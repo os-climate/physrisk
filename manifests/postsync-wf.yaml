@@ -1,0 +1,24 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Workflow
+metadata:
+  name: ignored
+  generateName: <CHANGE_ME>
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+spec:
+  volumeClaimTemplates:
+    - metadata:
+        name: local-data-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 10Gi
+  entrypoint: entrypoint
+  templates:
+  - name: entrypoint
+    steps:
+    - - name: execute-template
+        templateRef:
+          name: <CHANGE_ME>
+          template: entrypoint

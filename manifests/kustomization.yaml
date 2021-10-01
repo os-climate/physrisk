@@ -1,0 +1,27 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+commonLabels:
+  app.kubernetes.io/name: <CHANGE_ME>
+  app.kubernetes.io/component: <CHANGE_ME>
+  app.kubernetes.io/part-of: aiops-analytics
+  app.kubernetes.io/managed-by: aicoe-aiops-devops-argocd
+
+resources:
+  - cronwf.yaml
+  - imagestream.yaml
+  - postsync-wf.yaml
+  - wftmpl.yaml
+
+generators:
+  - ksops.yaml
+
+patchesJson6902:
+- patch: &patch |
+    - op: remove
+      path: /metadata/name
+  target:
+    group: argoproj.io
+    version: v1alpha1
+    kind: Workflow
+    name: ignored

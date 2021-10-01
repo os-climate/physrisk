@@ -1,0 +1,99 @@
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowTemplate
+metadata:
+  name: <CHANGE_ME>
+spec:
+  entrypoint: entrypoint
+  templates:
+    # - name: entrypoint
+    #   steps:
+    #     - - name: data-collection
+    #         template: data-collection
+    #     - - name: analysis
+    #         template: analysis
+    #
+    # - name: data-collection
+    #   dag:
+    #     tasks:
+    #       - name: collect-raw-data
+    #         template: notebook-executor
+    #         arguments:
+    #           parameters: [{name: notebook, value: <PATH_WITHIN_NOTEBOOKS_FOLDER>}]
+    #       - ...
+    #
+    # - name: analysis
+    #   steps:
+    #     - - name: contributor-analysis
+    #         template: notebook-executor
+    #         arguments:
+    #           parameters: [{name: notebook, value: <PATH_WITHIN_NOTEBOOKS_FOLDER>}]
+    #       - ...
+
+    - name: notebook-executor
+      inputs:
+        parameters:
+          - name: notebook
+      outputs:
+        artifacts:
+          - name: rendered_notebook
+            path: "/mnt/data/notebooks/{{inputs.parameters.notebook}}"
+            archive:
+              none: {}
+            s3:
+              endpoint: s3.upshift.redhat.com:443
+              bucket: <CHANGE_ME>
+              key: "production_data/rendered_notebooks/{{inputs.parameters.notebook}}"
+              accessKeySecret:
+                key: access-key-id
+                name: <SECRET_NAME>
+              secretKeySecret:
+                key: secret-access-key
+                name: <SECRET_NAME>
+      container:
+        image: <CHANGE_ME>:latest
+        command: [jupyter-nbconvert]
+        args:
+          - --config
+          - .jupyter/jupyter_nbconvert_config.py
+          - "notebooks/{{inputs.parameters.notebook}}"
+        # If using different image than built by https://github.com/AICoE/s2i-custom-notebook, please change or remote the workingDir settings
+        workingDir: /opt/app-root/backup
+        volumeMounts:
+          - name: local-data-storage
+            mountPath: /mnt/data
+        env:
+          - name: LOCAL_DATA_PATH
+            value: /mnt/data
+          - name: RUN_IN_AUTOMATION
+            value: "true"
+          - name: NOTEBOOK_NAME
+            value: "{{inputs.parameters.notebook}}"
+          - name: S3_ENDPOINT_URL
+            value: https://s3.upshift.redhat.com
+          - name: S3_PROJECT_KEY
+            valueFrom:
+              secretKeyRef:
+                key: path
+                name: <SECRET_NAME>
+          - name: S3_BUCKET
+            valueFrom:
+              secretKeyRef:
+                key: bucket
+                name: <SECRET_NAME>
+          - name: AWS_ACCESS_KEY_ID
+            valueFrom:
+              secretKeyRef:
+                key: access-key-id
+                name: <SECRET_NAME>
+          - name: AWS_SECRET_ACCESS_KEY
+            valueFrom:
+              secretKeyRef:
+                key: secret-access-key
+                name: <SECRET_NAME>
+        resources:
+          requests:
+            cpu: 500m
+            memory: 1Gi
+          limits:
+            cpu: '2'
+            memory: 4Gi

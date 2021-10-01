@@ -1,0 +1,6 @@
+apiVersion: viaduct.ai/v1
+kind: ksops
+metadata:
+  name: ksops-name-doesnt-matter
+files:
+  - ceph-creds.yaml

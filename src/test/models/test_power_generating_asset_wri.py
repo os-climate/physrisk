@@ -5,7 +5,7 @@ from physrisk import Asset, AssetEventDistrib, ExceedanceCurve, VulnerabilityDis
 from physrisk import Drought, Inundation
 from physrisk import get_impact_distrib
 from physrisk.models import InnundationModel
-from src.physrisk.models.power_generating_asset_model import InnundationModel
+from physrisk.data.hazard.event_provider_wri import EventProviderWri
 
 class EventResponseMock:
 
@@ -36,7 +36,21 @@ class TestPowerGeneratingAssetWri(unittest.TestCase):
 
         self.assertAlmostEqual(mean, 4.8453897)
 
+    @unittest.skip("example, not test")
+    def test_with_data_sourcing(self):
+        cache_folder = r"<cache file>"
+        provider = EventProviderWri('web', cache_folder = cache_folder)
+        lon = 19.885738
+        lat = 45.268405
 
+        provider.get_inundation_file_name_stub_river(5, "rcp8p5", "river", "MIROC-ESM-CHEM", 2080)
+
+        lat2, lon2 = 45.258405, 19.895738
+
+        events_river = provider.get_inundation_depth([lon], [lat], type = "river", scenario="rcp8p5", model = "MIROC-ESM-CHEM", year = "2080")
+        #events_coast = provider.get_inundation_depth([lon], [lat], type = "coast", scenario="rcp8p5", subsidence = True, year = "2080", sea_level = 0)
+        
+        self.assertAlmostEqual(1, 1)
 
 
 

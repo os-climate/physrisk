@@ -9,6 +9,13 @@ class EventProviderWri():
     
     __return_periods = [5, 10, 25, 50, 100, 250, 500, 1000]
     __wri_public_url = "http://wri-projects.s3.amazonaws.com/AqueductFloodTool/download/v2/"
+    __riverine_circ_models =  {  "000000000WATCH" :	"Baseline condition",
+                            "00000NorESM1-M	GCM" : "Bjerknes Centre for Climate Research, Norwegian Meteorological Institute",
+                            "0000GFDL_ESM2M	GCM" : "Geophysical Fluid Dynamics Laboratory (NOAA)",
+                            "20000HadGEM2-ES" : "Met Office Hadley Centre",
+                            "00IPSL-CM5A-LR	GCM" : "Institut Pierre Simon Laplace",
+                            "MIROC-ESM-CHEM	GCM" : "Atmosphere and Ocean Research Institute (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency for Marine-Earth Science and Technology" }
+
 
     def __init__(self, src_key, event_type = "inundation", **kwargs):
         # different sources can be specified
@@ -19,8 +26,8 @@ class EventProviderWri():
         # for 'file', data must exist in folder specified
         if src_key == 'file':
             if 'folder' in kwargs:
-                self.__get_events = lambda lons, lats, return_periods, scenario, sea_level, type, subsidence, year, cf = kwargs['folder'] : self.__get_inundation_file_based(
-                    cf, lats, lons, return_periods, scenario, sea_level, type, subsidence, year)
+                self.__get_events = lambda lons, lats, return_periods, scenario, sea_level, type, subsidence, model, year, cf = kwargs['folder'] : self.__get_inundation_file_based(
+                    cf, lats, lons, return_periods, scenario, sea_level, type, subsidence, model, year)
             else:
                 # enforced: otherwise very slow and hits WRI servers frequently
                 raise KeyError("folder must be supplied")
@@ -30,8 +37,8 @@ class EventProviderWri():
             if 'cache_folder' in kwargs:
                 # cache GeoTiffs in folder specified (important for local development)
                 download = self.__download_inundation
-                self.__get_events = lambda lons, lats, return_periods, scenario, sea_level, type, subsidence, year, cf = kwargs['cache_folder'], d = download : self.__get_inundation_file_based(
-                    cf, lats, lons, return_periods, scenario, sea_level, type, subsidence, year, download_flood_data = d)
+                self.__get_events = lambda lons, lats, return_periods, scenario, sea_level, type, subsidence, model, year, cf = kwargs['cache_folder'], d = download : self.__get_inundation_file_based(
+                    cf, lats, lons, return_periods, scenario, sea_level, type, subsidence, model, year, download_flood_data = d)
             else:
                 # enforced: otherwise very slow and hits WRI servers frequently
                 raise KeyError("cache_folder must be supplied")
@@ -40,7 +47,7 @@ class EventProviderWri():
         else:
             raise NotImplementedError("Source Key : {0} not handled.".format(src_key))
 
-    def get_inundation_depth(self, lons, lats, return_periods = None, scenario = "rcp8p5", sea_level = 0, type = "coast", subsidence = True, year = 2080):
+    def get_inundation_depth(self, lons, lats, return_periods = None, scenario = "rcp8p5", sea_level = 0, type = "coast", subsidence = True, model = None, year = 2080):
         """Return inundation depths for available return periods.
 
         Args:
@@ -53,16 +60,21 @@ class EventProviderWri():
             type (str): "coast" or "river"
             year (int): 2030, 2050 or 2080
         """
-        self.__get_events(lats, lons, EventProviderWri.__return_periods if return_periods is None else return_periods, scenario, sea_level, type, subsidence, year)
+        self.__get_events(lats, lons, EventProviderWri.__return_periods if return_periods is None else return_periods, scenario, sea_level, type, subsidence, model, year)
 
     #region inundation
 
-    def __get_inundation_file_based(self, folder, lons, lats, return_periods, scenario, sea_level, type, subsidence, year, download_flood_data = None):
+    def __get_inundation_file_based(self, folder, lons, lats, return_periods, scenario, sea_level, type, subsidence, model, year, download_flood_data = None):
         """Get inundation data by reading GeoTiff files."""
                
         intensities = []
         for period in [5, 10, 25, 50, 100, 250, 500, 1000]:
-            filename_stub = self.__get_inundation_file_name_stub(period, scenario, sea_level, type, subsidence, year)
+            if type == "coast":
+                filename_stub = self.get_inundation_file_name_stub_coast(period, scenario, sea_level, type, subsidence, year)
+            elif type == "river":
+                filename_stub = self.get_inundation_file_name_stub_river(period, scenario, type, model, year)
+            else: 
+                raise NotImplementedError("uknown type " + type)
             filename = filename_stub + ".tif"
             path = os.path.join(folder, filename)
 
@@ -89,15 +101,17 @@ class EventProviderWri():
         stream.write(r.content)
         logging.info("Downloaded")  
 
-    def __get_inundation_file_name_stub(self, return_period, scenario, sea_level, type, with_subsidence, year):
+    def get_inundation_file_name_stub_coast(self, return_period, scenario, sea_level, type, with_subsidence, year):
         if type not in ["coast", "river"]:
             raise ValueError("invalid type")
 
-        return "{0}{1}_{2}_{3}_{4}_rp{5:04d}_{6}".format("inun", type, scenario, 
+        return "inun{0}_{1}_{2}_{3}_rp{4:04d}_{5}".format(type, scenario, 
             "wtsub" if with_subsidence else "nosub", year, return_period, "0" if sea_level == 0 else "0_perc_{:02d}".format(sea_level))
 
-    #for converstion to NetCDF
-    #from osgeo import gdal
-    #ds = gdal.Translate(dir + filename_stub + ".nc", dir + filename_stub + ".tif", format='NetCDF') 
+    def get_inundation_file_name_stub_river(self, return_period, scenario, type, model, year):
+        if type not in ["coast", "river"]:
+            raise ValueError("invalid type")
+
+        return "inun{0}_{1}_{2}_{3}_rp{4:05d}".format(type, scenario, model, year, return_period)
 
     #endregion

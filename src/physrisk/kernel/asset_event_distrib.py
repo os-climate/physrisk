@@ -1,7 +1,7 @@
 import numpy as np
 from typing import List
 
-class AssetEventDistribution:
+class AssetEventDistrib:
     """Event intensity distributions specific to an asset."""
     
     __slots__ = ["_event_type", "_intensity_bins", "_prob"]

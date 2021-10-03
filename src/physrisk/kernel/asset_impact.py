@@ -2,13 +2,13 @@ import numpy as np
 #import numpy.typing as npt
 from abc import ABC, abstractmethod
 from typing import Tuple, Union, List, Optional, Any
-from .asset_event_distribution import AssetEventDistribution
-from .impact_distribution import ImpactDistribution
+from .asset_event_distrib import AssetEventDistrib
+from .impact_distrib import ImpactDistrib
 from .vulnerability_distrib import VulnerabilityDistrib
 
-def get_impact_distribution(event_dist : AssetEventDistribution, vulnerability_dist : VulnerabilityDistrib) -> ImpactDistribution:
+def get_impact_distrib(event_dist : AssetEventDistrib, vulnerability_dist : VulnerabilityDistrib) -> ImpactDistrib:
     impact_prob = vulnerability_dist.prob_matrix.T @ event_dist.prob
-    return ImpactDistribution(vulnerability_dist.event_type, vulnerability_dist.impact_bins, impact_prob)
+    return ImpactDistrib(vulnerability_dist.event_type, vulnerability_dist.impact_bins, impact_prob)
 
 class AssetImpact:
     """Calculates the impacts associated with a portfolio of assets."""

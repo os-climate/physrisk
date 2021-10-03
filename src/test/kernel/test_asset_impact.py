@@ -1,9 +1,9 @@
 """ Test asset impact calculations."""
 import unittest
 import numpy as np
-from physrisk import AssetEventDistribution, ExceedanceCurve, VulnerabilityDistrib
+from physrisk import AssetEventDistrib, ExceedanceCurve, VulnerabilityDistrib
 from physrisk import Drought, Inundation
-from physrisk import get_impact_distribution
+from physrisk import get_impact_distrib
 
 class TestAssetImpact(unittest.TestCase):
     """Tests asset impact calculations."""
@@ -71,9 +71,9 @@ class TestAssetImpact(unittest.TestCase):
         probs_w_cutoff = np.where(depth_bins[1:] <= cutoff_depth, 0.0, 1.0)
         n_bins = len(probs)
         vul = VulnerabilityDistrib(type(Inundation), depth_bins, impact_bins, np.diag(probs_w_cutoff)) # np.eye(n_bins, n_bins))
-        event = AssetEventDistribution(type(Inundation), depth_bins, probs) 
+        event = AssetEventDistrib(type(Inundation), depth_bins, probs) 
 
-        impact = get_impact_distribution(event, vul)
+        impact = get_impact_distrib(event, vul)
         mean = impact.mean_impact()
 
         self.assertAlmostEqual(mean, 4.8453897)

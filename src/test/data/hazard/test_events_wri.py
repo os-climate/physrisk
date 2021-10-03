@@ -2,7 +2,7 @@
 import unittest
 import shutil, tempfile
 import numpy as np
-from physical_risk.data.hazard.event_provider_wri import EventProviderWri
+from physrisk.data.hazard.event_provider_wri import EventProviderWri
 import boto3
 
 class TestEventsWri(unittest.TestCase):
@@ -14,10 +14,9 @@ class TestEventsWri(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.test_dir)
     
-    #@unittest.skip("includes download of large files")
+    @unittest.skip("includes download of large files")
     def test_wri_from_web(self):
-        #cache_folder = self.test_dir
-        cache_folder = r"C:/Users/joemo/Code/Repos/WRI-EBRD-Flood-Module/data_1"
+        cache_folder = self.test_dir 
         provider = EventProviderWri('web', cache_folder = cache_folder)
         lon = 19.885738
         lat = 45.268405

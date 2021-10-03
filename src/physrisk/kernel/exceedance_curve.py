@@ -34,6 +34,9 @@ class ExceedanceCurve:
         values, probs = cv.add_x_value_to_curve(value, self.values, self.probs)
         return ExceedanceCurve(probs, values)
 
+    def get_value(self, prob):
+        return np.interp(prob, self.probs[::-1], self.values[::-1])
+
     def get_probability_bins(self):
         r"""Convert from exceedance (cumulative) probability to bins of constant probability.
         This is equivalent to the assumption of linear interpolation of exceedance points.

@@ -1,7 +1,7 @@
 import numpy as np
 from typing import List, Union
 
-class ImpactDistribution:
+class ImpactDistrib:
     """Impact distributions specific to an asset."""
     
     __slots__ = ["_event_type", "_impact_bins", "_prob"]

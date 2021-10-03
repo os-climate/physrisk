@@ -1,9 +1,9 @@
 """ Test asset impact calculations."""
 import unittest
 import numpy as np
-from physrisk import AssetEventDistribution, ExceedanceCurve, VulnerabilityDistrib
+from physrisk import AssetEventDistrib, ExceedanceCurve, VulnerabilityDistrib
 from physrisk import Drought, Inundation
-from physrisk import get_impact_distribution
+from physrisk import get_impact_distrib
 
 class TestAssetImpact(unittest.TestCase):
     """Tests asset impact calculations."""

@@ -1,7 +1,7 @@
-project-template
+Physrisk
 ==============================
 
-template for the team to use
+Physical risk calculation engine
 
 Project Organization
 ------------
@@ -57,5 +57,3 @@ Project Organization
 
 
 --------
-
-<p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>

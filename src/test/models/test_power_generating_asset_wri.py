@@ -1,11 +1,16 @@
 """ Test asset impact calculations."""
-import unittest
+import unittest, os
 import numpy as np
+import pandas as pd
 from physrisk import Asset, AssetEventDistrib, ExceedanceCurve, VulnerabilityDistrib
 from physrisk import Drought, Inundation
 from physrisk import get_impact_distrib
+import physrisk.data.data_requests as dr
+from physrisk.data import ReturnPeriodEvDataResp
 from physrisk.models import InnundationModel
 from physrisk.data.hazard.event_provider_wri import EventProviderWri
+import physrisk.data.raster_reader as rr
+from src import physrisk
 
 class EventResponseMock:
 
@@ -29,7 +34,7 @@ class TestPowerGeneratingAssetWri(unittest.TestCase):
         assets = [Asset(latitude, longitude)]
         model = InnundationModel(assets)
 
-        vul, event = model.get_distributions(responses_mock)
+        vul, event = model.get_distributions(assets[0], responses_mock)
 
         impact = get_impact_distrib(event, vul)
         mean = impact.mean_impact()
@@ -38,18 +43,39 @@ class TestPowerGeneratingAssetWri(unittest.TestCase):
 
     @unittest.skip("example, not test")
     def test_with_data_sourcing(self):
-        cache_folder = r"<cache file>"
-        provider = EventProviderWri('web', cache_folder = cache_folder)
-        lon = 19.885738
-        lat = 45.268405
+                
+        cache_folder = r"C:/Users/joemo/Code/Repos/WRI-EBRD-Flood-Module/data_1"
 
-        provider.get_inundation_file_name_stub_river(5, "rcp8p5", "river", "MIROC-ESM-CHEM", 2080)
+        asset_list = pd.read_csv(os.path.join(cache_folder, "wri-all.csv"))
 
-        lat2, lon2 = 45.258405, 19.895738
+        types = asset_list["primary_fuel"].unique()
 
-        events_river = provider.get_inundation_depth([lon], [lat], type = "river", scenario="rcp8p5", model = "MIROC-ESM-CHEM", year = "2080")
-        #events_coast = provider.get_inundation_depth([lon], [lat], type = "coast", scenario="rcp8p5", subsidence = True, year = "2080", sea_level = 0)
+        gas = asset_list.loc[asset_list['primary_fuel'] == 'Gas'] # Nuclear
+
+        gas = gas[0:10]
+
+        longitudes = np.array(gas['longitude'])
+        latitudes = np.array(gas['latitude'])
+        generation = np.array(gas['estimated_generation_gwh'])
+
+        assets = [Asset(lon, lat, generation = gen, primary_fuel = 'gas') for lon, lat, gen in zip(longitudes, latitudes, generation)]
+
+        model = InnundationModel()
+
+        event_requests_by_asset = [model.get_event_data_requests(asset) for asset in assets]
+        event_requests = [req for event_request_by_asset in event_requests_by_asset for req in event_request_by_asset]
+
+        # select hazard data source
+        events_innundation_provider = EventProviderWri('web', cache_folder = cache_folder).get_inundation_depth
+        event_provider = { Inundation : events_innundation_provider }
+
+        responses = dr.process_requests(event_requests, event_provider)
         
+        for asset, requests in zip(assets, event_requests_by_asset):
+            vul, event = model.get_distributions(asset, [responses[req] for req in requests])
+            impact = get_impact_distrib(event, vul)
+            mean = impact.mean_impact()
+
         self.assertAlmostEqual(1, 1)
 
 

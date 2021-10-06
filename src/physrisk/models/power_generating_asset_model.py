@@ -1,34 +1,34 @@
 import numpy as np
 from physrisk.kernel.events import HighTemperature
 from typing import List
-from physrisk.kernel import Asset, PowerGeneratingAsset, Inundation, VulnerabilityModel
+from physrisk.kernel import Asset, PowerGeneratingAsset, Inundation, Model
 from physrisk.kernel import AssetEventDistrib, VulnerabilityDistrib
 from physrisk.data import EventDataRequest
 from physrisk import ExceedanceCurve
 
-class InnundationModel(VulnerabilityModel):
+class InnundationModel(Model):
     __asset_types = [PowerGeneratingAsset]
     __event_types = [Inundation]
     
-    def __init__(self, assets: List[Asset]):
+    def __init__(self, model = "MIROC-ESM-CHEM"):
         # default impact curve
-        self.__assets = assets
         self.__curve_depth = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 1])
         self.__curve_impact = np.array([0, 1, 2, 7, 14, 30, 60, 180, 365])
+        self.__model = model
+        self.__base_model = "000000000WATCH"
         pass
 
-    @staticmethod
-    def event_data_requests(asset: Asset):
+    def get_event_data_requests(self, asset : Asset):
         # assuming here that other specific look-ups wold be needed
-        histo =  EventDataRequest(Inundation, latitude = asset.latitude, longitude = asset.longitude, 
-            scenario = "historical", sea_level = 0, type = "river", subsidence = True, year = 2080)
+        histo =  EventDataRequest(Inundation, asset.longitude, asset.latitude,
+            scenario = "historical", type = "river", year = 1980, model = self.__base_model)
         
-        future = EventDataRequest(Inundation, latitude = asset.latitude, longitude = asset.longitude, 
-            scenario = "rcp8p5", sea_level = 0, type = "river", subsidence = True, year = 2080)
+        future = EventDataRequest(Inundation, asset.longitude, asset.latitude,
+            scenario = "rcp8p5", type = "river", year = 2080, model = self.__model)
         
         return histo, future
 
-    def get_distributions(self, event_data_responses):
+    def get_distributions(self, asset, event_data_responses):
         """Return vulnerability and asset event distributions"""
 
         histo, future = event_data_responses

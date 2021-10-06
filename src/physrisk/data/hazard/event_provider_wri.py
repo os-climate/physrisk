@@ -1,6 +1,6 @@
 import logging, os.path, rasterio, rasterio.sample, requests
 import numpy as np
-from rasterio.windows import from_bounds
+import physrisk.data.raster_reader as rr
 
 # requires raterio and gdal; for binaries to install on Windows, at time of writing https://pypi.org/project/rasterio/ directs us to https://www.lfd.uci.edu/~gohlke/pythonlibs/#rasterio
 
@@ -60,7 +60,8 @@ class EventProviderWri():
             type (str): "coast" or "river"
             year (int): 2030, 2050 or 2080
         """
-        self.__get_events(lats, lons, EventProviderWri.__return_periods if return_periods is None else return_periods, scenario, sea_level, type, subsidence, model, year)
+        ret_period = EventProviderWri.__return_periods if return_periods is None else return_periods
+        return ret_period, self.__get_events(lats, lons, ret_period, scenario, sea_level, type, subsidence, model, year)
 
     #region inundation
 
@@ -85,14 +86,10 @@ class EventProviderWri():
                     with open(path, 'wb') as stream:
                         download_flood_data(stream, filename)
             
-            with rasterio.open(path) as dataset:
-                sg = rasterio.sample.sample_gen(dataset, [[lon, lat] for (lon, lat) in zip(lons, lats)])
-                hw = 0.01 # half-width of window in degrees
-                win = from_bounds(lons[0] - hw, lats[0] - hw, lons[0] + hw, lats[0] + hw, dataset.transform) # left, bottom, right, top
-                intensities.append(list(sg))
-                max_intensity = np.max(dataset.read(1, window = win))
-        return intensities
- 
+            intensities.append(rr.file_read_bounded(path, lons, lats)) 
+
+        return np.stack(intensities, -1)
+
     def __download_inundation(self, stream, filename):        
         url = EventProviderWri.__wri_public_url + filename       
         logging.info("Downloading file " + filename)      

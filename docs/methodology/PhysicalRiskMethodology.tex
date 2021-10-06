@@ -1,0 +1,352 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+% Generic Methodology for Physical Climate Risk Modelling
+%
+% 2021 OS-Climate
+%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\documentclass[a4paper,11pt]{extarticle} %12pt
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Required packages
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bm}
+\usepackage{fancyhdr}
+\usepackage{float}  
+\usepackage{framed}
+\usepackage{graphicx}
+\usepackage[colorlinks,citecolor=blue,urlcolor=black,linkcolor=black,bookmarks=false,hypertexnames=true]{hyperref}
+\usepackage{numprint}
+%\usepackage{physics}  % causing problems; using different notation for bra-ket
+%\usepackage{sfmath}[cmbright]
+%\usepackage[round]{natbib}
+\usepackage{ragged2e}
+\usepackage{scrextend}
+\usepackage{sistyle}
+\usepackage{subcaption}
+
+\usepackage{bookmark}
+
+\usepackage[normalem]{ulem}
+	
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% General settings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%
+% Font
+%%%%%%%%%%%%%
+
+%\renewcommand*{\familydefault}{\sfdefault}
+
+%%%%%%%%%%%%%
+% Spacing
+%%%%%%%%%%%%%
+
+\setlength{\parskip}{1em}
+\setlength{\parindent}{0em}
+\frenchspacing
+
+%%%%%%%%%%%%%
+% Hyphenation
+%%%%%%%%%%%%%
+
+\tolerance=1
+\emergencystretch=\maxdimen
+\hyphenpenalty=10000
+\hbadness=10000
+
+%%%%%%%%%%%%%
+% Number formatting
+%%%%%%%%%%%%%
+
+\npthousandsep{,}
+\npthousandthpartsep{}
+\npdecimalsign{.}
+
+%%%%%%%%%%%%%
+% Footnotes
+%%%%%%%%%%%%%
+
+\usepackage[hang, flushmargin]{footmisc} 
+\setlength{\footnotemargin}{4mm}
+
+%%%%%%%%%%%%%
+% Running title
+%%%%%%%%%%%%%
+
+\pagestyle{fancy}
+\lhead{OS-Climate}
+\rhead{Physical Climate Risk Methodology}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\title{Physical Climate Risk Methodology}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\author{Joe Moorhouse\thanks{\textit{E-mail}: Joe.Moorhouse@gmail.com.
+    	\smallskip	    
+	    \newline% \indent
+	The views expressed in this paper are those of the authors and do not necessarily reflect the views and policies of their respective employers.}
+	}
+
+\date{24 September 2021 [Draft]}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{document}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\maketitle{}
+
+%\begin{abstract}
+%Add abstract here.
+%\end{abstract}
+
+
+\clearpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TEMP ONLY during writing stage
+\setcounter{tocdepth}{4}
+\renewcommand{\contentsname}{Contents}
+\tableofcontents
+
+%\listoftables
+
+%\listoffigures
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\clearpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+\label{Sec:Introduction}
+
+The purpose of this paper is to present the methodology of a framework that is sufficiently generic to be used for a wide range of physical climate risk models. The motivation is to provide a specification for use in the OS-Climate (OS-C) \cite{OSC} physical climate risk calculation module. OS-C aims to provide an platform unconstrained by any one particular methodology choice. However, it is hoped that just as the open-source Oasis Loss Modelling Framework \cite{OasisLMF} (henceforth Oasis) was designed to accommodate a wide range of catastrophe models, within a well-defined framework and set of interfaces, an analogous physical risk modelling framework can be defined. This could expedite the implementation of a wide range of models and promote standardisation and resource sharing.
+
+The modelling framework can be split into three main parts:
+
+\begin{enumerate}
+	\item Hazard 
+	\item Vulnerability 
+	\item Financial 
+\end{enumerate}
+
+Hazard models are used to obtain probability distributions of future events, such as inundations or periods of drought. Vulnerability models are used to assess the impact of these events on the assets within a portfolio. Financial models convert these impacts into financial measures. These could be measures of the financial impact of climate change on a portfolio of assets, for example Average Annual Loss or loss Exceedance Probability. The impact on an asset could also be used in structural credit risk models. 
+
+At time of writing, physical risk calculations may make use of `bulk-assessment' approaches where accurate asset vulnerability information is unavailable and approximations are therefore required. The modelling framework accommodates bulk-assessment-type models as well as approaches capable of modelling vulnerability more precisely\footnote{There is potentially great value in the results obtained from very simple models, as long as the model error can be quantified. The aim is to be able to accommodate both simple and complex models in combination.}. The framework is designed to control the model risk that this creates by incorporating a model of the uncertainty of the approximations into the calculation. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Model description}
+
+\subsection{Overview}
+A high-level view of the physical risk modelling framework is shown in Figure~\ref{Fig:top_level_view}. 
+
+Hazard models are used to create hazard data sets, providing probability distributions of events such as inundations, periods of drought or periods of high wind. These data sets might, for example, specify the annual probability of occurrence of an event (e.g. high wind) of a certainty intensity (e.g. maximum wind speed) for some specified year in the future.
+
+Vulnerability models are used to construct, for a given set of assets, both:
+\begin{itemize}
+	\item Asset event distributions: probability distributions of events that impact the assets at their locations, derived from hazard data sets
+	\item Vulnerability distributions: conditional probability distributions of the impacts on the assets of events of given intensity  
+\end{itemize}
+
+The asset impact model uses these quantities to derive distributions of impact for each asset. An impact might be, for example, damage to the asset, expressed as a fraction of the asst value. The financial risk model calculates financial measures from the impact distributions, for example Exceedance Probability.
+
+Within the OS-C modelling framework, models are interchangeable and allow forms of composition. That is, different choices of vulnerability model may be used for a particular asset and a vulnerability model may use different hazard data sets for its calculation. The intention is to allow a risk calculation to be built from an ecosystem of hazard and vulnerability models according to the requirements of the model owner. 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[ht]
+	
+	\begin{framed}
+		% left, bottom, right, top
+		\includegraphics[clip, trim=0cm 7cm 0cm 1cm, width=1.00\textwidth]{plots/top_level_view.pdf}
+		
+	\end{framed}
+	
+	\footnotesize
+	
+	\renewcommand{\arraystretch}{1.01}
+	
+	\vspace{-3ex}
+		
+	\vspace{-0.5ex}
+	
+	\caption{\small Physical risk model components. }
+	\label{Fig:top_level_view}
+	
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Asset impact model}
+The {\it asset impact} model is used to determine how an asset is impacted by an event. The impact is a quantity from which financial loss can be inferred, but is not itself a monetary value. For example, a response might be the damage sustained to a building as a fraction of its value or the annual loss of energy output of a power station as a fraction of its annual output\footnote{A systemic change in annual output changes asset value, since this is partly determined by the expected future cash flows generated by the asset.}. In each case, a further model is required to translate the impact to a change in asset value. In principle an impact might lead to an increase or decrease in value.
+
+Catastrophe models sometimes define a quantity `damage', and talk about `damageability'. `Damage' and `impact' are analagous quantities here but `impact' is perhaps better-suited to situations where there is, say, a decrease in output efficiency of a plant as a result of a period of higher temperatures. 
+
+Asset impact models as used in physical risk calculations may overlap with those of catastrophe models. OS-C aims to support a wide range of models, but it is desirable to identify approaches that generalize a large class of these. One such approach is adopted from Oasis \cite{OasisLMF}. The first assumption behind this is that a model should capture two important types of uncertainty, doing so by representing each by a probability distributions:
+\begin{enumerate}
+	\item Uncertainty as to the frequency and intensity (or severity) of events that potentially lead to a change in asset value. This is sometimes called the {\it primary uncertainty}
+	\item Uncertainty as to the vulnerability of assets to events (i.e. response of assets to events of a given intensity), the {\it secondary uncertainty}
+\end{enumerate}
+
+These quantities are defined more precisely in \ref{Sec:MathematicalDescriptionOfAssetImpactModel}. Impact can be modelled using a {\it mean impact curve} (or {\it mean damage curve} in catastrophe modelling nomenclature). This is a curve relating an event intensity to an impact (e.g. a wind event with a given maximum gust speed will cause a given fractional damage to a property). In general, however, there is uncertainty as to the impact on an asset to an event of a given intensity -- in the example, the wind may cause mild or severe damage. For this reason, the vulnerability is represented rather as a two dimensional curve.
+
+A second assumption is that the probabilities of such events may not be readily represented by distributions such as beta, gamma, beta-Bernoulli or truncated Gaussian and may be complex and multi-modal. Discrete probability distributions are therefore used in order to represent the range of possible distributions: a non-parametric approach.   
+
+\subsubsection{Mathematical description of asset impact model}
+\label{Sec:MathematicalDescriptionOfAssetImpactModel}
+
+$e^{(a)}_i$ is the probability that an event of type $a$ occurs with intensity $s$ in the range $s^{(a, \text{lower})}_i < s \le s^{(a, \text{upper})}_i$.
+
+$v^{(a, b)}_{ij}$ is the conditional probability that given the occurrence of an event of type $a$ with intensity $s$ in the range $s^{(a, \text{lower})}_i < s \le s^{(a, \text{upper})}_i$ there is an impact (or response\footnote{$r$ for `response' is used to denote impact as $i$ is reserved for indexing}), $r$ in the range $r^{(a,b,\text{lower})}_j < r \le r^{(a,b,\text{upper})}_j$. The impact is of type $b$. 
+
+The definition of an event type $a$ includes a time interval e.g. $a$ is the occurrence of an inundation in the locale of the asset {\it within a one year period}. $b$ is, for example, the fractional damage to the asset.
+
+$y^{(a,b)}_j$ is the marginal probability of impact $r$ in the range $r^{(a,b, \text{lower})}_j < r \le r^{(a,b,\text{upper})}_j$ occurring as a result of an event of type $a$. 
+
+From the definition of conditional probability:
+
+\begin{equation}
+	\label{Eq:vulnerability}
+	y^{(a,b)}_j = \sum_{i} v^{(a,b)}_{ij} e^{(a)}_i
+\end{equation}
+
+If only the mean impact curve is available, then it is possible to create the matrix such that $v_{ij} \in \{0, 1\}$. The matrix then provides a simple mapping from intensity to impact; if the number of intensity and response bins is equal then matrix $\mathbf{v}$ is simply the identity matrix. However, note that these simplifications exclude from the model any uncertainty in the parameters\footnote{A better approach would be to estimate the standard deviation of the distributions from which the mean impact curve was calculated and to incorporate this.}.
+
+Note that $y^{(a,b)}_j$ is identical to the {\it effective damage} distribution of Oasis and can be described as the `effective impact'. It is a marginal distribution and does not capture any correlation between events nor impacts.
+
+\subsubsection{Importance of secondary uncertainty}
+The importance of the vulnerability matrix as opposed to mean response curve or vector is emphasized above; see also \cite{Taylor:2015} for a discussion of this point. This is true not only in cases where the underlying distribution of an impact, for example a fractional damage, can be inferred from empirical data; see for example Figure~\ref{Fig:vulnerability_matrix}). This is arguably more important where data is limited in order that model risk is not under-estimated in such cases. 
+
+In many case response data is provided by:
+\begin{itemize}
+	\item Corporate disclosures
+	\item Modelling of asset vulnerability based on asset characteristics and historical data
+\end{itemize}
+but in the absence of such data, physical risk models may need to take a `bulk assessment' approach for certain assets with rough estimates of the response of the asset to different events. The presence of such estimates in an overall model may, or may not, materially impact the accuracy of the results, but it is important that this impact can be assessed. By quantifying the uncertainty in the response estimates, a distribution of financial losses is ultimately obtained from which the model user can derive the impact of the approximation.   
+
+\subsubsection{Interpolation of probability distributions}
+Cases arise where the event distributions and vulnerability distributions are not defined for a common set of intensity bins and interpolation is therefore required. The question then arises of how probability density is distributed within bins. The choice is model-specific and customizable, but here two common cases are described.
+
+\begin{itemize}
+	\item Probability density constant across bin: linear interpolation of cumulative probability function
+	\item Probability density changes linearly across bin: quadratic interpolation of cumulative probability function
+\end{itemize}
+
+{\textcolor{red}{\emph{[Add equations and example plots here]}}}  
+
+Hazard data sets might also contain instances of `point-probabilities', for example where there is a finite probability that the intensity of an event takes a single value. These represent Dirac delta functions in the probability distribution, steps in the cumulative probability function. There is the option of retaining these as delta functions (bins of zero width), but in some cases it may be necessary to make assumptions about how these the probability might be distributed across a bin. 
+
+{\textcolor{red}{\emph{[Add equations and plot of step-CDF with interpolation; exemplify by `damage threshold']}}}  
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[ht]
+	
+	\begin{framed}
+		
+		\includegraphics[width=\textwidth]{plots/vulnerability_lagace_2008.png}
+		
+	\end{framed}
+	
+	\footnotesize
+	
+	\renewcommand{\arraystretch}{1.01}
+	
+	\vspace{-3ex}
+	
+%	{\justify
+%		Taken from  	
+%		\par}
+	
+	\vspace{-0.5ex}
+	
+	\caption{\small Taken from Lagacé (2008) Catastrophe Modeling, Université Laval. Mean damage curve as an approximation to an underlying set of distributions, modelled using a vulnerability matrix. {\textcolor{red}{\emph{[To seek permission or replace e.g. with synthetic plot]}}}}
+	\label{Fig:vulnerability_matrix}
+	
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Effective impact distribution}
+$y^{(a,b)}_j$ from Equation~\ref{Eq:vulnerability} is the probability distribution of impacts of type $b$ for an asset as a result of events of type $a$. In the catastrophe models of Oasis, impacts are sampled from this distribution \cite{OasisFinancialModule}, for example samples of fractional damage, which form the basis of a Monte Carlo calculation. This is done in order to apply insurance policy terms and conditions which can be complex and non-linear.
+
+The Monte Carlo sampling is done by constructing a cumulative probability density function, $Y_R(r)$, of impact $R$ from the effective impact distribution ($Y_R(r) = P(R \le r$)). Random numbers, $u_i$ are then sampled from a standard uniform distribution ($u_i \in [0, 1]$), from which impacts are calculated by:
+
+\begin{equation}
+	\label{Eq:sampling}
+	r_i = Y^{-1}_R(u_i)
+\end{equation}   
+
+In this Monte Carlo approach, samples of fractional damage can be drawn from distributions so as to be correlated or uncorrelated. For example, if the impact distributions represent damage to buildings as a result of inundation then it may be appropriate to model damage to two buildings in close proximity as being highly correlated\footnote{Catastrophe model practitioners might point out that presence or absence of kerb stones and availability of sand bags are highly significant so any such assumption is prone to error}. If the buildings are far apart (say in different countries) then the correlation is likely to be close to zero.
+
+\subsubsection{Full Monte Carlo calculation}
+A more sophisticated correlation model might try to capture correlation of events and of vulnerabilities. Such models would typically need to first sample from the distribution of event intensity and then from the vulnerability distribution. This is more computationally expensive than the approach of deriving an effective impact distribution. Such a `full Monte Carlo' approach might prove to be relevant for some models as it is a highly flexible approach. 
+   
+
+\subsection{Aggregation of impacts}
+For impacts of the same type, $b$, arising from different events, it is assumed that the impacts are additive, up to a ceiling value\footnote{this approximation is only strictly valid for sufficiently small impacts; consider the contrived example of 0.8 fractional damage that occurs from both flood and high wind in the same year.}. If the annual impacts from events with index 1 and 2 are represented by random variables, $Y^{(1,b)}$, $Y^{(2,b)}$ then $Y^{(\text{tot}, b)} = Y^{(1,b)} + Y^{(2,b)}$. 
+
+If the random variables are uncorrelated, then the aggregated effective impact distribution is given by the convolution:  
+
+\begin{equation}
+	\label{Eq:sampling}
+	y^{(\text{tot}, b)}(r) = \int^{\infty}_{-\infty} y^{(1, b)}(t) y^{(2, b)}(r - t) dt
+\end{equation} 
+
+{\textcolor{red}{\emph{[Add version with discrete binned data.]}}} 
+
+\subsection{Financial loss model}
+Several financial measures are of interest. 
+
+\begin{enumerate}
+	\item Annual Exceedance Probability (AEP): the probability that in a given year the aggregated losses of a portfolio will exceed a certain value  
+	\item Valuation Adjustment: an adjustment to the present value of an asset to reflect the expected loss 
+\end{enumerate}
+
+The first of these typically requires less data in its calculation. This is a cumulative probability distribution of losses from which the average annual loss (AAL) can be inferred, but also the range of losses in a given confidence interval. This interval is driven by the primary and secondary uncertainties above.
+
+With additional modelling steps, credit risk measures can also be derived.
+
+\subsubsection{Structural models of credit risk}
+Changes in asset value can be used to model changes in the credit quality of market participants. Financial risk modules for physical risk may then use distributions of asset value changes in order to model changes of credit quality over time as a result of climate change, for example estimates of default probability and loss given default. 
+
+The intention of this section is not to specify any particular model, but rather to give a brief introduction. Particularly of interest is the question of what inputs credit risk models require.
+
+For medium and large cap firms, a credit default event typically occurs when a firm is not able to meet its debt servicing obligations. Under an important class of credit risk models called `structural models', it is assumed that a default event occurs for a firm when its assets are sufficiently low compared to its liabilities. 
+
+A number of different structural models exist which make various assumptions about how a firm's assets change over time, how its capital is structured and the nature of its debt. 
+
+The earliest structural model was described by Merton in 1974 \cite{Merton:1974} based on an extremely simple debt structure. Black and Cox \cite{BlackCox:1976} introduced an important refinement to the Merton model in 1976. Practical implementations were subsequently created as a result of this foundational work. A notable one of these is the `KMV' model, named after Kealhofer, McQuown and Vasiek, now owned by Moody's Investors Service, Inc.  
+
+Use of such credit models, may provide a mechanism for incorporation of physical risk into financial institutions existing risk models\cite{KenyonEtAl:2021}. 
+
+\subsection{Uncertainties in the calculation}
+
+\subsection{Model limitations}
+
+\begin{enumerate}
+	\item Spatial correlation of events: to what extent possible without MC calculation; to what extent is provided / can be inferred from data sets
+	\item Correlation of vulnerability
+\end{enumerate}
+
+
+
+
+
+
+\clearpage
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bibliography{Physical Risk Methodology Bibliography}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\bibliographystyle{plain}
+\bibliographystyle{acm}
+%\bibliographystyle{agsm}
+
+
+\end{document}

@@ -1,1 +1,1 @@
-from .power_generating_asset_model import InnundationModel
+from physrisk.models.power_generating_asset_model import InundationModel

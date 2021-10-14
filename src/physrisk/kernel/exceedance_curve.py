@@ -21,7 +21,7 @@ class ExceedanceCurve:
         # values must be sorted and non-decreasing (intens[i + 1] >= intens[i])
         if len(probs) != len(values):
             raise ValueError('same number of probabilities and values expected')
-        if not np.all(np.diff(probs) < 0):
+        if not np.all(np.diff(probs) <= 0):
             raise ValueError('probs must be sorted and decreasing')
         if not np.all(np.diff(values) >= 0):
             raise ValueError('values must be sorted and non-decreasing')

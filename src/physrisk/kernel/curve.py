@@ -8,17 +8,16 @@ def add_x_value_to_curve(x, curve_x, curve_y):
     # this might be a candidate for numba optimization
 
     i = np.searchsorted(curve_x, x)
-    
-    if x == curve_x[i]:
+
+    if i == len(curve_y):
+        curve_y = np.insert(curve_y, i, curve_y[i - 1]) # flat extrapolation
+        curve_x = np.insert(curve_x, i, x)    
+    elif x == curve_x[i]:
         # point already exists; nothing to do
         return curve_x, curve_y
-
-    if (i == 0):
+    elif (i == 0):
         curve_y = np.insert(curve_y, 0, curve_y[0]) # flat extrapolation
         curve_x = np.insert(curve_x, 0, x)       
-    elif i == len(curve_y):
-        curve_y = np.insert(curve_y, i, curve_y[i - 1]) # flat extrapolation
-        curve_x = np.insert(curve_x, i, x)
     else:
         pl, pu = curve_y[i - 1], curve_y[i]
         il, iu = curve_x[i - 1], curve_x[i]

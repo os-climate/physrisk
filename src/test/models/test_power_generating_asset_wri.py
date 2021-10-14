@@ -2,15 +2,21 @@
 import unittest, os
 import numpy as np
 import pandas as pd
+import physrisk
 from physrisk import Asset, AssetEventDistrib, ExceedanceCurve, VulnerabilityDistrib
-from physrisk import Drought, Inundation
-from physrisk import get_impact_distrib
+from physrisk.kernel import Drought, Inundation
+from physrisk.kernel import calculate_impacts, get_impact_distrib
 import physrisk.data.data_requests as dr
 from physrisk.data import ReturnPeriodEvDataResp
-from physrisk.models import InnundationModel
+from physrisk.models import InundationModel
 from physrisk.data.hazard.event_provider_wri import EventProviderWri
 import physrisk.data.raster_reader as rr
-from src import physrisk
+import time
+from affine import Affine
+from geotiff import GeoTiff
+from tifffile import TiffFile
+
+from physrisk.kernel.assets import PowerGeneratingAsset
 
 class EventResponseMock:
 
@@ -32,7 +38,7 @@ class TestPowerGeneratingAssetWri(unittest.TestCase):
 
         latitude, longitude = 45.268405, 19.885738
         assets = [Asset(latitude, longitude)]
-        model = InnundationModel(assets)
+        model = InundationModel(assets)
 
         vul, event = model.get_distributions(assets[0], responses_mock)
 
@@ -44,37 +50,27 @@ class TestPowerGeneratingAssetWri(unittest.TestCase):
     @unittest.skip("example, not test")
     def test_with_data_sourcing(self):
                 
-        cache_folder = r"C:/Users/joemo/Code/Repos/WRI-EBRD-Flood-Module/data_1"
+        cache_folder = r"<cache folder>"
 
         asset_list = pd.read_csv(os.path.join(cache_folder, "wri-all.csv"))
 
         types = asset_list["primary_fuel"].unique()
 
-        gas = asset_list.loc[asset_list['primary_fuel'] == 'Gas'] # Nuclear
+        filtered = asset_list.loc[asset_list['primary_fuel'] == 'Gas'] # Nuclear
 
-        gas = gas[0:10]
+        interest =  [3,   8,  13,  14,  22,  25,  27,  28,  33,  40,  51,  64,  65, 66,  71,  72,  80,  88,  92, 109]
 
-        longitudes = np.array(gas['longitude'])
-        latitudes = np.array(gas['latitude'])
-        generation = np.array(gas['estimated_generation_gwh'])
+        filtered = filtered[22:23]
 
-        assets = [Asset(lon, lat, generation = gen, primary_fuel = 'gas') for lon, lat, gen in zip(longitudes, latitudes, generation)]
+        longitudes = np.array(filtered['longitude'])
+        latitudes = np.array(filtered['latitude'])
+        generation = np.array(filtered['estimated_generation_gwh'])
 
-        model = InnundationModel()
+        assets = [PowerGeneratingAsset(lat, lon, generation = gen, primary_fuel = 'gas') for lon, lat, gen in zip(longitudes, latitudes, generation)]
 
-        event_requests_by_asset = [model.get_event_data_requests(asset) for asset in assets]
-        event_requests = [req for event_request_by_asset in event_requests_by_asset for req in event_request_by_asset]
-
-        # select hazard data source
-        events_innundation_provider = EventProviderWri('web', cache_folder = cache_folder).get_inundation_depth
-        event_provider = { Inundation : events_innundation_provider }
-
-        responses = dr.process_requests(event_requests, event_provider)
-        
-        for asset, requests in zip(assets, event_requests_by_asset):
-            vul, event = model.get_distributions(asset, [responses[req] for req in requests])
-            impact = get_impact_distrib(event, vul)
-            mean = impact.mean_impact()
+        detailed_results = calculate_impacts(assets, cache_folder = cache_folder)
+        detailed_results[assets[0]].impact.to_exceedance_curve()
+        means = np.array([detailed_results[asset].mean_impact for asset in assets])
 
         self.assertAlmostEqual(1, 1)
 

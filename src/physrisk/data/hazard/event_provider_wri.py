@@ -60,7 +60,7 @@ class EventProviderWri():
             type (str): "coast" or "river"
             year (int): 2030, 2050 or 2080
         """
-        ret_period = EventProviderWri.__return_periods if return_periods is None else return_periods
+        ret_period = np.array(EventProviderWri.__return_periods if return_periods is None else return_periods)
         return ret_period, self.__get_events(lats, lons, ret_period, scenario, sea_level, type, subsidence, model, year)
 
     #region inundation

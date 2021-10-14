@@ -21,6 +21,9 @@ class AssetEventDistrib:
         self._prob = np.array(prob)
 
     def intensity_bins(self):
+        return self._intensity_bins
+
+    def intensity_bins_explicit(self):
         return zip(self._intensity_bins[0:-1], self._intensity_bins[1:])
 
     @property

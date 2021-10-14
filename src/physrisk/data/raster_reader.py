@@ -1,6 +1,7 @@
 from itertools import chain
 import numpy as np
 import rasterio, rasterio.sample
+from rasterio.io import MemoryFile
 from rasterio.windows import from_bounds
 
 def dataset_read_bounded(dataset, longitudes, latitudes, window_half_width = 0.01):
@@ -32,6 +33,9 @@ def dataset_read_windows(dataset, longitudes, latitudes, window_half_width = 0.0
     return samples
 
 def file_read_bounded(path, longitudes, latitudes, window_half_width = 0.01):
+    #with MemoryFile() as memfile:
+    #    with memfile.open(driver = 'GTiff', count)
+
     with rasterio.open(path) as dataset:
         return dataset_read_bounded(dataset, longitudes, latitudes, window_half_width)
 

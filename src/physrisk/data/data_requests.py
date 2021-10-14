@@ -8,13 +8,13 @@ class EventDataRequest:
         self.latitude = latitude
         self.key = '_'.join(str(k) + ":" + str(v) for k, v in sorted(kwargs.items()))
         self.props = dict(**kwargs)
-        self.__dict__.update((k, v) for k, v in kwargs.items())
+        #self.__dict__.update((k, v) for k, v in kwargs.items())
         #allowed_keys = {'a', 'b', 'c'}
         #self.__dict__.update((k, v) for k, v in kwargs.items() if k in allowed_keys)
 
 class ReturnPeriodEvDataResp:
-    def __init__(self, returns_periods, intensities):
-        self.returns_periods = returns_periods
+    def __init__(self, return_periods, intensities):
+        self.return_periods = return_periods
         self.intensities = intensities
 
 def process_requests(requests : List[EventDataRequest], event_provider):

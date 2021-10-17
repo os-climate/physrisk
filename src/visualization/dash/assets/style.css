@@ -5,12 +5,13 @@ body {
 }
 
 .header {
-    background-color: #222222;
+    background-color: #303030;
     height: 288px;
     padding: 16px 0 0 0;
 }
 
-.header-emoji {
+.header-subtitle {
+    color: #707070;
     font-size: 48px;
     margin: 0 auto;
     text-align: center;
@@ -47,7 +48,7 @@ body {
 
 .menu {
     height: 112px;
-    width: 912px;
+    width: 1012px;
     display: flex;
     justify-content: space-evenly;
     padding-top: 24px;
@@ -72,6 +73,5 @@ body {
 .menu-title {
     margin-bottom: 6px;
     font-weight: bold;
-    color: #079A82;
 }
 

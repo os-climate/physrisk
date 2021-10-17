@@ -18,7 +18,7 @@ def __get_default_models():
     """Get default exposure/vulnerability models for different asset types."""
     return { PowerGeneratingAsset : [ InundationModel ] }
 
-def calculate_impacts(assets, cache_folder = None):
+def calculate_impacts(assets, cache_folder = None, model_properties = None):
     
     # the types of model that apply to asset of a particular type
     model_mapping = __get_default_models()
@@ -37,7 +37,7 @@ def calculate_impacts(assets, cache_folder = None):
     for model_type, assets in model_assets.items():
         logging.info("Applying model {0} to {1} assets of type {2}".format(model_type.__name__, len(assets), type(assets[0]).__name__))
         
-        model = model_type()
+        model = model_type() if model_properties is None else model_type(**model_properties)
 
         event_requests_by_asset = [model.get_event_data_requests(asset) for asset in assets]
 

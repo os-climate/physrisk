@@ -33,7 +33,7 @@ class InundationModel(Model):
 
         histo, future = event_data_responses
         
-        protection_return_period = 10.0 # 250.0 
+        protection_return_period = 250.0 
         curve_histo = ExceedanceCurve(1.0 / histo.return_periods, histo.intensities)
         protection_depth = curve_histo.get_value(1.0 / protection_return_period)
         

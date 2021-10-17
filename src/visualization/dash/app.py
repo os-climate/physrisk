@@ -119,7 +119,7 @@ def get_fig_gos_for_asset(asset, detailed_results):
     go1 = go.Bar(x = 0.5*(impact_bins[0:-1] + impact_bins[1:]), y = impact_bin_probs, width = impact_bins[1:] - impact_bins[:-1])
 
     exc = res.impact.to_exceedance_curve()
-    go2 = go.Scatter(x=exc.probs, y=exc.values * asset.generation * 100 * 1000)
+    go2 = go.Scatter(x=exc.probs, y=exc.values * asset.generation * 100 * 1000 / 365)
 
     return go1, go2
 

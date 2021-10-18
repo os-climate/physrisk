@@ -20,22 +20,26 @@ import pandas as pd
 import numpy as np
 import os, sys
 from collections import OrderedDict
+
 sys.path.append("../..")
-sys.path.append(r"C:/Users/joemo/Code/Repos/physrisk/src")
 
 from dash.dependencies import Output, Input
 import physrisk
+from physrisk.kernel.calculation import DetailedResultItem
 from physrisk.kernel import PowerGeneratingAsset
 from physrisk.kernel import calculate_impacts
 
-cache_folder = r"C:/Users/joemo/Code/Repos/WRI-EBRD-Flood-Module/data_1"
+cache_folder = r""
 asset_list = pd.read_csv(os.path.join(cache_folder, "wri-all.csv"))
 
 types = asset_list["primary_fuel"].unique()
 
 asset_filt = asset_list.loc[asset_list['primary_fuel'] == 'Gas'] # Nuclear
+#asset_filt = asset_filt[0:2]
 
-defaultIndex = np.flatnonzero(asset_filt['gppd_idnr'] == 'GBR1000313')[0]  #WRI1023786 #WRI1023786
+asset_filt = asset_filt.append({'gppd_idnr' : 'test1', 'name' : 'Proposed Loc 1', 'primary_fuel' : 'Gas', 'longitude' : 36.596, 'latitude' : 2.878, 'estimated_generation_gwh' : 100 }, ignore_index=True)
+
+defaultIndex = np.flatnonzero(asset_filt['gppd_idnr'] == 'test1')[0] #GBR1000313 #WRI1023786 #WRI1023786
 
 ids = np.array(asset_filt['gppd_idnr'])
 names = np.array(asset_filt['name'])
@@ -79,10 +83,9 @@ def create_map_fig(assets):
 
     return map_fig
 
-def get_fig_for_asset(asset):
+def get_fig_for_asset(asset, detailed_results):
         
-    fig = make_subplots(rows=1, cols=2)
-    detailed_results = calculate_impacts([asset], cache_folder = cache_folder)  
+    fig = make_subplots(rows=1, cols=2) 
     go1, go2 = get_fig_gos_for_asset(asset, detailed_results)
 
     fig.add_trace(
@@ -98,8 +101,8 @@ def get_fig_for_asset(asset):
     fig.update_traces(marker_color = px.colors.qualitative.T10[0]) #'rgb(158,202,225)')
     fig.update_xaxes(title = 'Impact (generation loss in days per year)', row=1, col=1)
     fig.update_yaxes(title = 'Probability', tickformat = ',.2%', row=1, col=1),
-    fig.update_xaxes(title = 'Exceedance probability', row=1, col=2)
-    fig.update_xaxes(autorange="reversed", row=1, col=2)
+    fig.update_xaxes(title = 'Exceedance probability', type="log", row=1, col=2)
+    fig.update_xaxes(autorange="reversed", row=1, col=2) 
     fig.update_yaxes(title = 'Loss (EUR)', row=1, col=2)
     fig.update_layout(showlegend = False, font_family='Lato, sans-serif',
         title='Average annual loss of {:.1f} generation days'.format(detailed_results[asset].impact.mean_impact()),
@@ -120,6 +123,49 @@ def get_fig_gos_for_asset(asset, detailed_results):
 
     exc = res.impact.to_exceedance_curve()
     go2 = go.Scatter(x=exc.probs, y=exc.values * asset.generation * 100 * 1000 / 365)
+
+    return go1, go2
+
+def get_fig_for_model(asset, detailed_results):
+        
+    fig = make_subplots(rows=1, cols=2)
+    go1, go2 = get_fig_gos_for_model(asset, detailed_results)
+
+    fig.add_trace(
+        go1,
+        row=1, col=1
+    )
+
+    fig.add_trace(
+        go2,
+        row=1, col=2
+    )
+    
+    fig.update_traces(marker_color = px.colors.qualitative.T10[0]) #'rgb(158,202,225)')
+    fig.update_xaxes(title = 'Inundation intensity (m)', row=1, col=1)
+    fig.update_yaxes(title = 'Probability', tickformat = ',.2%', row=1, col=1),
+    fig.update_xaxes(title = 'Exceedance probability', type="log", row=1, col=2)
+    fig.update_xaxes(autorange="reversed", row=1, col=2)
+    fig.update_yaxes(title = 'Inundation intensity (m)', row=1, col=2)
+    fig.update_layout(showlegend = False, font_family='Lato, sans-serif',
+        title='Inundation intensity',
+        title_font_size = 24, margin=dict(l=100, r=100, t=100, b=100))
+
+    return fig
+
+def get_fig_gos_for_model(asset, detailed_results):
+  
+    res : DetailedResultItem = detailed_results[asset]
+
+    color_discrete_sequence = px.colors.qualitative.Pastel1
+
+    intensity_bins = res.event.intensity_bins
+    intensity_bin_probs = res.event.prob
+
+    go1 = go.Bar(x = 0.5*(intensity_bins[0:-1] + intensity_bins[1:]), y = intensity_bin_probs, width = intensity_bins[1:] - intensity_bins[:-1])
+
+    exc = res.event.exceedance # to_exceedance_curve()
+    go2 = go.Scatter(x=exc.probs, y=exc.values)
 
     return go1, go2
 
@@ -273,6 +319,13 @@ app.layout = html.Div(
                         config={"displayModeBar": False}
                     ), 
                     className="card",   
+                ),
+                html.Div(
+                    children=dcc.Graph(
+                        id="intensity-chart",
+                        config={"displayModeBar": False}
+                    ), 
+                    className="card",   
                 )],
             className="wrapper",
         ),
@@ -280,7 +333,8 @@ app.layout = html.Div(
 )
 
 @app.callback(
-    [Output('asset-header', 'children'), Output('asset-data-table', 'data'), Output('exceedance-chart', 'figure')],
+    [Output('asset-header', 'children'), Output('asset-data-table', 'data'), 
+        Output('exceedance-chart', 'figure'), Output('intensity-chart', 'figure')],
     [Input('map-chart', 'clickData')])
 def display_click_data(clickData):
     #columns=[{"name": i, "id": i} for i in df.columns],
@@ -288,10 +342,15 @@ def display_click_data(clickData):
 
     index = defaultIndex if clickData is None else clickData['points'][0]['pointIndex']
     data = asset_filt.iloc[index:index + 1].to_dict('records')
-
-    fig = get_fig_for_asset(all_assets[index])
-
-    return names[index], data, fig #json.dumps(clickData, indent=2)
+    asset = all_assets[index]
+    detailed_results = calculate_impacts([asset], cache_folder = cache_folder) 
+    fig1 = get_fig_for_asset(asset, detailed_results)
+    fig2 = get_fig_for_model(asset, detailed_results)
+    
+    fig_plot = get_fig_for_model(asset, detailed_results)
+    fig_plot.update_layout(width=900)
+    
+    return names[index], data, fig1, fig2 #json.dumps(clickData, indent=2)
 
 """
 @app.callback(

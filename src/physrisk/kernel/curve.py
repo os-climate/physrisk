@@ -1,4 +1,6 @@
 import numpy as np
+from physrisk.kernel import exceedance_curve
+from physrisk.kernel.exceedance_curve import ExceedanceCurve
     
 def add_x_value_to_curve(x, curve_x, curve_y):
     """Add an x value to a curve, interpolated from the existing curve. curve_x and curve_y are the curve x and y values.
@@ -28,3 +30,13 @@ def add_x_value_to_curve(x, curve_x, curve_y):
     
     return curve_x, curve_y
 
+def to_exceedance_curve(bin_edges, probs):
+    """An exceedance curve gives the probability that the random variable is greater than the value,
+        a type of cumulative probability.   
+    """
+    nz = np.asarray(probs > 0).nonzero()
+    fnz = nz[0][0] if len(nz[0]) > 0 else 0
+    nz_values = bin_edges[fnz:]
+    nz_probs = probs[fnz:]
+    cum_prob = np.insert(np.cumsum(nz_probs[::-1]), 0, 0.0)[::-1]
+    return ExceedanceCurve(cum_prob, nz_values)

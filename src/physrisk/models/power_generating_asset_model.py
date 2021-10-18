@@ -50,7 +50,7 @@ class InundationModel(Model):
         probs_protected = np.where(depth_bins[1:] <= protection_depth, 0.0, 1.0)
         n_bins = len(probs)
         vul = VulnerabilityDistrib(type(Inundation), depth_bins, impact_bins, np.diag(probs_protected)) 
-        event = AssetEventDistrib(type(Inundation), depth_bins, probs) 
+        event = AssetEventDistrib(type(Inundation), depth_bins, probs, curve_future) 
 
         return vul, event
 

@@ -202,7 +202,7 @@ A second assumption is that the probabilities of such events may not be readily 
 \subsubsection{Mathematical description of asset impact model}
 \label{Sec:MathematicalDescriptionOfAssetImpactModel}
 
-$e^{(a)}_i$ is the probability that an event of type $a$ occurs with intensity $s$ in the range $s^{(a, \text{lower})}_i < s \le s^{(a, \text{upper})}_i$.
+There are $n$ intensity bins where $i \in \{0, \dots, n \}$. $e^{(a)}_i$ is the probability that an event of type $a$ occurs with intensity $s$ in the range $s^{(a, \text{lower})}_i < s \le s^{(a, \text{upper})}_i$.
 
 $v^{(a, b)}_{ij}$ is the conditional probability that given the occurrence of an event of type $a$ with intensity $s$ in the range $s^{(a, \text{lower})}_i < s \le s^{(a, \text{upper})}_i$ there is an impact (or response\footnote{$r$ for `response' is used to denote impact as $i$ is reserved for indexing}), $r$ in the range $r^{(a,b,\text{lower})}_j < r \le r^{(a,b,\text{upper})}_j$. The impact is of type $b$. 
 
@@ -220,6 +220,34 @@ From the definition of conditional probability:
 If only the mean impact curve is available, then it is possible to create the matrix such that $v_{ij} \in \{0, 1\}$. The matrix then provides a simple mapping from intensity to impact; if the number of intensity and response bins is equal then matrix $\mathbf{v}$ is simply the identity matrix. However, note that these simplifications exclude from the model any uncertainty in the parameters\footnote{A better approach would be to estimate the standard deviation of the distributions from which the mean impact curve was calculated and to incorporate this.}.
 
 Note that $y^{(a,b)}_j$ is identical to the {\it effective damage} distribution of Oasis and can be described as the `effective impact'. It is a marginal distribution and does not capture any correlation between events nor impacts.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[ht]
+	
+	\begin{framed}
+		
+		\includegraphics[width=\textwidth]{plots/fig_intensity.pdf}
+		
+	\end{framed}
+	
+	\footnotesize
+	
+	\renewcommand{\arraystretch}{1.01}
+	
+	\vspace{-3ex}
+	
+	{\justify
+		The exceedance curve of event intensity at the asset location is shown on the right. The event intensity in this example is inundation depth in metres. Exceedance is a cumulative probability. As an example, the probability of an inundation event occurring within a single year of intensity 0.91m or greater is 0.002. An exceedance probability is the reciprocal of the return period; it could equivalently be said that the 0.91m intensity event occurs with a return period of 500 years.
+		The exceedance curve can be converted to a histogram of probabilities. Here the $n$ bins have ranges $[s^{(a, \text{lower})}_i, s^{(a, \text{upper})}_i]$. For example, the first bin has range [0.28m, 0.38m]. The second bin has range [0.38m,	0.51m]; that is $s^{(a, \text{lower})}_2 = 0.38$m and $s^{(a, \text{upper})}_2 = 0.51$m. $e^{(a)}_2 = 0.06$.	
+		\par}
+	
+	\vspace{-0.5ex}
+	
+	\caption{\small Event intensity exceedance curve (right) and corresponding histogram (left).}
+	\label{Fig:intensity}
+	
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsubsection{Importance of secondary uncertainty}
 The importance of the vulnerability matrix as opposed to mean response curve or vector is emphasized above; see also \cite{Taylor:2015} for a discussion of this point. This is true not only in cases where the underlying distribution of an impact, for example a fractional damage, can be inferred from empirical data; see for example Figure~\ref{Fig:vulnerability_matrix}). This is arguably more important where data is limited in order that model risk is not under-estimated in such cases. 

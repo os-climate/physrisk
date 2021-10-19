@@ -3,8 +3,6 @@ Use dash to produce a visualization for an asset-level drill-down
 Dash app then migrated to React / Flask
 """
 
-
-
 from datetime import datetime
 import dash, dash_table
 import dash_core_components as dcc
@@ -29,17 +27,16 @@ from physrisk.kernel.calculation import DetailedResultItem
 from physrisk.kernel import PowerGeneratingAsset
 from physrisk.kernel import calculate_impacts
 
-cache_folder = r""
+cache_folder = r"<cache folder>"
 asset_list = pd.read_csv(os.path.join(cache_folder, "wri-all.csv"))
 
 types = asset_list["primary_fuel"].unique()
 
 asset_filt = asset_list.loc[asset_list['primary_fuel'] == 'Gas'] # Nuclear
-#asset_filt = asset_filt[0:2]
 
-asset_filt = asset_filt.append({'gppd_idnr' : 'test1', 'name' : 'Proposed Loc 1', 'primary_fuel' : 'Gas', 'longitude' : 36.596, 'latitude' : 2.878, 'estimated_generation_gwh' : 100 }, ignore_index=True)
+asset_filt = asset_filt.append({'gppd_idnr' : 'WRI12541', 'name' : 'Turkana 1', 'primary_fuel' : 'Gas', 'longitude' : 36.596, 'latitude' : 2.878, 'estimated_generation_gwh' : 394.4 }, ignore_index=True)
 
-defaultIndex = np.flatnonzero(asset_filt['gppd_idnr'] == 'test1')[0] #GBR1000313 #WRI1023786 #WRI1023786
+defaultIndex = np.flatnonzero(asset_filt['gppd_idnr'] == 'WRI12541')[0] #GBR1000313 #WRI1023786 #WRI1023786 #WRI1006025
 
 ids = np.array(asset_filt['gppd_idnr'])
 names = np.array(asset_filt['name'])
@@ -99,12 +96,12 @@ def get_fig_for_asset(asset, detailed_results):
     )
     
     fig.update_traces(marker_color = px.colors.qualitative.T10[0]) #'rgb(158,202,225)')
-    fig.update_xaxes(title = 'Impact (generation loss in days per year)', row=1, col=1)
-    fig.update_yaxes(title = 'Probability', tickformat = ',.2%', row=1, col=1),
-    fig.update_xaxes(title = 'Exceedance probability', type="log", row=1, col=2)
-    fig.update_xaxes(autorange="reversed", row=1, col=2) 
-    fig.update_yaxes(title = 'Loss (EUR)', row=1, col=2)
-    fig.update_layout(showlegend = False, font_family='Lato, sans-serif',
+    fig.update_xaxes(title = 'Impact (generation loss in days per year)', title_font = {"size": 20}, row=1, col=1)
+    fig.update_yaxes(title = 'Probability', title_font = {"size": 20}, ticksuffix = '%', row=1, col=1),
+    fig.update_xaxes(title = 'Exceedance probability', title_font = {"size": 20}, type="log", row=1, col=2)
+    fig.update_xaxes(autorange="reversed", ticksuffix = '%', row=1, col=2) 
+    fig.update_yaxes(title = 'Loss (EUR)', title_font = {"size": 20}, row=1, col=2)
+    fig.update_layout(showlegend = False, font_family='Lato, sans-serif', font_size = 16,
         title='Average annual loss of {:.1f} generation days'.format(detailed_results[asset].impact.mean_impact()),
         title_font_size = 24, margin=dict(l=100, r=100, t=100, b=100))
 
@@ -119,10 +116,10 @@ def get_fig_gos_for_asset(asset, detailed_results):
     impact_bins = res.impact.impact_bins
     impact_bin_probs = res.impact.prob
 
-    go1 = go.Bar(x = 0.5*(impact_bins[0:-1] + impact_bins[1:]), y = impact_bin_probs, width = impact_bins[1:] - impact_bins[:-1])
+    go1 = go.Bar(x = 0.5*(impact_bins[0:-1] + impact_bins[1:]), y = impact_bin_probs * 100, width = impact_bins[1:] - impact_bins[:-1])
 
     exc = res.impact.to_exceedance_curve()
-    go2 = go.Scatter(x=exc.probs, y=exc.values * asset.generation * 100 * 1000 / 365)
+    go2 = go.Scatter(x=exc.probs * 100, y=exc.values * asset.generation * 100 * 1000 / 365)
 
     return go1, go2
 
@@ -142,12 +139,12 @@ def get_fig_for_model(asset, detailed_results):
     )
     
     fig.update_traces(marker_color = px.colors.qualitative.T10[0]) #'rgb(158,202,225)')
-    fig.update_xaxes(title = 'Inundation intensity (m)', row=1, col=1)
-    fig.update_yaxes(title = 'Probability', tickformat = ',.2%', row=1, col=1),
-    fig.update_xaxes(title = 'Exceedance probability', type="log", row=1, col=2)
-    fig.update_xaxes(autorange="reversed", row=1, col=2)
-    fig.update_yaxes(title = 'Inundation intensity (m)', row=1, col=2)
-    fig.update_layout(showlegend = False, font_family='Lato, sans-serif',
+    fig.update_xaxes(title = 'Inundation intensity (m)', title_font = {"size": 20}, row=1, col=1)
+    fig.update_yaxes(title = 'Probability', title_font = {"size": 20}, ticksuffix = "%", row=1, col=1),
+    fig.update_xaxes(title = 'Exceedance probability', title_font = {"size": 20}, type="log", row=1, col=2)
+    fig.update_xaxes(autorange="reversed", row=1, col=2, ticksuffix = "%")
+    fig.update_yaxes(title = 'Inundation intensity (m)', title_font = {"size": 20}, row=1, col=2) 
+    fig.update_layout(showlegend = False, font_family='Lato, sans-serif', font_size = 16,
         title='Inundation intensity',
         title_font_size = 24, margin=dict(l=100, r=100, t=100, b=100))
 
@@ -162,18 +159,48 @@ def get_fig_gos_for_model(asset, detailed_results):
     intensity_bins = res.event.intensity_bins
     intensity_bin_probs = res.event.prob
 
-    go1 = go.Bar(x = 0.5*(intensity_bins[0:-1] + intensity_bins[1:]), y = intensity_bin_probs, width = intensity_bins[1:] - intensity_bins[:-1])
+    go1 = go.Bar(x = 0.5*(intensity_bins[0:-1] + intensity_bins[1:]), y = intensity_bin_probs * 100, width = intensity_bins[1:] - intensity_bins[:-1])
 
     exc = res.event.exceedance # to_exceedance_curve()
-    go2 = go.Scatter(x=exc.probs, y=exc.values)
+    go2 = go.Scatter(x=exc.probs * 100, y=exc.values)
 
     return go1, go2
+
+def get_fig_for_vulnerability(asset, detailed_results):
+        
+    fig = make_subplots(rows=1, cols=1)
+    go1 = get_fig_gos_for_vulnerability(asset, detailed_results)
+
+    fig.add_trace(
+        go1,
+        row=1, col=1
+    )
+    
+    fig.update_xaxes(title = 'Inundation intensity (m)', title_font = {"size": 20}, row=1, col=1)
+    fig.update_yaxes(title = 'Impact (generation loss)', title_font = {"size": 20}, row=1, col=1),
+    fig.update_layout(showlegend = False, font_family='Lato, sans-serif', font_size = 16,
+        title='Vulnerability distribution',
+        title_font_size = 24, margin=dict(l=100, r=100, t=100, b=100))
+
+    return fig
+
+def get_fig_gos_for_vulnerability(asset, detailed_results):
+  
+    res : DetailedResultItem = detailed_results[asset]
+
+    go1=go.Heatmap(
+                   z=res.vulnerability.prob_matrix,
+                   x=res.vulnerability.intensity_bins,
+                   y=res.vulnerability.impact_bins,
+                   colorscale = 'Reds',
+                   hoverongaps = False)
+    return go1
 
 
 asset_categories = np.array(["Power generating assets"])
 hazards = np.array(["Inundation"])
 date_start = datetime(2080, 1, 1)
-date_end = datetime(2080, 1, 1)
+date_end = datetime(2080, 12, 31)
 
 map_fig = create_map_fig(all_assets)
 
@@ -206,7 +233,7 @@ app.layout = html.Div(
             style = { 'background-image' :  'url("/assets/banner3.jpg', 
                 'background-position' : 'center',
                 'background-repeat' : 'no-repeat',
-                'background-size' : '100%' },
+                'background-size' : 2600 }, #'100%#
             className="header",
         ),
         html.Div(
@@ -265,10 +292,10 @@ app.layout = html.Div(
                             id="scenario-filter",
                             options=[
                                 {"label": scenario, "value": scenario}
-                                for scenario in ["base", "4.5", "8.5"]
+                                for scenario in ["Histo", "RCP4.5", "RCP8.5"]
                             ],
                             multi=True,
-                            value="4.5",
+                            value=["Histo", "RCP8.5"],
                             clearable=False,
                             searchable=False,
                             className="dropdown",
@@ -325,7 +352,14 @@ app.layout = html.Div(
                         id="intensity-chart",
                         config={"displayModeBar": False}
                     ), 
-                    className="card",   
+                    className="card",
+                ),
+                html.Div(
+                    children=dcc.Graph(
+                        id="vulnerability-chart",
+                        config={"displayModeBar": False}
+                    ), 
+                    className="card",
                 )],
             className="wrapper",
         ),
@@ -334,11 +368,9 @@ app.layout = html.Div(
 
 @app.callback(
     [Output('asset-header', 'children'), Output('asset-data-table', 'data'), 
-        Output('exceedance-chart', 'figure'), Output('intensity-chart', 'figure')],
+        Output('exceedance-chart', 'figure'), Output('intensity-chart', 'figure'), Output('vulnerability-chart', 'figure')],
     [Input('map-chart', 'clickData')])
 def display_click_data(clickData):
-    #columns=[{"name": i, "id": i} for i in df.columns],
-                        #data=df.to_dict('records'),
 
     index = defaultIndex if clickData is None else clickData['points'][0]['pointIndex']
     data = asset_filt.iloc[index:index + 1].to_dict('records')
@@ -346,29 +378,12 @@ def display_click_data(clickData):
     detailed_results = calculate_impacts([asset], cache_folder = cache_folder) 
     fig1 = get_fig_for_asset(asset, detailed_results)
     fig2 = get_fig_for_model(asset, detailed_results)
+    fig3 = get_fig_for_vulnerability(asset, detailed_results)
     
     fig_plot = get_fig_for_model(asset, detailed_results)
     fig_plot.update_layout(width=900)
-    
-    return names[index], data, fig1, fig2 #json.dumps(clickData, indent=2)
-
-"""
-@app.callback(
-    Output("exceedance-chart", "figure")
-    [
-        Input("asset-filter", "value"),
-        Input("hazard-filter", "value"),
-        Input("date-range", "start_date"),
-        Input("date-range", "end_date"),
-    ],
-)
-def update_charts(asset, hazard, start_date, end_date):
-    from plotly.subplots import make_subplots
-    
-    fig = get_fig_for_asset(all_assets[index])
-
-    return fig
-"""
+    fig_plot.write_image("C:/Users/joemo/Code/Repos/physrisk/docs/methodology/plots/fig_intensity.pdf")
+    return names[index], data, fig1, fig2, fig3 #json.dumps(clickData, indent=2)
 
 if __name__ == "__main__":
     app.run_server(debug=True)

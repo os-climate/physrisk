@@ -47,12 +47,13 @@ body {
 }
 
 .menu {
-    height: 112px;
+    height: 102px;
     width: 1012px;
     display: flex;
     justify-content: space-evenly;
     padding-top: 24px;
-    margin: -80px auto 0 auto;
+    padding-bottom: 4px;
+    margin: -60px auto 0 auto;
     background-color: #FFFFFF;
     box-shadow: 0 4px 6px 0 rgba(0, 0, 0, 0.18);
 }
@@ -74,4 +75,5 @@ body {
     margin-bottom: 6px;
     font-weight: bold;
 }
+
 

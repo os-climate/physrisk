@@ -90,7 +90,9 @@
 \title{Physical Climate Risk Methodology}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\author{Joe Moorhouse\thanks{\textit{E-mail}: Joe.Moorhouse@gmail.com.
+\author{Joe Moorhouse\thanks{\textit{E-mail}: Joe.Moorhouse@gmail.com.}
+		\and
+		Florian Gallo\thanks{
     	\smallskip	    
 	    \newline% \indent
 	The views expressed in this paper are those of the authors and do not necessarily reflect the views and policies of their respective employers.}
@@ -202,24 +204,42 @@ A second assumption is that the probabilities of such events may not be readily 
 \subsubsection{Mathematical description of asset impact model}
 \label{Sec:MathematicalDescriptionOfAssetImpactModel}
 
-There are $n$ intensity bins where $i \in \{0, \dots, n \}$. $e^{(a)}_i$ is the probability that an event of type $a$ occurs with intensity $s$ in the range $s^{(a, \text{lower})}_i < s \le s^{(a, \text{upper})}_i$.
+There are $n$ intensity bins with index $i$ such that $i \in \{1, \dots, n \}$. We define $e^{(a)}_i$ to be the probability that a hazard event of type $a$ occurs with an intensity that falls in bin $i$. If $S^{(a)}$, a random variable, is the intensity of event $a$ then: 
 
-$v^{(a, b)}_{ij}$ is the conditional probability that given the occurrence of an event of type $a$ with intensity $s$ in the range $s^{(a, \text{lower})}_i < s \le s^{(a, \text{upper})}_i$ there is an impact (or response\footnote{$r$ for `response' is used to denote impact as $i$ is reserved for indexing}), $r$ in the range $r^{(a,b,\text{lower})}_j < r \le r^{(a,b,\text{upper})}_j$. The impact is of type $b$. 
+\begin{equation}
+	\label{Eq:event}  
+	e^{(a)}_i = P \left( s^{(a, \text{lower})}_i < S^{(a)} \le s^{(a, \text{upper})}_i \right)
+\end{equation}  
+
+That is, $s^{(a, \text{lower})}_i$ and $s^{(a, \text{upper})}_i$ define the range of bin $i$.
+
+We define $v^{(a, b)}_{ij}$ to be the conditional probability that \emph{given} the occurrence of an event of type $a$ with intensity $S^{(a)}$ there is an impact (typically a damage or disruption\footnote{$d$ for `damage/disruption' is used to denote impact as $i$ is reserved for indexing}), $D^{(b)}$ in the range $d^{(a,b,\text{lower})}_j < D \le d^{(a,b,\text{upper})}_j$. The impact is of type $b$. 
+
+
+\begin{equation}
+	\label{Eq:vulnerability}  
+	v^{(a, b)}_{ij} = P \left( d^{(a,b,\text{lower})}_j < D^{(b)} \le d^{(a,b,\text{upper})}_j | s^{(a, \text{lower})}_i < S^{(a)} \le s^{(a, \text{upper})}_i \right)
+\end{equation} 
 
 The definition of an event type $a$ includes a time interval e.g. $a$ is the occurrence of an inundation in the locale of the asset {\it within a one year period}. $b$ is, for example, the fractional damage to the asset.
 
-$y^{(a,b)}_j$ is the marginal probability of impact $r$ in the range $r^{(a,b, \text{lower})}_j < r \le r^{(a,b,\text{upper})}_j$ occurring as a result of an event of type $a$. 
+We define $d^{(a,b)}_j$ to be the marginal probability of impact $D^{(b)}$ in the range $d^{(a,b, \text{lower})}_j < D^{(b)} \le d^{(a,b,\text{upper})}_j$ occurring as a result of an event of type $a$. 
+
+\begin{equation}
+	\label{Eq:impact}  
+	d^{(a,b)}_j = P \left( d^{(a,b,\text{lower})}_j < D^{(b)} \le d^{(a,b,\text{upper})}_j \right)
+\end{equation} 
 
 From the definition of conditional probability:
 
 \begin{equation}
-	\label{Eq:vulnerability}
-	y^{(a,b)}_j = \sum_{i} v^{(a,b)}_{ij} e^{(a)}_i
+	\label{Eq:model}
+	d^{(a,b)}_j = \sum_{i} v^{(a,b)}_{ij} e^{(a)}_i
 \end{equation}
 
 If only the mean impact curve is available, then it is possible to create the matrix such that $v_{ij} \in \{0, 1\}$. The matrix then provides a simple mapping from intensity to impact; if the number of intensity and response bins is equal then matrix $\mathbf{v}$ is simply the identity matrix. However, note that these simplifications exclude from the model any uncertainty in the parameters\footnote{A better approach would be to estimate the standard deviation of the distributions from which the mean impact curve was calculated and to incorporate this.}.
 
-Note that $y^{(a,b)}_j$ is identical to the {\it effective damage} distribution of Oasis and can be described as the `effective impact'. It is a marginal distribution and does not capture any correlation between events nor impacts.
+Note that $d^{(a,b)}_j$ is identical to the {\it effective damage} distribution of Oasis and can be described as the `effective impact'. It is a marginal distribution and does not capture any correlation between events nor impacts.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure}[ht]
@@ -250,14 +270,24 @@ Note that $y^{(a,b)}_j$ is identical to the {\it effective damage} distribution 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsubsection{Importance of secondary uncertainty}
-The importance of the vulnerability matrix as opposed to mean response curve or vector is emphasized above; see also \cite{Taylor:2015} for a discussion of this point. This is true not only in cases where the underlying distribution of an impact, for example a fractional damage, can be inferred from empirical data; see for example Figure~\ref{Fig:vulnerability_matrix}). This is arguably more important where data is limited in order that model risk is not under-estimated in such cases. 
+The importance of the vulnerability matrix as opposed to mean damage curve (or vector) is emphasized above; see also \cite{Taylor:2015} for a discussion of this point. This is true not only in cases where the underlying distribution of an impact, for example a fractional damage, can be inferred from empirical data; see for example Figure~\ref{Fig:vulnerability_matrix}). This is arguably \emph{more} important where data is limited in order that approximate data can be incorporated into the model in a way that the impact of the approximations can be well-understood. 
 
-In many case response data is provided by:
+Vulnerability data may be provided by
 \begin{itemize}
-	\item Corporate disclosures
-	\item Modelling of asset vulnerability based on asset characteristics and historical data
+	\item Modelling of asset vulnerability based on asset characteristics and/or historical data
+	\item 'Calibrated' vulnerabilities, for example based on realized insurance claims
 \end{itemize}
-but in the absence of such data, physical risk models may need to take a `bulk assessment' approach for certain assets with rough estimates of the response of the asset to different events. The presence of such estimates in an overall model may, or may not, materially impact the accuracy of the results, but it is important that this impact can be assessed. By quantifying the uncertainty in the response estimates, a distribution of financial losses is ultimately obtained from which the model user can derive the impact of the approximation.   
+Physical risk models may make use of so-called `bulk assessment' approaches for certain assets, where precise vulnerability information is not available and less precise estimates of the damage/disruption of the asset are used. The presence of such estimates in an overall model may, or may not, materially impact the accuracy of the results, but it is important that this impact can be assessed. By quantifying the uncertainty in the response estimates, a distribution of financial losses is ultimately obtained from which the model user can derive the impact of the approximation.
+
+\paragraph{Handling epistemic uncertainty}
+In forms of bulk-assessment, a common case is that insufficient information exists with which to characterize an asset. This is an example of an epistemic, as opposed to aleatory, uncertainty. The epistemic uncertainty, and its impact, can be included in the model in a relatively straight-forward way.
+
+We extend Equation~{\ref{Eq:vulnerability}, by including a new discrete random variable, $A$, which is the type of the asset.
+\begin{equation}
+	\label{Eq:vulnerability}  
+	v^{(a, b)}_{ij} = P \left( d^{(a,b,\text{lower})}_j < D^{(b)} \le d^{(a,b,\text{upper})}_j | s^{(a, \text{lower})}_i < S^{(a)} \le s^{(a, \text{upper})}_i, A = a_1 \right)
+\end{equation} 
+
 
 \subsubsection{Interpolation of probability distributions}
 Cases arise where the event distributions and vulnerability distributions are not defined for a common set of intensity bins and interpolation is therefore required. The question then arises of how probability density is distributed within bins. The choice is model-specific and customizable, but here two common cases are described.
@@ -300,14 +330,17 @@ Hazard data sets might also contain instances of `point-probabilities', for exam
 \end{figure}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Effective impact distribution}
-$y^{(a,b)}_j$ from Equation~\ref{Eq:vulnerability} is the probability distribution of impacts of type $b$ for an asset as a result of events of type $a$. In the catastrophe models of Oasis, impacts are sampled from this distribution \cite{OasisFinancialModule}, for example samples of fractional damage, which form the basis of a Monte Carlo calculation. This is done in order to apply insurance policy terms and conditions which can be complex and non-linear.
 
-The Monte Carlo sampling is done by constructing a cumulative probability density function, $Y_R(r)$, of impact $R$ from the effective impact distribution ($Y_R(r) = P(R \le r$)). Random numbers, $u_i$ are then sampled from a standard uniform distribution ($u_i \in [0, 1]$), from which impacts are calculated by:
+
+
+\subsection{Effective impact distribution}
+$d^{(a,b)}_j$ from Equation~\ref{Eq:vulnerability} is the probability distribution of impacts of type $b$ for an asset as a result of events of type $a$. In the catastrophe models of Oasis, impacts are sampled from this distribution \cite{OasisFinancialModule}, for example samples of fractional damage, which form the basis of a Monte Carlo calculation. This is done in order to apply insurance policy terms and conditions which can be complex and non-linear.
+
+The Monte Carlo sampling is done by constructing a cumulative probability density function, $Y_D(d)$, of impact $D$ from the effective impact distribution ($Y_D(d) = P(D \le d$)). Random numbers, $u_i$ are then sampled from a standard uniform distribution ($u_i \in [0, 1]$), from which impacts are calculated by:
 
 \begin{equation}
 	\label{Eq:sampling}
-	r_i = Y^{-1}_R(u_i)
+	d_i = Y^{-1}_D(u_i)
 \end{equation}   
 
 In this Monte Carlo approach, samples of fractional damage can be drawn from distributions so as to be correlated or uncorrelated. For example, if the impact distributions represent damage to buildings as a result of inundation then it may be appropriate to model damage to two buildings in close proximity as being highly correlated\footnote{Catastrophe model practitioners might point out that presence or absence of kerb stones and availability of sand bags are highly significant so any such assumption is prone to error}. If the buildings are far apart (say in different countries) then the correlation is likely to be close to zero.
@@ -360,9 +393,14 @@ Use of such credit models, may provide a mechanism for incorporation of physical
 \begin{enumerate}
 	\item Spatial correlation of events: to what extent possible without MC calculation; to what extent is provided / can be inferred from data sets
 	\item Correlation of vulnerability
+	\item Data availability
 \end{enumerate}
 
 
+\subsubsection{Data availability}
+Issues related to data availability and relevance are still one of the main limitations of physical risks assessments. If past and future climate data are becoming increasingly available through open-sources portals and tools (e.g. Copernicus, WRI Aqueduct), their availability and their reliability varies widely according to the climate hazard of interest, the region and the modelling process. If the availability of climate data is improving, open-source, asset-level information (required to estimate the exposure of an asset to a give climate hazard) is still seldom available. Such data include the location of assets, their link with owning companies and more generally any damages records that could be used to quantify the response of an asset (or of a type of asset) to a given climate event. Newly-published datasets have been recently released for some sectors but their exhaustiveness remains to be verified. Moreover, many industrial sectors are not covered, thus limiting the application of physical risks methodologies to a diversified portfolio.
+Finally, building and applying the correlation between hazard and damage (or impact), as described in section 2.2, requires common distribution between historical events, historical damages and future climate events. In a changing climate, assets and activities will be impacted by more intense events that will not have been experienced either in a given region of the world or even on the
+whole globe, leading to a potentially large mismatch between historical and future distributions of events. The interpolation of the damage curve, as described in section 2.2.3, might lead to very high uncertainties that need to be taken into account when interpreting the data.
 
 
 

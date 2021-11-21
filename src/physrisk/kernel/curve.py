@@ -40,3 +40,67 @@ def to_exceedance_curve(bin_edges, probs):
     nz_probs = probs[fnz:]
     cum_prob = np.insert(np.cumsum(nz_probs[::-1]), 0, 0.0)[::-1]
     return ExceedanceCurve(cum_prob, nz_values)
+
+def process_bin_edges_and_probs(bin_edges, probs, range_fraction = 0.05):
+    r = bin_edges[-1] - bin_edges[0]
+    r = bin_edges[0] if r == 0 else r
+    new_edges = []
+    new_probs = []
+    # say we have edges
+    # 0, 1, 2, 3, 3, 3, 5, 7
+    # we want to convert to
+    # 0, 1, 2, 3 + d, 5, 7
+    # 2d = (7 - 0) * 0.01
+    i = 0
+    while i < len(bin_edges):
+        j = __next_non_equal_index(bin_edges, i)
+        if j == i + 1:
+            i = i + 1
+            new_edges.append(bin_edges[i])
+            new_probs.append(probs[i])
+            continue
+        if j >= len(bin_edges):
+            delta = r * range_fraction
+        else:
+            delta = min(r * range_fraction, 0.25 * (bin_edges[j] - bin_edges[i]))
+        new_edges.append(bin_edges[i])
+        new_edges.append(bin_edges[i] + delta)
+        new_probs.append(np.sum(probs[i:j]))
+        i = j
+    return new_edges, new_probs
+
+def process_bin_edges_for_graph(bin_edges, range_fraction = 0.05):
+        """Process infinitessimal (zero width) bins for graph display.
+        We make width 5% of range or 1/4 the width to the next bin edge, whichever is smaller 
+        """
+        r = bin_edges[-1] - bin_edges[0]
+        r = bin_edges[0] if r == 0 else r
+        new_edges = np.copy(bin_edges)
+        # say we have edges
+        # 0, 1, 2, 3, 3, 3, 5, 7
+        # we want to convert to
+        # 0, 1, 2, 3, 3 + d, 3 + 2d, 5, 7
+        # 2d = (7 - 0) * 0.01
+        i = 0
+        while i < len(bin_edges):
+            j = __next_non_equal_index(bin_edges, i)
+            if j == i + 1:
+                i = i + 1
+                continue
+            if j >= len(bin_edges):
+                delta = r * range_fraction / (j - i - 1)
+            else:
+                delta = min(r * range_fraction, 0.25 * (bin_edges[j] - bin_edges[i])) / (j - i - 1)
+            offset = delta
+            for k in range(i + 1, j):
+                new_edges[k] = new_edges[k] + offset
+                offset += delta
+            i = j
+        return new_edges
+            
+def __next_non_equal_index(ndarray, i):
+    j = i + 1
+    c = ndarray[i]
+    while j < len(ndarray) and ndarray[j] == c:
+        j = j + 1
+    return j

@@ -1,6 +1,6 @@
 Physrisk
 ==============================
-Physical risk calculation engine
+Physical risk calculation engine.
 
 ## Getting started
 

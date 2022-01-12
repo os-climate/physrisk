@@ -1,10 +1,28 @@
 Physrisk
 ==============================
-
 Physical risk calculation engine
 
-Project Organization
+## Getting started
+
+To get set up and run tests, clone repo and then run:
+```
+pip install -r requirements.txt
+cd src
+python -m unittest discover -s test -p "test_*.py"
+```
+
+Using a Python virtual environment is recommended. For example if using VS Code:
+```
+python3 -m venv .venv
+code .
+```
+Then in VS Code:
+```
+source .venv/bin/activate
+```
+## Project Organization
 ------------
+Follows conventions of Cookiecutter Data Science
 
     ├── LICENSE
     ├── Makefile           <- Makefile with commands like `make data` or `make train`

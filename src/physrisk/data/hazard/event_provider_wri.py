@@ -1,4 +1,4 @@
-import logging, os.path, rasterio, rasterio.sample, requests
+import logging, os.path, requests
 import numpy as np
 import physrisk.data.raster_reader as rr
 

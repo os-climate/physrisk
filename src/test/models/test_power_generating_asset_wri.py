@@ -1,7 +1,7 @@
 """ Test asset impact calculations."""
 import unittest, os
 import numpy as np
-import pandas as pd
+from physrisk.utils.lazy_importing import lazy_import
 import physrisk
 from physrisk import Asset, AssetEventDistrib, ExceedanceCurve, VulnerabilityDistrib
 from physrisk.kernel import Drought, Inundation
@@ -12,11 +12,8 @@ from physrisk.models import InundationModel
 from physrisk.data.hazard.event_provider_wri import EventProviderWri
 import physrisk.data.raster_reader as rr
 import time
-from affine import Affine
-from geotiff import GeoTiff
-from tifffile import TiffFile
-
 from physrisk.kernel.assets import PowerGeneratingAsset
+pd = lazy_import('pandas')
 
 class EventResponseMock:
 

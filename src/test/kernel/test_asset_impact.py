@@ -31,9 +31,9 @@ class TestAssetImpact(unittest.TestCase):
         impact_bins = np.interp(depth_bins, vul_depths, vul_impacts)
 
         include_bin = depth_bins < cutoff_depth
-        probs[include_bin[:-1]] = 0
+        probs[include_bin[:-1]] = 0 # type: ignore
 
-        mean = np.sum((impact_bins[1:] + impact_bins[:-1]) * probs / 2) 
+        mean = np.sum((impact_bins[1:] + impact_bins[:-1]) * probs / 2) # type: ignore
         self.assertAlmostEqual(mean, 4.8453897)
 
     def test_protection_level(self):
@@ -46,7 +46,7 @@ class TestAssetImpact(unittest.TestCase):
         protection_return_period = 250.0 # protection level of 250 years
         protection_depth = np.interp(1.0 / protection_return_period, exceed_probs[::-1], base_depth[::-1])
 
-        self.assertAlmostEqual(protection_depth, 0.9406518)
+        self.assertAlmostEqual(protection_depth, 0.9406518) # type: ignore
 
      
     def test_single_asset_impact(self):
@@ -69,9 +69,9 @@ class TestAssetImpact(unittest.TestCase):
         
         # if upper end of bin less then cutoff then exclude
         probs_w_cutoff = np.where(depth_bins[1:] <= cutoff_depth, 0.0, 1.0)
-        n_bins = len(probs)
+        n_bins = len(probs) # type: ignore
         vul = VulnerabilityDistrib(type(Inundation), depth_bins, impact_bins, np.diag(probs_w_cutoff)) # np.eye(n_bins, n_bins))
-        event = AssetEventDistrib(type(Inundation), depth_bins, probs) 
+        event = AssetEventDistrib(type(Inundation), depth_bins, probs) # type: ignore
 
         impact = get_impact_distrib(event, vul)
         mean = impact.mean_impact()

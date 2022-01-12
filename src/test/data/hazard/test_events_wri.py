@@ -3,7 +3,6 @@ import unittest
 import shutil, tempfile
 import numpy as np
 from physrisk.data.hazard.event_provider_wri import EventProviderWri
-import boto3
 
 class TestEventsWri(unittest.TestCase):
     """Tests asset impact calculations."""

@@ -10,7 +10,7 @@ import physrisk.data.data_requests as dr
 from physrisk.data import ReturnPeriodEvDataResp
 from physrisk.models import InundationModel
 from physrisk.data.hazard.event_provider_wri import EventProviderWri
-import physrisk.data.raster_reader as rr
+import physrisk.data.geotiff_reader as rr
 import time
 from physrisk.kernel.assets import PowerGeneratingAsset
 pd = lazy_import('pandas')

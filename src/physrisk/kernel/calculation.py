@@ -10,21 +10,21 @@ from physrisk.data.hazard.event_provider_wri import EventProviderWri
 from physrisk.kernel.assets import PowerGeneratingAsset
 import logging
 
-def __get_default_hazard_data_sources(cache_folder = None):
+def _get_default_hazard_data_sources(cache_folder = None):
     """Get default hazard data sources for each hazard type."""
     return { Inundation : EventProviderWri('web', cache_folder = cache_folder).get_inundation_depth }
 
-def __get_default_models():
+def _get_default_models():
     """Get default exposure/vulnerability models for different asset types."""
     return { PowerGeneratingAsset : [ InundationModel ] }
 
 def calculate_impacts(assets, cache_folder = None, model_properties = None):
     
     # the types of model that apply to asset of a particular type
-    model_mapping = __get_default_models()
+    model_mapping = _get_default_models()
 
     # the different sources of hazard data
-    hazard_data_source = __get_default_hazard_data_sources(cache_folder = cache_folder)
+    hazard_data_source = _get_default_hazard_data_sources(cache_folder = cache_folder)
 
     model_assets = defaultdict(list)
     for asset in assets:

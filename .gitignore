@@ -90,3 +90,5 @@ target/
 
 # Virtual environment
 .venv/*
+src/test/data/coords.json
+credentials.env

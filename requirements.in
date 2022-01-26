@@ -1,5 +1,8 @@
+affine
 boto3
 numpy
+pydantic
 requests
+s3fs
 zarr
 

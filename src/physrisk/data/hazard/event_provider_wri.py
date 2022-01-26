@@ -1,6 +1,6 @@
 import logging, os.path, requests
 import numpy as np
-import physrisk.data.raster_reader as rr
+import physrisk.data.geotiff_reader as rr
 
 # requires raterio and gdal; for binaries to install on Windows, at time of writing https://pypi.org/project/rasterio/ directs us to https://www.lfd.uci.edu/~gohlke/pythonlibs/#rasterio
 

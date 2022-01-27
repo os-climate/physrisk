@@ -7,10 +7,18 @@ verify_ssl = true
 flake8 = "*"
 coverage = "*"
 Sphinx = "*"
+pipenv-setup = "*"
 
 [packages]
 src = {editable = true, path = "./"}
 awscli = "*"
+numpy = "*"
+affine = "*"
+pydantic = "*"
+python-dotenv = "*"
+requests = "*"
+s3fs = "*"
+zarr = "*"
 
 [requires]
 python_version = "3.8"

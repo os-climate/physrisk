@@ -1,7 +1,7 @@
 affine
-boto3
 numpy
 pydantic
+python-dotenv
 requests
 s3fs
 zarr

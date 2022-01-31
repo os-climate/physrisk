@@ -2,7 +2,7 @@
 import unittest
 import numpy as np
 from physrisk import AssetEventDistrib, ExceedanceCurve, VulnerabilityDistrib
-from physrisk import Drought, Inundation
+from physrisk import Drought, RiverineInundation
 from physrisk import get_impact_distrib
 
 class TestAssetImpact(unittest.TestCase):
@@ -70,8 +70,8 @@ class TestAssetImpact(unittest.TestCase):
         # if upper end of bin less then cutoff then exclude
         probs_w_cutoff = np.where(depth_bins[1:] <= cutoff_depth, 0.0, 1.0)
         n_bins = len(probs) # type: ignore
-        vul = VulnerabilityDistrib(type(Inundation), depth_bins, impact_bins, np.diag(probs_w_cutoff)) # np.eye(n_bins, n_bins))
-        event = AssetEventDistrib(type(Inundation), depth_bins, probs) # type: ignore
+        vul = VulnerabilityDistrib(type(RiverineInundation), depth_bins, impact_bins, np.diag(probs_w_cutoff)) # np.eye(n_bins, n_bins))
+        event = AssetEventDistrib(type(RiverineInundation), depth_bins, probs) # type: ignore
 
         impact = get_impact_distrib(event, vul)
         mean = impact.mean_impact()

@@ -4,7 +4,7 @@ import numpy as np
 from physrisk.utils.lazy_importing import lazy_import
 import physrisk
 from physrisk import Asset, AssetEventDistrib, ExceedanceCurve, VulnerabilityDistrib
-from physrisk.kernel import Drought, Inundation
+from physrisk.kernel import Drought, RiverineInundation
 from physrisk.kernel import calculate_impacts, get_impact_distrib
 import physrisk.data.data_requests as dr
 from physrisk.data import ReturnPeriodEvDataResp

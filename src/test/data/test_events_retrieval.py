@@ -1,11 +1,12 @@
 """ Test asset impact calculations."""
 import json, os, pathlib, shutil, tempfile, unittest
-from dotenv import dotenv_values, load_dotenv
+from dotenv import load_dotenv
 import numpy as np
 from physrisk.data.event_provider import EventProvider, get_source_path_wri_riverine_inundation
+import physrisk.requests as requests
 from physrisk.data.hazard.event_provider_wri import EventProviderWri
 from physrisk.kernel.events import RiverineInundation
-from physrisk.risk_requests import get_hazard_data, HazardEventDataRequest
+import physrisk.requests
 
 class TestEventRetrieval(unittest.TestCase):
     """Tests asset impact calculations."""
@@ -37,20 +38,31 @@ class TestEventRetrieval(unittest.TestCase):
         
         request_dict = {
             'request_id': 'get_hazard_data',
-            'event_type': 'RiverineInundation',
-            'longitudes': coords['longitudes'][0:1000],
-            'latitudes': coords['longitudes'][0:1000],
-            'year': 2080,
-            'scenario': "rcp8p5",
-            'model': 'MIROC-ESM-CHEM'
+            'items': [
+                { 
+                    'request_id': 'get_hazard_data',
+                    'request_item_id': 'test_inundation',
+                    'event_type': 'RiverineInundation',
+                    'longitudes': coords['longitudes'][0:10],
+                    'latitudes': coords['latitudes'][0:10],
+                    'year': 2080,
+                    'scenario': "rcp8p5",
+                    'model': 'MIROC-ESM-CHEM'
+                }
+            ]
         }
-        request = HazardEventDataRequest(**request_dict) # validate request
+        request = physrisk.requests.HazardEventDataRequest(**request_dict) # validate request
         
         data_sources = { 
             RiverineInundation: EventProvider(get_source_path_wri_riverine_inundation).get_intensity_curves
         }
-        
-        get_hazard_data(request, data_sources)
+
+        result = requests._get_hazard_data(request, data_sources)
+
+        print(result)
+
+    def create_mock_zarr(self):
+        pass
 
 
 

@@ -1,18 +1,21 @@
 
 from collections import defaultdict
 from physrisk.kernel import Asset, AssetEventDistrib, ExceedanceCurve, VulnerabilityDistrib
-from physrisk.kernel import Drought, Inundation
+from physrisk.kernel import Drought, RiverineInundation
 from physrisk.kernel import get_impact_distrib
 import physrisk.data.data_requests as dr
 from physrisk.data import ReturnPeriodEvDataResp
 from physrisk.models import InundationModel
-from physrisk.data.hazard.event_provider_wri import EventProviderWri
+from physrisk.data.event_provider import EventProvider, get_source_path_wri_riverine_inundation
 from physrisk.kernel.assets import PowerGeneratingAsset
 import logging
 
 def _get_default_hazard_data_sources(cache_folder = None):
     """Get default hazard data sources for each hazard type."""
-    return { Inundation : EventProviderWri('web', cache_folder = cache_folder).get_inundation_depth }
+    data_sources = { 
+        RiverineInundation: EventProvider(get_source_path_wri_riverine_inundation).get_intensity_curves
+    }
+    return data_sources
 
 def _get_default_models():
     """Get default exposure/vulnerability models for different asset types."""

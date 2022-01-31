@@ -1,6 +1,6 @@
 import physrisk.kernel.curve as curve
 import numpy as np
-from typing import Optional, List
+from typing import Optional, List, Union
 
 from physrisk.kernel.exceedance_curve import ExceedanceCurve
 
@@ -11,9 +11,9 @@ class AssetEventDistrib:
     
     def __init__(self,
         event_type: type,
-        intensity_bins: List[float],   
-        prob: List[float],
-        exceedance : Optional[ExceedanceCurve] = None):
+        intensity_bins: Union[List[float], np.ndarray],   
+        prob: Union[List[float], np.ndarray],
+        exceedance: Optional[ExceedanceCurve] = None):
         """Create a new asset event distribution.
         Args:
             event_type: type of event

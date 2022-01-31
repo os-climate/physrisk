@@ -1,14 +1,14 @@
 import numpy as np
 from physrisk.kernel.events import HighTemperature
 from typing import List
-from physrisk.kernel import Asset, PowerGeneratingAsset, Inundation, Model
+from physrisk.kernel import Asset, PowerGeneratingAsset, RiverineInundation, Model
 from physrisk.kernel import AssetEventDistrib, VulnerabilityDistrib
 from physrisk.data import EventDataRequest
 from physrisk.kernel import ExceedanceCurve
 
 class InundationModel(Model):
     __asset_types = [PowerGeneratingAsset]
-    __event_types = [Inundation]
+    __event_types = [RiverineInundation]
     
     def __init__(self, model = "MIROC-ESM-CHEM"):
         # default impact curve
@@ -20,11 +20,11 @@ class InundationModel(Model):
 
     def get_event_data_requests(self, asset : Asset):
         # assuming here that other specific look-ups wold be needed
-        histo =  EventDataRequest(Inundation, asset.longitude, asset.latitude,
-            scenario = "historical", type = "river", year = 1980, model = self.__base_model)
+        histo =  EventDataRequest(RiverineInundation, asset.longitude, asset.latitude,
+            scenario = "historical", year = 1980, model = self.__base_model)
         
-        future = EventDataRequest(Inundation, asset.longitude, asset.latitude,
-            scenario = "rcp8p5", type = "river", year = 2080, model = self.__model)
+        future = EventDataRequest(RiverineInundation, asset.longitude, asset.latitude,
+            scenario = "rcp8p5", year = 2080, model = self.__model)
         
         return histo, future
 
@@ -49,8 +49,8 @@ class InundationModel(Model):
         # but this general version allows model uncertainties to be added
         probs_protected = np.where(depth_bins[1:] <= protection_depth, 0.0, 1.0)
         n_bins = len(probs)
-        vul = VulnerabilityDistrib(type(Inundation), depth_bins, impact_bins, np.diag(probs_protected)) 
-        event = AssetEventDistrib(type(Inundation), depth_bins, probs, curve_future) 
+        vul = VulnerabilityDistrib(type(RiverineInundation), depth_bins, impact_bins, np.diag(probs_protected)) 
+        event = AssetEventDistrib(type(RiverineInundation), depth_bins, probs, curve_future) 
 
         return vul, event
 

@@ -13,8 +13,8 @@ class ExceedanceCurve:
         values: Union[List[float], np.ndarray]):
         """Create a new asset event distribution.
         Args:
-            probs: exceedance probabilities (must be sorted and decreasing)
-            values: values (must be sorted and non-decreasing)
+            probs: exceedance probabilities (must be sorted and decreasing).
+            values: values (must be sorted and non-decreasing).
         """
 
         # probabilities must be sorted and decreasing

@@ -4,3 +4,41 @@ requires = [
     "wheel"
 ]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+testpaths = "src/test"
+addopts = "-v"
+
+[tool.mypy]
+warn_unreachable = true
+
+[[tool.mypy.overrides]]
+module = "click"
+ignore_missing_imports = true
+
+[tool.black]
+line-length = 120
+exclude = '''
+/(
+    \.git
+  | \.tox
+  | \venv
+  | \.venv
+  | \*.env
+  | \build
+  | \dist
+)/
+'''
+
+[tool.isort]
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 120
+
+[tool.coverage.run]
+source = "src"
+omit = "test/*"
+relative_files = true

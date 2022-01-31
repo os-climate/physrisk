@@ -8,12 +8,8 @@ def get_version():
 
 
 def get_requirements():
-    with open("requirements.in") as reqs:
-        return [
-            line.split()[0]
-            for line in reqs.read().splitlines()
-            if not line.startswith("#")
-        ]
+    with open("requirements.in") as f:
+        return f.read().splitlines()
 
 
 setup(

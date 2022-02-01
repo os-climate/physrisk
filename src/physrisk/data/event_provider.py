@@ -1,7 +1,7 @@
 import logging, os.path, requests
 import numpy as np
 import physrisk.data.geotiff_reader as rr
-from typing import Any, cast, Any, Callable, List, TypeVar, Union
+from typing import Any, cast, Any, Callable, List, MutableMapping, TypeVar, Union
 from typing_extensions import Protocol
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.kernel.events import Event, Inundation, RiverineInundation
@@ -18,14 +18,14 @@ class SourcePath(Protocol):
 class EventProvider():
     """Provides hazard event intensities for a single Event (type of hazard event)."""
     
-    def __init__(self, get_source_path: SourcePath):
+    def __init__(self, get_source_path: SourcePath, *, store: MutableMapping = None, ):
         """Create an EventProvider.
 
             Args:
                 get_source_path: provides the path to the hazard event data source depending on year/scenario/model.
         """
         self._get_source_path = get_source_path
-        self._reader = ZarrReader()
+        self._reader = ZarrReader(store = store)
 
     def get_intensity_curves(self,
         longitudes: List[float], 

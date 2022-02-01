@@ -1,9 +1,12 @@
+import codecs
+import os
+
 from setuptools import setup
-import os, codecs
+
 
 def get_version():
     dir = os.path.abspath(os.path.dirname(__file__))
-    with codecs.open(os.path.join(dir, "VERSION"), 'r') as fp:
+    with codecs.open(os.path.join(dir, "VERSION"), "r") as fp:
         return fp.read()
 
 
@@ -13,6 +16,6 @@ def get_requirements():
 
 
 setup(
-    version = get_version(),
+    version=get_version(),
     install_requires=get_requirements(),
 )

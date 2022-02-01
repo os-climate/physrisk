@@ -1,30 +1,32 @@
-import numpy as np
-#import numpy.typing as npt
+# import numpy.typing as npt
 from abc import ABC, abstractmethod
-from typing import Tuple, Union, List, Optional, Any
+
 from .asset_event_distrib import AssetEventDistrib
 from .impact_distrib import ImpactDistrib
 from .vulnerability_distrib import VulnerabilityDistrib
 
-def get_impact_distrib(event_dist : AssetEventDistrib, vulnerability_dist : VulnerabilityDistrib) -> ImpactDistrib:
+
+def get_impact_distrib(event_dist: AssetEventDistrib, vulnerability_dist: VulnerabilityDistrib) -> ImpactDistrib:
     impact_prob = vulnerability_dist.prob_matrix.T @ event_dist.prob
     return ImpactDistrib(vulnerability_dist.event_type, vulnerability_dist.impact_bins, impact_prob)
 
+
 class AssetImpact:
     """Calculates the impacts associated with a portfolio of assets."""
-    
+
     def __init__(self, assets, vulnerabilities):
         pass
 
+
 class AssetEventProvider(ABC):
-    
     @abstractmethod
     def get_asset_events(assets, eventTypes):
-        """Source event distributions in the locale of each asset for events of certain types """
+        """Source event distributions in the locale of each asset for events of certain types"""
+
 
 class ModelsBuilder(ABC):
     """Provides VulnerabilityModels and EventProviders for a type of aset."""
-    
+
     @abstractmethod
     def get_vulnerability_model(assetType):
         pass
@@ -39,4 +41,3 @@ class ModelsBuilder(ABC):
                 criteria.
         """
         pass
- 

@@ -55,6 +55,28 @@ class TestEventRetrieval(unittest.TestCase):
         numpy.testing.assert_array_almost_equal_nulp(result.items[0].intensity_curve_set[1].intensities, np.linspace(0.1, 1.0, 8, dtype = 'f4'))
         numpy.testing.assert_array_almost_equal_nulp(result.items[0].intensity_curve_set[2].intensities, np.zeros((8)))
 
+    @unittest.skip("requires OSC environment variables set")
+    def test_zarr_reading_live(self):
+        # needs valid OSC_S3_BUCKET, OSC_S3_ACCESS_KEY, OSC_S3_SECRET_KEY
+        
+        request = {
+            'request_id': 'get_hazard_data',
+            'items': [
+                { 
+                    'request_id': 'get_hazard_data',
+                    'request_item_id': 'test_inundation',
+                    'event_type': 'RiverineInundation',
+                    'longitudes': TestEventRetrieval._longitudes,
+                    'latitudes': TestEventRetrieval._latitudes,
+                    'year': 2080,
+                    'scenario': "rcp8p5",
+                    'model': 'MIROC-ESM-CHEM'
+                }
+            ]
+        }
+        response = physrisk.requests.get(request)
+        print(response)
+
     def _get_mock_data_sources(self):
         return_periods = [5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0]
         t = [0.008333333333333333, 0.0, -180.0, 0.0, -0.008333333333333333, 90.0, 0.0, 0.0, 1.0]

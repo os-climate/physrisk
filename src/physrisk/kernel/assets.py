@@ -4,4 +4,6 @@ class Asset:
         self.longitude = longitude
         self.__dict__.update(kwargs)
 
-class PowerGeneratingAsset(Asset) : pass
+
+class PowerGeneratingAsset(Asset):
+    pass

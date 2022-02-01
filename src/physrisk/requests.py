@@ -41,13 +41,13 @@ def get(request_dict):
 
     if request_id == "get_hazard_data":
         request = HazardEventDataRequest(**request_dict)
-        return json.dumps(_get_hazard_data(request))
+        return json.dumps(_get_hazard_data(request).dict())
     else:
         raise ValueError('request type ' + request_dict["request_id"] + ' not found')
 
 def _get_hazard_data(request : HazardEventDataRequest, data_sources = None):
     if data_sources is None:
-        calc._get_default_hazard_data_sources()
+        data_sources = calc._get_default_hazard_data_sources()
     
     # get hazard event types:
     event_types = Event.__subclasses__()

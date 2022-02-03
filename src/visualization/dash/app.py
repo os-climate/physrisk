@@ -52,7 +52,7 @@ asset_filt = asset_filt.append(
     ignore_index=True,
 )
 
-defaultIndex = np.flatnonzero(asset_filt["gppd_idnr"] == "WRI12541")[
+default_index = np.flatnonzero(asset_filt["gppd_idnr"] == "WRI12541")[
     0
 ]  # GBR1000313 #WRI1023786 #WRI1023786 #WRI1006025
 
@@ -68,8 +68,8 @@ all_assets = [
     for lon, lat, gen, cap, name, id in zip(longitudes, latitudes, generation, capacity, names, ids)
 ]
 
-detailed_results = calculate_impacts(all_assets[defaultIndex : defaultIndex + 1], cache_folder=cache_folder)
-impact_bins = detailed_results[all_assets[defaultIndex]].impact.impact_bins
+detailed_results = calculate_impacts(all_assets[default_index : default_index + 1], cache_folder=cache_folder)
+impact_bins = detailed_results[all_assets[default_index]].impact.impact_bins
 impact_bins = curve.process_bin_edges_for_graph(impact_bins)
 
 
@@ -151,7 +151,7 @@ def create_map_fig(assets, layers):
                 colorscale="Aggrnyl",
             ),
             selected=go.scattermapbox.Selected(marker=go.scattermapbox.selected.Marker(size=20, color=colors_map[2])),
-            # selectedpoints = [defaultIndex]
+            # selectedpoints = [default_index]
         ),
         layout=go.Layout(
             mapbox_style="stamen-terrain",
@@ -520,7 +520,7 @@ app.layout = html.Div(
                         html.Div(
                             children=dash_table.DataTable(
                                 id="asset-data-table",
-                                data=asset_filt.iloc[defaultIndex : defaultIndex + 1].to_dict("records"),
+                                data=asset_filt.iloc[default_index : default_index + 1].to_dict("records"),
                                 columns=[
                                     dict(id="gppd_idnr", name="ID"),
                                     dict(id="name", name="Name"),
@@ -570,17 +570,17 @@ app.layout = html.Div(
         Output("vulnerability-chart", "figure"),
     ],
     # [Input("markers", "click_feature")])
-    [Input("map-chart", "clickData")],
+    [Input("map-chart", "click_data")],
 )
-def display_click_data(clickData):
-    visible = "none" if clickData is None else "block"
-    # index = defaultIndex if click_feature is None
+def display_click_data(click_data):
+    visible = "none" if click_data is None else "block"
+    # index = default_index if click_feature is None
     # else np.flatnonzero(asset_filt['gppd_idnr'] == click_feature["properties"]["id"])[0]
 
-    if clickData:
-        index = clickData["points"][0]["pointIndex"]
+    if click_data:
+        index = click_data["points"][0]["pointIndex"]
     else:
-        index = defaultIndex
+        index = default_index
 
     data = asset_filt.iloc[index : index + 1].to_dict("records")
     asset = all_assets[index]
@@ -592,7 +592,7 @@ def display_click_data(clickData):
     fig_plot = get_fig_for_model(asset, detailed_results)
     fig_plot.update_layout(width=900)
     fig_plot.write_image("C:/Users/joemo/Code/Repos/physrisk/docs/methodology/plots/fig_intensity.pdf")
-    return {"display": visible}, names[index], data, fig1, fig2, fig3  # json.dumps(clickData, indent=2)
+    return {"display": visible}, names[index], data, fig1, fig2, fig3  # json.dumps(click_data, indent=2)
 
 
 @app.callback(

@@ -14,8 +14,7 @@ affine = lazy_import("affine")
 
 def zarr_read(path, longitudes, latitudes):
     """A version that uses Zarr rather than GDAL. Typically faster than GDAL / rasterio."""
-    TiffFile = tifffile.tifffile.Tifffile
-    with TiffFile(path) as tif:
+    with tifffile.tifffile.Tifffile(path) as tif:
         scale: Tuple[float, float, float] = tif.geotiff_metadata["ModelPixelScale"]
         tie_point: List[float] = tif.geotiff_metadata["ModelTiepoint"]
         store = tif.series[0].aszarr()

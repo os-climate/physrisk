@@ -40,7 +40,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = u"project-template"
+project = "project-template"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -183,8 +183,8 @@ latex_documents = [
     (
         "index",
         "project-template.tex",
-        u"project-template Documentation",
-        u"aicoe-aiops",
+        "project-template Documentation",
+        "aicoe-aiops",
         "manual",
     ),
 ]
@@ -218,8 +218,8 @@ man_pages = [
     (
         "index",
         "project-template",
-        u"project-template Documentation",
-        [u"aicoe-aiops"],
+        "project-template Documentation",
+        ["aicoe-aiops"],
         1,
     )
 ]
@@ -237,8 +237,8 @@ texinfo_documents = [
     (
         "index",
         "project-template",
-        u"project-template Documentation",
-        u"aicoe-aiops",
+        "project-template Documentation",
+        "aicoe-aiops",
         "project-template",
         "template for the team to use",
         "Miscellaneous",

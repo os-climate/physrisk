@@ -20,7 +20,7 @@ class AssetImpact:
 
 class AssetEventProvider(ABC):
     @abstractmethod
-    def get_asset_events(assets, eventTypes):
+    def get_asset_events(self, assets, event_types):
         """Source event distributions in the locale of each asset for events of certain types"""
 
 
@@ -28,14 +28,14 @@ class ModelsBuilder(ABC):
     """Provides VulnerabilityModels and EventProviders for a type of aset."""
 
     @abstractmethod
-    def get_vulnerability_model(assetType):
+    def get_vulnerability_model(self, asset_type):
         pass
 
     @abstractmethod
-    def get_event_data_provider(assetType):
+    def get_event_data_provider(self, asset_type):
         """Return a list of backends matching the specified filtering.
         Args:
-            assetType (AssetType): type of asset.
+            asset_type (AssetType): type of asset.
         Returns:
             dict[EventType, AssetEvents]: a list of Backends that match the filtering
                 criteria.

@@ -18,11 +18,11 @@ class EventProviderWri:
     __wri_public_url = "http://wri-projects.s3.amazonaws.com/AqueductFloodTool/download/v2/"
     __riverine_circ_models = {
         "000000000WATCH": "Baseline condition",
-        "00000NorESM1-M	GCM": "Bjerknes Centre for Climate Research, Norwegian Meteorological Institute",
-        "0000GFDL_ESM2M	GCM": "Geophysical Fluid Dynamics Laboratory (NOAA)",
+        "00000NorESM1-M    GCM": "Bjerknes Centre for Climate Research, Norwegian Meteorological Institute",
+        "0000GFDL_ESM2M    GCM": "Geophysical Fluid Dynamics Laboratory (NOAA)",
         "20000HadGEM2-ES": "Met Office Hadley Centre",
-        "00IPSL-CM5A-LR	GCM": "Institut Pierre Simon Laplace",
-        "MIROC-ESM-CHEM	GCM": (
+        "00IPSL-CM5A-LR    GCM": "Institut Pierre Simon Laplace",
+        "MIROC-ESM-CHEM    GCM": (
             "Atmosphere and Ocean Research Institute (The University of Tokyo),"
             "National Institute for Environmental Studies,"
             "and Japan Agency for Marine-Earth Science and Technology"

@@ -1,12 +1,7 @@
 ---
 repos:
-  - repo: git://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.1.10
-    hooks:
-      - id: remove-tabs
-
   - repo: git://github.com/pre-commit/pre-commit-hooks
-    rev: v4.0.1
+    rev: v4.1.0
     hooks:
       - id: trailing-whitespace
       - id: check-merge-conflict
@@ -16,51 +11,32 @@ repos:
       - id: check-case-conflict
       - id: check-docstring-first
       - id: check-json
+      - id: check-toml
+      - id: check-yaml
       - id: check-symlinks
       - id: detect-private-key
       - id: check-ast
       - id: debug-statements
 
-  - repo: git://github.com/pycqa/pydocstyle.git
-    rev: 6.1.1
+  - repo: git://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.1.11
     hooks:
-      - id: pydocstyle
-
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.0.1
-    hooks:
-      - id: check-toml
-      - id: check-yaml
-      - id: end-of-file-fixer
-      - id: trailing-whitespace
-
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v0.902
-    hooks:
-      - id: mypy
-        exclude: '^(docs|tasks|tests)|setup\.py'
-        args: [--ignore-missing-imports]
+      - id: remove-tabs
 
   - repo: https://github.com/psf/black
-    rev: 21.6b0
+    rev: '22.1.0'
     hooks:
       - id: black
-
-  - repo: https://github.com/tomcatling/black-nb
-    rev: '0.5.0'
-    hooks:
-      - id: black-nb
-
-  # Enable this in repositories with python packages.
-  # - repo: https://github.com/mgedmin/check-manifest
-  #   rev: '0.39'
-  #   hooks:
-  #     - id: check-manifest
+      - id: black-jupyter
 
   - repo: https://github.com/s-weigand/flake8-nb
-    rev: v0.3.0
+    rev: v0.3.1
     hooks:
       - id: flake8-nb
-        additional_dependencies: ['pep8-naming']
+        additional_dependencies:
+          - pep8-naming
         # Ignore all format-related checks as Black takes care of those.
-        args: ['--ignore', 'E2,W5', '--select', 'E,W,F,N', '--max-line-length=120']
+        args:
+          - --ignore=E2, W5, F401, E401
+          - --select=E, W, F, N
+          - --max-line-length=120

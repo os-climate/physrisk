@@ -1,1 +1,1 @@
-from .data_requests import EventDataRequest, ReturnPeriodEvDataResp, process_requests
+from .data_requests import EventDataRequest, EventDataResponse, process_requests

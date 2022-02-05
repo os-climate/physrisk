@@ -31,7 +31,7 @@ class EventDataRequest:
         return tuple((self.event_type, self.model, self.scenario, self.year))
 
 
-class ReturnPeriodEvDataResp:
+class EventDataResponse:
     """Response to EventDataRequest."""
 
     def __init__(self, return_periods: np.ndarray, intensities: np.ndarray):
@@ -52,7 +52,7 @@ class DataSource(Protocol):
 
 def process_requests(
     requests: List[EventDataRequest], data_sources: Dict[type, DataSource]
-) -> Dict[EventDataRequest, ReturnPeriodEvDataResp]:
+) -> Dict[EventDataRequest, EventDataResponse]:
     """Create ReturnPeriodEvDataResp.
 
     Args:
@@ -75,6 +75,6 @@ def process_requests(
         )
 
         for i, req in enumerate(batch):
-            responses[req] = ReturnPeriodEvDataResp(return_periods, intensities[i, :])
+            responses[req] = EventDataResponse(return_periods, intensities[i, :])
 
     return responses

@@ -3,7 +3,7 @@ import unittest
 
 import numpy as np
 
-from physrisk import AssetEventDistrib, ExceedanceCurve, RiverineInundation, VulnerabilityDistrib, get_impact_distrib
+from physrisk import HazardEventDistrib, ExceedanceCurve, RiverineInundation, VulnerabilityDistrib, get_impact_distrib
 
 
 class TestAssetImpact(unittest.TestCase):
@@ -82,7 +82,7 @@ class TestAssetImpact(unittest.TestCase):
         vul = VulnerabilityDistrib(
             type(RiverineInundation), depth_bins, impact_bins, np.diag(probs_w_cutoff)
         )  # np.eye(n_bins, n_bins))
-        event = AssetEventDistrib(type(RiverineInundation), depth_bins, probs)  # type: ignore
+        event = HazardEventDistrib(type(RiverineInundation), depth_bins, probs)  # type: ignore
 
         impact = get_impact_distrib(event, vul)
         mean = impact.mean_impact()

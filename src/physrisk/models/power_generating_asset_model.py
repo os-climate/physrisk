@@ -1,7 +1,11 @@
 import numpy as np
 
+from typing import Iterable, Tuple
+
+from physrisk.data.data_requests import EventDataResponse
+
 from ..data import EventDataRequest
-from ..kernel.asset_event_distrib import AssetEventDistrib
+from ..kernel.hazard_event_distrib import HazardEventDistrib
 from ..kernel.assets import Asset, PowerGeneratingAsset
 from ..kernel.curve import ExceedanceCurve
 from ..kernel.events import RiverineInundation
@@ -22,7 +26,9 @@ class InundationModel(Model):
         pass
 
     def get_event_data_requests(self, asset: Asset):
-        # assuming here that other specific look-ups wold be needed
+        """Provide the list of hazard event data requests required in order to calculate 
+        the VulnerabilityDistrib and HazardEventDistrib for the asset."""
+        
         histo = EventDataRequest(
             RiverineInundation,
             asset.longitude,
@@ -38,13 +44,15 @@ class InundationModel(Model):
 
         return histo, future
 
-    def get_distributions(self, asset, event_data_responses):
-        """Return vulnerability and asset event distributions"""
+    def get_distributions(self, asset: Asset, event_data_responses: Iterable[EventDataResponse]):
+        """Return distributions for asset, based on hazard event date:
+        VulnerabilityDistrib and HazardEventDistrib."""
 
         histo, future = event_data_responses
 
         protection_return_period = 250.0
         curve_histo = ExceedanceCurve(1.0 / histo.return_periods, histo.intensities)
+        # the protection depth is the 250-year-return-period inundation depth at the asset location 
         protection_depth = curve_histo.get_value(1.0 / protection_return_period)
 
         curve_future = ExceedanceCurve(1.0 / future.return_periods, future.intensities)
@@ -60,6 +68,6 @@ class InundationModel(Model):
         probs_protected = np.where(depth_bins[1:] <= protection_depth, 0.0, 1.0)
 
         vul = VulnerabilityDistrib(type(RiverineInundation), depth_bins, impact_bins, np.diag(probs_protected))
-        event = AssetEventDistrib(type(RiverineInundation), depth_bins, probs, curve_future)
+        event = HazardEventDistrib(type(RiverineInundation), depth_bins, probs)
 
         return vul, event

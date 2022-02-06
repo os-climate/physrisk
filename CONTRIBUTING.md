@@ -19,6 +19,12 @@ Then in VS Code:
 ```
 source .venv/bin/activate
 ```
+
+## Forking workflow
+
+This is a useful clarification of the forking workflow:
+https://gist.github.com/Chaser324/ce0505fbed06b947d962
+
 ## Project Organization
 ------------
 Follows conventions of Cookiecutter Data Science

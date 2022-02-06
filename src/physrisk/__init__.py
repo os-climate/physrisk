@@ -1,6 +1,6 @@
 from .kernel import (
     Asset,
-    AssetEventDistrib,
+    HazardEventDistrib,
     Drought,
     ExceedanceCurve,
     RiverineInundation,

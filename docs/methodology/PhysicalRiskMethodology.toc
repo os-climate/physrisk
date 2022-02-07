@@ -1,0 +1,17 @@
+\contentsline {section}{\numberline {1}Introduction}{3}{section.1}%
+\contentsline {section}{\numberline {2}Literature}{4}{section.2}%
+\contentsline {section}{\numberline {3}Model description}{4}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Overview}{4}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Asset impact model}{5}{subsection.3.2}%
+\contentsline {subsubsection}{\numberline {3.2.1}Mathematical description of asset impact model}{7}{subsubsection.3.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.2}Importance of secondary uncertainty}{8}{subsubsection.3.2.2}%
+\contentsline {paragraph}{Handling epistemic uncertainty}{9}{section*.4}%
+\contentsline {subsubsection}{\numberline {3.2.3}Interpolation of probability distributions}{9}{subsubsection.3.2.3}%
+\contentsline {subsection}{\numberline {3.3}Effective impact distribution}{10}{subsection.3.3}%
+\contentsline {subsubsection}{\numberline {3.3.1}Full Monte Carlo calculation}{11}{subsubsection.3.3.1}%
+\contentsline {subsection}{\numberline {3.4}Aggregation of impacts}{11}{subsection.3.4}%
+\contentsline {subsection}{\numberline {3.5}Financial loss model}{12}{subsection.3.5}%
+\contentsline {subsubsection}{\numberline {3.5.1}Structural models of credit risk}{12}{subsubsection.3.5.1}%
+\contentsline {subsection}{\numberline {3.6}Uncertainties in the calculation}{13}{subsection.3.6}%
+\contentsline {subsection}{\numberline {3.7}Model limitations}{13}{subsection.3.7}%
+\contentsline {subsubsection}{\numberline {3.7.1}Data availability}{13}{subsubsection.3.7.1}%

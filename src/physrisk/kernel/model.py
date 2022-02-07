@@ -6,15 +6,15 @@ from physrisk.kernel.assets import Asset
 from physrisk.kernel.hazard_event_distrib import HazardEventDistrib
 from physrisk.kernel.vulnerability_distrib import VulnerabilityDistrib
 
+
 class Model(ABC):
-    """Models generate the VulnerabilityDistrib and HazardEventDistrib of an 
-    Asset. 
+    """Models generate the VulnerabilityDistrib and HazardEventDistrib of an
+    Asset.
     """
 
     @abstractmethod
-    def get_event_data_requests(self, asset: Asset
-    ) -> Union[EventDataRequest, Iterable[EventDataRequest]]:
-        """Provide the one or more hazard event data requests required in order to calculate 
+    def get_event_data_requests(self, asset: Asset) -> Union[EventDataRequest, Iterable[EventDataRequest]]:
+        """Provide the one or more hazard event data requests required in order to calculate
         the VulnerabilityDistrib and HazardEventDistrib for the asset."""
         ...
 
@@ -23,7 +23,7 @@ class Model(ABC):
         self, asset: Asset, event_data_responses: List[EventDataResponse]
     ) -> Tuple[VulnerabilityDistrib, HazardEventDistrib]:
         """Return distributions for asset, VulnerabilityDistrib and HazardEventDistrib.
-        The hazard event data is used to do this. 
+        The hazard event data is used to do this.
 
         Args:
             asset: the asset.

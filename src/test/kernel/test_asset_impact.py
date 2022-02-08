@@ -3,7 +3,7 @@ import unittest
 
 import numpy as np
 
-from physrisk import HazardEventDistrib, ExceedanceCurve, RiverineInundation, VulnerabilityDistrib, get_impact_distrib
+from physrisk import ExceedanceCurve, HazardEventDistrib, RiverineInundation, VulnerabilityDistrib, get_impact_distrib
 
 
 class TestAssetImpact(unittest.TestCase):

@@ -15,7 +15,4 @@ def get_requirements():
         return f.read().splitlines()
 
 
-setup(
-    version=get_version(),
-    install_requires=get_requirements(),
-)
+setup(version=get_version())

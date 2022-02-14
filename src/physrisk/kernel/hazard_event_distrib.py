@@ -12,10 +12,7 @@ class HazardEventDistrib:
     __slots__ = ["__event_type", "__intensity_bins", "__prob", "__exceedance"]
 
     def __init__(
-        self,
-        event_type: type,
-        intensity_bins: Union[List[float], np.ndarray],
-        prob: Union[List[float], np.ndarray]
+        self, event_type: type, intensity_bins: Union[List[float], np.ndarray], prob: Union[List[float], np.ndarray]
     ):
         """Create a new asset event distribution.
         Args:
@@ -40,4 +37,3 @@ class HazardEventDistrib:
     @property
     def prob(self) -> np.ndarray:
         return self.__prob
-

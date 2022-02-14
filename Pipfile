@@ -34,6 +34,7 @@ urllib3 = "==1.26.8"
 wrapt = "==1.13.3"
 yarl = "==1.7.2"
 zarr = "==2.10.3"
+scipy = "*"
 
 [dev-packages]
 attrs = "==21.4.0"
@@ -59,6 +60,7 @@ toml = "==0.10.2"
 tomli = "==1.2.3"
 typing-extensions = "==4.0.1"
 tox = "*"
+scipy = "*"
 
 [requires]
 python_version = "3.8"

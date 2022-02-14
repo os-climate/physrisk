@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, Union
 
 import numpy as np
 
@@ -9,14 +9,13 @@ from ..kernel.assets import Asset, PowerGeneratingAsset
 from ..kernel.curve import ExceedanceCurve
 from ..kernel.events import RiverineInundation
 from ..kernel.hazard_event_distrib import HazardEventDistrib
-from ..kernel.model import Model
+from ..kernel.model import Model, applies_to_assets, applies_to_events
 from ..kernel.vulnerability_distrib import VulnerabilityDistrib
 
 
+@applies_to_events([RiverineInundation])
+@applies_to_assets([PowerGeneratingAsset])
 class InundationModel(Model):
-    __asset_types = [PowerGeneratingAsset]
-    __event_types = [RiverineInundation]
-
     def __init__(self, model="MIROC-ESM-CHEM"):
         # default impact curve
         self.__curve_depth = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 1])
@@ -25,7 +24,9 @@ class InundationModel(Model):
         self.__base_model = "000000000WATCH"
         pass
 
-    def get_event_data_requests(self, asset: Asset):
+    def get_event_data_requests(
+        self, asset: Asset, *, scenario: str, year: int
+    ) -> Union[EventDataRequest, Iterable[EventDataRequest]]:
         """Provide the list of hazard event data requests required in order to calculate
         the VulnerabilityDistrib and HazardEventDistrib for the asset."""
 

@@ -19,6 +19,7 @@ python-dotenv = "*"
 requests = "*"
 s3fs = "*"
 zarr = "*"
+scipy = "*"
 
 [requires]
 python_version = "3.8"

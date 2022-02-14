@@ -1,4 +1,4 @@
-from typing import Iterable
+from typing import Iterable, Union
 
 import numpy as np
 
@@ -24,7 +24,9 @@ class InundationModel(Model):
         self.__base_model = "000000000WATCH"
         pass
 
-    def get_event_data_requests(self, asset: Asset, *, year: int, scenario: str):
+    def get_event_data_requests(
+        self, asset: Asset, *, scenario: str, year: int
+    ) -> Union[EventDataRequest, Iterable[EventDataRequest]]:
         """Provide the list of hazard event data requests required in order to calculate
         the VulnerabilityDistrib and HazardEventDistrib for the asset."""
 

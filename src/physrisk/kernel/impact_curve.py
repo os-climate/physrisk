@@ -1,5 +1,4 @@
 from typing import List, Union
-import physrisk.kernel.curve as curve
 
 import numpy as np
 
@@ -25,8 +24,9 @@ class ImpactCurve:
         """Create a new asset event distribution.
         Args:
             intensities: possible intensities of hazard event.
-            impacts: fractional damage or fractional average disruption occurring as a result of hazard event of given intensity.
-            distributions: provides the pdf and optiononally the cdf of the impact distribution
+            impacts: fractional damage or fractional average disruption occurring as a result
+                of hazard event of given intensity.
+            distributions: provides the pdf and optiononally cdf of the impact distribution
         """
 
         # probabilities must be sorted and decreasing
@@ -51,18 +51,3 @@ class ImpactCurve:
         prob_matrix = cdf_matrix[1:, :] - cdf_matrix[:-1, :]
 
         return prob_matrix
-
-        # first we calculate pdf at centre of impact bins for curve intensities
-        # from scipy import interpolate
-        # impact_bin_centres = (impact_bin_edges[1:] + impact_bin_edges[:-1]) / 2
-        # pdf_matrix = np.empty([len(impact_bin_centres), len(self.intensities)])
-
-        # next create interpolation function
-        # f = interpolate.interp2d(impact_bin_centres, self.intensities, pdf_matrix, kind='linear')
-
-        # and interpolate the intensities
-        # intensity_bin_centres = (intensity_bin_edges[1:] + intensity_bin_edges[:-1]) / 2
-        # prob_matrix = f(impact_bin_centres, intensity_bin_centres)
-        # prob_matrix = prob_matrix / np.sum(prob_matrix, 0)
-
-        # return prob_matrix

@@ -1,4 +1,4 @@
-from typing import List, Optional, Union
+from typing import List, Union
 
 import numpy as np
 
@@ -17,7 +17,8 @@ class HazardEventDistrib:
         """Create a new asset event distribution.
         Args:
             event_type: type of event
-            intensity_bins: non-decreasing intensity bin edges. e.g. bin edges [1.0, 1.5, 2.0] imply two bins: 1.0 < i <= 1.5, 1.5 < i <= 2.0
+            intensity_bins: non-decreasing intensity bin edges.
+            e.g. bin edges [1.0, 1.5, 2.0] imply two bins: 1.0 < i <= 1.5, 1.5 < i <= 2.0
             prob: (annual) probability of occurrence for each intensity bin with size [len(intensity_bins) - 1]
         """
         self.__event_type = event_type

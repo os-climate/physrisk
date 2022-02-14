@@ -1,11 +1,10 @@
-import numpy as np
+from typing import Iterable
 
-from typing import Iterable, Tuple
+import numpy as np
 
 from physrisk.data.data_requests import EventDataResponse
 
 from ..data import EventDataRequest
-from ..kernel.hazard_event_distrib import HazardEventDistrib
 from ..kernel.assets import Asset, PowerGeneratingAsset
 from ..kernel.curve import ExceedanceCurve
 from ..kernel.events import RiverineInundation

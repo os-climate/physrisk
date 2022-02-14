@@ -1,15 +1,11 @@
-import os
 import unittest
 
 import numpy as np
 
-from physrisk import calculate_impacts, get_impact_distrib
 from physrisk.data.data_requests import EventDataResponse
-from physrisk.kernel import Asset, PowerGeneratingAsset
+from physrisk.kernel.assets import Asset
 from physrisk.kernel.events import Inundation
-from physrisk.models import InundationModel
 from physrisk.models.example_models import ExampleCdfBasedVulnerabilityModel
-from physrisk.utils.lazy_importing import lazy_import
 
 
 class TestExampleModels(unittest.TestCase):

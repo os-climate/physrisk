@@ -1,21 +1,13 @@
-from abc import abstractmethod
 from types import SimpleNamespace
+
 import numpy as np
 import scipy.stats as stats
 
-from typing import Callable, Iterable, Tuple
-
-from physrisk.data.data_requests import EventDataResponse
 from physrisk.kernel.impact_curve import ImpactCurve
 from physrisk.kernel.vulnerability_model import VulnerabilityModel
 
-from ..data import EventDataRequest
-from ..kernel.hazard_event_distrib import HazardEventDistrib
-from ..kernel.assets import Asset, PowerGeneratingAsset
-from ..kernel.curve import ExceedanceCurve
 from ..kernel.events import RiverineInundation
-from ..kernel.model import Model, applies_to_events
-from ..kernel.vulnerability_distrib import VulnerabilityDistrib
+from ..kernel.model import applies_to_events
 
 
 @applies_to_events([RiverineInundation])

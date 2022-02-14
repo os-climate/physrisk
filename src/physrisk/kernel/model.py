@@ -3,8 +3,6 @@ from typing import Iterable, List, Tuple, Union
 
 from physrisk.data.data_requests import EventDataRequest, EventDataResponse
 from physrisk.kernel.assets import Asset
-from physrisk.kernel.curve import ExceedanceCurve
-from physrisk.kernel.events import Inundation
 from physrisk.kernel.hazard_event_distrib import HazardEventDistrib
 from physrisk.kernel.vulnerability_distrib import VulnerabilityDistrib
 
@@ -44,11 +42,13 @@ class Model(ABC):
         self.event_type = event_type
         self.year = year
         self.scenario = scenario
-        self.__event_types = []
-        self.__asset_types = []
+        self._event_types: List[type] = []
+        self._asset_types: List[type] = []
 
     @abstractmethod
-    def get_event_data_requests(self, asset: Asset) -> Union[EventDataRequest, Iterable[EventDataRequest]]:
+    def get_event_data_requests(
+        self, asset: Asset, *, scenario: str, year: int
+    ) -> Union[EventDataRequest, Iterable[EventDataRequest]]:
         """Provide the one or more hazard event data requests required in order to calculate
         the VulnerabilityDistrib and HazardEventDistrib for the asset."""
         ...
@@ -67,5 +67,5 @@ class Model(ABC):
         ...
 
     def _check_event_type(self):
-        if self.event_type not in self.__event_types:
+        if self.event_type not in self._event_types:
             raise NotImplementedError(f"model does not support events of type {self.event_type.__name__}")

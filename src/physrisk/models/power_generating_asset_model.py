@@ -8,6 +8,7 @@ from ..data import EventDataRequest
 from ..kernel.assets import Asset, PowerGeneratingAsset
 from ..kernel.curve import ExceedanceCurve
 from ..kernel.events import RiverineInundation
+from ..kernel.hazard_event_distrib import HazardEventDistrib
 from ..kernel.model import Model, applies_to_assets, applies_to_events
 from ..kernel.vulnerability_distrib import VulnerabilityDistrib
 

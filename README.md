@@ -10,7 +10,7 @@ pip install -i https://test.pypi.org/simple/ physrisk
 
 Post open-source go-live:
 ```
-pip install pyrisk
+pip install physrisk
 ```
 
 Access to hazard event data requires setting of environment variables specifying the S3 Bucket, for example:

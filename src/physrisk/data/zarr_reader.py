@@ -1,4 +1,5 @@
 import os
+from pathlib import PurePosixPath
 from typing import Callable, MutableMapping, Optional
 
 import numpy as np
@@ -49,9 +50,11 @@ class ZarrReader:
             )
 
             store = s3fs.S3Map(
-                root=os.path.join(
-                    get_env(ZarrReader.__S3_bucket, "redhat-osc-physical-landing-647521352890"),
-                    get_env(ZarrReader.__zarr_path, "hazard/hazard.zarr"),
+                root=str(
+                    PurePosixPath(
+                        get_env(ZarrReader.__S3_bucket, "redhat-osc-physical-landing-647521352890"),
+                        get_env(ZarrReader.__zarr_path, "hazard/hazard.zarr"),
+                    ),
                 ),
                 s3=s3,
                 check=False,

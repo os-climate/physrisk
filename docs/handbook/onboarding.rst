@@ -27,7 +27,8 @@ In code this can be done by
 Vulnerability/Event Model 
 -------------------------
 In general a Vulnerability/Event Model is responsible for obtaining for a particular asset: 
-#. ::HazardEventDistrib::: provides probabilities of hazard event intensentities for the asset
+
+#. HazardEventDistrib: provides probabilities of hazard event intensentities for the asset
 #. VulnerabilityDistrib: provides conditional probabilities that given a hazard event of given intensity has occurred, a loss wwill occur of a given amount
 
 A loss is either a damage or a disruption.

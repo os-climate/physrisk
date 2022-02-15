@@ -77,6 +77,7 @@ source: Huizinga et al. 'Global flood depth-damage functions: methodology and th
 In such cases :code:`VulnerabilityModel` can be used to specify the close-formed conditional probability distribution to be used for a given intensity level. The cumulative probability density function is expected. 
 
 A model that uses beta distributions to provide a distribution yields the following :code:`VulnerabilityDistrib` in the above case:
+
 .. image:: onboarding/vulnerability_with_uncertainty.png
   :width: 600
   

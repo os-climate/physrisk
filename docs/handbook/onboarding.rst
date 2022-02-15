@@ -28,8 +28,8 @@ Vulnerability/Event Model
 -------------------------
 In general a Vulnerability/Event Model is responsible for obtaining for a particular asset: 
 
-#. HazardEventDistrib: provides probabilities of hazard event intensentities for the asset
-#. VulnerabilityDistrib: provides conditional probabilities that given a hazard event of given intensity has occurred, a loss wwill occur of a given amount
+#. :code:`HazardEventDistrib`: provides probabilities of hazard event intensentities for the asset
+#. :code:`VulnerabilityDistrib`: provides conditional probabilities that given a hazard event of given intensity has occurred, a loss wwill occur of a given amount
 
 A loss is either a damage or a disruption.
 
@@ -57,7 +57,8 @@ On-boarding a model based on a damage/disruption curve with uncertainty
 
 .. image:: onboarding/damage_with_uncertainty.png
   :width: 600
-  
+source: Huizinga et al. 'Global flood depth-damage functions: methodology and the database with guidelines' 
+ 
 Include some code
 ::
   import math

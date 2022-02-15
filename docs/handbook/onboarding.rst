@@ -7,15 +7,15 @@ Exceedance curves
 The starting point of the calculation is a curve of hazard event intensities, obtained at the location of one particular asset. The probability of occurrence is given either by the 'return period' or an 'exceedance probability'. The return period is the average time in years between occurrences of an event that exceeds a given intensity. The exceedance probability is the probability that in a year an event occurs that exceeds the given intensity. Exceedance probability is the reciprocal of the return period. 
 
 .. image:: onboarding/return_periods.png
-  :width: 600
+  :width: 500
   
 .. image:: onboarding/exceedance_curve.png
-  :width: 600
+  :width: 500
 
 Probability bins can be obtained from the exceedance curve, by subtracting one cumulative probability from another.
 
 .. image:: onboarding/histo_from_exceedance.png
-  :width: 600
+  :width: 500
 
 Note that in this case - which is the standard case - linear interpolation between points of the exceedance curve is assumed which corresponds to flat probability density within a bin.
 

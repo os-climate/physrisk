@@ -16,6 +16,14 @@ of the return period).
 
 Probability bins can then be obtained from the exceedance curve, by subtracting one cumulative probability from another.
 
+.. image:: onboarding/histo_from_exceedance.png
+  :width: 600
+
+In code this can be done by
+::
+  exceedance_curve = ExceedanceCurve(1.0 / return_periods, event_intensities)
+  intensity_bins, probs = exceedance_curve.get_probability_bins()
+
 On-boarding a model based on a damage/disruption curve
 ------------------------------------------------------
 

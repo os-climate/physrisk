@@ -86,6 +86,5 @@ Example models are provided to illustrate this. A model that uses beta distribut
 Note that a beta distribution is a commonly-used heuristic; its functional form is convenient for vulnerability distributions although there appears to be limited justification for its use beyond providing a convenient means to apply uncertainty to a vulnerability distribution.
   
 .. math::
-
-   \frac{ \sum_{t=0}^{N}f(t,k) }{N}
+  \frac{ \sum_{t=0}^{N}f(t,k) }{N}
 

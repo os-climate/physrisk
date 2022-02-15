@@ -58,10 +58,10 @@ On-boarding a model based on a damage/disruption curve
 A vulnerability distribition can be inferred directly from a damage/disruption curve: 
 
 .. image:: onboarding/disruption_curve.png
-  :width: 600
+  :width: 500
 
 .. image:: onboarding/vulnerability_curve.png
-  :width: 600
+  :width: 500
 
 This approach is generally not recommended as it implies that damage/disruption in the event of an event occurs certainly with the given level.
 
@@ -73,7 +73,7 @@ On-boarding a model based on a damage/disruption curve with uncertainty
 In some cases, even if a full vulnerability matrix is unavailable, an estimate of the spread around a mean damage/disruption might be provided:
 
 .. image:: onboarding/damage_with_uncertainty.png
-  :width: 600
+  :width: 500
 source: Huizinga et al. 'Global flood depth-damage functions: methodology and the database with guidelines' 
  
   
@@ -82,7 +82,7 @@ In such cases :code:`VulnerabilityModel` can be used to specify the close-formed
 A model that uses beta distributions to provide a distribution yields the following :code:`VulnerabilityDistrib` in the above case:
 
 .. image:: onboarding/vulnerability_with_uncertainty.png
-  :width: 600
+  :width: 500
   
   
  

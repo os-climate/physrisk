@@ -76,13 +76,13 @@ In some cases, even if a full vulnerability matrix is unavailable, an estimate o
   :width: 500
 source: Huizinga et al. 'Global flood depth-damage functions: methodology and the database with guidelines' 
  
-  
-In such cases :code:`VulnerabilityModel` can be used to specify the close-formed conditional probability distribution to be used for a given intensity level. The cumulative probability density function is expected. 
+In such cases :code:`VulnerabilityModel` can be used to specify the close-formed conditional probability distribution to be used for a given intensity level. The cumulative probability density function is expected, and is provided via an :code:`ImpactCurve` by implementing method :code:`get_impact_curve`. 
 
-A model that uses beta distributions to provide a distribution yields the following :code:`VulnerabilityDistrib` in the above case:
+Example models are provided to illustrate this. A model that uses beta distributions to provide a distribution yields the following :code:`VulnerabilityDistrib` in the above case:
 
 .. image:: onboarding/vulnerability_with_uncertainty.png
   :width: 500
   
+Note that a beta distribution is a commonly-used heuristic; its functional form is convenient for vulnerability distributions although there appears to be limited justification for its use beyond providing a convenient means to apply uncertainty to a vulnerability distribution.
   
  

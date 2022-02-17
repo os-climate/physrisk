@@ -33,6 +33,7 @@ jobs:
         value=`cat VERSION`
         echo "$value-dev${{ github.run_id }}" > VERSION
         echo ${{ github.run_id }}
+        echo ${{ github.tag }}
 
     - name: Output Run Number
       run: echo ${{ github.run_number }}

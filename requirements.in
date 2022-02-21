@@ -1,7 +1,0 @@
-affine
-numpy
-pydantic
-python-dotenv
-requests
-s3fs
-zarr

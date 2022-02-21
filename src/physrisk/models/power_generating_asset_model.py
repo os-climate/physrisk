@@ -1,22 +1,21 @@
-import numpy as np
+from typing import Iterable, Union
 
-from typing import Iterable, Tuple
+import numpy as np
 
 from physrisk.data.data_requests import EventDataResponse
 
 from ..data import EventDataRequest
-from ..kernel.hazard_event_distrib import HazardEventDistrib
 from ..kernel.assets import Asset, PowerGeneratingAsset
 from ..kernel.curve import ExceedanceCurve
 from ..kernel.events import RiverineInundation
-from ..kernel.model import Model
+from ..kernel.hazard_event_distrib import HazardEventDistrib
+from ..kernel.model import Model, applies_to_assets, applies_to_events
 from ..kernel.vulnerability_distrib import VulnerabilityDistrib
 
 
+@applies_to_events([RiverineInundation])
+@applies_to_assets([PowerGeneratingAsset])
 class InundationModel(Model):
-    __asset_types = [PowerGeneratingAsset]
-    __event_types = [RiverineInundation]
-
     def __init__(self, model="MIROC-ESM-CHEM"):
         # default impact curve
         self.__curve_depth = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 1])
@@ -25,10 +24,12 @@ class InundationModel(Model):
         self.__base_model = "000000000WATCH"
         pass
 
-    def get_event_data_requests(self, asset: Asset):
-        """Provide the list of hazard event data requests required in order to calculate 
+    def get_event_data_requests(
+        self, asset: Asset, *, scenario: str, year: int
+    ) -> Union[EventDataRequest, Iterable[EventDataRequest]]:
+        """Provide the list of hazard event data requests required in order to calculate
         the VulnerabilityDistrib and HazardEventDistrib for the asset."""
-        
+
         histo = EventDataRequest(
             RiverineInundation,
             asset.longitude,
@@ -52,7 +53,7 @@ class InundationModel(Model):
 
         protection_return_period = 250.0
         curve_histo = ExceedanceCurve(1.0 / histo.return_periods, histo.intensities)
-        # the protection depth is the 250-year-return-period inundation depth at the asset location 
+        # the protection depth is the 250-year-return-period inundation depth at the asset location
         protection_depth = curve_histo.get_value(1.0 / protection_return_period)
 
         curve_future = ExceedanceCurve(1.0 / future.return_periods, future.intensities)

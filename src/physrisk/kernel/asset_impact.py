@@ -1,15 +1,6 @@
 # import numpy.typing as npt
 from abc import ABC, abstractmethod
 
-from .hazard_event_distrib import HazardEventDistrib
-from .impact_distrib import ImpactDistrib
-from .vulnerability_distrib import VulnerabilityDistrib
-
-
-def get_impact_distrib(event_dist: HazardEventDistrib, vulnerability_dist: VulnerabilityDistrib) -> ImpactDistrib:
-    impact_prob = vulnerability_dist.prob_matrix.T @ event_dist.prob
-    return ImpactDistrib(vulnerability_dist.event_type, vulnerability_dist.impact_bins, impact_prob)
-
 
 class AssetImpact:
     """Calculates the impacts associated with a portfolio of assets."""

@@ -4,18 +4,13 @@ import unittest
 
 import numpy as np
 
-from physrisk import calculate_impacts, get_impact_distrib
+from physrisk import calculate_impacts
 from physrisk.kernel import Asset, PowerGeneratingAsset
-from physrisk.models import InundationModel
+from physrisk.kernel.hazard_model import EventDataResponse
+from physrisk.models.power_generating_asset_model import InundationModel
 from physrisk.utils.lazy_importing import lazy_import
 
 pd = lazy_import("pandas")
-
-
-class EventResponseMock:
-    def __init__(self, return_periods, intensities):
-        self.return_periods = return_periods
-        self.intensities = intensities
 
 
 class TestPowerGeneratingAssetWri(unittest.TestCase):
@@ -32,15 +27,16 @@ class TestPowerGeneratingAssetWri(unittest.TestCase):
         )
 
         # we mock the response of the data request
-        responses_mock = EventResponseMock(return_periods, base_depth), EventResponseMock(return_periods, future_depth)
+        responses_mock = [
+            EventDataResponse(return_periods, base_depth),
+            EventDataResponse(return_periods, future_depth),
+        ]
 
         latitude, longitude = 45.268405, 19.885738
         assets = [Asset(latitude, longitude)]
         model = InundationModel(assets)
 
-        vul, event = model.get_distributions(assets[0], responses_mock)
-
-        impact = get_impact_distrib(event, vul)
+        impact, vul, event = model.get_impact(assets[0], responses_mock)
         mean = impact.mean_impact()
 
         self.assertAlmostEqual(mean, 4.8453897)

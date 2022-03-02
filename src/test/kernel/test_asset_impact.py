@@ -3,7 +3,8 @@ import unittest
 
 import numpy as np
 
-from physrisk import ExceedanceCurve, HazardEventDistrib, RiverineInundation, VulnerabilityDistrib, get_impact_distrib
+from physrisk import ExceedanceCurve, HazardEventDistrib, RiverineInundation, VulnerabilityDistrib
+from physrisk.kernel.impact_distrib import ImpactDistrib
 
 
 class TestAssetImpact(unittest.TestCase):
@@ -84,7 +85,9 @@ class TestAssetImpact(unittest.TestCase):
         )  # np.eye(n_bins, n_bins))
         event = HazardEventDistrib(type(RiverineInundation), depth_bins, probs)  # type: ignore
 
-        impact = get_impact_distrib(event, vul)
+        impact_prob = vul.prob_matrix.T @ event.prob
+        impact = ImpactDistrib(vul.event_type, vul.impact_bins, impact_prob)
+
         mean = impact.mean_impact()
 
         self.assertAlmostEqual(mean, 4.8453897)

@@ -2,20 +2,23 @@ from typing import Iterable, Union
 
 import numpy as np
 
-from physrisk.data.data_requests import EventDataResponse
-
-from ..data import EventDataRequest
 from ..kernel.assets import Asset, PowerGeneratingAsset
 from ..kernel.curve import ExceedanceCurve
-from ..kernel.events import RiverineInundation
+from ..kernel.events import HighTemperature, RiverineInundation
 from ..kernel.hazard_event_distrib import HazardEventDistrib
-from ..kernel.model import Model, applies_to_assets, applies_to_events
+from ..kernel.hazard_model import EventDataRequest, EventDataResponse
 from ..kernel.vulnerability_distrib import VulnerabilityDistrib
+from ..kernel.vulnerability_model import (
+    VulnerabilityModel,
+    VulnerabilityModelBase,
+    applies_to_assets,
+    applies_to_events,
+)
 
 
 @applies_to_events([RiverineInundation])
 @applies_to_assets([PowerGeneratingAsset])
-class InundationModel(Model):
+class InundationModel(VulnerabilityModelBase):
     def __init__(self, model="MIROC-ESM-CHEM"):
         # default impact curve
         self.__curve_depth = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 1])
@@ -72,3 +75,10 @@ class InundationModel(Model):
         event = HazardEventDistrib(type(RiverineInundation), depth_bins, probs)
 
         return vul, event
+
+
+@applies_to_events([HighTemperature])
+@applies_to_assets([PowerGeneratingAsset])
+class TemperatureModel(VulnerabilityModel):
+    # not yet implemented
+    pass

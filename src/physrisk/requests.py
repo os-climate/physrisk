@@ -3,9 +3,10 @@ from typing import List
 
 from pydantic import BaseModel
 
+from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.kernel.events import Event
+from physrisk.kernel.hazard_model import EventDataRequest
 
-from .data import data_requests as dr
 from .kernel import calculation as calc
 
 
@@ -55,10 +56,12 @@ def get(request_dict):
         raise ValueError("request type " + request_dict["request_id"] + " not found")
 
 
-def _get_hazard_data(request: HazardEventDataRequest, data_sources=None):
-    if data_sources is None:
-        data_sources = calc._get_default_hazard_data_sources()
+def _get_hazard_data(request: HazardEventDataRequest, source_paths=None, store=None):
 
+    if source_paths is None:
+        source_paths = calc.get_default_zarr_source_paths()
+
+    hazard_model = ZarrHazardModel(source_paths, store=store)
     # get hazard event types:
     event_types = Event.__subclasses__()
     event_dict = dict((et.__name__, et) for et in event_types)
@@ -71,14 +74,14 @@ def _get_hazard_data(request: HazardEventDataRequest, data_sources=None):
         event_type = event_dict[item.event_type]
 
         data_requests = [
-            dr.EventDataRequest(event_type, lon, lat, model=item.model, scenario=item.scenario, year=item.year)
+            EventDataRequest(event_type, lon, lat, model=item.model, scenario=item.scenario, year=item.year)
             for (lon, lat) in zip(item.longitudes, item.latitudes)
         ]
 
         all_requests.extend(data_requests)
         item_requests.append(data_requests)
 
-    response_dict = dr.process_requests(all_requests, data_sources)
+    response_dict = hazard_model.get_hazard_events(all_requests)
     # responses comes back as a dictionary because requests may be executed in different order to list
     # to optimise performance.
 

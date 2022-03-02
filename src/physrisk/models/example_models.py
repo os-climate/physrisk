@@ -7,7 +7,7 @@ from physrisk.kernel.impact_curve import ImpactCurve
 from physrisk.kernel.vulnerability_model import VulnerabilityModel
 
 from ..kernel.events import RiverineInundation
-from ..kernel.model import applies_to_events
+from ..kernel.vulnerability_model import applies_to_events
 
 
 @applies_to_events([RiverineInundation])

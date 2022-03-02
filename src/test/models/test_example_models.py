@@ -2,9 +2,9 @@ import unittest
 
 import numpy as np
 
-from physrisk.data.data_requests import EventDataResponse
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.events import Inundation
+from physrisk.kernel.hazard_model import EventDataResponse
 from physrisk.models.example_models import ExampleCdfBasedVulnerabilityModel
 
 

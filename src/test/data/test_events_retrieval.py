@@ -13,7 +13,7 @@ from affine import Affine
 from dotenv import load_dotenv
 
 from physrisk import RiverineInundation, requests
-from physrisk.data.event_provider import EventProvider, get_source_path_wri_riverine_inundation
+from physrisk.data.event_provider import get_source_path_wri_riverine_inundation
 from physrisk.data.hazard.event_provider_wri import EventProviderWri
 
 
@@ -83,9 +83,11 @@ class TestEventRetrieval(unittest.TestCase):
         }
         request = requests.HazardEventDataRequest(**request_dict)  # validate request
 
-        _mock_data_sources = self._get_mock_data_sources()
+        store = self._get_mock_hazard_model_store()
 
-        result = requests._get_hazard_data(request, _mock_data_sources)  # data_sources
+        result = requests._get_hazard_data(
+            request, {RiverineInundation: get_source_path_wri_riverine_inundation}, store=store
+        )
 
         result.items[0].intensity_curve_set[0].intensities
 
@@ -117,7 +119,7 @@ class TestEventRetrieval(unittest.TestCase):
         response = requests.get(request)
         print(response)
 
-    def _get_mock_data_sources(self):
+    def _get_mock_hazard_model_store(self):
         return_periods = [5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0]
         t = [0.008333333333333333, 0.0, -180.0, 0.0, -0.008333333333333333, 90.0, 0.0, 0.0, 1.0]
         shape = (len(return_periods), 21600, 43200)
@@ -142,14 +144,7 @@ class TestEventRetrieval(unittest.TestCase):
         image_coords = np.floor(frac_image_coords).astype(int)
         z[:, image_coords[1, 1], image_coords[0, 1]] = np.linspace(0.1, 1.0, z.shape[0])
 
-        # c.f.
-        # data_sources = {
-        #    RiverineInundation: EventProvider(get_source_path_wri_riverine_inundation).get_intensity_curves
-        # }
-
-        return {
-            RiverineInundation: EventProvider(get_source_path_wri_riverine_inundation, store=store).get_intensity_curves
-        }
+        return store
 
     @unittest.skip("includes download of large files; deprecated")
     def test_wri_from_web(self):

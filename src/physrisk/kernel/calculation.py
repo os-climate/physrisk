@@ -1,34 +1,32 @@
 import logging
 from collections import defaultdict
 
-from ..data import data_requests as dr
-from ..data.event_provider import EventProvider, get_source_path_wri_riverine_inundation
-from ..models import InundationModel
-from .asset_impact import get_impact_distrib
+import physrisk.models.power_generating_asset_model as pgam
+from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
+
+from ..data.event_provider import get_source_path_wri_riverine_inundation
 from .assets import PowerGeneratingAsset
 from .events import RiverineInundation
 
 
-def _get_default_hazard_data_sources(cache_folder=None):
-    """Get default hazard data sources for each hazard type."""
-    data_sources = {RiverineInundation: EventProvider(get_source_path_wri_riverine_inundation).get_intensity_curves}
-    return data_sources
+def get_default_zarr_source_paths():
+    return {RiverineInundation: get_source_path_wri_riverine_inundation}
 
 
-def _get_default_models():
+def get_default_vulnerability_models():
     """Get default exposure/vulnerability models for different asset types."""
-    return {PowerGeneratingAsset: [InundationModel]}
+    return {PowerGeneratingAsset: [pgam.InundationModel, pgam.TemperatureModel]}
 
 
 def calculate_impacts(assets, cache_folder=None, model_properties=None):
 
     # the types of model that apply to asset of a particular type
-    model_mapping = _get_default_models()
+    model_mapping = get_default_vulnerability_models()
 
-    # the different sources of hazard data
-    hazard_data_source = _get_default_hazard_data_sources(cache_folder=cache_folder)
+    # Model that gets hazard event data from Zarr storage
+    hazard_model = ZarrHazardModel(get_default_zarr_source_paths())
 
-    model_assets = defaultdict(list)
+    model_assets = defaultdict(list)  # list of assets to be modelled using vulnerability model
     for asset in assets:
         asset_type = type(asset)
         mappings = model_mapping[asset_type]
@@ -49,12 +47,11 @@ def calculate_impacts(assets, cache_folder=None, model_properties=None):
 
         event_requests = [req for event_request_by_asset in event_requests_by_asset for req in event_request_by_asset]
 
-        responses = dr.process_requests(event_requests, hazard_data_source)
+        responses = hazard_model.get_hazard_events(event_requests)
 
         for asset, requests in zip(assets, event_requests_by_asset):
             hazard_data = [responses[req] for req in requests]
-            vul, event = model.get_distributions(asset, hazard_data)
-            impact = get_impact_distrib(event, vul)
+            impact, vul, event = model.get_impacts(asset, hazard_data)
             detailed_results[asset] = DetailedResultItem(vul, event, impact, hazard_data)
 
     return detailed_results

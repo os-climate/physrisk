@@ -6,5 +6,4 @@ from .kernel import (
     RiverineInundation,
     VulnerabilityDistrib,
     calculate_impacts,
-    get_impact_distrib,
 )

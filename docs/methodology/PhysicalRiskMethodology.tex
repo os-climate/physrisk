@@ -92,7 +92,10 @@
 
 \author{Joe Moorhouse\thanks{\textit{E-mail}: Joe.Moorhouse@gmail.com.}
         \and
-        Florian Gallo\thanks{
+        Florian Gallo\thanks{}
+        \and
+        Davide Ferri\thanks{\textit{E-mail}:
+        davide.ferri.94@gmail.com
         \smallskip
         \newline% \indent
     The views expressed in this paper are those of the authors and do not necessarily reflect the views and policies of their respective employers.}
@@ -130,9 +133,9 @@
 \section{Introduction}
 \label{Sec:Introduction}
 
-The purpose of this paper is to present the methodology of a framework that is sufficiently generic to be used for a wide range of physical climate risk models. The motivation is to provide a specification for use in the OS-Climate (OS-C) \cite{OSC} physical climate risk calculation module. OS-C aims to provide an platform unconstrained by any one particular methodology choice. However, it is hoped that just as the open-source Oasis Loss Modelling Framework \cite{OasisLMF} (henceforth Oasis) was designed to accommodate a wide range of catastrophe models, within a well-defined framework and set of interfaces, an analogous physical risk modelling framework can be defined. This could expedite the implementation of a wide range of models and promote standardisation and resource sharing.
+Physical risk is widely understood as the financial risk which arises from the physical effects of climate change. Measuring such risk requires multiple analyses: a) an assessment of the risk of catastrophic events, b) an estimate of the damage on a company's assets and c) the consequent impact on cash flows. A number of papers \cite{add reference} have developed models and tools that tackle one specific aspect of the problem. However, it is not currently easy to seamlessly integrate models which operate in different areas to come up with an end to end physical risk analysis, or to experiment with different approaches.
 
-The modelling framework can be split into three main parts:
+The purpose of this paper is to present the methodology of a framework that is sufficiently generic to be used for a wide range of physical climate risk models. The motivation is to provide a specification for use in the OS-Climate (OS-C) \cite{OSC} physical climate risk calculation module. OS-C aims to provide an platform unconstrained by any one particular methodology choice. We take inspiration from the Oasis Loss Modelling Framework (henceforth Oasis), which was designed to accomodate a wide range of catastrophe models and analyse physical risk in the context of the insurance market: Similarly to what they do, we adopt a modular approach to modeling physical risk, where each module is responsible for answering a specific question and together contribute to assessing physical risk. This approach allows the user to easily change approach to how one question is tackled, while maintaining the integration among the parts. In particular, we build a framework of three independent parts:
 
 \begin{enumerate}
     \item Hazard
@@ -140,11 +143,17 @@ The modelling framework can be split into three main parts:
     \item Financial
 \end{enumerate}
 
-Hazard models are used to obtain probability distributions of future events, such as inundations or periods of drought. Vulnerability models are used to assess the impact of these events on the assets within a portfolio. Financial models convert these impacts into financial measures. These could be measures of the financial impact of climate change on a portfolio of assets, for example Average Annual Loss or loss Exceedance Probability. The impact on an asset could also be used in structural credit risk models.
+First, we have an Hazard component. This component is responsible for answering questions such as "what is the probability of an inundation or a period of drought in that area?". Hazard models produce the probability distributions for such future events. Hazard models are pure climate models, whose outputs can be used as an input for the next steps of the analysis. The Vulnerability component measures the potential impact of a catastrophic event on a given company's asset. Vulnerability models answer questions such as "what's the loss of output suffered by my power station if an inundation of a certain intensity happens?". Finally, the Financial module is concerned with translating the asset damage to a loss of profitability for the company, or a loss of value for a lender, insurer, equity stakeholder etc. Clearly, the models used in the Financial module answer questions specific to a certain user: is the ultimate objective that of measuring the physical risk for the company or for one of the asset's insurer? Depending on the answer to that question, a different Financial model might be needed. 
+
+With respect to Oasis, we try to structure the three components in a way that makes easy analyze physical risk from a variety of perspectives. We do not have a specific market (e.g. insurance market) in mind and we want to make sure that our framework is general enough to allow any stakeholder to reason about their physical risks. In addition, we want our framework to make as few assumptions as possible: The clear hypothesis is that we can treat the modules as dependent from one another only through their potential input-output relationships. Other than that, we want the user to have a flexible access to a wide choice of models within each module: the models are only required to have a predictable external behavior, while the details of the internal workings can be defined with flexibility.
 
 At time of writing, physical risk calculations may make use of `bulk-assessment' approaches where accurate asset vulnerability information is unavailable and approximations are therefore required. The modelling framework accommodates bulk-assessment-type models as well as approaches capable of modelling vulnerability more precisely\footnote{There is potentially great value in the results obtained from very simple models, as long as the model error can be quantified. The aim is to be able to accommodate both simple and complex models in combination.}. The framework is designed to control the model risk that this creates by incorporating a model of the uncertainty of the approximations into the calculation.
 
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Literature}
 
 \section{Model description}
 

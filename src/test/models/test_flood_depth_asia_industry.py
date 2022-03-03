@@ -9,14 +9,15 @@ from physrisk.kernel.vulnerability_model import VulnerabilityModel
 from ..kernel.events import RiverineInundation
 from ..kernel.vulnerability_model import applies_to_events
 
+# following example for flood-depth daamge curve on industry buildings in Asia 
 
 @applies_to_events([RiverineInundation])
 class ExampleCdfBasedVulnerabilityModel(VulnerabilityModel):
     def __init__(self, *, model: str, event_type: type):
-        self.intensities = np.array([0, 0.01, 0.5, 1.0, 1.5, 2, 3, 4, 5, 6])
-        self.impact_means = np.array([0, 0.2, 0.44, 0.58, 0.68, 0.78, 0.85, 0.92, 0.96, 1.0])
-        self.impact_stddevs = np.array([0, 0.17, 0.14, 0.14, 0.17, 0.14, 0.13, 0.10, 0.06, 0])
-        impact_bin_edges = np.array([0, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
+        self.intensities = np.array([0, 0.5, 1.0, 1.5, 2, 3, 4, 5, 6])
+        self.impact_means = np.array([0, 0.28, 0.48, 0.63, 0.72, 0.86, 0.91, 0.96, 1.0])
+        self.impact_stddevs = np.array([0, 0.17, 0.14, 0.14, 0.17, 0.14, 0.10, 0.06, 0]) # completely random at the moment
+        impact_bin_edges = np.array([0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
         super().__init__(model=model, event_type=event_type, impact_bin_edges=impact_bin_edges)
 
     def get_impact_curve(self, intensities):

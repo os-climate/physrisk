@@ -25,7 +25,7 @@ from dash_table.Format import Format, Scheme
 from plotly.subplots import make_subplots
 
 from physrisk.kernel import PowerGeneratingAsset, calculate_impacts, curve
-from physrisk.kernel.calculation import DetailedResultItem
+from physrisk.kernel.calculation import AssetImpactResult
 
 sys.path.append("../..")
 
@@ -63,12 +63,15 @@ latitudes = np.array(asset_filt["latitude"])
 generation = np.array(asset_filt["estimated_generation_gwh"])
 capacity = np.array(asset_filt["capacity_mw"])
 
+scenario = "rcp8p5"
+year = 2080
+
 all_assets = [
     PowerGeneratingAsset(lat, lon, generation=gen, capacity=cap, primary_fuel="gas", name=name, id=id)
     for lon, lat, gen, cap, name, id in zip(longitudes, latitudes, generation, capacity, names, ids)
 ]
 
-detailed_results = calculate_impacts(all_assets[default_index : default_index + 1], cache_folder=cache_folder)
+detailed_results = calculate_impacts(all_assets[default_index : default_index + 1], scenario=scenario, year=year)
 impact_bins = detailed_results[all_assets[default_index]].impact.impact_bins
 impact_bins = curve.process_bin_edges_for_graph(impact_bins)
 
@@ -79,7 +82,7 @@ if os.path.isfile(impacts_file):
         mean_loss = json.load(r)
 
 else:
-    full_detailed_results = calculate_impacts(all_assets, cache_folder=cache_folder)
+    full_detailed_results = calculate_impacts(all_assets, scenario=scenario, year=year)
     mean_loss = {a.id: full_detailed_results[a].impact.mean_impact() for a in all_assets}  # type: ignore
     with open(os.path.join(cache_folder, "all_impacts.json"), "w") as w:
         contents = json.dumps(mean_loss)
@@ -299,7 +302,7 @@ def get_fig_for_model(asset, detailed_results):
 
 def get_fig_gos_for_model(asset, detailed_results):
 
-    res: DetailedResultItem = detailed_results[asset]
+    res: AssetImpactResult = detailed_results[asset]
 
     intensity_bins = res.event.intensity_bins
     intensity_bin_probs = res.event.prob
@@ -343,7 +346,7 @@ def get_fig_for_vulnerability(asset, detailed_results):
 
 def get_fig_gos_for_vulnerability(asset, detailed_results):
 
-    res: DetailedResultItem = detailed_results[asset]
+    res: AssetImpactResult = detailed_results[asset]
 
     go1 = go.Heatmap(
         z=res.vulnerability.prob_matrix,

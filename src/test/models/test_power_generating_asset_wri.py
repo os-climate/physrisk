@@ -65,7 +65,7 @@ class TestPowerGeneratingAssetWri(unittest.TestCase):
             for lon, lat, gen in zip(longitudes, latitudes, generation)
         ]
 
-        detailed_results = calculate_impacts(assets, cache_folder=cache_folder)
+        detailed_results = calculate_impacts(assets, scenario="rcp8p5", year=2020)
         detailed_results[assets[0]].impact.to_exceedance_curve()
         # means = np.array([detailed_results[asset].mean_impact for asset in assets])
 

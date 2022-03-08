@@ -113,7 +113,7 @@ def __next_non_equal_index(ndarray, i):
 
 class ExceedanceCurve:
     """A point on an exceedance curve comprises an value, v, and a probability, p.
-    p is the probability that an event occurs with event value (e.g. intensity) >= v."""
+    p is the probability that the random variable >= v, e.g. an event occurs with event value (e.g. intensity) >= v."""
 
     __slots__ = ["probs", "values"]
 
@@ -161,5 +161,12 @@ class ExceedanceCurve:
         """
         # value bins are contiguous
         value_bins = self.values[:]
-        probs = self.probs[:-1] - self.probs[1:]
+        probs = self.probs[:-1] - self.probs[1:]  # type: ignore
         return value_bins, probs
+
+    def get_samples(self, uniforms):
+        """Return value, v, for each probability p in uniforms such that p is the probability that the random variable
+        < v."""
+        return np.interp(
+            uniforms, np.concatenate([np.zeros(1), 1.0 - self.probs]), np.concatenate([np.zeros(1), self.values])
+        )

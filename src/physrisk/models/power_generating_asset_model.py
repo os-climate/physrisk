@@ -9,7 +9,7 @@ from ..kernel.hazard_event_distrib import HazardEventDistrib
 from ..kernel.hazard_model import EventDataRequest, EventDataResponse
 from ..kernel.vulnerability_distrib import VulnerabilityDistrib
 from ..kernel.vulnerability_model import (
-    VulnerabilityModel,
+    DeterministicVulnerabilityModel,
     VulnerabilityModelBase,
     applies_to_assets,
     applies_to_events,
@@ -71,14 +71,15 @@ class InundationModel(VulnerabilityModelBase):
         # but this general version allows model uncertainties to be added
         probs_protected = np.where(depth_bins[1:] <= protection_depth, 0.0, 1.0)
 
-        vul = VulnerabilityDistrib(type(RiverineInundation), depth_bins, impact_bins, np.diag(probs_protected))
-        event = HazardEventDistrib(type(RiverineInundation), depth_bins, probs)
+        vul = VulnerabilityDistrib(RiverineInundation, depth_bins, impact_bins, np.diag(probs_protected))
+        event = HazardEventDistrib(RiverineInundation, depth_bins, probs)
 
         return vul, event
 
 
 @applies_to_events([HighTemperature])
 @applies_to_assets([PowerGeneratingAsset])
-class TemperatureModel(VulnerabilityModel):
-    # not yet implemented
-    pass
+class TemperatureModel(DeterministicVulnerabilityModel):
+    def __init__(self):
+        # does nothing
+        pass

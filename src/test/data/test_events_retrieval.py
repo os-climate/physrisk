@@ -126,7 +126,7 @@ class TestEventRetrieval(unittest.TestCase):
         store = zarr.storage.MemoryStore(root="hazard.zarr")
         root = zarr.open(store=store, mode="w")
         array_path = get_source_path_wri_riverine_inundation(model="MIROC-ESM-CHEM", scenario="rcp8p5", year=2080)
-        z = root.create_dataset(
+        z = root.create_dataset(  # type: ignore
             array_path, shape=(shape[0], shape[1], shape[2]), chunks=(shape[0], 1000, 1000), dtype="f4"
         )
         z.attrs["transform_mat3x3"] = t

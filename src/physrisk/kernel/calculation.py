@@ -1,66 +1,98 @@
 import logging
 from collections import defaultdict
+from typing import Dict, List
 
 import physrisk.models.power_generating_asset_model as pgam
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
+from physrisk.kernel.hazard_event_distrib import HazardEventDistrib
+from physrisk.kernel.hazard_model import HazardModel
+from physrisk.kernel.impact_distrib import ImpactDistrib
+from physrisk.kernel.vulnerability_distrib import VulnerabilityDistrib
+from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
+from physrisk.utils.helpers import get_iterable
 
 from ..data.event_provider import get_source_path_wri_riverine_inundation
-from .assets import PowerGeneratingAsset
+from .assets import Asset, PowerGeneratingAsset, TestAsset
 from .events import RiverineInundation
+
+
+class AssetImpactResult:
+    def __init__(
+        self,
+        impact: ImpactDistrib,
+        vulnerability: VulnerabilityDistrib = None,
+        event: HazardEventDistrib = None,
+        hazard_data=None,
+    ):
+        self.impact = impact
+        # optional detailed results for drill-dowwn
+        self.hazard_data = hazard_data
+        self.vulnerability = vulnerability
+        self.event = event
 
 
 def get_default_zarr_source_paths():
     return {RiverineInundation: get_source_path_wri_riverine_inundation}
 
 
+def get_default_hazard_model():
+    # Model that gets hazard event data from Zarr storage
+    return ZarrHazardModel(get_default_zarr_source_paths())
+
+
 def get_default_vulnerability_models():
     """Get default exposure/vulnerability models for different asset types."""
-    return {PowerGeneratingAsset: [pgam.InundationModel, pgam.TemperatureModel]}
+    return {PowerGeneratingAsset: [pgam.InundationModel()], TestAsset: [pgam.TemperatureModel()]}
 
 
-def calculate_impacts(assets, cache_folder=None, model_properties=None):
+def calculate_impacts(
+    assets,
+    hazard_model: HazardModel = None,
+    vulnerability_models: Dict[type, List[VulnerabilityModelBase]] = None,
+    *,
+    scenario: str,
+    year: int,
+) -> Dict[Asset, AssetImpactResult]:
+    """ """
+    if hazard_model is None:
+        hazard_model = get_default_hazard_model()
 
-    # the types of model that apply to asset of a particular type
-    model_mapping = get_default_vulnerability_models()
+    # the models that apply to asset of a particular type
+    if vulnerability_models is None:
+        vulnerability_models = get_default_vulnerability_models()
 
-    # Model that gets hazard event data from Zarr storage
-    hazard_model = ZarrHazardModel(get_default_zarr_source_paths())
-
-    model_assets = defaultdict(list)  # list of assets to be modelled using vulnerability model
+    model_assets: Dict[VulnerabilityModelBase, List[Asset]] = defaultdict(
+        list
+    )  # list of assets to be modelled using vulnerability model
     for asset in assets:
         asset_type = type(asset)
-        mappings = model_mapping[asset_type]
+        mappings = vulnerability_models[asset_type]
         for m in mappings:
             model_assets[m].append(asset)
 
-    detailed_results = {}
-    for model_type, assets in model_assets.items():
+    results = {}
+    for model, assets in model_assets.items():
         logging.info(
             "Applying model {0} to {1} assets of type {2}".format(
-                model_type.__name__, len(assets), type(assets[0]).__name__
+                type(model).__name__, len(assets), type(assets[0]).__name__
             )
         )
 
-        model = model_type() if model_properties is None else model_type(**model_properties)
+        # previously used: model_type() if model_properties is None else model_type(**model_properties)
 
-        event_requests_by_asset = [model.get_event_data_requests(asset) for asset in assets]
+        event_requests_by_asset = [
+            model.get_event_data_requests(asset, scenario=scenario, year=year) for asset in assets
+        ]
 
-        event_requests = [req for event_request_by_asset in event_requests_by_asset for req in event_request_by_asset]
+        event_requests = [
+            req for event_request_by_asset in event_requests_by_asset for req in get_iterable(event_request_by_asset)
+        ]
 
         responses = hazard_model.get_hazard_events(event_requests)
 
         for asset, requests in zip(assets, event_requests_by_asset):
-            hazard_data = [responses[req] for req in requests]
-            impact, vul, event = model.get_impacts(asset, hazard_data)
-            detailed_results[asset] = DetailedResultItem(vul, event, impact, hazard_data)
+            hazard_data = [responses[req] for req in get_iterable(requests)]
+            impact, vul, event = model.get_impact(asset, hazard_data)
+            results[asset] = AssetImpactResult(impact, vulnerability=vul, event=event, hazard_data=hazard_data)
 
-    return detailed_results
-
-
-class DetailedResultItem:
-    def __init__(self, vulnerability, event, impact, hazard_data):
-        self.hazard_data = hazard_data
-        self.vulnerability = vulnerability
-        self.event = event
-        self.impact = impact
-        self.mean_impact = impact.mean_impact()
+    return results

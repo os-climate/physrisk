@@ -7,3 +7,11 @@ class Asset:
 
 class PowerGeneratingAsset(Asset):
     pass
+
+
+class RealEstateAsset(Asset):
+    pass
+
+
+class TestAsset(Asset):
+    pass

@@ -94,7 +94,7 @@ class ZarrReader:
         iy = np.repeat(image_coords[0, :], len(return_periods))
 
         data = z.get_coordinate_selection((iz, ix, iy))  # type: ignore
-        return data.reshape([len(longitudes), len(return_periods)]), return_periods
+        return data.reshape([len(longitudes), len(return_periods)]), np.array(return_periods)
 
     @staticmethod
     def _get_coordinates(longitudes, latitudes, transform: Affine):

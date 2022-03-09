@@ -1,5 +1,3 @@
-from types import SimpleNamespace
-
 import numpy as np
 import scipy.stats as stats
 
@@ -24,12 +22,12 @@ class ExampleCdfBasedVulnerabilityModel(VulnerabilityModel):
         impact_means = np.interp(intensities, self.intensities, self.impact_means)
         impact_stddevs = np.interp(intensities, self.intensities, self.impact_stddevs)
         return ImpactCurve(
-            intensities, impact_distribs=[checked_beta_distrib(m, s) for m, s in zip(impact_means, impact_stddevs)]
+            intensities, impact_cdfs=[checked_beta_distrib(m, s) for m, s in zip(impact_means, impact_stddevs)]
         )
 
 
 def delta_cdf(y):
-    return SimpleNamespace(pdf=lambda x: np.where(x >= y, 1, 0))
+    return lambda x: np.where(x >= y, 1, 0)
 
 
 def checked_beta_distrib(mean, std):
@@ -45,4 +43,4 @@ def beta_distrib(mean, std):
     cv = std / mean
     a = (1 - mean) / (cv * cv) - mean
     b = a * (1 - mean) / mean
-    return SimpleNamespace(cdf=lambda x, a=a, b=b: stats.beta.cdf(x, a, b))
+    return lambda x, a=a, b=b: stats.beta.cdf(x, a, b)

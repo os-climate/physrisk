@@ -48,7 +48,7 @@ def get_default_vulnerability_models():
 def calculate_impacts(
     assets,
     hazard_model: HazardModel = None,
-    vulnerability_models: Dict[type, List[VulnerabilityModelBase]] = None,
+    vulnerability_models=None,
     *,
     scenario: str,
     year: int,

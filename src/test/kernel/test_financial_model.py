@@ -34,6 +34,11 @@ class TestAssetImpact(unittest.TestCase):
         data_provider = MockFinancialDataProvider()
 
         assets = [PowerGeneratingAsset(lat, lon) for lon, lat in zip(TestData.longitudes, TestData.latitudes)]
-        model.get_financial_impacts(assets, data_provider=data_provider, scenario="rcp8p5", year=2050)
+        measures = model.get_financial_impacts(
+            assets, data_provider=data_provider, scenario="rcp8p5", year=2050, sims=100000
+        )
 
-        self.assertTrue(True)
+        np.testing.assert_array_almost_equal_nulp(
+            measures["RiverineInundation"]["percentile_values"],
+            np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 365000.0, 365000.0, 365000.0, 730000.0]),
+        )

@@ -167,6 +167,4 @@ class ExceedanceCurve:
     def get_samples(self, uniforms):
         """Return value, v, for each probability p in uniforms such that p is the probability that the random variable
         < v."""
-        return np.interp(
-            uniforms, np.concatenate([np.zeros(1), 1.0 - self.probs]), np.concatenate([np.zeros(1), self.values])
-        )
+        return np.where(uniforms > (1.0 - self.probs[0]), np.interp(uniforms, 1.0 - self.probs, self.values), 0.0)

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Dict, List, Sequence
+from typing import Dict, List, Optional, Sequence
 
 import numpy as np
 
@@ -33,12 +33,14 @@ class Aggregator(ABC):
 
 class DefaultAggregator(Aggregator):
     def get_aggregation_keys(self, asset: Asset, impact: ImpactDistrib) -> List:
-        return [(impact.event_type), ("root")]
+        return [(impact.event_type.__name__), ("root")]
 
 
 class FinancialModel:
     def __init__(
-        self, hazard_model: HazardModel = None, vulnerability_models: Dict[type, List[VulnerabilityModelBase]] = None
+        self,
+        hazard_model: Optional[HazardModel] = None,
+        vulnerability_models: Optional[Dict[type, List[VulnerabilityModelBase]]] = None,
     ):
         self.hazard_model = calculation.get_default_hazard_model() if hazard_model is None else hazard_model
         self.vulnerability_models = (
@@ -54,19 +56,20 @@ class FinancialModel:
         data_provider: FinancialDataProvider,
         scenario: str,
         year: int,
-        aggregator: Aggregator = None,
-        currency: str = "EUR"
+        aggregator: Optional[Aggregator] = None,
+        currency: str = "EUR",
+        sims: int = 100000
     ):
 
         if aggregator is None:
             aggregator = DefaultAggregator()
 
-        aggregation_pools = {}
+        aggregation_pools: Dict[str, np.ndarray] = {}
 
         results = calculate_impacts(assets, self.hazard_model, self.vulnerability_models, scenario=scenario, year=year)
         # the impacts in the results are either fractional damage or a fractional disruption
 
-        rg = np.random.Generator(np.random.MT19937())
+        rg = np.random.Generator(np.random.MT19937(seed=111))
 
         for asset, result in results.items():
             # look up keys for results
@@ -83,13 +86,23 @@ class FinancialModel:
 
             # Monte-Carlo approach: note that if correlations of distributions are simple and model is otherwise linear
             # then calculation by closed-form expression is preferred
-            loss = trans * self.uncorrelated_samples(impact, 10000, rg)
+            loss = trans * self.uncorrelated_samples(impact, sims, rg)
 
             for key in keys:
                 if key not in aggregation_pools:
-                    aggregation_pools[key] = 0.0
+                    aggregation_pools[key] = np.zeros(sims)
                 aggregation_pools[key] += loss  # type: ignore
-        return aggregation_pools
+
+        measures = {}
+        percentiles = [0, 10, 20, 40, 60, 80, 90, 95, 97.5, 99, 99.5, 99.9]
+        for key, loss in aggregation_pools.items():
+            measures[key] = {
+                "percentiles": percentiles,
+                "percentile_values": np.percentile(loss, percentiles),
+                "mean": np.mean(loss),
+            }
+
+        return measures
 
     def uncorrelated_samples(self, impact: ImpactDistrib, samples: int, generator: np.random.Generator) -> np.ndarray:
         return impact.to_exceedance_curve().get_samples(generator.uniform(size=samples))

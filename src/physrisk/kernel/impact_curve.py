@@ -43,7 +43,7 @@ class ImpactCurve:
         cdf_matrix = np.empty([len(self.intensities), len(impact_bin_edges)])
 
         for i, _ in enumerate(self.intensities):
-            cdf_matrix[i, :] = self.impact_cdfs[i](impact_bin_edges)
+            cdf_matrix[i, :] = self.impact_cdfs[i](impact_bin_edges)  # type: ignore
 
         prob_matrix = cdf_matrix[:, 1:] - cdf_matrix[:, :-1]
 

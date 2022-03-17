@@ -39,7 +39,7 @@ class TestPowerGeneratingAssetWri(unittest.TestCase):
         impact, vul, event = model.get_impact(assets[0], responses_mock)
         mean = impact.mean_impact()
 
-        self.assertAlmostEqual(mean, 4.8453897)
+        self.assertAlmostEqual(mean, 4.8453897 / 365.0)
 
     @unittest.skip("example, not test")
     def test_with_data_sourcing(self):

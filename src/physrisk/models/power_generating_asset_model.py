@@ -64,7 +64,7 @@ class InundationModel(VulnerabilityModelBase):
 
         depth_bins, probs = curve_future.get_probability_bins()
 
-        impact_bins = np.interp(depth_bins, self.__curve_depth, self.__curve_impact)
+        impact_bins = np.interp(depth_bins, self.__curve_depth, self.__curve_impact) / 365.0
 
         # keep all bins, but make use of vulnerability matrix to apply protection level
         # for improved performance we could truncate (and treat identify matrix as a special case)

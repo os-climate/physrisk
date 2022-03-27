@@ -1,59 +1,38 @@
 import json
-from typing import List
 
-from pydantic import BaseModel
-
+from physrisk.data.inventory import Inventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
+from physrisk.data_objects.hazard_event_requests import (
+    HazardEventAvailabilityRequest,
+    HazardEventAvailabilityResponse,
+    HazardEventDataRequest,
+    HazardEventDataResponse,
+    HazardEventDataResponseItem,
+    IntensityCurve,
+)
 from physrisk.kernel.events import Event
 from physrisk.kernel.hazard_model import EventDataRequest
 
 from .kernel import calculation as calc
 
 
-class BaseRequest(BaseModel):
-    request_id: str
-
-
-class HazardEventDataRequestItem(BaseModel):
-    longitudes: List[float]
-    latitudes: List[float]
-    request_item_id: str
-    event_type: str  # e.g. RiverineInundation
-    model: str
-    scenario: str  # e.g. rcp8p5
-    year: int
-
-
-class HazardEventDataRequest(BaseRequest):
-    items: List[HazardEventDataRequestItem]
-
-
-class IntensityCurve(BaseModel):
-    intensities: List[float]
-    return_periods: List[float]
-
-
-class HazardEventDataResponseItem(BaseModel):
-    intensity_curve_set: List[IntensityCurve]
-    request_item_id: str
-    event_type: str
-    model: str
-    scenario: str
-    year: int
-
-
-class HazardEventDataResponse(BaseRequest):
-    items: List[HazardEventDataResponseItem]
-
-
-def get(request_dict):
-    request_id = request_dict["request_id"].lower()
+def get(*, request_id, request_dict):
 
     if request_id == "get_hazard_data":
         request = HazardEventDataRequest(**request_dict)
         return json.dumps(_get_hazard_data(request).dict())
+    elif request_id == "get_hazard_data_availability":
+        request = HazardEventAvailabilityRequest(**request_dict)
+        return json.dumps(_get_hazard_data_availability(request).dict())
     else:
         raise ValueError("request type " + request_dict["request_id"] + " not found")
+
+
+def _get_hazard_data_availability(request: HazardEventAvailabilityRequest):
+    inventory = Inventory()
+    models = inventory.models
+    response = HazardEventAvailabilityResponse(models=models)  # type: ignore
+    return response
 
 
 def _get_hazard_data(request: HazardEventDataRequest, source_paths=None, store=None):
@@ -85,7 +64,7 @@ def _get_hazard_data(request: HazardEventDataRequest, source_paths=None, store=N
     # responses comes back as a dictionary because requests may be executed in different order to list
     # to optimise performance.
 
-    response = HazardEventDataResponse(request_id=request.request_id, items=[])
+    response = HazardEventDataResponse(items=[])
 
     for i, item in enumerate(request.items):
         requests = item_requests[i]

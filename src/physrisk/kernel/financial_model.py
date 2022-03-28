@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
+from typing import Dict
 
 import numpy as np
 
@@ -27,7 +28,7 @@ class FinancialModelBase(ABC):
 
     @abstractmethod
     def disruption_to_loss(self, asset: Asset, impact: np.ndarray, year: int, currency: str):
-        """Convert the fractional disruption of the specified asset to a financial loss."""
+        """Convert the fractional annual disruption of the specified asset to a financial loss."""
         ...
 
 
@@ -52,4 +53,11 @@ class FinancialModel(FinancialModelBase):
 class CompositeFinancialModel(FinancialModelBase):
     """Financial model split by asset type."""
 
-    pass
+    def __init__(self, financial_models: Dict[type, FinancialModelBase]):
+        self.financial_models = financial_models
+
+    def damage_to_loss(self, asset: Asset, impact: np.ndarray, currency: str):
+        return self.financial_models[type(asset)].damage_to_loss(asset, impact, currency)
+
+    def disruption_to_loss(self, asset: Asset, impact: np.ndarray, year: int, currency: str):
+        return self.financial_models[type(asset)].disruption_to_loss(asset, impact, year, currency)

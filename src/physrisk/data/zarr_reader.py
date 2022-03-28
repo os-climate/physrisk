@@ -8,7 +8,7 @@ import zarr
 from affine import Affine
 
 
-def get_env(key: str, default: str = None) -> str:
+def get_env(key: str, default: Optional[str] = None) -> str:
     value = os.environ.get(key)
     if value is None:
         if default is not None:
@@ -29,8 +29,8 @@ class ZarrReader:
 
     def __init__(
         self,
-        store: MutableMapping = None,
-        path_provider: Callable[..., str] = None,
+        store: Optional[MutableMapping] = None,
+        path_provider: Optional[Callable[..., str]] = None,
         get_env: Callable[[str, Optional[str]], str] = get_env,
     ):
         """Create a ZarrReader.

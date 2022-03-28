@@ -8,21 +8,21 @@ class BaseRequest(BaseModel):
 
 
 class Scenario(BaseModel):
+    """Scenario ID and the list of available years for that scenario e.g. RCP8.5 = 'rcp8.5'"""
+
     id: str
     years: List[int]
 
 
 class Model(BaseModel):
+    """Provides the scenarios associated ith a hazard model."""
+
     event_type: str
     id: str
     scenarios: List[Scenario]
 
 
 # region HazardAvailability
-
-
-class HazardAvailabilityItem(BaseModel):
-    models: List[Model]
 
 
 class HazardEventAvailabilityRequest(BaseModel):

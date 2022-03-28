@@ -14,7 +14,6 @@ from physrisk import RiverineInundation, requests
 from physrisk.data.event_provider import get_source_path_wri_riverine_inundation
 from physrisk.data.hazard.event_provider_wri import EventProviderWri
 from physrisk.data.inventory import Inventory
-from physrisk.data_objects.hazard_event_requests import HazardEventAvailabilityRequest
 
 
 class TestEventRetrieval(unittest.TestCase):
@@ -35,10 +34,8 @@ class TestEventRetrieval(unittest.TestCase):
         _ = requests.get(request_id="get_hazard_data_availability", request_dict={})
 
     def test_hazard_data_availability_summary(self):
-        # test that validation passes:
-        response = requests._get_hazard_data_availability(HazardEventAvailabilityRequest(event_types=None))
-        summary = Inventory.get_models_summary(response.models)
-        self.assertEqual(summary["RiverineInundation"].years, [2030, 2050, 2080])
+        summary = Inventory().get_models_summary()
+        self.assertEqual(summary["RiverineInundation"].years, [1980, 2030, 2050, 2080])
 
     def test_zarr_reading(self):
         request_dict = {

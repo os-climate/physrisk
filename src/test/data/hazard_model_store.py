@@ -44,6 +44,34 @@ class TestData:
     ]
 
 
+def get_mock_hazard_model_store_single_curve():
+    return_periods = [5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0]
+    t = [0.008333333333333333, 0.0, -180.0, 0.0, -0.008333333333333333, 90.0, 0.0, 0.0, 1.0]
+    shape = (len(return_periods), 21600, 43200)
+    store = zarr.storage.MemoryStore(root="hazard.zarr")
+    root = zarr.open(store=store, mode="w")
+    array_path = get_source_path_wri_riverine_inundation(model="MIROC-ESM-CHEM", scenario="rcp8p5", year=2080)
+    z = root.create_dataset(  # type: ignore
+        array_path, shape=(shape[0], shape[1], shape[2]), chunks=(shape[0], 1000, 1000), dtype="f4"
+    )
+    z.attrs["transform_mat3x3"] = t
+    z.attrs["index_values"] = return_periods
+
+    longitudes = TestData.longitudes
+    latitudes = TestData.latitudes
+    t = z.attrs["transform_mat3x3"]
+    transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
+
+    coords = np.vstack((longitudes, latitudes, np.ones(len(longitudes))))
+    inv_trans = ~transform
+    mat = np.array(inv_trans).reshape(3, 3)
+    frac_image_coords = mat @ coords
+    image_coords = np.floor(frac_image_coords).astype(int)
+    z[:, image_coords[1, 1], image_coords[0, 1]] = np.linspace(0.1, 1.0, z.shape[0])
+
+    return store
+
+
 def get_mock_hazard_model_store(longitudes, latitudes, curve):
     return_periods = [2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0]
     t = [0.008333333333333333, 0.0, -180.0, 0.0, -0.008333333333333333, 90.0, 0.0, 0.0, 1.0]

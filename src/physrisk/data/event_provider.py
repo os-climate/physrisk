@@ -1,5 +1,5 @@
 import os
-from typing import List, MutableMapping
+from typing import List, MutableMapping, Optional
 
 from typing_extensions import Protocol
 
@@ -25,7 +25,7 @@ class EventProvider:
         self,
         get_source_path: SourcePath,
         *,
-        store: MutableMapping = None,
+        store: Optional[MutableMapping] = None,
     ):
         """Create an EventProvider.
 

@@ -3,13 +3,12 @@ from typing import Dict, List, Optional, Sequence
 
 import numpy as np
 
-from physrisk.kernel import calculation
-from physrisk.kernel.assets import Asset
-from physrisk.kernel.calculation import calculate_impacts
-from physrisk.kernel.financial_model import FinancialModelBase
-from physrisk.kernel.hazard_model import HazardModel
-from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
-from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
+from .assets import Asset
+from .calculation import calculate_impacts, get_default_hazard_model, get_default_vulnerability_models
+from .financial_model import FinancialModelBase
+from .hazard_model import HazardModel
+from .impact_distrib import ImpactDistrib, ImpactType
+from .vulnerability_model import VulnerabilityModelBase
 
 
 class Aggregator(ABC):
@@ -29,9 +28,9 @@ class LossModel:
         hazard_model: Optional[HazardModel] = None,
         vulnerability_models: Optional[Dict[type, Sequence[VulnerabilityModelBase]]] = None,
     ):
-        self.hazard_model = calculation.get_default_hazard_model() if hazard_model is None else hazard_model
+        self.hazard_model = get_default_hazard_model() if hazard_model is None else hazard_model
         self.vulnerability_models = (
-            calculation.get_default_vulnerability_models() if vulnerability_models is None else vulnerability_models
+            get_default_vulnerability_models() if vulnerability_models is None else vulnerability_models
         )
 
     """Calculates the financial impact on a list of assets."""

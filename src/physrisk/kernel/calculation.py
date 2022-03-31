@@ -2,18 +2,17 @@ import logging
 from collections import defaultdict
 from typing import Dict, List
 
-import physrisk.models.power_generating_asset_model as pgam
-from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
-from physrisk.kernel.hazard_event_distrib import HazardEventDistrib
-from physrisk.kernel.hazard_model import HazardModel
-from physrisk.kernel.impact_distrib import ImpactDistrib
-from physrisk.kernel.vulnerability_distrib import VulnerabilityDistrib
-from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
-from physrisk.utils.helpers import get_iterable
-
 from ..data.event_provider import get_source_path_wri_riverine_inundation
+from ..data.pregenerated_hazard_model import ZarrHazardModel
+from ..models import power_generating_asset_model as pgam
+from ..utils.helpers import get_iterable
 from .assets import Asset, PowerGeneratingAsset, TestAsset
 from .events import RiverineInundation
+from .hazard_event_distrib import HazardEventDistrib
+from .hazard_model import HazardModel
+from .impact_distrib import ImpactDistrib
+from .vulnerability_distrib import VulnerabilityDistrib
+from .vulnerability_model import VulnerabilityModelBase
 
 
 class AssetImpactResult:

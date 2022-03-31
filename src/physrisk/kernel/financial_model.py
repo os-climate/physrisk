@@ -4,7 +4,7 @@ from typing import Dict
 
 import numpy as np
 
-from physrisk.kernel.assets import Asset
+from .assets import Asset
 
 
 class FinancialDataProvider(ABC):

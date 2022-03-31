@@ -2,7 +2,7 @@ from typing import List, Union
 
 import numpy as np
 
-import physrisk.kernel.curve as curve
+from . import curve
 
 
 class HazardEventDistrib:

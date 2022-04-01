@@ -1,8 +1,8 @@
 import json
 
-from physrisk.data.inventory import Inventory
-from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
-from physrisk.data_objects.hazard_event_requests import (
+from .data.inventory import Inventory
+from .data.pregenerated_hazard_model import ZarrHazardModel
+from .data_objects.hazard_event_requests import (
     HazardEventAvailabilityRequest,
     HazardEventAvailabilityResponse,
     HazardEventDataRequest,
@@ -10,10 +10,9 @@ from physrisk.data_objects.hazard_event_requests import (
     HazardEventDataResponseItem,
     IntensityCurve,
 )
-from physrisk.kernel.events import Event
-from physrisk.kernel.hazard_model import EventDataRequest
-
+from .kernel import Event
 from .kernel import calculation as calc
+from .kernel.hazard_model import EventDataRequest
 
 
 def get(*, request_id, request_dict):

@@ -1,11 +1,9 @@
 import numpy as np
 import scipy.stats as stats
 
-from physrisk.kernel.impact_curve import ImpactCurve
-from physrisk.kernel.vulnerability_model import VulnerabilityModel
-
 from ..kernel.events import RiverineInundation
-from ..kernel.vulnerability_model import applies_to_events
+from ..kernel.impact_curve import ImpactCurve
+from ..kernel.vulnerability_model import VulnerabilityModel, applies_to_events
 
 
 @applies_to_events([RiverineInundation])

@@ -1,8 +1,8 @@
 from collections import defaultdict
 from typing import Dict, List
 
-from physrisk.data.event_provider import EventProvider, SourcePath
-from physrisk.kernel.hazard_model import EventDataRequest, EventDataResponse, HazardModel
+from ..kernel.hazard_model import EventDataRequest, EventDataResponse, HazardModel
+from .event_provider import EventProvider, SourcePath
 
 
 class PregeneratedHazardModel(HazardModel):

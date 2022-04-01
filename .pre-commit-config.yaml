@@ -1,6 +1,6 @@
 ---
 repos:
-  - repo: git://github.com/pre-commit/pre-commit-hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.1.0
     hooks:
       - id: trailing-whitespace
@@ -18,19 +18,19 @@ repos:
       - id: check-ast
       - id: debug-statements
 
-  - repo: git://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.1.11
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: v1.1.13
     hooks:
       - id: remove-tabs
 
   - repo: https://github.com/psf/black
-    rev: '22.1.0'
+    rev: '22.3.0'
     hooks:
       - id: black
       - id: black-jupyter
 
   - repo: https://github.com/s-weigand/flake8-nb
-    rev: v0.3.1
+    rev: v0.4.0
     hooks:
       - id: flake8-nb
         additional_dependencies:

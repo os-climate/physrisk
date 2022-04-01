@@ -24,7 +24,7 @@ def get(*, request_id, request_dict):
         request = HazardEventAvailabilityRequest(**request_dict)
         return json.dumps(_get_hazard_data_availability(request).dict())
     else:
-        raise ValueError("request type " + request_dict["request_id"] + " not found")
+        raise ValueError(f"request type '{request_id}' not found")
 
 
 def _get_hazard_data_availability(request: HazardEventAvailabilityRequest):

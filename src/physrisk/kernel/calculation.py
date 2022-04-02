@@ -1,8 +1,8 @@
 import logging
 from collections import defaultdict
-from typing import Dict, List
+from typing import Any, Dict, List, Optional, Sequence
 
-import physrisk.models.power_generating_asset_model as pgam
+import physrisk.models.power_generating_asset_models as pgam
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.kernel.hazard_event_distrib import HazardEventDistrib
 from physrisk.kernel.hazard_model import HazardModel
@@ -20,8 +20,8 @@ class AssetImpactResult:
     def __init__(
         self,
         impact: ImpactDistrib,
-        vulnerability: VulnerabilityDistrib = None,
-        event: HazardEventDistrib = None,
+        vulnerability: Optional[VulnerabilityDistrib] = None,
+        event: Optional[HazardEventDistrib] = None,
         hazard_data=None,
     ):
         self.impact = impact
@@ -47,8 +47,8 @@ def get_default_vulnerability_models():
 
 def calculate_impacts(
     assets,
-    hazard_model: HazardModel = None,
-    vulnerability_models=None,
+    hazard_model: Optional[HazardModel] = None,
+    vulnerability_models: Optional[Any] =None, #: Optional[Dict[type, Sequence[VulnerabilityModelBase]]] = None,
     *,
     scenario: str,
     year: int,

@@ -14,7 +14,7 @@ from physrisk.kernel.vulnerability_model import VulnerabilityModel
 from physrisk.models.example_models import ExampleCdfBasedVulnerabilityModel
 
 
-class RealEstateInundationModel(VulnerabilityModel):
+class ExampleRealEstateInundationModel(VulnerabilityModel):
     def __init__(self):
         self.intensities = np.array([0, 0.01, 0.5, 1.0, 1.5, 2, 3, 4, 5, 6])
         self.impact_means = np.array([0, 0.2, 0.44, 0.58, 0.68, 0.78, 0.85, 0.92, 0.96, 1.0])
@@ -22,7 +22,7 @@ class RealEstateInundationModel(VulnerabilityModel):
         impact_bin_edges = np.array([0, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
         super().__init__(model="MIROC-ESM-CHEM", event_type=RiverineInundation, impact_bin_edges=impact_bin_edges)
 
-    def get_impact_curve(self, intensities):
+    def get_impact_curve(self, intensities, asset):
         # we interpolate the mean and standard deviation and use this to construct distributions
         impact_means = np.interp(intensities, self.intensities, self.impact_means)
         impact_stddevs = np.interp(intensities, self.intensities, self.impact_stddevs)
@@ -77,9 +77,9 @@ class TestExampleModels(unittest.TestCase):
         scenario = "rcp8p5"
         year = 2080
 
-        vulnerability_models = {RealEstateAsset: [RealEstateInundationModel()]}
+        vulnerability_models = {RealEstateAsset: [ExampleRealEstateInundationModel()]}
 
-        assets = [RealEstateAsset(lat, lon) for lon, lat in zip(TestData.longitudes, TestData.latitudes)]
+        assets = [RealEstateAsset(lat, lon, location='Asia', type='Building/Industrial') for lon, lat in zip(TestData.longitudes, TestData.latitudes)]
 
         results = calculation.calculate_impacts(
             assets, hazard_model, vulnerability_models, scenario=scenario, year=year

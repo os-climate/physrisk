@@ -3,7 +3,7 @@ from typing import Dict, List, Sequence
 
 from pydantic import parse_obj_as
 
-from physrisk.data_objects.hazard_event_requests import Model
+from ..data_objects.hazard_event_requests import Model
 
 
 class EventTypeInfo:

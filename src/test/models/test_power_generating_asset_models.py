@@ -7,13 +7,13 @@ import numpy as np
 from physrisk import calculate_impacts
 from physrisk.kernel import Asset, PowerGeneratingAsset
 from physrisk.kernel.hazard_model import EventDataResponse
-from physrisk.models.power_generating_asset_model import InundationModel
+from physrisk.models.power_generating_asset_models import InundationModel
 from physrisk.utils.lazy_importing import lazy_import
 
 pd = lazy_import("pandas")
 
 
-class TestPowerGeneratingAssetWri(unittest.TestCase):
+class TestPowerGeneratingAssetModels(unittest.TestCase):
     """Tests World Resource Institute (WRI) models for power generating assets."""
 
     def test_innundation(self):

@@ -1,27 +1,31 @@
 import importlib.resources
 import json
 from typing import Dict, List, Union
+
 import numpy as np
-from physrisk.data_objects.vulnerability_curve import Countries, Country
+
 import physrisk.data.static
+from physrisk.data_objects.vulnerability_curve import Countries, Country
 
 
 def get_countries_from_resource():
-    with importlib.resources.open_text(physrisk.data.static, 'world.json') as f:
+    with importlib.resources.open_text(physrisk.data.static, "world.json") as f:
         countries = Countries(**json.load(f))
         return dict((c.country, c) for c in countries.items)
 
 
 def get_countries_json():
     """Get countries and continents, populating json."""
-    
-    import pandas as pd
+
     import geopandas as gpd
 
-    world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres')) #type: ignore
+    world = gpd.read_file(gpd.datasets.get_path("naturalearth_lowres"))  # type: ignore
     countries = world[["continent", "name", "iso_a3"]]
-    
-    countries = [Country(continent=continent, country=country, country_iso_a3=code) for (continent, country, code) in zip(world["continent"], world["name"], world["iso_a3"])]
+
+    countries = [
+        Country(continent=continent, country=country, country_iso_a3=code)
+        for (continent, country, code) in zip(world["continent"], world["name"], world["iso_a3"])
+    ]
 
     return json.dumps(Countries(items=countries).dict(), sort_keys=True, indent=4)
 
@@ -34,19 +38,17 @@ def get_countries_and_continents(longitudes: Union[List[float], np.ndarray], lat
     # want to confine its use to pre-processing / on-boarding of data
     # In particular, country/continent look-up is probably something to do pre-onboarding
 
-    import pandas as pd
     import geopandas as gpd
+    import pandas as pd
 
     # consider using map here https://gadm.org/download_world.html
-    world = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres')) #type: ignore
+    world = gpd.read_file(gpd.datasets.get_path("naturalearth_lowres"))  # type: ignore
     gdf = gpd.GeoDataFrame(crs=world.crs, geometry=gpd.points_from_xy(longitudes, latitudes))
-    result = gpd.sjoin(gdf, world, how='left')
+    result = gpd.sjoin(gdf, world, how="left")
 
-    return list(result["name"]), list(result["continent"]) 
+    return list(result["name"]), list(result["continent"])
+
 
 class World:
-    
+
     countries: Dict[str, Country] = get_countries_from_resource()
-
-
-        

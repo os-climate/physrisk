@@ -36,7 +36,6 @@ class TestEventRetrieval(unittest.TestCase):
     def test_hazard_data_availability_summary(self):
         summary = Inventory().get_models_summary()
         self.assertEqual(summary["RiverineInundation"].years, [1980, 2030, 2050, 2080])
-        
 
     def test_zarr_reading(self):
         request_dict = {

@@ -79,7 +79,10 @@ class TestExampleModels(unittest.TestCase):
 
         vulnerability_models = {RealEstateAsset: [ExampleRealEstateInundationModel()]}
 
-        assets = [RealEstateAsset(lat, lon, location='Asia', type='Building/Industrial') for lon, lat in zip(TestData.longitudes, TestData.latitudes)]
+        assets = [
+            RealEstateAsset(lat, lon, location="Asia", type="Building/Industrial")
+            for lon, lat in zip(TestData.longitudes, TestData.latitudes)
+        ]
 
         results = calculation.calculate_impacts(
             assets, hazard_model, vulnerability_models, scenario=scenario, year=year

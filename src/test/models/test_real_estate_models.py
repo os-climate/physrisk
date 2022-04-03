@@ -1,17 +1,13 @@
 """ Test asset impact calculations."""
-import os
 import unittest
+from test.data.hazard_model_store import TestData, get_mock_hazard_model_store
 
 import numpy as np
 
-from physrisk import calculate_impacts
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.kernel import calculation
 from physrisk.kernel.assets import RealEstateAsset
 from physrisk.models.real_estate_models import RealEstateInundationModel
-from test.data.hazard_model_store import TestData, get_mock_hazard_model_store, get_mock_hazard_model_store_single_curve
-from test.models.test_example_models import ExampleRealEstateInundationModel
-
 
 
 class TestRealEstateModels(unittest.TestCase):
@@ -24,10 +20,12 @@ class TestRealEstateModels(unittest.TestCase):
         )
         store = get_mock_hazard_model_store(TestData.longitudes, TestData.latitudes, curve)
         hazard_model = ZarrHazardModel(source_paths=calculation.get_default_zarr_source_paths(), store=store)
-        
-        assets = [RealEstateAsset(lat, lon, location='Asia', type='Buildings/Industrial')
-            for lon, lat in zip(TestData.longitudes[0:1], TestData.latitudes[0:1])]
-        
+
+        assets = [
+            RealEstateAsset(lat, lon, location="Asia", type="Buildings/Industrial")
+            for lon, lat in zip(TestData.longitudes[0:1], TestData.latitudes[0:1])
+        ]
+
         scenario = "rcp8p5"
         year = 2080
 
@@ -36,4 +34,8 @@ class TestRealEstateModels(unittest.TestCase):
         results = calculation.calculate_impacts(
             assets, hazard_model, vulnerability_models, scenario=scenario, year=year
         )
-        
+
+        np.testing.assert_allclose(results[assets[0]].impact.prob,
+            np.array([0.02816851, 0.19360632, 0.11700387, 0.06039094, 0.03344832,
+                0.02109813, 0.01503788, 0.01139472, 0.00864163, 0.00626335,
+                0.00394632]), rtol=1e-6)

@@ -88,4 +88,4 @@ class TestExampleModels(unittest.TestCase):
             assets, hazard_model, vulnerability_models, scenario=scenario, year=year
         )
 
-        self.assertAlmostEquals(results[assets[0]].impact.to_exceedance_curve().probs[0], 0.499)
+        self.assertAlmostEqual(results[assets[0]].impact.to_exceedance_curve().probs[0], 0.499)

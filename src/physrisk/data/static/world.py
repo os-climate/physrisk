@@ -39,7 +39,6 @@ def get_countries_and_continents(longitudes: Union[List[float], np.ndarray], lat
     # In particular, country/continent look-up is probably something to do pre-onboarding
 
     import geopandas as gpd
-    import pandas as pd
 
     # consider using map here https://gadm.org/download_world.html
     world = gpd.read_file(gpd.datasets.get_path("naturalearth_lowres"))  # type: ignore

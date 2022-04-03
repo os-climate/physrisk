@@ -35,7 +35,22 @@ class TestRealEstateModels(unittest.TestCase):
             assets, hazard_model, vulnerability_models, scenario=scenario, year=year
         )
 
-        np.testing.assert_allclose(results[assets[0]].impact.prob,
-            np.array([0.02816851, 0.19360632, 0.11700387, 0.06039094, 0.03344832,
-                0.02109813, 0.01503788, 0.01139472, 0.00864163, 0.00626335,
-                0.00394632]), rtol=1e-6)
+        np.testing.assert_allclose(
+            results[assets[0]].impact.prob,
+            np.array(
+                [
+                    0.02816851,
+                    0.19360632,
+                    0.11700387,
+                    0.06039094,
+                    0.03344832,
+                    0.02109813,
+                    0.01503788,
+                    0.01139472,
+                    0.00864163,
+                    0.00626335,
+                    0.00394632,
+                ]
+            ),
+            rtol=1e-6,
+        )

@@ -15,11 +15,11 @@ from .kernel import calculation as calc
 from .kernel.hazard_model import EventDataRequest
 
 
-def get(*, request_id, request_dict):
+def get(*, request_id, request_dict, store=None):
 
     if request_id == "get_hazard_data":
         request = HazardEventDataRequest(**request_dict)
-        return json.dumps(_get_hazard_data(request).dict())
+        return json.dumps(_get_hazard_data(request, store=store).dict())
     elif request_id == "get_hazard_data_availability":
         request = HazardEventAvailabilityRequest(**request_dict)
         return json.dumps(_get_hazard_data_availability(request).dict())

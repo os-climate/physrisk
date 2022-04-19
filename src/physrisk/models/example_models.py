@@ -15,7 +15,7 @@ class ExampleCdfBasedVulnerabilityModel(VulnerabilityModel):
         impact_bin_edges = np.array([0, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
         super().__init__(model=model, event_type=event_type, impact_bin_edges=impact_bin_edges)
 
-    def get_impact_curve(self, intensities):
+    def get_impact_curve(self, intensities, asset):
         # we interpolate the mean and standard deviation and use this to construct distributions
         impact_means = np.interp(intensities, self.intensities, self.impact_means)
         impact_stddevs = np.interp(intensities, self.intensities, self.impact_stddevs)

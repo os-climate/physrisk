@@ -1,10 +1,10 @@
 import logging
 from collections import defaultdict
-from typing import Dict, List
+from typing import Any, Dict, List, Optional
 
 from ..data.event_provider import get_source_path_wri_riverine_inundation
 from ..data.pregenerated_hazard_model import ZarrHazardModel
-from ..models import power_generating_asset_model as pgam
+from ..models import power_generating_asset_models as pgam
 from ..utils.helpers import get_iterable
 from .assets import Asset, PowerGeneratingAsset, TestAsset
 from .events import RiverineInundation
@@ -19,8 +19,8 @@ class AssetImpactResult:
     def __init__(
         self,
         impact: ImpactDistrib,
-        vulnerability: VulnerabilityDistrib = None,
-        event: HazardEventDistrib = None,
+        vulnerability: Optional[VulnerabilityDistrib] = None,
+        event: Optional[HazardEventDistrib] = None,
         hazard_data=None,
     ):
         self.impact = impact
@@ -46,8 +46,8 @@ def get_default_vulnerability_models():
 
 def calculate_impacts(
     assets,
-    hazard_model: HazardModel = None,
-    vulnerability_models=None,
+    hazard_model: Optional[HazardModel] = None,
+    vulnerability_models: Optional[Any] = None,  #: Optional[Dict[type, Sequence[VulnerabilityModelBase]]] = None,
     *,
     scenario: str,
     year: int,

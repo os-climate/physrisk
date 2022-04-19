@@ -23,17 +23,20 @@ class Inventory:
         wri_riverine_inundation_models = [
             {
                 "event_type": "RiverineInundation",
-                "id": "riverine_inundation/wri/v2/000000000WATCH",
+                "path": "riverine_inundation/wri/v2",
+                "id": "000000000WATCH",
                 "display_name": "Baseline condition",
-                "filename": "inun{type}_{scenario}_{model}_{year}",
+                "filename": "inunriver_{scenario}_{id}_{year}",
                 "scenarios": [
                     {"id": "historical", "years": [1980]},
                 ],
             },
             {
                 "event_type": "RiverineInundation",
-                "id": "riverine_inundation/wri/v2/00000NorESM1-M",
+                "path": "riverine_inundation/wri/v2",
+                "id": "00000NorESM1-M",
                 "display_name": "GCM model: Bjerknes Centre for Climate Research, Norwegian Meteorological Institute",
+                "filename": "inunriver_{scenario}_{id}_{year}",
                 "scenarios": [
                     {"id": "rcp4p5", "years": [2030, 2050, 2080]},
                     {"id": "rcp8p5", "years": [2030, 2050, 2080]},
@@ -41,8 +44,10 @@ class Inventory:
             },
             {
                 "event_type": "RiverineInundation",
-                "id": "riverine_inundation/wri/v2/0000GFDL-ESM2M",
+                "path": "riverine_inundation/wri/v2",
+                "id": "0000GFDL-ESM2M",
                 "display_name": "GCM model: Geophysical Fluid Dynamics Laboratory (NOAA)",
+                "filename": "inunriver_{scenario}_{id}_{year}",
                 "scenarios": [
                     {"id": "rcp4p5", "years": [2030, 2050, 2080]},
                     {"id": "rcp8p5", "years": [2030, 2050, 2080]},
@@ -50,8 +55,10 @@ class Inventory:
             },
             {
                 "event_type": "RiverineInundation",
-                "id": "riverine_inundation/wri/v2/0000HadGEM2-ES",
+                "path": "riverine_inundation/wri/v2",
+                "id": "0000HadGEM2-ES",
                 "display_name": "GCM model: Met Office Hadley Centre",
+                "filename": "inunriver_{scenario}_{id}_{year}",
                 "scenarios": [
                     {"id": "rcp4p5", "years": [2030, 2050, 2080]},
                     {"id": "rcp8p5", "years": [2030, 2050, 2080]},
@@ -59,8 +66,10 @@ class Inventory:
             },
             {
                 "event_type": "RiverineInundation",
-                "id": "riverine_inundation/wri/v2/00IPSL-CM5A-LR",
+                "path": "riverine_inundation/wri/v2",
+                "id": "00IPSL-CM5A-LR",
                 "display_name": "GCM model: Institut Pierre Simon Laplace",
+                "filename": "inunriver_{scenario}_{id}_{year}",
                 "scenarios": [
                     {"id": "rcp4p5", "years": [2030, 2050, 2080]},
                     {"id": "rcp8p5", "years": [2030, 2050, 2080]},
@@ -68,10 +77,12 @@ class Inventory:
             },
             {
                 "event_type": "RiverineInundation",
-                "id": "riverine_inundation/wri/v2/MIROC-ESM-CHEM",
+                "path": "riverine_inundation/wri/v2",
+                "id": "MIROC-ESM-CHEM",
                 "display_name": """GCM model: Atmosphere and Ocean Research Institute
  (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency
  for Marine-Earth Science and Technology""",
+                "filename": "inunriver_{scenario}_{id}_{year}",
                 "scenarios": [
                     {"id": "rcp4p5", "years": [2030, 2050, 2080]},
                     {"id": "rcp8p5", "years": [2030, 2050, 2080]},
@@ -82,7 +93,8 @@ class Inventory:
         wri_coastal_inundation_models = [
             {
                 "event_type": "CoastalInundation",
-                "id": "coastal_inundation/wri/v2/nosub",
+                "path": "coastal_inundation/wri/v2",
+                "id": "nosub",
                 "display_name": "Baseline condition; no subsidence",
                 "scenarios": [
                     {"id": "historical", "years": [1980]},
@@ -92,7 +104,8 @@ class Inventory:
             },
             {
                 "event_type": "CoastalInundation",
-                "id": "coastal_inundation/wri/v2/nosub_95",
+                "path": "coastal_inundation/wri/v2",
+                "id": "nosub_95",
                 "display_name": "No subsidence; 95th percentile sea rise",
                 "scenarios": [
                     {"id": "historical", "years": [1980]},
@@ -102,7 +115,8 @@ class Inventory:
             },
             {
                 "event_type": "CoastalInundation",
-                "id": "coastal_inundation/wri/v2/nosub_05",
+                "path": "coastal_inundation/wri/v2",
+                "id": "nosub_05",
                 "display_name": "No subsidence; 5th percentile sea rise",
                 "scenarios": [
                     {"id": "historical", "years": [1980]},
@@ -112,7 +126,8 @@ class Inventory:
             },
             {
                 "event_type": "CoastalInundation",
-                "id": "coastal_inundation/wri/v2/nosub_50",
+                "path": "coastal_inundation/wri/v2",
+                "id": "nosub_50",
                 "display_name": "No subsidence; 50th percentile sea rise",
                 "scenarios": [
                     {"id": "historical", "years": [1980]},
@@ -122,7 +137,8 @@ class Inventory:
             },
             {
                 "event_type": "CoastalInundation",
-                "id": "coastal_inundation/wri/v2/wtsub",
+                "path": "coastal_inundation/wri/v2",
+                "id": "wtsub",
                 "display_name": "Baseline condition; with subsidence",
                 "scenarios": [
                     {"id": "historical", "years": [1980]},
@@ -132,7 +148,8 @@ class Inventory:
             },
             {
                 "event_type": "CoastalInundation",
-                "id": "coastal_inundation/wri/v2/wtsub_95",
+                "path": "coastal_inundation/wri/v2",
+                "id": "wtsub_95",
                 "display_name": "With subsidence; 95th percentile sea rise",
                 "scenarios": [
                     {"id": "historical", "years": [1980]},
@@ -142,7 +159,8 @@ class Inventory:
             },
             {
                 "event_type": "CoastalInundation",
-                "id": "coastal_inundation/wri/v2/wtsub_05",
+                "path": "coastal_inundation/wri/v2",
+                "id": "wtsub_05",
                 "display_name": "With subsidence; 5th percentile sea rise",
                 "scenarios": [
                     {"id": "historical", "years": [1980]},
@@ -152,7 +170,8 @@ class Inventory:
             },
             {
                 "event_type": "CoastalInundation",
-                "id": "coastal_inundation/wri/v2/wtsub_50",
+                "path": "coastal_inundation/wri/v2",
+                "id": "wtsub_50",
                 "display_name": "With subsidence; 50th percentile sea rise",
                 "scenarios": [
                     {"id": "historical", "years": [1980]},

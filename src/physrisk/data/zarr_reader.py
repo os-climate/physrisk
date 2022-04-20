@@ -1,3 +1,4 @@
+import logging
 import os
 from pathlib import PurePosixPath
 from typing import Callable, MutableMapping, Optional
@@ -6,6 +7,9 @@ import numpy as np
 import s3fs
 import zarr
 from affine import Affine
+
+LOG = logging.getLogger("physrisk-lib")
+LOG.setLevel("INFO")
 
 
 def get_env(key: str, default: Optional[str] = None) -> str:
@@ -45,17 +49,21 @@ class ZarrReader:
             if get_env is None:
                 raise TypeError("if no store specified, get_env is required to provide credentials")
 
-            s3 = s3fs.S3FileSystem(
-                anon=False, key=get_env(ZarrReader.__access_key, None), secret=get_env(ZarrReader.__secret_key, None)
-            )
+            access_key = get_env(self.__access_key, None)
+            secret_key = get_env(self.__secret_key, None)
+            s3_bucket = get_env(self.__S3_bucket, "redhat-osc-physical-landing-647521352890")
+            zarr_path = get_env(self.__zarr_path, "hazard/hazard.zarr")
+
+            # For debugging in OpenShift, remove ASAP
+            assert access_key
+            assert secret_key
+            LOG.info(f"Got keys from env: access={access_key}, secret={secret_key}")
+            #########################################
+
+            s3 = s3fs.S3FileSystem(anon=False, key=access_key, secret=secret_key)
 
             store = s3fs.S3Map(
-                root=str(
-                    PurePosixPath(
-                        get_env(ZarrReader.__S3_bucket, "redhat-osc-physical-landing-647521352890"),
-                        get_env(ZarrReader.__zarr_path, "hazard/hazard.zarr"),
-                    ),
-                ),
+                root=str(PurePosixPath(s3_bucket, zarr_path)),
                 s3=s3,
                 check=False,
             )
@@ -88,7 +96,7 @@ class ZarrReader:
         transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
         return_periods = z.attrs["index_values"]  # type: ignore
 
-        image_coords = ZarrReader._get_coordinates(longitudes, latitudes, transform)
+        image_coords = self._get_coordinates(longitudes, latitudes, transform)
         iz = np.tile(np.arange(z.shape[0]), image_coords.shape[1])  # type: ignore
         ix = np.repeat(image_coords[1, :], len(return_periods))
         iy = np.repeat(image_coords[0, :], len(return_periods))

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - n/a
 
+## [0.2.0] - 2022-04-20
+
+- Add debug
+- Allow requests to provide zarr store
+- Support vulerability curves
+
 ## [0.1.3] - 2022-04-01
 
 ### Fixes
@@ -38,7 +44,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Early development release
 
 
-[Unreleased]: https://github.com/os-climate/physrisk/compare/v0.1.2...HEAD
+[Unreleased]: https://github.com/os-climate/physrisk/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/os-climate/physrisk/compare/v0.1.3...v0.2.0
+[0.1.3]: https://github.com/os-climate/physrisk/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/os-climate/physrisk/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/os-climate/physrisk/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/os-climate/physrisk/compare/v0.0.2...v0.1.0

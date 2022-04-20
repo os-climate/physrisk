@@ -12,6 +12,7 @@ requests = "==2.27.1"
 scipy = "==1.7.3"
 s3fs = "==2022.1.0"
 zarr = "==2.10.3"
+boto3 = "==1.20"
 
 [dev-packages]
 isort = "*"

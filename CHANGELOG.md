@@ -7,11 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-- n/a
+- Remove zarr_reader debug logging
 
 ## [0.2.0] - 2022-04-20
 
-- Add debug
+- Add zarr_reader debug logging
 - Allow requests to provide zarr store
 - Support vulerability curves
 

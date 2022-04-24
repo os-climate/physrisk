@@ -21,6 +21,7 @@ class TestRealEstateModels(unittest.TestCase):
         store = get_mock_hazard_model_store(TestData.longitudes, TestData.latitudes, curve)
         hazard_model = ZarrHazardModel(source_paths=calculation.get_default_zarr_source_paths(), store=store)
 
+        # location="Europe", type="Buildings/Residential"
         assets = [
             RealEstateAsset(lat, lon, location="Asia", type="Buildings/Industrial")
             for lon, lat in zip(TestData.longitudes[0:1], TestData.latitudes[0:1])

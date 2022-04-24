@@ -1,5 +1,7 @@
 from collections import defaultdict
-from typing import Dict, List
+from typing import Dict, List, Optional
+
+from physrisk.kernel import calculation
 
 from ..kernel.hazard_model import EventDataRequest, EventDataResponse, HazardModel
 from .event_provider import EventProvider, SourcePath
@@ -37,5 +39,7 @@ class PregeneratedHazardModel(HazardModel):
 
 
 class ZarrHazardModel(PregeneratedHazardModel):
-    def __init__(self, source_paths: Dict[type, SourcePath], store=None):
+    def __init__(self, source_paths: Optional[Dict[type, SourcePath]] = None, store=None):
+        if source_paths is None:
+            source_paths = calculation.get_default_zarr_source_paths()
         super().__init__(dict((t, EventProvider(sp, store=store)) for t, sp in source_paths.items()))

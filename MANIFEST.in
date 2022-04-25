@@ -1,1 +1,3 @@
 include VERSION
+include src/physrisk/data/static/*.json
+include src/physrisk/data/static/vulnerability/*.json

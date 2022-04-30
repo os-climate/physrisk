@@ -1,4 +1,3 @@
-import logging
 import os
 from pathlib import PurePosixPath
 from typing import Callable, MutableMapping, Optional
@@ -7,9 +6,6 @@ import numpy as np
 import s3fs
 import zarr
 from affine import Affine
-
-LOG = logging.getLogger("physrisk-lib")
-LOG.setLevel("INFO")
 
 
 def get_env(key: str, default: Optional[str] = None) -> str:
@@ -53,12 +49,6 @@ class ZarrReader:
             secret_key = get_env(self.__secret_key, None)
             s3_bucket = get_env(self.__S3_bucket, "redhat-osc-physical-landing-647521352890")
             zarr_path = get_env(self.__zarr_path, "hazard/hazard.zarr")
-
-            # For debugging in OpenShift, remove ASAP
-            assert access_key
-            assert secret_key
-            LOG.info(f"Got keys from env: access={access_key}, secret={secret_key}")
-            #########################################
 
             s3 = s3fs.S3FileSystem(anon=False, key=access_key, secret=secret_key)
 

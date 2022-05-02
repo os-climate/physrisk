@@ -3,10 +3,6 @@ from typing import List, Union
 from pydantic import BaseModel
 
 
-class BaseRequest(BaseModel):
-    request_item_id: str
-
-
 class Scenario(BaseModel):
     """Scenario ID and the list of available years for that scenario e.g. RCP8.5 = 'rcp8.5'"""
 
@@ -14,11 +10,15 @@ class Scenario(BaseModel):
     years: List[int]
 
 
-class Model(BaseModel):
-    """Provides the scenarios associated ith a hazard model."""
+class HazardModel(BaseModel):
+    """Provides the scenarios associated with a hazard model."""
 
     event_type: str
+    path: str
     id: str
+    display_name: str
+    description: str
+    filename: str
     scenarios: List[Scenario]
 
 
@@ -30,7 +30,7 @@ class HazardEventAvailabilityRequest(BaseModel):
 
 
 class HazardEventAvailabilityResponse(BaseModel):
-    models: List[Model]
+    models: List[HazardModel]
 
 
 # endregion

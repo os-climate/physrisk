@@ -38,7 +38,7 @@ class Inventory:
             {
                 "event_type": "RiverineInundation",
                 "path": "riverine_inundation/wri/v2",
-                "id": "Baseline",
+                "id": "000000000WATCH",
                 "display_name": "Baseline",
                 "description": "Baseline condition",
                 "filename": "inunriver_{scenario}_{id}_{year}",
@@ -49,7 +49,7 @@ class Inventory:
             {
                 "event_type": "RiverineInundation",
                 "path": "riverine_inundation/wri/v2",
-                "id": "NorESM1-M",
+                "id": "00000NorESM1-M",
                 "display_name": "NorESM1-M",
                 "description": "GCM model: Bjerknes Centre for Climate Research, Norwegian Meteorological Institute",
                 "filename": "inunriver_{scenario}_{id}_{year}",
@@ -61,7 +61,7 @@ class Inventory:
             {
                 "event_type": "RiverineInundation",
                 "path": "riverine_inundation/wri/v2",
-                "id": "GFDL-ESM2M",
+                "id": "0000GFDL-ESM2M",
                 "display_name": "GFDL-ESM2M",
                 "description": "GCM model: Geophysical Fluid Dynamics Laboratory (NOAA)",
                 "filename": "inunriver_{scenario}_{id}_{year}",
@@ -73,7 +73,7 @@ class Inventory:
             {
                 "event_type": "RiverineInundation",
                 "path": "riverine_inundation/wri/v2",
-                "id": "HadGEM2-ES",
+                "id": "0000HadGEM2-ES",
                 "display_name": "HadGEM2-ES",
                 "description": "GCM model: Met Office Hadley Centre",
                 "filename": "inunriver_{scenario}_{id}_{year}",
@@ -85,7 +85,7 @@ class Inventory:
             {
                 "event_type": "RiverineInundation",
                 "path": "riverine_inundation/wri/v2",
-                "id": "IPSL-CM5A-LR",
+                "id": "00IPSL-CM5A-LR",
                 "display_name": "IPSL-CM5A-LR",
                 "description": "GCM model: Institut Pierre Simon Laplace",
                 "filename": "inunriver_{scenario}_{id}_{year}",

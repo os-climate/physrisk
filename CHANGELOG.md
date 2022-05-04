@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - n/a
 
+## [0.3.1] - 2022-05-04
+
+- Revert RiverineInundation inventory IDs
+
 ## [0.3.0] - 2022-05-02
 
 - Add path, display_name, description, filename to hazard inventory
@@ -57,7 +61,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Early development release
 
 
-[Unreleased]: https://github.com/os-climate/physrisk/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/os-climate/physrisk/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/os-climate/physrisk/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/os-climate/physrisk/compare/v0.2.3...v0.3.0
 [0.2.3]: https://github.com/os-climate/physrisk/compare/v0.2.1...v0.2.3
 [0.2.1]: https://github.com/os-climate/physrisk/compare/v0.2.0...v0.2.1

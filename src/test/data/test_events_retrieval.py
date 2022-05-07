@@ -72,7 +72,7 @@ class TestEventRetrieval(unittest.TestCase):
     def test_zarr_reading_live(self):
         # needs valid OSC_S3_BUCKET, OSC_S3_ACCESS_KEY, OSC_S3_SECRET_KEY
 
-        request = {
+        request1 = {
             "items": [
                 {
                     "request_item_id": "test_inundation",
@@ -85,7 +85,23 @@ class TestEventRetrieval(unittest.TestCase):
                 }
             ],
         }
-        response = requests.get(request_id="get_hazard_data", request_dict=request)
+        response = requests.get(request_id="get_hazard_data", request_dict=request1)
+        print(response)
+
+        request2 = {
+            "items": [
+                {
+                    "request_item_id": "test_inundation",
+                    "event_type": "CoastalInundation",
+                    "longitudes": TestData.longitudes,
+                    "latitudes": TestData.latitudes,
+                    "year": 2080,
+                    "scenario": "rcp8p5",
+                    "model": "wtsub/95",
+                }
+            ],
+        }
+        response = requests.get(request_id="get_hazard_data", request_dict=request2)
         print(response)
 
     @unittest.skip("includes download of large files; deprecated")

@@ -64,6 +64,22 @@ def _wri_inundation_prefix():
     return "inundation/wri/v2"
 
 
+_percentiles_map = {"95": "0", "5": "0_perc_05", "50": "0_perc_50"}
+_subsidence_set = {"wtsub", "nosub"}
+
+
+def get_source_path_wri_coastal_inundation(*, model: str, scenario: str, year: int):
+    type = "coast"
+    # model is expected to be of the form subsidence/percentile, e.g. wtsub/95
+    # if percentile is omitted then 95th percentile is used
+    model_components = model.split("/")
+    sub = model_components[0]
+    if sub not in _subsidence_set:
+        raise ValueError("expected model input of the form {subsidence/percentile}, e.g. wtsub/95, nosub/5, wtsub/50")
+    perc = "95" if len(model_components) == 1 else model_components[1]
+    return os.path.join(_wri_inundation_prefix(), f"inun{type}_{scenario}_{sub}_{year}_{_percentiles_map[perc]}")
+
+
 def get_source_path_wri_riverine_inundation(*, model: str, scenario: str, year: int):
     type = "river"
     return os.path.join(_wri_inundation_prefix(), f"inun{type}_{scenario}_{model}_{year}")

@@ -38,6 +38,7 @@ class TestEventRetrieval(unittest.TestCase):
         self.assertEqual(summary["RiverineInundation"].years, [1980, 2030, 2050, 2080])
 
     def test_zarr_reading(self):
+
         request_dict = {
             "items": [
                 {
@@ -93,8 +94,8 @@ class TestEventRetrieval(unittest.TestCase):
                 {
                     "request_item_id": "test_inundation",
                     "event_type": "CoastalInundation",
-                    "longitudes": TestData.longitudes,
-                    "latitudes": TestData.latitudes,
+                    "longitudes": TestData.coastal_longitudes,
+                    "latitudes": TestData.coastal_latitudes,
                     "year": 2080,
                     "scenario": "rcp8p5",
                     "model": "wtsub/95",

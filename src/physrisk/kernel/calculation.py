@@ -19,8 +19,8 @@ class AssetImpactResult:
     def __init__(
         self,
         impact: ImpactDistrib,
-        vulnerability: Optional[VulnerabilityDistrib] = None,
-        event: Optional[HazardEventDistrib] = None,
+        vulnerability: VulnerabilityDistrib,
+        event: HazardEventDistrib,
         hazard_data=None,
     ):
         self.impact = impact

@@ -9,18 +9,32 @@ from physrisk.kernel.assets import RealEstateAsset
 from physrisk.kernel.impact_curve import ImpactCurve
 from physrisk.kernel.vulnerability_model import VulnerabilityModel
 
-from ..kernel.events import RiverineInundation
+from ..kernel.events import CoastalInundation, RiverineInundation
 from ..kernel.vulnerability_model import applies_to_events, get_vulnerability_curves_from_resource
 
 
-@applies_to_events([RiverineInundation])
 class RealEstateInundationModel(VulnerabilityModel):
+    _default_impact_bin_edges = np.array([0, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
+    _default_resource = "EU JRC global flood depth-damage functions"
+
     def __init__(
         self,
         *,
-        resource: str = "EU JRC global flood depth-damage functions",
-        impact_bin_edges=np.array([0, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
+        event_type: type,
+        model: str,
+        resource: str = _default_resource,
+        impact_bin_edges=_default_impact_bin_edges
     ):
+        """
+        Inundation vulnerability model for real estates assets. Applies to both riverine and coastal inundation.
+
+        Args:
+            event_type: Event type.
+            model: optional identifier for hazard event model, passed to HazardModel.
+            resource: embedded resource identifier used to infer vulnerability matrix.
+            impact_bin_edges: specifies the impact (fractional damage/disruption bins).
+        """
+
         curve_set: VulnerabilityCurves = get_vulnerability_curves_from_resource(resource)
 
         # for this model, key for looking up curves is (location, asset_type), e.g. ('Asian', 'Building/Industrial')
@@ -30,7 +44,8 @@ class RealEstateInundationModel(VulnerabilityModel):
         for item in curve_set.items:
             self.vuln_curves_by_type[item.asset_type].append(item)
 
-        super().__init__(model="MIROC-ESM-CHEM", event_type=RiverineInundation, impact_bin_edges=impact_bin_edges)
+        # global circulation parameter 'model' is a hint; can be overriden by hazard model
+        super().__init__(model=model, event_type=event_type, impact_bin_edges=impact_bin_edges)
 
     def get_impact_curve(self, intensities, asset: RealEstateAsset):
         # we interpolate the mean and standard deviation and use this to construct distributions
@@ -81,3 +96,33 @@ def beta_distrib(mean, std):
     a = (1 - mean) / (cv * cv) - mean
     b = a * (1 - mean) / mean
     return lambda x, a=a, b=b: stats.beta.cdf(x, a, b)
+
+
+@applies_to_events([CoastalInundation])
+class RealEstateCoastalInundationModel(RealEstateInundationModel):
+    def __init__(
+        self,
+        *,
+        model: str = "wtsub/95",
+        resource: str = RealEstateInundationModel._default_resource,
+        impact_bin_edges=RealEstateInundationModel._default_impact_bin_edges
+    ):
+        # by default include subsidence and 95% sea-level rise
+        super().__init__(
+            event_type=CoastalInundation, model=model, resource=resource, impact_bin_edges=impact_bin_edges
+        )
+
+
+@applies_to_events([RiverineInundation])
+class RealEstateRiverineInundationModel(RealEstateInundationModel):
+    def __init__(
+        self,
+        *,
+        model: str = "MIROC-ESM-CHEM",
+        resource: str = RealEstateInundationModel._default_resource,
+        impact_bin_edges=RealEstateInundationModel._default_impact_bin_edges
+    ):
+        # by default request HazardModel to use "MIROC-ESM-CHEM" GCM
+        super().__init__(
+            event_type=RiverineInundation, model=model, resource=resource, impact_bin_edges=impact_bin_edges
+        )

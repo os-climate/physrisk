@@ -21,6 +21,7 @@ class ImpactCurve:
         impact_cdfs=None,
     ):
         """Create a new asset event distribution.
+
         Args:
             intensities: possible intensities of hazard event.
             impacts: fractional damage or fractional average disruption occurring as a result
@@ -28,10 +29,7 @@ class ImpactCurve:
             distributions: provides the pdf and optiononally cdf of the impact distribution
         """
 
-        # probabilities must be sorted and decreasing
-        # values must be sorted and non-decreasing (intens[i + 1] >= intens[i])
-
-        if not np.all(np.diff(intensities) > 0):
+        if not np.all(np.diff(intensities) >= 0):
             raise ValueError("intensities must be sorted and increasing")
 
         self.intensities = np.array(intensities)

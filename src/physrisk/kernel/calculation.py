@@ -2,12 +2,12 @@ import logging
 from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
-from ..data.event_provider import get_source_path_wri_riverine_inundation
+from ..data.event_provider import get_source_path_wri_coastal_inundation, get_source_path_wri_riverine_inundation
 from ..data.pregenerated_hazard_model import ZarrHazardModel
 from ..models import power_generating_asset_models as pgam
 from ..utils.helpers import get_iterable
 from .assets import Asset, PowerGeneratingAsset, TestAsset
-from .events import RiverineInundation
+from .events import CoastalInundation, RiverineInundation
 from .hazard_event_distrib import HazardEventDistrib
 from .hazard_model import HazardModel
 from .impact_distrib import ImpactDistrib
@@ -19,8 +19,8 @@ class AssetImpactResult:
     def __init__(
         self,
         impact: ImpactDistrib,
-        vulnerability: Optional[VulnerabilityDistrib] = None,
-        event: Optional[HazardEventDistrib] = None,
+        vulnerability: VulnerabilityDistrib,
+        event: HazardEventDistrib,
         hazard_data=None,
     ):
         self.impact = impact
@@ -31,7 +31,10 @@ class AssetImpactResult:
 
 
 def get_default_zarr_source_paths():
-    return {RiverineInundation: get_source_path_wri_riverine_inundation}
+    return {
+        RiverineInundation: get_source_path_wri_riverine_inundation,
+        CoastalInundation: get_source_path_wri_coastal_inundation,
+    }
 
 
 def get_default_hazard_model():

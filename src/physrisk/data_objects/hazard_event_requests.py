@@ -49,6 +49,7 @@ class HazardEventDataRequestItem(BaseModel):
 
 
 class HazardEventDataRequest(BaseModel):
+    interpolation: str = "floor"
     items: List[HazardEventDataRequestItem]
 
 

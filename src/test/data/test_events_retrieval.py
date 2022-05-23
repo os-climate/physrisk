@@ -1,4 +1,5 @@
 """ Test asset impact calculations."""
+import json
 import os
 import pathlib
 import shutil
@@ -105,16 +106,24 @@ class TestEventRetrieval(unittest.TestCase):
                 {
                     "request_item_id": "test_inundation",
                     "event_type": "RiverineInundation",
-                    "longitudes": TestData.longitudes,
-                    "latitudes": TestData.latitudes,
+                    "longitudes": TestData.longitudes[5:6],
+                    "latitudes": TestData.latitudes[5:6],
                     "year": 2080,
                     "scenario": "rcp8p5",
                     "model": "MIROC-ESM-CHEM",
                 }
             ],
         }
-        response = requests.get(request_id="get_hazard_data", request_dict=request1)
-        print(response)
+        response_floor = requests.get(request_id="get_hazard_data", request_dict=request1)
+        request1["interpolation"] = "linear"  # type: ignore
+        response_linear = requests.get(request_id="get_hazard_data", request_dict=request1)
+        print(response_linear)
+
+        floor = json.loads(response_floor)["items"][0]["intensity_curve_set"][5]["intensities"]
+        linear = json.loads(response_linear)["items"][0]["intensity_curve_set"][5]["intensities"]
+
+        print(floor)
+        print(linear)
 
         request2 = {
             "items": [

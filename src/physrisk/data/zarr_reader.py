@@ -69,6 +69,7 @@ class ZarrReader:
             set_id: string or tuple representing data set, converted into path by path_provider.
             longitudes: list of longitudes.
             latitudes: list of latitudes.
+            interpolation: interpolation method, "floor" or "linear".
 
         Returns:
             curves: numpy array of intensity (no. coordinate pairs, no. return periods).
@@ -104,13 +105,16 @@ class ZarrReader:
             res = ZarrReader._linear_interp_frac_coordinates(z, image_coords, return_periods)
             return res, return_periods
 
+        else:
+            raise ValueError("interpolation must have value 'floor' or 'linear'")
+
     @staticmethod
     def _linear_interp_frac_coordinates(z, image_coords, return_periods):
         """Return linear interpolated data from fractional row and column coordinates."""
         icx = np.floor(image_coords[0, :]).astype(int)[..., None]
         xf = image_coords[0, :][..., None] - icx  # type: ignore
-        # periodic boundary condition
-        ix = np.concatenate([icx, icx, icx + 1, icx + 1], axis=1)[..., None].repeat(
+        # note periodic boundary condition
+        ix = np.concatenate([icx, icx, (icx + 1) % z.shape[2], (icx + 1) % z.shape[2]], axis=1)[..., None].repeat(
             len(return_periods), axis=2
         )  # points, 4, return_periods
 

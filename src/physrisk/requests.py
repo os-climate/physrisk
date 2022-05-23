@@ -39,7 +39,7 @@ def _get_hazard_data(request: HazardEventDataRequest, source_paths=None, store=N
     if source_paths is None:
         source_paths = calc.get_default_zarr_source_paths()
 
-    hazard_model = ZarrHazardModel(source_paths, store=store)
+    hazard_model = ZarrHazardModel(source_paths, store=store, interpolation=request.interpolation)
     # get hazard event types:
     event_types = Event.__subclasses__()
     event_dict = dict((et.__name__, et) for et in event_types)

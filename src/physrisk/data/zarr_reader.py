@@ -62,13 +62,14 @@ class ZarrReader:
         self._path_provider = path_provider
         pass
 
-    def get_curves(self, set_id, longitudes, latitudes):
+    def get_curves(self, set_id, longitudes, latitudes, interpolation="floor"):
         """Get intensity curve for each latitude and longitude coordinate pair.
 
         Args:
             set_id: string or tuple representing data set, converted into path by path_provider.
             longitudes: list of longitudes.
             latitudes: list of latitudes.
+            interpolation: interpolation method, "floor" or "linear".
 
         Returns:
             curves: numpy array of intensity (no. coordinate pairs, no. return periods).
@@ -87,12 +88,53 @@ class ZarrReader:
         return_periods = z.attrs["index_values"]  # type: ignore
 
         image_coords = self._get_coordinates(longitudes, latitudes, transform)
-        iz = np.tile(np.arange(z.shape[0]), image_coords.shape[1])  # type: ignore
-        ix = np.repeat(image_coords[1, :], len(return_periods))
-        iy = np.repeat(image_coords[0, :], len(return_periods))
 
-        data = z.get_coordinate_selection((iz, ix, iy))  # type: ignore
-        return data.reshape([len(longitudes), len(return_periods)]), np.array(return_periods)
+        res = z.shape
+        print(res)
+
+        if interpolation == "floor":
+            image_coords = np.floor(image_coords).astype(int)
+            iz = np.tile(np.arange(z.shape[0]), image_coords.shape[1])  # type: ignore
+            iy = np.repeat(image_coords[1, :], len(return_periods))
+            ix = np.repeat(image_coords[0, :], len(return_periods))
+
+            data = z.get_coordinate_selection((iz, iy, ix))  # type: ignore
+            return data.reshape([len(longitudes), len(return_periods)]), np.array(return_periods)
+
+        elif interpolation == "linear":
+            res = ZarrReader._linear_interp_frac_coordinates(z, image_coords, return_periods)
+            return res, return_periods
+
+        else:
+            raise ValueError("interpolation must have value 'floor' or 'linear'")
+
+    @staticmethod
+    def _linear_interp_frac_coordinates(z, image_coords, return_periods):
+        """Return linear interpolated data from fractional row and column coordinates."""
+        icx = np.floor(image_coords[0, :]).astype(int)[..., None]
+        xf = image_coords[0, :][..., None] - icx  # type: ignore
+        # note periodic boundary condition
+        ix = np.concatenate([icx, icx, (icx + 1) % z.shape[2], (icx + 1) % z.shape[2]], axis=1)[..., None].repeat(
+            len(return_periods), axis=2
+        )  # points, 4, return_periods
+
+        icy = np.floor(image_coords[1, :]).astype(int)[..., None]
+        yf = image_coords[1, :][..., None] - icy  # type: ignore
+        iy = np.concatenate([icy, icy + 1, icy, icy + 1], axis=1)[..., None].repeat(len(return_periods), axis=2)
+
+        iz = (
+            np.arange(len(return_periods), dtype=int)[None, ...]
+            .repeat(4, axis=0)[None, ...]
+            .repeat(image_coords.shape[1], axis=0)
+        )
+
+        data = z.get_coordinate_selection((iz, iy, ix))  # type: ignore # index, row, column
+        w0 = (1 - yf) * (1 - xf)
+        w1 = yf * (1 - xf)
+        w2 = (1 - yf) * xf
+        w3 = yf * xf
+
+        return data[:, 0, :] * w0 + data[:, 1, :] * w1 + data[:, 2, :] * w2 + data[:, 3, :] * w3
 
     @staticmethod
     def _get_coordinates(longitudes, latitudes, transform: Affine):
@@ -100,5 +142,4 @@ class ZarrReader:
         inv_trans = ~transform
         mat = np.array(inv_trans).reshape(3, 3)
         frac_image_coords = mat @ coords
-        image_coords = np.floor(frac_image_coords).astype(int)
-        return image_coords
+        return frac_image_coords

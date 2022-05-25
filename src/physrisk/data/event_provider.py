@@ -9,9 +9,9 @@ from .zarr_reader import ZarrReader
 class SourcePath(Protocol):
     """Provides path to hazard event data source. Each source should have its own implementation.
     Args:
-        year: projection year, e.g. 2080.
-        scenario: identifier of scenario, e.g. rcp8p5 (RCP 8.5).
         model: model identifier.
+        scenario: identifier of scenario, e.g. rcp8p5 (RCP 8.5).
+        year: projection year, e.g. 2080.
     """
 
     def __call__(self, *, model: str, scenario: str, year: int) -> str:
@@ -26,6 +26,7 @@ class EventProvider:
         get_source_path: SourcePath,
         *,
         store: Optional[MutableMapping] = None,
+        interpolation: Optional[str] = "floor",
     ):
         """Create an EventProvider.
 
@@ -34,6 +35,9 @@ class EventProvider:
         """
         self._get_source_path = get_source_path
         self._reader = ZarrReader(store=store)
+        if interpolation not in ["floor", "linear"]:
+            raise ValueError("interpolation must be 'floor' or 'linear'")
+        self._interpolation = interpolation
 
     def get_intensity_curves(
         self, longitudes: List[float], latitudes: List[float], *, model: str, scenario: str, year: int
@@ -43,9 +47,9 @@ class EventProvider:
         Args:
             longitudes: list of longitudes.
             latitudes: list of latitudes.
-            year: projection year, e.g. 2080.
-            scenario: identifier of scenario, e.g. rcp8p5 (RCP 8.5).
             model: model identifier.
+            scenario: identifier of scenario, e.g. rcp8p5 (RCP 8.5).
+            year: projection year, e.g. 2080.
 
         Returns:
             curves: numpy array of intensity (no. coordinate pairs, no. return periods).
@@ -53,7 +57,9 @@ class EventProvider:
         """
 
         path = self._get_source_path(model=model, scenario=scenario, year=year)
-        curves, return_periods = self._reader.get_curves(path, longitudes, latitudes)
+        curves, return_periods = self._reader.get_curves(
+            path, longitudes, latitudes, self._interpolation
+        )  # type: ignore
         return curves, return_periods
 
 

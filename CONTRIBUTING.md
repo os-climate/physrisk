@@ -1,81 +1,101 @@
-Contributing to Physrisk
-==============================
+# Contributing to physrisk
 
 ## Getting started
-
-To get set up and run tests, clone repo and then run:
+To get set up, clone and enter the repo.
 ```
-pip install -r requirements.txt
-cd src
-pytest
+git clone git@github.com:os-climate/physrisk.git
+cd physrisk
 ```
 
-Using a Python virtual environment is recommended. For example if using VS Code:
+We recommend using [pipenv](https://pipenv.pypa.io/en/latest/) for a
+consistent working environment.
 ```
-python3 -m venv .venv
-code .
+pip install pipenv
+pipenv install
+pipenv shell
 ```
-Then in VS Code:
+
+When adding a package for use in new or improved functionality,
+`pipenv install <package-name>`. Or, when adding something helpful for
+testing or development, `pipenv install -d <package-name>`.
+
+## Development
+Patches may be contributed via pull requests to
+https://github.com/os-climate/physrisk.
+
+All changes must pass the automated test suite, along with various static
+checks.
+
+[Black](https://black.readthedocs.io/) code style and
+[isort](https://pycqa.github.io/isort/) import ordering are enforced
+and enabling automatic formatting via [pre-commit](https://pre-commit.com/)
+is recommended:
 ```
-source .venv/bin/activate
+pre-commit install
+```
+
+To ensure compliance with static check tools, developers may wish to run black and isort against modified files.
+
+E.g.,
+```
+# auto-sort imports
+isort .
+# auto-format code
+black .
+```
+
+Code can then be tested using tox.
+```
+# run static checks and unit tests
+tox
+# run only tests
+tox -e py3
+# run only static checks
+tox -e static
+# run unit tests and produce an HTML code coverage report (/htmlcov)
+tox -e cov
+```
+
+## IDE set-up
+For those using VS Code, configure tests ('Python: Configure Tests') to use 'pytest'
+to allow running of tests within the IDE.
+
+## Releasing
+Actions are configured to release to PyPI on pushing a tag. In order to do this:
+- Update VERSION
+- Create new annotated tag and push 
+```
+git tag -a v1.0.0 -m "v1.0.0"
+git push --follow-tags
 ```
 
 ## Forking workflow
-
 This is a useful clarification of the forking workflow:
 https://gist.github.com/Chaser324/ce0505fbed06b947d962
 
 ## Project Organization
 ------------
-Follows conventions of Cookiecutter Data Science
 
     ├── LICENSE
-    ├── Makefile           <- Makefile with commands like `make data` or `make train`
     ├── Pipfile            <- Pipfile stating package configuration as used by Pipenv.
     ├── Pipfile.lock       <- Pipfile.lock stating a pinned down software stack with as used by Pipenv.
     ├── README.md          <- The top-level README for developers using this project.
-    ├── data
-    │   ├── external       <- Data from third party sources.
-    │   ├── interim        <- Intermediate data that has been transformed.
-    │   ├── processed      <- The final, canonical data sets for modeling.
-    │   └── raw            <- The original, immutable data dump.
+    │
+    ├── methodology        <- Contains LaTeX methodology document
+    │    └── literature    <- Literature review
     │
     ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
     │
-    ├── models             <- Trained and serialized models, model predictions, or model summaries
-    │
-    ├── notebooks          <- Jupyter notebooks. Naming convention is a number (for ordering),
-    │                         the creator's initials, and a short `-` delimited description, e.g.
-    │                         `1.0-jqp-initial-data-exploration`.
-    │
-    ├── references         <- Data dictionaries, manuals, and all other explanatory materials.
-    │
-    ├── reports            <- Generated analysis as HTML, PDF, LaTeX, etc.
-    │   └── figures        <- Generated graphics and figures to be used in reporting
-    │
-    ├── requirements.txt   <- The requirements file stating direct dependencies if a library
-    │                         is developed.
+    ├── notebooks          <- Jupyter notebooks. These comprise notebooks used for on-boarding
+    │                         hazard data, on-boarding vulnerability models and tutorial
     │
     ├── setup.py           <- makes project pip installable (pip install -e .) so src can be imported
-    ├── src                <- Source code for use in this project.
-    │   ├── __init__.py    <- Makes src a Python module
-    │   │
-    │   ├── data           <- Scripts to download or generate data
-    │   │   └── make_dataset.py
-    │   │
-    │   ├── features       <- Scripts to turn raw data into features for modeling
-    │   │   └── build_features.py
-    │   │
-    │   ├── models         <- Scripts to train models and then use trained models to make
-    │   │   │                 predictions
-    │   │   ├── predict_model.py
-    │   │   └── train_model.py
-    │   │
-    │   └── visualization  <- Scripts to create exploratory and results oriented visualizations
-    │       └── visualize.py
     │
-    ├── .thoth.yaml        <- Thoth's configuration file
-    ├── .aicoe-ci.yaml     <- AICoE CI configuration file (https://github.com/AICoE/aicoe-ci)
+    ├── src                <- Source code for use in this project.
+    │   ├── physrisk       <- physrisk source code
+    │   ├── test           <- physrisk tests; follows same folder structure as physrisk
+    │   └── visualization  <- Deprecated visualizations, migrated to physrisk-ui)
+    │
     └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
 
 

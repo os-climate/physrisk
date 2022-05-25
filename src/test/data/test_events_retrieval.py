@@ -1,4 +1,5 @@
 """ Test asset impact calculations."""
+import json
 import os
 import pathlib
 import shutil
@@ -8,12 +9,15 @@ from test.data.hazard_model_store import TestData, get_mock_hazard_model_store_s
 
 import numpy as np
 import numpy.testing
+import scipy.interpolate
+import zarr
 from dotenv import load_dotenv
 
 from physrisk import RiverineInundation, requests
 from physrisk.data.event_provider import get_source_path_wri_riverine_inundation
 from physrisk.data.hazard.event_provider_wri import EventProviderWri
 from physrisk.data.inventory import Inventory
+from physrisk.data.zarr_reader import ZarrReader
 
 
 class TestEventRetrieval(unittest.TestCase):
@@ -36,6 +40,30 @@ class TestEventRetrieval(unittest.TestCase):
     def test_hazard_data_availability_summary(self):
         summary = Inventory().get_models_summary()
         self.assertEqual(summary["RiverineInundation"].years, [1980, 2030, 2050, 2080])
+
+    def test_zarr_bilinear(self):
+        # create suitable asymmetric data set and compare with scipy
+
+        xt, yt = np.meshgrid(np.linspace(-5, 5, 10), np.linspace(-5, 5, 10))
+        data0 = np.exp(-(xt**2 / 25.0 + yt**2 / 16.0))
+        data1 = np.exp(-(xt**2 / 36.0 + yt**2 / 25.0))
+
+        data = np.stack([data0, data1], axis=0)
+
+        # note that zarr array has index [z, y, x], e.g. 9, 21600, 43200 or [index, lat, lon]
+        y = np.array([1.4, 2.8, 3.4])  # row indices
+        x = np.array([3.2, 6.7, 7.9])  # column indices
+        image_coords = np.stack([x, y])
+        data_zarr = zarr.array(data)
+        candidate = ZarrReader._linear_interp_frac_coordinates(data_zarr, image_coords, np.array([0, 1]))
+        interp_scipy0 = scipy.interpolate.interp2d(np.linspace(0, 9, 10), np.linspace(0, 9, 10), data0, kind="linear")
+        interp_scipy1 = scipy.interpolate.interp2d(np.linspace(0, 9, 10), np.linspace(0, 9, 10), data1, kind="linear")
+        expected0 = interp_scipy0(x, y).diagonal().reshape(len(y))
+        expected1 = interp_scipy1(x, y).diagonal().reshape(len(y))
+        numpy.testing.assert_allclose(candidate[:, 0], expected0, rtol=1e-6)
+        numpy.testing.assert_allclose(candidate[:, 1], expected1, rtol=1e-6)
+        # array([0.43854423, 0.62290176, 0.50660137])
+        # array([0.58346331, 0.72702827, 0.62629474])
 
     def test_zarr_reading(self):
 
@@ -78,16 +106,24 @@ class TestEventRetrieval(unittest.TestCase):
                 {
                     "request_item_id": "test_inundation",
                     "event_type": "RiverineInundation",
-                    "longitudes": TestData.longitudes,
-                    "latitudes": TestData.latitudes,
+                    "longitudes": TestData.longitudes[5:6],
+                    "latitudes": TestData.latitudes[5:6],
                     "year": 2080,
                     "scenario": "rcp8p5",
                     "model": "MIROC-ESM-CHEM",
                 }
             ],
         }
-        response = requests.get(request_id="get_hazard_data", request_dict=request1)
-        print(response)
+        response_floor = requests.get(request_id="get_hazard_data", request_dict=request1)
+        request1["interpolation"] = "linear"  # type: ignore
+        response_linear = requests.get(request_id="get_hazard_data", request_dict=request1)
+        print(response_linear)
+
+        floor = json.loads(response_floor)["items"][0]["intensity_curve_set"][5]["intensities"]
+        linear = json.loads(response_linear)["items"][0]["intensity_curve_set"][5]["intensities"]
+
+        print(floor)
+        print(linear)
 
         request2 = {
             "items": [

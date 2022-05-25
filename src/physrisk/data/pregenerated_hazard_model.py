@@ -39,7 +39,9 @@ class PregeneratedHazardModel(HazardModel):
 
 
 class ZarrHazardModel(PregeneratedHazardModel):
-    def __init__(self, source_paths: Optional[Dict[type, SourcePath]] = None, store=None):
+    def __init__(self, source_paths: Optional[Dict[type, SourcePath]] = None, store=None, interpolation="floor"):
         if source_paths is None:
             source_paths = calculation.get_default_zarr_source_paths()
-        super().__init__(dict((t, EventProvider(sp, store=store)) for t, sp in source_paths.items()))
+        super().__init__(
+            dict((t, EventProvider(sp, store=store, interpolation=interpolation)) for t, sp in source_paths.items())
+        )

@@ -101,7 +101,7 @@
     The views expressed in this paper are those of the authors and do not necessarily reflect the views and policies of their respective employers.}
     }
 
-\date{24 September 2021 [Draft]}
+\date{June 2022 [Draft]}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -133,9 +133,9 @@
 \section{Introduction}
 \label{Sec:Introduction}
 
-Physical risk is widely understood as the financial risk which arises from the physical effects of climate change. Measuring such risk requires multiple analyses: a) an assessment of the risk of catastrophic events, b) an estimate of the damage on a company's assets and c) the consequent impact on cash flows. A number of papers \cite{add reference} have developed models and tools that tackle one specific aspect of the problem. However, it is not currently easy to seamlessly integrate models which operate in different areas to come up with an end to end physical risk analysis, or to experiment with different approaches.
+Physical risk is widely understood as the financial risk which arises from the physical effects of climate change. Measuring such risk requires multiple analyses: a) an assessment of the risk of catastrophic events, b) an estimate of the damage on a company's assets and c) the consequent impact on cash flows. A number of papers have developed models and tools that tackle one specific aspect of the problem. However, it is not currently easy to seamlessly integrate models which operate in different areas to produce an end to end physical risk analysis, or to experiment with different approaches.
 
-The purpose of this paper is to present the methodology of a framework that is sufficiently generic to be used for a wide range of physical climate risk models. The motivation is to provide a specification for use in the OS-Climate (OS-C) \cite{OSC} physical climate risk calculation module. OS-C aims to provide an platform unconstrained by any one particular methodology choice. We take inspiration from the Oasis Loss Modelling Framework (henceforth Oasis), which was designed to accomodate a wide range of catastrophe models and analyse physical risk in the context of the insurance market: Similarly to what they do, we adopt a modular approach to modeling physical risk, where each module is responsible for answering a specific question and together contribute to assessing physical risk. This approach allows the user to easily change approach to how one question is tackled, while maintaining the integration among the parts. In particular, we build a framework of three independent parts:
+The purpose of this paper is to present the methodology of a framework that is sufficiently generic to be used for a wide range of physical climate risk models. The motivation is to provide a specification for use in the \emph{`physrisk'} OS-Climate (OS-C) \cite{OSC} physical climate risk calculation module. OS-C aims to provide an platform unconstrained by any one particular methodology choice. We take inspiration from the \emph{Oasis Loss Modelling Framework} (henceforth \emph{Oasis}), which was designed to accomodate a wide range of catastrophe models and analyse physical risk in the context of the insurance market. Similarly to \emph{Oasis}, we adopt a modular approach, each module being responsible for answering a specific question and together contributing to the assessment of physical risk. This approach allows the user to easily change a modelling method, whilst maintaining the integration between the components. In particular, we build a framework of three independent parts:
 
 \begin{enumerate}
     \item Hazard
@@ -143,7 +143,7 @@ The purpose of this paper is to present the methodology of a framework that is s
     \item Financial
 \end{enumerate}
 
-First, we have an Hazard component. This component is responsible for answering questions such as "what is the probability of an inundation or a period of drought in that area?". Hazard models produce the probability distributions for such future events. Hazard models are pure climate models, whose outputs can be used as an input for the next steps of the analysis. The Vulnerability component measures the potential impact of a catastrophic event on a given company's asset. Vulnerability models answer questions such as "what's the loss of output suffered by my power station if an inundation of a certain intensity happens?". Finally, the Financial module is concerned with translating the asset damage to a loss of profitability for the company, or a loss of value for a lender, insurer, equity stakeholder etc. Clearly, the models used in the Financial module answer questions specific to a certain user: is the ultimate objective that of measuring the physical risk for the company or for one of the asset's insurer? Depending on the answer to that question, a different Financial model might be needed. 
+This Hazard component is responsible for answering questions such as "what is the probability of an inundation or a period of drought in that area?". Hazard models produce the probability distributions for such future events. Hazard models are pure climate models, whose outputs can be used as an input for the next steps of the analysis. The Vulnerability component measures the potential impact of a catastrophic event on a given company's asset. Vulnerability models answer questions such as "what's the loss of output suffered by my power station if an inundation of a certain intensity happens?". Finally, the Financial module is concerned with translating the asset damage to a loss of profitability for the company, or a loss of value for a lender, insurer, equity stakeholder etc. Clearly, the models used in the Financial module answer questions specific to a certain user: is the ultimate objective that of measuring the physical risk for the company or for one of the asset's insurer? Depending on the answer to that question, a different Financial model might be needed. 
 
 With respect to Oasis, we try to structure the three components in a way that makes easy analyze physical risk from a variety of perspectives. We do not have a specific market (e.g. insurance market) in mind and we want to make sure that our framework is general enough to allow any stakeholder to reason about their physical risks. In addition, we want our framework to make as few assumptions as possible: The clear hypothesis is that we can treat the modules as dependent from one another only through their potential input-output relationships. Other than that, we want the user to have a flexible access to a wide choice of models within each module: the models are only required to have a predictable external behavior, while the details of the internal workings can be defined with flexibility.
 
@@ -196,6 +196,7 @@ Within the OS-C modelling framework, models are interchangeable and allow forms 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \subsection{Asset impact model}
+\label{SubSec:AcuteAssetImpactModel}
 The {\it asset impact} model is used to determine how an asset is impacted by an event. The impact is a quantity from which financial loss can be inferred, but is not itself a monetary value. For example, a response might be the damage sustained to a building as a fraction of its value or the annual loss of energy output of a power station as a fraction of its annual output\footnote{A systemic change in annual output changes asset value, since this is partly determined by the expected future cash flows generated by the asset.}. In each case, a further model is required to translate the impact to a change in asset value. In principle an impact might lead to an increase or decrease in value.
 
 Catastrophe models sometimes define a quantity `damage', and talk about `damageability'. `Damage' and `impact' are analagous quantities here but `impact' is perhaps better-suited to situations where there is, say, a decrease in output efficiency of a plant as a result of a period of higher temperatures.
@@ -395,6 +396,10 @@ The earliest structural model was described by Merton in 1974 \cite{Merton:1974}
 
 Use of such credit models, may provide a mechanism for incorporation of physical risk into financial institutions existing risk models\cite{KenyonEtAl:2021}.
 
+
+Loss given default (LGD). Do we need 
+
+
 \subsection{Uncertainties in the calculation}
 
 \subsection{Model limitations}
@@ -414,6 +419,39 @@ whole globe, leading to a potentially large mismatch between historical and futu
 
 
 
+
+\section{Hazard and vulnerability models}
+
+\subsection{Inundation}
+\paragraph{Hazard models}
+Inundation is modelled as an acute risk using the approach of Section~\ref{SubSec:AcuteAssetImpactModel}. Hazard event models compatible with this method provide inundation depths for different annual probabilities of occurrence -- or equivalently return periods. The need for sufficient granularity in the set of return periods is discussed in \cite{WardEtAl:2011}. 
+
+Inundation hazards are incorporated into physical risk calculations using the World Resource Institute (WRI) Aqueduct flood model \cite{WardEtAl:2020} which has relatively high return-period granularity. This is based on the global modelling approach of \cite{WardEtAl:2013}.
+
+{\textcolor{red}{\emph{[Discuss and include refs for approaches based on flooded area?]}}}
+
+\paragraph{Vulnerability models}
+Notable damage models for real estate assets include the FEMA FAST `HAZUS' model \cite{ScawthornEtAl:2006} and an European Commission Joint Research Centre (JRC) model \cite{HuizingaEtAl:2017}. The latter is implemented in the \emph{physrisk} library. 
+ 
+
+\subsection{Heat}
+
+Heat is classified as both a chronic and an acute hazard.  For example, increased average temperature in a particular area can lower average productivity from labour or make the area less desirable as a place to live, lowering real estate prices. These we classify as risks from chronic hazards. Heat waves are examples of acute hazard events; a period of particularly high temperature might lead to the complete suspension of industrial activity.
+
+Multiple indexes for quantifying heat hazards have been suggested and multiple approaches for the modelling of acute events are present in the literature, e.g. \cite{MazdiyasniEtAl:2019}. Similarly, various methods for modelling the vulnerability to heat hazards have been suggested. Analyses of heat wave events are commonly based on Global and Regional Circulation Model (GCM and RCM) outputs \cite{DosioEtAl:2018}. In \cite{Christidis:2021} and \cite{Christidis:2013} the authors analyse ensembles of CMIP6 simulations with and without anthropogenic forcings in order to determine if extreme heat events are attributable to (anthropogenic) climate change. Such attribution analysis is based in part on finding return periods of events (see also \cite{StottEtAl:2016}). This estimation of return periods for events is directly applicable to acute hazard models.  
+
+In order to support a wide range of hazard and vulnerability models,  \emph{physrisk} includes the derivation of heat statistics from CMIP6 data\footnote{This is somewhat in contrast to the use of the Aqueduct model of \cite{WardEtAl:2020} for modelling inundation where the complete hazard model is used as-is within \emph{physrisk} -- albeit reformatted to handle efficiently the access patterns needed for physical risk calculations.}. 
+
+\paragraph{Chronic hazard models}
+As mentioned above, hazard models and vulnerability models are closely coupled. \cite{ZhangAndShindell:2021} describes the `GZN' and `WBGT' methods. The statistics required for these methods are derived using bias-corrected and down-scaled data sets. There are multiple sources of data suitable for the estimation of the required statistics, notably the NEX-GDDP-NASA set \cite{ThrasherEtAl:2022}.
+
+\paragraph{Chronic vulnerability models}
+
+Vulnerability models are presented in \cite{DunneEtAl:2013} and \cite{ZhangAndShindell:2021}. \emph{physrisk} implements the `GZN' and `WBGT' approaches of the latter.
+
+\paragraph{Accute hazard models}
+Acute hazard modelling approaches are based on calculating return periods of events in a way analagous to acute inundation models. The calculation of return periods from data sets presents a statistical challenge, dealt with for example by \cite{MentaschiEtAl:2016}.
+
 \clearpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \bibliography{Physical Risk Methodology Bibliography}
@@ -422,6 +460,7 @@ whole globe, leading to a potentially large mismatch between historical and futu
 %\bibliographystyle{plain}
 \bibliographystyle{acm}
 %\bibliographystyle{agsm}
+
 
 
 \end{document}

@@ -1,0 +1,130 @@
+\begin{thebibliography}{10}
+
+\bibitem{BlackCox:1976}
+{\sc Black, F., and Cox, J.~C.}
+\newblock Valuing corporate securities: some effects of bond indenture
+  provisions.
+\newblock {\em Journal of Finance 31}, 2 (1976), 351--367.
+
+\bibitem{Christidis:2021}
+{\sc Christidis, N.}
+\newblock Using {CMIP6} multi-model ensembles for near real-time attribution of
+  extreme events.
+\newblock {\em Hadley Centre Technical Note 107\/} (2019).
+
+\bibitem{Christidis:2013}
+{\sc Christidis, N., Stott, P.~A., Scaife, A.~A., Arribas, A., Jones, G.~S.,
+  Copsey, D., Knight, J.~R., and Tennant, W.~J.}
+\newblock A new {HadGEM3-A}-based system for attribution of weather-and
+  climate-related extreme events.
+\newblock {\em Journal of Climate 26}, 9 (2013), 2756--2783.
+
+\bibitem{DosioEtAl:2018}
+{\sc Dosio, A., Mentaschi, L., Fischer, E.~M., and Wyser, K.}
+\newblock Extreme heat waves under {1.5 C} and {2 C} global warming.
+\newblock {\em Environmental Research Letters 13}, 5 (2018), 054006.
+
+\bibitem{DunneEtAl:2013}
+{\sc Dunne, J.~P., Stouffer, R.~J., and John, J.~G.}
+\newblock Reductions in labour capacity from heat stress under climate warming.
+\newblock {\em Nature Climate Change 3}, 6 (2013), 563--566.
+
+\bibitem{HuizingaEtAl:2017}
+{\sc Huizinga, J., De~Moel, H., Szewczyk, W., et~al.}
+\newblock Global flood depth-damage functions: Methodology and the database
+  with guidelines.
+\newblock Tech. rep., Joint Research Centre (Seville site), 2017.
+
+\bibitem{KenyonEtAl:2021}
+{\sc Kenyon, C., and Berrahouia, M.}
+\newblock Climate change valuation adjustment (ccva) using parameterized
+  climate change impacts.
+\newblock {\em Risk\/} (2021).
+
+\bibitem{MazdiyasniEtAl:2019}
+{\sc Mazdiyasni, O., Sadegh, M., Chiang, F., and AghaKouchak, A.}
+\newblock Heat wave intensity duration frequency curve: A multivariate approach
+  for hazard and attribution analysis.
+\newblock {\em Scientific reports 9}, 1 (2019), 1--8.
+
+\bibitem{MentaschiEtAl:2016}
+{\sc Mentaschi, L., Vousdoukas, M., Voukouvalas, E., Sartini, L., Feyen, L.,
+  Besio, G., and Alfieri, L.}
+\newblock The transformed-stationary approach: a generic and simplified
+  methodology for non-stationary extreme value analysis.
+\newblock {\em Hydrology and Earth System Sciences 20}, 9 (2016), 3527--3547.
+
+\bibitem{Merton:1974}
+{\sc Merton, R.~C.}
+\newblock On the pricing of corporate debt: the risk structure of interest
+  rates.
+\newblock {\em Journal of Finance 29}, 2 (1974), 449--470.
+
+\bibitem{OasisLMF}
+{\sc Oasis}.
+\newblock Oasis loss modelling framework: open source catastrophe modelling
+  platform, 2021.
+
+\bibitem{OSC}
+{\sc OS-C}.
+\newblock {OS-Climate} {(OS-C)} platform, 2021.
+
+\bibitem{ScawthornEtAl:2006}
+{\sc Scawthorn, C., Blais, N., Seligson, H., Tate, E., Mifflin, E., Thomas, W.,
+  Murphy, J., and Jones, C.}
+\newblock {HAZUS-MH} flood loss estimation methodology. i: Overview and flood
+  hazard characterization.
+\newblock {\em Natural Hazards Review 7}, 2 (2006), 60--71.
+
+\bibitem{StottEtAl:2016}
+{\sc Stott, P.~A., Christidis, N., Otto, F.~E., Sun, Y., Vanderlinden, J.-P.,
+  van Oldenborgh, G.~J., Vautard, R., von Storch, H., Walton, P., Yiou, P.,
+  et~al.}
+\newblock Attribution of extreme weather and climate-related events.
+\newblock {\em Wiley Interdisciplinary Reviews: Climate Change 7}, 1 (2016),
+  23--41.
+
+\bibitem{Taylor:2015}
+{\sc Taylor, P.}
+\newblock Calculating financial loss from catastrophes.
+\newblock In {\em SECED 2015 Conference: Earthquake risk and engineering
+  towards a resilient world\/} (2015), Society for earthquake and civil
+  engineering dynamics.
+
+\bibitem{OasisFinancialModule}
+{\sc Taylor, P., and Carter, J.}
+\newblock Oasis financial module, 2020.
+
+\bibitem{ThrasherEtAl:2022}
+{\sc Thrasher, B., Wang, W., Michaelis, A., Melton, F., Lee, T., and Nemani,
+  R.}
+\newblock Nasa global daily downscaled projections, {CMIP6}.
+\newblock {\em Scientific Data 9}, 1 (2022), 1--6.
+
+\bibitem{WardEtAl:2011}
+{\sc Ward, P.~J., De~Moel, H., and Aerts, J.}
+\newblock How are flood risk estimates affected by the choice of
+  return-periods?
+\newblock {\em Natural Hazards and Earth System Sciences 11}, 12 (2011),
+  3181--3195.
+
+\bibitem{WardEtAl:2013}
+{\sc Ward, P.~J., Jongman, B., Weiland, F.~S., Bouwman, A., van Beek, R.,
+  Bierkens, M.~F., Ligtvoet, W., and Winsemius, H.~C.}
+\newblock Assessing flood risk at the global scale: model setup, results, and
+  sensitivity.
+\newblock {\em Environmental research letters 8}, 4 (2013), 044019.
+
+\bibitem{WardEtAl:2020}
+{\sc Ward, P.~J., Winsemius, H.~C., Kuzma, S., Bierkens, M.~F., Bouwman, A.,
+  De~Moel, H., Loaiza, A.~D., Eilander, D., Englhardt, J., Erkens, G., et~al.}
+\newblock Aqueduct floods methodology.
+\newblock {\em World Resources Institute\/} (2020), 1--28.
+
+\bibitem{ZhangAndShindell:2021}
+{\sc Zhang, Y., and Shindell, D.~T.}
+\newblock Costs from labor losses due to extreme heat in the usa attributable
+  to climate change.
+\newblock {\em Climatic change 164}, 3 (2021), 1--18.
+
+\end{thebibliography}

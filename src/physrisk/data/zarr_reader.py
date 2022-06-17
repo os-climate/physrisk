@@ -89,9 +89,6 @@ class ZarrReader:
 
         image_coords = self._get_coordinates(longitudes, latitudes, transform)
 
-        res = z.shape
-        print(res)
-
         if interpolation == "floor":
             image_coords = np.floor(image_coords).astype(int)
             iz = np.tile(np.arange(z.shape[0]), image_coords.shape[1])  # type: ignore
@@ -103,7 +100,7 @@ class ZarrReader:
 
         elif interpolation == "linear":
             res = ZarrReader._linear_interp_frac_coordinates(z, image_coords, return_periods)
-            return res, return_periods
+            return res, np.array(return_periods)
 
         else:
             raise ValueError("interpolation must have value 'floor' or 'linear'")

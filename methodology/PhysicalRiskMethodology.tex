@@ -17,9 +17,11 @@
 \usepackage{amsmath}
 \usepackage{amssymb}
 \usepackage{bm}
+\usepackage[shortlabels]{enumitem}
 \usepackage{fancyhdr}
 \usepackage{float}
 \usepackage{framed}
+\usepackage{glossaries}
 \usepackage{graphicx}
 \usepackage[colorlinks,citecolor=blue,urlcolor=black,linkcolor=black,bookmarks=false,hypertexnames=true]{hyperref}
 \usepackage{numprint}
@@ -85,6 +87,8 @@
 \lhead{OS-Climate}
 \rhead{Physical Climate Risk Methodology}
 
+\makeglossaries
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \title{Physical Climate Risk Methodology}
@@ -133,27 +137,114 @@
 \section{Introduction}
 \label{Sec:Introduction}
 
-Physical risk is widely understood as the financial risk which arises from the physical effects of climate change. Measuring such risk requires multiple analyses: a) an assessment of the risk of catastrophic events, b) an estimate of the damage on a company's assets and c) the consequent impact on cash flows. A number of papers have developed models and tools that tackle one specific aspect of the problem. However, it is not currently easy to seamlessly integrate models which operate in different areas to produce an end to end physical risk analysis, or to experiment with different approaches.
-
-The purpose of this paper is to present the methodology of a framework that is sufficiently generic to be used for a wide range of physical climate risk models. The motivation is to provide a specification for use in the \emph{`physrisk'} OS-Climate (OS-C) \cite{OSC} physical climate risk calculation module. OS-C aims to provide an platform unconstrained by any one particular methodology choice. We take inspiration from the \emph{Oasis Loss Modelling Framework} (henceforth \emph{Oasis}), which was designed to accomodate a wide range of catastrophe models and analyse physical risk in the context of the insurance market. Similarly to \emph{Oasis}, we adopt a modular approach, each module being responsible for answering a specific question and together contributing to the assessment of physical risk. This approach allows the user to easily change a modelling method, whilst maintaining the integration between the components. In particular, we build a framework of three independent parts:
-
+The changing climate introduces new risks. These can be grouped into:
 \begin{enumerate}
-    \item Hazard
-    \item Vulnerability
-    \item Financial
+	\item Physical risks -- risks arising from the physical effects of climate change
+	\item Transition risks -- risks arising from the transition to a low-carbon economy\footnote{Liability risks are considered a third by some\cite{WoetzelEtAl:2020}. These are risks arising from those affected by anthropogenic climate change seeking compensation.}   
 \end{enumerate}
 
-This Hazard component is responsible for answering questions such as "what is the probability of an inundation or a period of drought in that area?". Hazard models produce the probability distributions for such future events. Hazard models are pure climate models, whose outputs can be used as an input for the next steps of the analysis. The Vulnerability component measures the potential impact of a catastrophic event on a given company's asset. Vulnerability models answer questions such as "what's the loss of output suffered by my power station if an inundation of a certain intensity happens?". Finally, the Financial module is concerned with translating the asset damage to a loss of profitability for the company, or a loss of value for a lender, insurer, equity stakeholder etc. Clearly, the models used in the Financial module answer questions specific to a certain user: is the ultimate objective that of measuring the physical risk for the company or for one of the asset's insurer? Depending on the answer to that question, a different Financial model might be needed. 
 
-With respect to Oasis, we try to structure the three components in a way that makes easy analyze physical risk from a variety of perspectives. We do not have a specific market (e.g. insurance market) in mind and we want to make sure that our framework is general enough to allow any stakeholder to reason about their physical risks. In addition, we want our framework to make as few assumptions as possible: The clear hypothesis is that we can treat the modules as dependent from one another only through their potential input-output relationships. Other than that, we want the user to have a flexible access to a wide choice of models within each module: the models are only required to have a predictable external behavior, while the details of the internal workings can be defined with flexibility.
+The methodology presented in this document concerns the assessment of physical risk. Physical risk comes from changes in climate \emph{\gls{hazard}s}, climate-related physical phenomena that have the potential to impact natural and socioeconomic systems \cite{WoetzelEtAl:2020}\cite{MitchellEtAl:2017}. Hazards can be divided into \emph{\gls{acute_hazard}s} and \emph{\gls{chronic_hazard}s}. Acute hazards are those associated with \emph{events}, for example heat waves, inundations (floods) and hurricanes. Chronic hazards are long-term shifts in climate parameters such as average temperature, sea-level or water stress indices.  
+
+
+\newglossaryentry{hazard}
+{
+	name=hazard,
+	description=Climate-related physical phenonenon that can impact natural and socioeconomic systems.
+}
+\newglossaryentry{acute_hazard}
+{
+	name=acute hazard,
+	description={Hazard which is an event, for example a heat wave, inundation, hurricane or wild fire.}
+}
+\newglossaryentry{chronic_hazard}
+{
+	name=chronic hazard,
+	description={Hazard which is a long-term shift in a climate parameter such as average temperature, sea-level or a water stress index.}  
+}
+\newglossaryentry{hazard_event}
+{
+	name=hazard event,
+	description={Definition of the occurrence of a hazard which can be assigned a probability. For example, a flood occurring in the year 2050 at a certain location with a depth greater than 50 cm.}
+}
+\newglossaryentry{hazard_parameter}
+{
+	name=hazard parameter,
+	description=Definition of the shifting parameter of a chronic hazard. This is a time-varying quantity such as the average temperature or the average number of days per year over a certain temperature threshold. 
+}
+
+
+A model designed to quantify physical risk must take into account: a) hazards' likelihood of occurrence  b) the damage or disruption caused by a hazard c) the consequence of this damage/disruption. Damage/disruption caused by a hazard is determined by the \emph{vulnerability} of the asset that is exposed\footnote{\emph{Exposure} of an asset to a hazard is defined after \cite{MaskreyEtAl:2011}; for most purposes this is determined by asset location.}. With a focus on financial risk, damage/disruption refers to damage of financial assets and disruption to business activities. More generally, damage can refer to natural assets and disruption to populations and ecosystems. Hereafter we use the word `asset' to describe both physical assets and business activities. As an example, the physical infrastructure of a power generating asset may be damaged by inundation and its electricity production may be disrupted, leading to a loss in revenue. 
+
+We assign explicit names to these three components, a), b) and c) for the financial risk case:
+\begin{enumerate}[a)]
+\item Hazard
+\item Vulnerability
+\item Financial
+\end{enumerate}
+
+A precise model of the physical risk from a single (localized) asset or business activity must consider a hazard's likelihood of occurrence \emph{at the asset's locale} (i.e. if the asset is exposed to the hazard) and vulnerability to the hazard particular to that asset. This requires specific knowledge of the asset. For example a power station that relies on air-cooling might be disrupted by a period of extremely high air temperature. In addition, an asset may be impacted through its reliance on other assets; a manufacturing facility may rely on continuity of electricity supply for example.
+
+Such precise models of physical risk can be complex and may rely on information that is not readily available. For these reasons, approximations are commonly used, although approximate models still typically include hazard, vulnerability and financial components \cite{BertramEtAl:2020}\cite{WoetzelEtAl:2020} -- even highly-approximate global-scale impact analyses used in macroeconomic models.
+
+The purpose of this paper is to present the methodology of a framework that is sufficiently generic to be used for a wide range of physical climate risk models, both precise and approximate as required. The ability to perform precise, fine-grained calculations is an important requirement therefore. This paper serves as a specification for use in the \emph{`physrisk'} OS-Climate (OS-C) \cite{OSC} physical climate risk calculation module.
+
+OS-C aims to provide an platform unconstrained by any one particular methodology choice, but takes inspiration from natural catastrophe modelling \cite{MitchellEtAl:2017} and in particular the \emph{Oasis Loss Modelling Framework} \cite{OasisLMF} (henceforth \emph{Oasis}), which was designed to accommodate a wide range of catastrophe models and analyse physical risk in the context of the insurance market. Similarly to \emph{Oasis}, we adopt a modular approach. This approach allows the user to change easily a particular modelling method, whilst maintaining the integration of the components. 
+
+In the following, models of hazards, vulnerability and financial impact are discussed in more detail. In a later section these are presented more formally.
+
+\subsection{Hazard model}
+Hazard models come in two varieties: models of acute hazards and models of chronic hazards.
+\begin{enumerate}[label=\Alph*.]
+\item{\emph{Accute hazard models.}}
+Models of accute hazards provide probabilities that accute hazards of a certain intensity occur within a given future time period. For example a hazard model may provide the probability that an inundation occurs in a certain location in th year 2050 with a flood depth greater than 30~cm. 
+
+Accute hazard models may or may not be \emph{event-based}
+\paragraph{Event-based hazard models}
+What we term `event-based hazard models' are the models common in natural catastrophe modelling. These provide a spatial distribution of hazard probabilities -- the `hazard footprint' -- conditional on the occurrence of some catastrophic event. This event might be, for example, a Noth American hurricane, a European heat wave or a South Asian inundation. 
+
+Event-based hazard models are important when the \emph{correlation} of hazards to which assets are exposed is material to the analysis being performed. Non-event-based hazard models provide probabilities that accute hazards occur in a certain location but with no information about how likely it is that two assets may experience the hazards at the same time. For example, if one house on a street is exposed to an inundation it is quite possible that the house two doors down will also be exposed. This is captured by event-based hazard models when both houses appear in the same event footprint.
+
+Of the face of it, non-event-based hazard models may appear to be missing important information  
+
+
+
+\item{\emph{Chronic hazards.}}
+Risk factors are modelled using probability distributions calibrated to historically-observed returns; simplifying assumptions such as a multivariate normal distribution are made in order to obtain closed-form expressions for the VaR.
+
+Risk factors are again reflected by probability distributions calibrated to historically-observed returns. The joint distributions are typically fitted to historical data more closely than in the case of a Parametric~VaR and, as such, usually do not allow for closed-form expressions.
+
+\end{enumerate}
+
+\begin{enumerate}[a)]
+	\item For \emph{acute hazards} distributions 
+	\item Vulnerability
+	\item Financial
+\end{enumerate}
+  such as the probability of an inundation above a certain depth, or a period of drought, in a specific area. 
+
+Models of acute hazards produce probability distributions for future events whereas chronic hazard models produce climate parameters only. Hazard models are pure climate models, whose outputs can be used as an input for the next steps of the analysis. 
+
+\paragraph{Vulnerability model}
+The vulnerability component measures the potential impact of a catastrophic event on an asset. Vulnerability models, like acute hazard models, are probabilistic.  loss of output suffered by my power station if an inundation of a certain intensity happens?". 
+
+Finally, the Financial module is concerned with translating the asset damage to a loss of profitability for the company, or a loss of value for a lender, insurer, equity stakeholder etc. Clearly, the models used in the Financial module answer questions specific to a certain user: is the ultimate objective that of measuring the physical risk for the company or for one of the asset's insurer? Depending on the answer to that question, a different Financial model might be needed. 
+
 
 At time of writing, physical risk calculations may make use of `bulk-assessment' approaches where accurate asset vulnerability information is unavailable and approximations are therefore required. The modelling framework accommodates bulk-assessment-type models as well as approaches capable of modelling vulnerability more precisely\footnote{There is potentially great value in the results obtained from very simple models, as long as the model error can be quantified. The aim is to be able to accommodate both simple and complex models in combination.}. The framework is designed to control the model risk that this creates by incorporating a model of the uncertainty of the approximations into the calculation.
 
+ The different elements can be modelled in a variety of ways, under different approximations. However we consider that a `micro' or `fine-granularity' method is pre-requisite for all of these. For example, 
 
+Hazard likelihood of occurrence is generally scenario-based \cite{BertramEtAl:2020}. 
+
+A number of papers have developed models and tools that tackle one specific aspect of the problem. However, it is not currently easy to seamlessly integrate models which operate in different areas to produce an end to end physical risk analysis, or to experiment with different approaches.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Literature}
+
+\section{Design goal}
+The design goal of the \emph{`physrisk'} library is to facilitate the analysis of physical risk from a variety of perspectives. There is no specific market (e.g. insurance market) in mind and we want to make sure that our framework is general enough to allow any stakeholder to reason about their physical risks. In addition, we want our framework to make as few assumptions as possible: The clear hypothesis is that we can treat the modules as dependent from one another only through their potential input-output relationships. Other than that, we want the user to have a flexible access to a wide choice of models within each module: the models are only required to have a predictable external behavior, while the details of the internal workings can be defined with flexibility.
 
 \section{Model description}
 
@@ -452,6 +543,9 @@ Vulnerability models are presented in \cite{DunneEtAl:2013} and \cite{ZhangAndSh
 \paragraph{Accute hazard models}
 Acute hazard modelling approaches are based on calculating return periods of events in a way analagous to acute inundation models. The calculation of return periods from data sets presents a statistical challenge, dealt with for example by \cite{MentaschiEtAl:2016}.
 
+
+\clearpage
+\printglossaries
 \clearpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \bibliography{Physical Risk Methodology Bibliography}

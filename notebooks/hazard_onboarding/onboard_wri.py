@@ -1,5 +1,5 @@
 import logging
-import os
+import os, pathlib
 import time
 
 import numpy as np
@@ -8,13 +8,21 @@ import s3fs
 import zarr
 from affine import Affine
 from botocore import UNSIGNED
+from dotenv import load_dotenv
+from mapbox_utilities import write_map_geotiff
 from zarr_utilities import add_logging_output_to_stdout, get_geotiff_meta_data, zarr_create, zarr_write
 
 LOG = logging.getLogger("WRI onboarding")
 LOG.setLevel(logging.INFO)
 
+dotenv_dir = os.environ.get("CREDENTIAL_DOTENV_DIR", os.environ.get("PWD", "/users/joemoorhouse/Code/physrisk/"))
+dotenv_path = pathlib.Path(dotenv_dir) / "credentials.env"
+if os.path.exists(dotenv_path):
+    load_dotenv(dotenv_path=dotenv_path, override=True)
 
-def onboard_wri_riverine_inundation(dest_bucket="redhat-osc-physical-landing-647521352890"):
+
+def onboard_wri_riverine_inundation(dest_bucket="redhat-osc-physical-landing-647521352890",
+    create_zarr = True, create_geotiff = True):
     LOG.info("Riverine inundation")
     # http://wri-projects.s3.amazonaws.com/AqueductFloodTool/download/v2/index.html
 
@@ -42,33 +50,38 @@ def onboard_wri_riverine_inundation(dest_bucket="redhat-osc-physical-landing-647
             for rcp in rcps:
                 LOG.info("RCP: " + rcp)
                 try:
-                    geotiff_to_zarr_riverine(
-                        circ_model=circ_model,
-                        year=year,
-                        rcp=rcp,
-                        src_bucket=src_bucket,
-                        src_prefix=src_prefix,
-                        s3_source=s3_source,
-                        dest_bucket=dest_bucket,
-                        dest_prefix=dest_prefix,
-                        s3_dest=s3_dest,
-                    )
+                    if create_zarr:
+                        geotiff_to_zarr_riverine(
+                            circ_model=circ_model,
+                            year=year,
+                            rcp=rcp,
+                            src_bucket=src_bucket,
+                            src_prefix=src_prefix,
+                            s3_source=s3_source,
+                            dest_bucket=dest_bucket,
+                            dest_prefix=dest_prefix,
+                            s3_dest=s3_dest)
+                    if create_geotiff:
+                        (colormap, map) = write_map_geotiff(input_dir, input_file, output_dir)
+                        
+                    
                 except Exception as e:
                     LOG.error("Error writing zarr", exc_info=e)
                     LOG.info("Skipping...")
 
     LOG.info("Historical")
-    geotiff_to_zarr_riverine(
-        circ_model="000000000WATCH",
-        year="1980",
-        rcp="historical",
-        src_bucket=src_bucket,
-        src_prefix=src_prefix,
-        s3_source=s3_source,
-        dest_bucket=dest_bucket,
-        dest_prefix=dest_prefix,
-        s3_dest=s3_dest,
-    )
+    if create_zarr:
+        geotiff_to_zarr_riverine(
+            circ_model="000000000WATCH",
+            year="1980",
+            rcp="historical",
+            src_bucket=src_bucket,
+            src_prefix=src_prefix,
+            s3_source=s3_source,
+            dest_bucket=dest_bucket,
+            dest_prefix=dest_prefix,
+            s3_dest=s3_dest,
+        )
 
 
 def onboard_wri_coastal_inundation(dest_bucket="redhat-osc-physical-landing-647521352890"):

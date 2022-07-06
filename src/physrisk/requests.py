@@ -1,4 +1,5 @@
 import json
+from typing import cast
 
 from .data.inventory import Inventory
 from .data.pregenerated_hazard_model import ZarrHazardModel
@@ -12,7 +13,8 @@ from .data_objects.hazard_event_requests import (
 )
 from .kernel import Event
 from .kernel import calculation as calc
-from .kernel.hazard_model import EventDataRequest
+from .kernel.hazard_model import HazardDataRequest
+from .kernel.hazard_model import HazardEventDataResponse as hmHazardEventDataResponse
 
 
 def get(*, request_id, request_dict, store=None):
@@ -37,7 +39,7 @@ def _get_hazard_data_availability(request: HazardEventAvailabilityRequest):
 def _get_hazard_data(request: HazardEventDataRequest, source_paths=None, store=None):
 
     if source_paths is None:
-        source_paths = calc.get_default_zarr_source_paths()
+        source_paths = calc.get_default_accute_zarr_source_paths()
 
     hazard_model = ZarrHazardModel(source_paths, store=store, interpolation=request.interpolation)
     # get hazard event types:
@@ -52,7 +54,7 @@ def _get_hazard_data(request: HazardEventDataRequest, source_paths=None, store=N
         event_type = event_dict[item.event_type]
 
         data_requests = [
-            EventDataRequest(event_type, lon, lat, model=item.model, scenario=item.scenario, year=item.year)
+            HazardDataRequest(event_type, lon, lat, model=item.model, scenario=item.scenario, year=item.year)
             for (lon, lat) in zip(item.longitudes, item.latitudes)
         ]
 
@@ -67,11 +69,10 @@ def _get_hazard_data(request: HazardEventDataRequest, source_paths=None, store=N
 
     for i, item in enumerate(request.items):
         requests = item_requests[i]
+        resps = (cast(hmHazardEventDataResponse, response_dict[req]) for req in requests)
         intensity_curves = [
-            IntensityCurve(
-                intensities=list(response_dict[req].intensities), return_periods=list(response_dict[req].return_periods)
-            )
-            for req in requests
+            IntensityCurve(intensities=list(resp.intensities), return_periods=list(resp.return_periods))
+            for resp in resps
         ]
         response.items.append(
             HazardEventDataResponseItem(

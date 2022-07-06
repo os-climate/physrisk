@@ -8,7 +8,7 @@ from .calculation import calculate_impacts, get_default_hazard_model, get_defaul
 from .financial_model import FinancialModelBase
 from .hazard_model import HazardModel
 from .impact_distrib import ImpactDistrib, ImpactType
-from .vulnerability_model import VulnerabilityModelBase
+from .vulnerability_model import VulnerabilityModelAcuteBase
 
 
 class Aggregator(ABC):
@@ -26,7 +26,7 @@ class LossModel:
     def __init__(
         self,
         hazard_model: Optional[HazardModel] = None,
-        vulnerability_models: Optional[Dict[type, Sequence[VulnerabilityModelBase]]] = None,
+        vulnerability_models: Optional[Dict[type, Sequence[VulnerabilityModelAcuteBase]]] = None,
     ):
         self.hazard_model = get_default_hazard_model() if hazard_model is None else hazard_model
         self.vulnerability_models = (

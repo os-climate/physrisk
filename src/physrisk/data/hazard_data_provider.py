@@ -18,9 +18,7 @@ class SourcePath(Protocol):
         ...
 
 
-class EventProvider:
-    """Provides hazard event intensities for a single Event (type of hazard event)."""
-
+class HazardDataProvider:
     def __init__(
         self,
         get_source_path: SourcePath,
@@ -38,6 +36,19 @@ class EventProvider:
         if interpolation not in ["floor", "linear"]:
             raise ValueError("interpolation must be 'floor' or 'linear'")
         self._interpolation = interpolation
+
+
+class AcuteHazardDataProvider(HazardDataProvider):
+    """Provides hazard event intensities for a single Hazard (type of hazard event)."""
+
+    def __init__(
+        self,
+        get_source_path: SourcePath,
+        *,
+        store: Optional[MutableMapping] = None,
+        interpolation: Optional[str] = "floor",
+    ):
+        super().__init__(get_source_path, store=store, interpolation=interpolation)
 
     def get_intensity_curves(
         self, longitudes: List[float], latitudes: List[float], *, model: str, scenario: str, year: int
@@ -61,6 +72,37 @@ class EventProvider:
             path, longitudes, latitudes, self._interpolation
         )  # type: ignore
         return curves, return_periods
+
+
+class ChronicHazardDataProvider(HazardDataProvider):
+    """Provides hazard parameters for a single type of chronic hazard."""
+
+    def __init__(
+        self,
+        get_source_path: SourcePath,
+        *,
+        store: Optional[MutableMapping] = None,
+        interpolation: Optional[str] = "floor",
+    ):
+        super().__init__(get_source_path, store=store, interpolation=interpolation)
+
+    def get_parameters(self, longitudes: List[float], latitudes: List[float], *, model: str, scenario: str, year: int):
+        """Get hazard parameters for each latitude and longitude coordinate pair.
+
+        Args:
+            longitudes: list of longitudes.
+            latitudes: list of latitudes.
+            model: model identifier.
+            scenario: identifier of scenario, e.g. rcp8p5 (RCP 8.5).
+            year: projection year, e.g. 2080.
+
+        Returns:
+            parameters: numpy array of parameters
+        """
+
+        path = self._get_source_path(model=model, scenario=scenario, year=year)
+        parameters, _ = self._reader.get_curves(path, longitudes, latitudes, self._interpolation)
+        return parameters[:, 0]
 
 
 # region World Resource Aqueduct Model
@@ -89,6 +131,20 @@ def get_source_path_wri_coastal_inundation(*, model: str, scenario: str, year: i
 def get_source_path_wri_riverine_inundation(*, model: str, scenario: str, year: int):
     type = "river"
     return os.path.join(_wri_inundation_prefix(), f"inun{type}_{scenario}_{model}_{year}")
+
+
+# endregion
+
+# region OS-C Chronic Heat Model
+
+
+def _osc_chronic_heat_prefix():
+    return "chronic_heat/osc/v1"
+
+
+def get_source_path_osc_chronic_heat(*, model: str, scenario: str, year: int):
+    # model valid options: 'mean_heating_degree_days'
+    return os.path.join(_osc_chronic_heat_prefix(), f"{model}_{scenario}_{year}")
 
 
 # endregion

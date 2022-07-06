@@ -2,7 +2,7 @@ import numpy as np
 import scipy.stats as stats
 
 from ..kernel.events import RiverineInundation
-from ..kernel.impact_curve import ImpactCurve
+from ..kernel.vulnerability_matrix_provider import VulnMatrixProvider
 from ..kernel.vulnerability_model import VulnerabilityModel, applies_to_events
 
 
@@ -19,7 +19,7 @@ class ExampleCdfBasedVulnerabilityModel(VulnerabilityModel):
         # we interpolate the mean and standard deviation and use this to construct distributions
         impact_means = np.interp(intensities, self.intensities, self.impact_means)
         impact_stddevs = np.interp(intensities, self.intensities, self.impact_stddevs)
-        return ImpactCurve(
+        return VulnMatrixProvider(
             intensities, impact_cdfs=[checked_beta_distrib(m, s) for m, s in zip(impact_means, impact_stddevs)]
         )
 

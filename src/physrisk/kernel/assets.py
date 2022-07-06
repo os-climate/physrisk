@@ -16,5 +16,11 @@ class RealEstateAsset(Asset):
         self.type = type
 
 
+class IndustrialActivity(Asset):
+    def __init__(self, latitude: float, longitude: float, *, type: str):
+        super().__init__(latitude, longitude)
+        self.type = type
+
+
 class TestAsset(Asset):
     pass

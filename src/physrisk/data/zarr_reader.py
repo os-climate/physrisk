@@ -85,22 +85,26 @@ class ZarrReader:
         # OSC-specific attributes contain tranform and return periods
         t = z.attrs["transform_mat3x3"]  # type: ignore
         transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
-        return_periods = z.attrs["index_values"]  # type: ignore
+
+        index_values = z.attrs["index_values"]  # type: ignore
+        # in the case of acute risks, index_values will contain the return periods
+        if index_values is None:
+            index_values = [0]
 
         image_coords = self._get_coordinates(longitudes, latitudes, transform)
 
         if interpolation == "floor":
             image_coords = np.floor(image_coords).astype(int)
             iz = np.tile(np.arange(z.shape[0]), image_coords.shape[1])  # type: ignore
-            iy = np.repeat(image_coords[1, :], len(return_periods))
-            ix = np.repeat(image_coords[0, :], len(return_periods))
+            iy = np.repeat(image_coords[1, :], len(index_values))
+            ix = np.repeat(image_coords[0, :], len(index_values))
 
             data = z.get_coordinate_selection((iz, iy, ix))  # type: ignore
-            return data.reshape([len(longitudes), len(return_periods)]), np.array(return_periods)
+            return data.reshape([len(longitudes), len(index_values)]), np.array(index_values)
 
         elif interpolation == "linear":
-            res = ZarrReader._linear_interp_frac_coordinates(z, image_coords, return_periods)
-            return res, np.array(return_periods)
+            res = ZarrReader._linear_interp_frac_coordinates(z, image_coords, index_values)
+            return res, np.array(index_values)
 
         else:
             raise ValueError("interpolation must have value 'floor' or 'linear'")

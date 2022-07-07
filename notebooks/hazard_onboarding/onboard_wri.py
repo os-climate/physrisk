@@ -1,5 +1,6 @@
 import logging
-import os, pathlib
+import os
+import pathlib
 import time
 
 import numpy as np
@@ -21,8 +22,9 @@ if os.path.exists(dotenv_path):
     load_dotenv(dotenv_path=dotenv_path, override=True)
 
 
-def onboard_wri_riverine_inundation(dest_bucket="redhat-osc-physical-landing-647521352890",
-    create_zarr = True, create_geotiff = True):
+def onboard_wri_riverine_inundation(
+    dest_bucket="redhat-osc-physical-landing-647521352890", create_zarr=True, create_geotiff=True
+):
     LOG.info("Riverine inundation")
     # http://wri-projects.s3.amazonaws.com/AqueductFloodTool/download/v2/index.html
 
@@ -60,11 +62,11 @@ def onboard_wri_riverine_inundation(dest_bucket="redhat-osc-physical-landing-647
                             s3_source=s3_source,
                             dest_bucket=dest_bucket,
                             dest_prefix=dest_prefix,
-                            s3_dest=s3_dest)
+                            s3_dest=s3_dest,
+                        )
                     if create_geotiff:
                         (colormap, map) = write_map_geotiff(input_dir, input_file, output_dir)
-                        
-                    
+
                 except Exception as e:
                     LOG.error("Error writing zarr", exc_info=e)
                     LOG.info("Skipping...")

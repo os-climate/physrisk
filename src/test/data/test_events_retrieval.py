@@ -14,8 +14,8 @@ import zarr
 from dotenv import load_dotenv
 
 from physrisk import RiverineInundation, requests
-from physrisk.data.event_provider import get_source_path_wri_riverine_inundation
 from physrisk.data.hazard.event_provider_wri import EventProviderWri
+from physrisk.data.hazard_data_provider import get_source_path_wri_riverine_inundation
 from physrisk.data.inventory import Inventory
 from physrisk.data.zarr_reader import ZarrReader
 

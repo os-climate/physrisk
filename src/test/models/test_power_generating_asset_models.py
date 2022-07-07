@@ -6,7 +6,7 @@ import numpy as np
 
 from physrisk import calculate_impacts
 from physrisk.kernel import Asset, PowerGeneratingAsset
-from physrisk.kernel.hazard_model import EventDataResponse
+from physrisk.kernel.hazard_model import HazardEventDataResponse
 from physrisk.models.power_generating_asset_models import InundationModel
 from physrisk.utils.lazy_importing import lazy_import
 
@@ -28,15 +28,15 @@ class TestPowerGeneratingAssetModels(unittest.TestCase):
 
         # we mock the response of the data request
         responses_mock = [
-            EventDataResponse(return_periods, base_depth),
-            EventDataResponse(return_periods, future_depth),
+            HazardEventDataResponse(return_periods, base_depth),
+            HazardEventDataResponse(return_periods, future_depth),
         ]
 
         latitude, longitude = 45.268405, 19.885738
         assets = [Asset(latitude, longitude)]
         model = InundationModel(assets)
 
-        impact, vul, event = model.get_impact(assets[0], responses_mock)
+        impact, vul, event = model.get_impact_details(assets[0], responses_mock)
         mean = impact.mean_impact()
 
         self.assertAlmostEqual(mean, 4.8453897 / 365.0)

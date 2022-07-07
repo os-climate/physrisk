@@ -2,25 +2,29 @@ import logging
 from collections import defaultdict
 from typing import Any, Dict, List, Optional
 
-from ..data.event_provider import get_source_path_wri_coastal_inundation, get_source_path_wri_riverine_inundation
+from ..data.hazard_data_provider import (
+    get_source_path_osc_chronic_heat,
+    get_source_path_wri_coastal_inundation,
+    get_source_path_wri_riverine_inundation,
+)
 from ..data.pregenerated_hazard_model import ZarrHazardModel
 from ..models import power_generating_asset_models as pgam
 from ..utils.helpers import get_iterable
 from .assets import Asset, PowerGeneratingAsset, TestAsset
-from .events import CoastalInundation, RiverineInundation
 from .hazard_event_distrib import HazardEventDistrib
 from .hazard_model import HazardModel
+from .hazards import ChronicHeat, CoastalInundation, RiverineInundation
 from .impact_distrib import ImpactDistrib
 from .vulnerability_distrib import VulnerabilityDistrib
-from .vulnerability_model import VulnerabilityModelBase
+from .vulnerability_model import VulnerabilityModelAcuteBase, VulnerabilityModelBase
 
 
 class AssetImpactResult:
     def __init__(
         self,
         impact: ImpactDistrib,
-        vulnerability: VulnerabilityDistrib,
-        event: HazardEventDistrib,
+        vulnerability: VulnerabilityDistrib = None,
+        event: HazardEventDistrib = None,
         hazard_data=None,
     ):
         self.impact = impact
@@ -34,6 +38,7 @@ def get_default_zarr_source_paths():
     return {
         RiverineInundation: get_source_path_wri_riverine_inundation,
         CoastalInundation: get_source_path_wri_coastal_inundation,
+        ChronicHeat: get_source_path_osc_chronic_heat,
     }
 
 
@@ -80,11 +85,7 @@ def calculate_impacts(
             )
         )
 
-        # previously used: model_type() if model_properties is None else model_type(**model_properties)
-
-        event_requests_by_asset = [
-            model.get_event_data_requests(asset, scenario=scenario, year=year) for asset in assets
-        ]
+        event_requests_by_asset = [model.get_data_requests(asset, scenario=scenario, year=year) for asset in assets]
 
         event_requests = [
             req for event_request_by_asset in event_requests_by_asset for req in get_iterable(event_request_by_asset)
@@ -94,7 +95,11 @@ def calculate_impacts(
 
         for asset, requests in zip(assets, event_requests_by_asset):
             hazard_data = [responses[req] for req in get_iterable(requests)]
-            impact, vul, event = model.get_impact(asset, hazard_data)
-            results[asset] = AssetImpactResult(impact, vulnerability=vul, event=event, hazard_data=hazard_data)
+            if isinstance(model, VulnerabilityModelAcuteBase):
+                impact, vul, event = model.get_impact_details(asset, hazard_data)
+                results[asset] = AssetImpactResult(impact, vulnerability=vul, event=event, hazard_data=hazard_data)
+            elif isinstance(model, VulnerabilityModelBase):
+                impact = model.get_impact(asset, hazard_data)
+                results[asset] = AssetImpactResult(impact, hazard_data=hazard_data)
 
     return results

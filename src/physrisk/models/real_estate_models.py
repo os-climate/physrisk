@@ -6,10 +6,9 @@ import scipy.stats as stats
 
 from physrisk.data_objects.vulnerability_curve import VulnerabilityCurve, VulnerabilityCurves
 from physrisk.kernel.assets import RealEstateAsset
-from physrisk.kernel.impact_curve import ImpactCurve
-from physrisk.kernel.vulnerability_model import VulnerabilityModel
+from physrisk.kernel.vulnerability_model import VulnerabilityModel, VulnMatrixProvider
 
-from ..kernel.events import CoastalInundation, RiverineInundation
+from ..kernel.hazards import CoastalInundation, RiverineInundation
 from ..kernel.vulnerability_model import applies_to_events, get_vulnerability_curves_from_resource
 
 
@@ -63,7 +62,7 @@ class RealEstateInundationModel(VulnerabilityModel):
         impact_means = np.interp(intensities, curve.intensity, curve.impact_mean)
         impact_stddevs = np.interp(intensities, std_curve.intensity, std_curve.impact_std)
 
-        return ImpactCurve(
+        return VulnMatrixProvider(
             intensities, impact_cdfs=[checked_beta_distrib(m, s) for m, s in zip(impact_means, impact_stddevs)]
         )
 

@@ -1,5 +1,5 @@
 import unittest
-from test.data.hazard_model_store import TestData, get_mock_hazard_model_store
+from test.data.hazard_model_store import TestData, mock_hazard_model_store_inundation
 
 import numpy as np
 from scipy import stats
@@ -7,9 +7,9 @@ from scipy import stats
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.kernel import calculation
 from physrisk.kernel.assets import Asset, RealEstateAsset
-from physrisk.kernel.events import Inundation, RiverineInundation
-from physrisk.kernel.hazard_model import EventDataResponse
-from physrisk.kernel.impact_curve import ImpactCurve
+from physrisk.kernel.hazard_model import HazardEventDataResponse
+from physrisk.kernel.hazards import Inundation, RiverineInundation
+from physrisk.kernel.vulnerability_matrix_provider import VulnMatrixProvider
 from physrisk.kernel.vulnerability_model import VulnerabilityModel
 from physrisk.models.example_models import ExampleCdfBasedVulnerabilityModel
 
@@ -26,7 +26,7 @@ class ExampleRealEstateInundationModel(VulnerabilityModel):
         # we interpolate the mean and standard deviation and use this to construct distributions
         impact_means = np.interp(intensities, self.intensities, self.impact_means)
         impact_stddevs = np.interp(intensities, self.intensities, self.impact_stddevs)
-        return ImpactCurve(
+        return VulnMatrixProvider(
             intensities, impact_cdfs=[checked_beta_distrib(m, s) for m, s in zip(impact_means, impact_stddevs)]
         )
 
@@ -63,7 +63,7 @@ class TestExampleModels(unittest.TestCase):
             [0.059601218, 0.33267087, 0.50511575, 0.71471703, 0.8641244, 1.0032823, 1.1491022, 1.1634114, 1.1634114]
         )
 
-        mock_response = EventDataResponse(return_periods, intensities)
+        mock_response = HazardEventDataResponse(return_periods, intensities)
 
         vul, event = model.get_distributions(asset, [mock_response])
 
@@ -71,7 +71,7 @@ class TestExampleModels(unittest.TestCase):
         curve = np.array(
             [0.059601218, 0.33267087, 0.50511575, 0.71471703, 0.8641244, 1.0032823, 1.1491022, 1.1634114, 1.1634114]
         )
-        store = get_mock_hazard_model_store(TestData.longitudes, TestData.latitudes, curve)
+        store = mock_hazard_model_store_inundation(TestData.longitudes, TestData.latitudes, curve)
         hazard_model = ZarrHazardModel(source_paths=calculation.get_default_zarr_source_paths(), store=store)
 
         scenario = "rcp8p5"

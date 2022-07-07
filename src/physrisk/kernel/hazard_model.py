@@ -1,15 +1,18 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import Dict, List, Protocol, Tuple
+from typing import Dict, List, Mapping, Protocol, Tuple
 
 import numpy as np
 
 
-class EventDataRequest:
-    """Request for a hazard event intensity curve."""
+class HazardDataRequest:
+    """Request for hazard data. The event_type determines whether the hazard is acute or chronic.
+    An acute hazard is an event and the response will therefore comprise hazard intensities for the
+    different event return periods. A chronic hazard on the other hand is a shift in a climate parameter
+    and the parameter value is returned."""
 
     def __init__(self, event_type: type, longitude: float, latitude: float, *, model: str, scenario: str, year: int):
-        """Create EventDataRequest.
+        """Create HazardDataRequest.
 
         Args:
             event_type: type of hazard event.
@@ -31,11 +34,15 @@ class EventDataRequest:
         return tuple((self.event_type, self.model, self.scenario, self.year))
 
 
-class EventDataResponse:
-    """Response to EventDataRequest."""
+class HazardDataResponse:
+    pass
+
+
+class HazardEventDataResponse(HazardDataResponse):
+    """Response to HazardDataRequest for acute hazards."""
 
     def __init__(self, return_periods: np.ndarray, intensities: np.ndarray):
-        """Create ReturnPeriodEvDataResp.
+        """Create HazardEventDataResponse.
 
         Args:
             return_periods: return periods in years.
@@ -45,13 +52,25 @@ class EventDataResponse:
         self.intensities = intensities
 
 
+class HazardParameterDataResponse(HazardDataResponse):
+    """Response to HazardDataRequest."""
+
+    def __init__(self, parameter: np.ndarray):
+        """Create HazardParameterDataResponse.
+
+        Args:
+            parameter: the chronic hazard parameter value.
+        """
+        self.parameter = parameter
+
+
 class HazardModel(ABC):
     """Hazard event model. The model accepts a set of EventDataRequests and returns the corresponding
     EventDataResponses."""
 
     @abstractmethod
-    def get_hazard_events(self, requests: List[EventDataRequest]) -> Dict[EventDataRequest, EventDataResponse]:
-        """Process the hazard event requests and return responses."""
+    def get_hazard_events(self, requests: List[HazardDataRequest]) -> Mapping[HazardDataRequest, HazardDataResponse]:
+        """Process the hazard data requests and return responses."""
         ...
 
 
@@ -66,14 +85,15 @@ class CompositeHazardModel(HazardModel):
     def __init__(self, hazard_models: Dict[type, HazardModel]):
         self.hazard_models = hazard_models
 
-    def get_hazard_events(self, requests: List[EventDataRequest]) -> Dict[EventDataRequest, EventDataResponse]:
+    def get_hazard_events(self, requests: List[HazardDataRequest]) -> Mapping[HazardDataRequest, HazardDataResponse]:
         requests_by_event_type = defaultdict(list)
 
         for request in requests:
             requests_by_event_type[request.event_type].append(request)
 
-        responses = {}
+        responses: Dict[HazardDataRequest, HazardDataResponse] = {}
         for event_type, reqs in requests_by_event_type.items():
-            responses.update(self.hazard_models[event_type].get_hazard_events(reqs))
+            events_reponses = self.hazard_models[event_type].get_hazard_events(reqs)
+            responses.update(events_reponses)
 
         return responses

@@ -9,7 +9,7 @@ from physrisk.kernel.assets import Asset, PowerGeneratingAsset
 from physrisk.kernel.financial_model import FinancialDataProvider, FinancialModel
 from physrisk.kernel.loss_model import LossModel
 
-from ..data.hazard_model_store import TestData, get_mock_hazard_model_store
+from ..data.hazard_model_store import TestData, mock_hazard_model_store_inundation
 
 
 class MockFinancialDataProvider(FinancialDataProvider):
@@ -27,7 +27,7 @@ class TestAssetImpact(unittest.TestCase):
         curve = np.array(
             [0.059601218, 0.33267087, 0.50511575, 0.71471703, 0.8641244, 1.0032823, 1.1491022, 1.1634114, 1.1634114]
         )
-        store = get_mock_hazard_model_store(TestData.longitudes, TestData.latitudes, curve)
+        store = mock_hazard_model_store_inundation(TestData.longitudes, TestData.latitudes, curve)
 
         # we need to define
         # 1) The hazard models

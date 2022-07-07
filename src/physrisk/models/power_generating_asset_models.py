@@ -4,9 +4,9 @@ import numpy as np
 
 from ..kernel.assets import Asset, PowerGeneratingAsset
 from ..kernel.curve import ExceedanceCurve
-from ..kernel.events import ChronicHeat, RiverineInundation
 from ..kernel.hazard_event_distrib import HazardEventDistrib
 from ..kernel.hazard_model import HazardDataRequest, HazardDataResponse, HazardEventDataResponse
+from ..kernel.hazards import ChronicHeat, RiverineInundation
 from ..kernel.vulnerability_distrib import VulnerabilityDistrib
 from ..kernel.vulnerability_model import (
     DeterministicVulnerabilityModel,

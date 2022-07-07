@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import cast
 
 
 class HazardKind(Enum):
@@ -11,20 +12,22 @@ class InundationType(Enum):
     coastal = 2
 
 
-class Event:
+class Hazard:
+    @staticmethod
+    def kind(hazard_type):
+        return cast(HazardKind, hazard_type.kind)
+
+
+class Drought(Hazard):
     pass
 
 
-class Drought(Event):
-    pass
-
-
-class ChronicHeat(Event):
+class ChronicHeat(Hazard):
     kind = HazardKind.chronic
     pass
 
 
-class Inundation(Event):
+class Inundation(Hazard):
     kind = HazardKind.acute
     pass
 

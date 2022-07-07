@@ -7,8 +7,8 @@ from scipy import stats
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.kernel import calculation
 from physrisk.kernel.assets import Asset, RealEstateAsset
-from physrisk.kernel.events import Inundation, RiverineInundation
 from physrisk.kernel.hazard_model import HazardEventDataResponse
+from physrisk.kernel.hazards import Inundation, RiverineInundation
 from physrisk.kernel.vulnerability_matrix_provider import VulnMatrixProvider
 from physrisk.kernel.vulnerability_model import VulnerabilityModel
 from physrisk.models.example_models import ExampleCdfBasedVulnerabilityModel
@@ -72,9 +72,7 @@ class TestExampleModels(unittest.TestCase):
             [0.059601218, 0.33267087, 0.50511575, 0.71471703, 0.8641244, 1.0032823, 1.1491022, 1.1634114, 1.1634114]
         )
         store = mock_hazard_model_store_inundation(TestData.longitudes, TestData.latitudes, curve)
-        hazard_model = ZarrHazardModel(
-            acute_source_paths=calculation.get_default_accute_zarr_source_paths(), store=store
-        )
+        hazard_model = ZarrHazardModel(source_paths=calculation.get_default_zarr_source_paths(), store=store)
 
         scenario = "rcp8p5"
         year = 2080

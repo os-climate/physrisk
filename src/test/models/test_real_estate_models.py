@@ -17,9 +17,7 @@ class TestRealEstateModels(unittest.TestCase):
 
         curve = np.array([0.0596, 0.333, 0.505, 0.715, 0.864, 1.003, 1.149, 1.163, 1.163])
         store = mock_hazard_model_store_inundation(TestData.longitudes, TestData.latitudes, curve)
-        hazard_model = ZarrHazardModel(
-            acute_source_paths=calculation.get_default_accute_zarr_source_paths(), store=store
-        )
+        hazard_model = ZarrHazardModel(source_paths=calculation.get_default_zarr_source_paths(), store=store)
 
         # location="Europe", type="Buildings/Residential"
         assets = [
@@ -86,9 +84,7 @@ class TestRealEstateModels(unittest.TestCase):
         curve = np.array([0.223, 0.267, 0.29, 0.332, 0.359, 0.386, 0.422, 0.449, 0.476])
 
         store = mock_hazard_model_store_inundation(TestData.coastal_longitudes, TestData.coastal_latitudes, curve)
-        hazard_model = ZarrHazardModel(
-            acute_source_paths=calculation.get_default_accute_zarr_source_paths(), store=store
-        )
+        hazard_model = ZarrHazardModel(source_paths=calculation.get_default_zarr_source_paths(), store=store)
 
         # location="Europe", type="Buildings/Residential"
         assets = [

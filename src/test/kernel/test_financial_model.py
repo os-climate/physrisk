@@ -34,9 +34,7 @@ class TestAssetImpact(unittest.TestCase):
         # 2) The vulnerability models
         # 3) The financial models
 
-        hazard_model = ZarrHazardModel(
-            acute_source_paths=calculation.get_default_accute_zarr_source_paths(), store=store
-        )
+        hazard_model = ZarrHazardModel(source_paths=calculation.get_default_zarr_source_paths(), store=store)
 
         model = LossModel(hazard_model=hazard_model)
 

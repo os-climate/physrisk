@@ -11,9 +11,9 @@ from ..data.pregenerated_hazard_model import ZarrHazardModel
 from ..models import power_generating_asset_models as pgam
 from ..utils.helpers import get_iterable
 from .assets import Asset, PowerGeneratingAsset, TestAsset
-from .events import ChronicHeat, CoastalInundation, RiverineInundation
 from .hazard_event_distrib import HazardEventDistrib
 from .hazard_model import HazardModel
+from .hazards import ChronicHeat, CoastalInundation, RiverineInundation
 from .impact_distrib import ImpactDistrib
 from .vulnerability_distrib import VulnerabilityDistrib
 from .vulnerability_model import VulnerabilityModelAcuteBase, VulnerabilityModelBase
@@ -34,7 +34,7 @@ class AssetImpactResult:
         self.event = event
 
 
-def get_default_accute_zarr_source_paths():
+def get_default_zarr_source_paths():
     return {
         RiverineInundation: get_source_path_wri_riverine_inundation,
         CoastalInundation: get_source_path_wri_coastal_inundation,
@@ -42,13 +42,9 @@ def get_default_accute_zarr_source_paths():
     }
 
 
-def get_default_chronic_zarr_source_paths():
-    return {ChronicHeat: get_source_path_osc_chronic_heat}
-
-
 def get_default_hazard_model():
     # Model that gets hazard event data from Zarr storage
-    return ZarrHazardModel(get_default_accute_zarr_source_paths(), get_default_chronic_zarr_source_paths())
+    return ZarrHazardModel(get_default_zarr_source_paths())
 
 
 def get_default_vulnerability_models():

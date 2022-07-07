@@ -11,7 +11,7 @@ from .data_objects.hazard_event_requests import (
     HazardEventDataResponseItem,
     IntensityCurve,
 )
-from .kernel import Event
+from .kernel import Hazard
 from .kernel import calculation as calc
 from .kernel.hazard_model import HazardDataRequest
 from .kernel.hazard_model import HazardEventDataResponse as hmHazardEventDataResponse
@@ -39,11 +39,11 @@ def _get_hazard_data_availability(request: HazardEventAvailabilityRequest):
 def _get_hazard_data(request: HazardEventDataRequest, source_paths=None, store=None):
 
     if source_paths is None:
-        source_paths = calc.get_default_accute_zarr_source_paths()
+        source_paths = calc.get_default_zarr_source_paths()
 
     hazard_model = ZarrHazardModel(source_paths, store=store, interpolation=request.interpolation)
     # get hazard event types:
-    event_types = Event.__subclasses__()
+    event_types = Hazard.__subclasses__()
     event_dict = dict((et.__name__, et) for et in event_types)
     event_dict.update((est.__name__, est) for et in event_types for est in et.__subclasses__())
 

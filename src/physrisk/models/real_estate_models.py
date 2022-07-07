@@ -8,7 +8,7 @@ from physrisk.data_objects.vulnerability_curve import VulnerabilityCurve, Vulner
 from physrisk.kernel.assets import RealEstateAsset
 from physrisk.kernel.vulnerability_model import VulnerabilityModel, VulnMatrixProvider
 
-from ..kernel.events import CoastalInundation, RiverineInundation
+from ..kernel.hazards import CoastalInundation, RiverineInundation
 from ..kernel.vulnerability_model import applies_to_events, get_vulnerability_curves_from_resource
 
 

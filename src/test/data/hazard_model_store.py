@@ -82,12 +82,29 @@ def get_mock_hazard_model_store_single_curve():
     return store
 
 
-def mock_hazard_model_store_heat(longitudes, latitudes, curve):
-    return mock_hazard_model_store_for_paths(longitudes, latitudes, curve, heat_paths)
+def mock_hazard_model_store_heat(longitudes, latitudes):
+    return mock_hazard_model_store_for_parameter_sets(longitudes, latitudes, degree_day_heat_parameter_set())
 
 
 def mock_hazard_model_store_inundation(longitudes, latitudes, curve):
     return mock_hazard_model_store_for_paths(longitudes, latitudes, curve, inundation_paths)
+
+
+def mock_hazard_model_store_for_parameter_sets(longitudes, latitudes, path_parameters):
+    """Create a MemoryStore for creation of Zarr hazard model to be used with unit tests,
+    with the specified longitudes and latitudes set to the curve supplied."""
+
+    return_periods = None
+    shape = (1, 21600, 43200)
+
+    t = [0.008333333333333333, 0.0, -180.0, 0.0, -0.008333333333333333, 90.0, 0.0, 0.0, 1.0]
+    store = zarr.storage.MemoryStore(root="hazard.zarr")
+    root = zarr.open(store=store, mode="w")
+
+    for (path, parameter) in path_parameters.items():
+        _add_curves(root, longitudes, latitudes, path, shape, parameter, return_periods, t)
+
+    return store
 
 
 def mock_hazard_model_store_for_paths(longitudes, latitudes, curve, paths):
@@ -112,11 +129,17 @@ def mock_hazard_model_store_for_paths(longitudes, latitudes, curve, paths):
     return store
 
 
-def heat_paths():
+def degree_day_heat_parameter_set():
     paths = []
-    for model, scenario, year in [("mean_heating_degree_days", "rcp8p5", 2080)]:
+    for model, scenario, year in [
+        ("mean_degree_days/heating/18C", "historical", 1980),
+        ("mean_degree_days/cooling/18C", "historical", 1980),
+        ("mean_delta_degree_days/heating/18C", "ssp585", 2050),
+        ("mean_delta_degree_days/cooling/18C", "ssp585", 2050),
+    ]:
         paths.append(get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year))
-    return paths
+    parameters = [1000, 900, -200, 300]
+    return dict(zip(paths, parameters))
 
 
 def inundation_paths():

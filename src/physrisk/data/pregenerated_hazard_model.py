@@ -1,8 +1,8 @@
 from collections import defaultdict
-from typing import Dict, List, Mapping, MutableMapping, Optional
+from typing import Dict, List, Mapping, MutableMapping, Optional, cast
 
 from physrisk.kernel import calculation
-from physrisk.kernel.events import HazardKind
+from physrisk.kernel.hazards import Hazard, HazardKind
 
 from ..kernel.hazard_model import (
     HazardDataRequest,
@@ -11,7 +11,7 @@ from ..kernel.hazard_model import (
     HazardModel,
     HazardParameterDataResponse,
 )
-from .hazard_data_provider import AcuteHazardDataProvider, ChronicHazardDataProvider, SourcePath
+from .hazard_data_provider import AcuteHazardDataProvider, ChronicHazardDataProvider, HazardDataProvider, SourcePath
 
 
 class PregeneratedHazardModel(HazardModel):
@@ -19,11 +19,19 @@ class PregeneratedHazardModel(HazardModel):
 
     def __init__(
         self,
-        acute_hazard_data_providers: Dict[type, AcuteHazardDataProvider],
-        chronic_hazard_data_providers: Dict[type, ChronicHazardDataProvider],
+        hazard_data_providers: Dict[type, HazardDataProvider],
     ):
-        self.acute_hazard_data_providers = acute_hazard_data_providers
-        self.chronic_hazard_data_providers = chronic_hazard_data_providers
+
+        self.acute_hazard_data_providers = dict(
+            (k, cast(AcuteHazardDataProvider, v))
+            for (k, v) in hazard_data_providers.items()
+            if Hazard.kind(k) == HazardKind.acute
+        )
+        self.chronic_hazard_data_providers = dict(
+            (k, cast(ChronicHazardDataProvider, v))
+            for (k, v) in hazard_data_providers.items()
+            if Hazard.kind(k) == HazardKind.chronic
+        )
 
     def get_hazard_events(self, requests: List[HazardDataRequest]) -> Mapping[HazardDataRequest, HazardDataResponse]:
 
@@ -57,20 +65,23 @@ class PregeneratedHazardModel(HazardModel):
 class ZarrHazardModel(PregeneratedHazardModel):
     def __init__(
         self,
-        acute_source_paths: Optional[Dict[type, SourcePath]] = None,
-        chronic_source_paths: Optional[Dict[type, SourcePath]] = None,
+        source_paths: Optional[Dict[type, SourcePath]] = None,
         store=None,
         interpolation="floor",
     ):
-        if acute_source_paths is None:
-            acute_source_paths = calculation.get_default_accute_zarr_source_paths()
+        if source_paths is None:
+            source_paths = calculation.get_default_zarr_source_paths()
+
         super().__init__(
             dict(
-                (t, AcuteHazardDataProvider(sp, store=store, interpolation=interpolation))
-                for t, sp in acute_source_paths.items()
-            ),
-            dict(
-                (t, ChronicHazardDataProvider(sp, store=store, interpolation=interpolation))
-                for t, sp in acute_source_paths.items()
-            ),
+                (
+                    t,
+                    (
+                        AcuteHazardDataProvider(sp, store=store, interpolation=interpolation)
+                        if Hazard.kind(t) == HazardKind.acute
+                        else ChronicHazardDataProvider(sp, store=store, interpolation=interpolation)
+                    ),
+                )
+                for t, sp in source_paths.items()
+            )
         )

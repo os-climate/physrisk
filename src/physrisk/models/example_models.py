@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.stats as stats
 
-from ..kernel.events import RiverineInundation
+from ..kernel.hazards import RiverineInundation
 from ..kernel.vulnerability_matrix_provider import VulnMatrixProvider
 from ..kernel.vulnerability_model import VulnerabilityModel, applies_to_events
 

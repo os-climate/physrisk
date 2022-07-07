@@ -1,4 +1,5 @@
 import os
+from abc import ABC
 from typing import List, MutableMapping, Optional
 
 from typing_extensions import Protocol
@@ -18,7 +19,7 @@ class SourcePath(Protocol):
         ...
 
 
-class HazardDataProvider:
+class HazardDataProvider(ABC):
     def __init__(
         self,
         get_source_path: SourcePath,
@@ -143,8 +144,15 @@ def _osc_chronic_heat_prefix():
 
 
 def get_source_path_osc_chronic_heat(*, model: str, scenario: str, year: int):
-    # model valid options: 'mean_heating_degree_days'
-    return os.path.join(_osc_chronic_heat_prefix(), f"{model}_{scenario}_{year}")
+    type, heating_cooling, ref_temp = model.split("/")
+    valid_types = ["mean_degree_days", "mean_delta_degree_days"]
+    # valid_heating_cooling = ["heating", "cooling"]
+    # valid_ref_temp = ["18C"]
+
+    if type not in valid_types:
+        raise ValueError("valid types are {valid_types}")
+
+    return os.path.join(_osc_chronic_heat_prefix(), f"{type}_{heating_cooling}_{ref_temp}_{scenario}_{year}")
 
 
 # endregion

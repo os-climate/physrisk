@@ -1,34 +1,41 @@
-import base64, hashlib, json, logging, os, sys
-from time import sleep
+import base64
+import hashlib
+import json
+import logging
+import os
+import sys
 from os import listdir
 from os.path import isfile, join
+from time import sleep
 from typing import List, Tuple
 
-from affine import Affine
 import numpy as np
+import rasterio
+import s3fs
+import seaborn as sns
+import zarr
+from affine import Affine
 from mapbox import Uploader
 from matplotlib import pyplot as plt
-import rasterio
 from rasterio.enums import Resampling
-import seaborn as sns
-import s3fs
 from tifffile.tifffile import TiffFile
-import zarr
+
 
 def alphanumeric(text):
     """Return alphanumeric hash from supplied string."""
-    hash_int = int.from_bytes(hashlib.sha1(text.encode('utf-8')).digest(), 'big')
+    hash_int = int.from_bytes(hashlib.sha1(text.encode("utf-8")).digest(), "big")
     return base36encode(hash_int)
 
-def base36encode(number, alphabet='0123456789abcdefghijklmnopqrstuvwxyz'):
+
+def base36encode(number, alphabet="0123456789abcdefghijklmnopqrstuvwxyz"):
     """Converts an integer to a base36 string."""
     if not isinstance(number, int):
-        raise TypeError('number must be an integer')
+        raise TypeError("number must be an integer")
 
-    base36 = ''
+    base36 = ""
 
     if number < 0:
-        raise TypeError('number must be positive')
+        raise TypeError("number must be positive")
 
     if 0 <= number < len(alphabet):
         return sign + alphabet[number]
@@ -39,10 +46,12 @@ def base36encode(number, alphabet='0123456789abcdefghijklmnopqrstuvwxyz'):
 
     return base36
 
+
 def load_s3(s3_source, src_bucket, src_prefix, filename, target_width=None):
     with s3_source.open(os.path.join(src_bucket, src_prefix, filename)) as f:
         with rasterio.open(f) as dataset:
             return load(dataset, target_width)
+
 
 def load(dataset, target_width=None):
     scaling = 1 if target_width is None else float(target_width) / dataset.width
@@ -51,7 +60,11 @@ def load(dataset, target_width=None):
 
     # data = src.read(1)
     # resample data to target shape
-    data = dataset.read(1) if scaling == 1 else dataset.read(1, out_shape=(dataset.count, height, width), resampling=Resampling.bilinear)
+    data = (
+        dataset.read(1)
+        if scaling == 1
+        else dataset.read(1, out_shape=(dataset.count, height, width), resampling=Resampling.bilinear)
+    )
 
     # scale image transform
     t = dataset.transform
@@ -62,9 +75,11 @@ def load(dataset, target_width=None):
 
     return (data, dataset.profile, width, height, transform)
 
-def load_fs(input_path, target_width=None):    
+
+def load_fs(input_path, target_width=None):
     with rasterio.open(input_path) as dataset:
         return load(dataset, target_width)
+
 
 def write_map_geotiff_s3(s3_source, src_bucket, src_prefix, filename, output_dir):
     (data, profile, width, height, transform) = load_s3(s3_source, src_bucket, src_prefix, filename)
@@ -72,11 +87,13 @@ def write_map_geotiff_s3(s3_source, src_bucket, src_prefix, filename, output_dir
 
     write_map_geotiff(data, profile, width, height, transform, filename, output_dir)
 
+
 def write_map_geotiff_fs(input_dir, filename, output_dir):
     (data, profile, width, height, transform) = load_fs(os.path.join(input_dir, filename))
     LOG.info("Loaded")
 
     write_map_geotiff(data, profile, width, height, transform, filename, output_dir)
+
 
 def write_map_geotiff(data, profile, width, height, transform, filename, output_dir):
 
@@ -102,10 +119,10 @@ def write_map_geotiff(data, profile, width, height, transform, filename, output_
     map_for_json[0] = map_for_json[1] = (255, 255, 255, 0)  # no data and zero are transparent
     a[0] = a[1] = 0
 
-    filename_stub = filename.split('.')[0]
+    filename_stub = filename.split(".")[0]
     alpha = alphanumeric(filename_stub)[0:6]
     LOG.info(f"Hashing {filename_stub} as code: {alpha}")
-    
+
     colormap_path_out = os.path.join(output_dir, "colormap_" + alpha + "_" + filename_stub + ".json")
     with open(colormap_path_out, "w") as f:
         colormap_info = json.dumps(
@@ -188,9 +205,9 @@ def upload_geotiff(path, id):
             sleep(5)
 
 
-#LOG = logging.getLogger("Mapbox onboarding")
-#LOG.setLevel(logging.INFO)
-            
+# LOG = logging.getLogger("Mapbox onboarding")
+# LOG.setLevel(logging.INFO)
+
 # input_dir = r"/root/code/osc/inputs/"
 # input_file = "inunriver_rcp8p5_MIROC-ESM-CHEM_2080_rp01000.tif"
 # output_dir = r"/root/code/osc/inputs/"
@@ -204,4 +221,3 @@ def upload_geotiff(path, id):
 
 # (colormap, map) = write_map_geotiff(input_dir, input_file, output_dir)
 # upload_geotiff("/root/code/osc/inputs/map_inunriver_rcp8p5_MIROC-ESM-CHEM_2080_rp01000.tif", "test3")
-

@@ -11,18 +11,18 @@ class HazardDataRequest:
     different event return periods. A chronic hazard on the other hand is a shift in a climate parameter
     and the parameter value is returned."""
 
-    def __init__(self, event_type: type, longitude: float, latitude: float, *, model: str, scenario: str, year: int):
+    def __init__(self, hazard_type: type, longitude: float, latitude: float, *, model: str, scenario: str, year: int):
         """Create HazardDataRequest.
 
         Args:
-            event_type: type of hazard event.
+            event_type: type of hazard.
             longitude: required longitude.
             latitude: required latitude.
             model: model identifier.
             scenario: identifier of scenario, e.g. rcp8p5 (RCP 8.5).
             year: projection year, e.g. 2080.
         """
-        self.event_type = event_type
+        self.hazard_type = hazard_type
         self.longitude = longitude
         self.latitude = latitude
         self.model = model
@@ -31,7 +31,7 @@ class HazardDataRequest:
 
     def group_key(self):
         """Key used to group EventDataRequests into batches."""
-        return tuple((self.event_type, self.model, self.scenario, self.year))
+        return tuple((self.hazard_type, self.model, self.scenario, self.year))
 
 
 class HazardDataResponse:
@@ -89,7 +89,7 @@ class CompositeHazardModel(HazardModel):
         requests_by_event_type = defaultdict(list)
 
         for request in requests:
-            requests_by_event_type[request.event_type].append(request)
+            requests_by_event_type[request.hazard_type].append(request)
 
         responses: Dict[HazardDataRequest, HazardDataResponse] = {}
         for event_type, reqs in requests_by_event_type.items():

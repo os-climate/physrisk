@@ -106,8 +106,8 @@ class TestEventRetrieval(unittest.TestCase):
                 {
                     "request_item_id": "test_inundation",
                     "event_type": "RiverineInundation",
-                    "longitudes": TestData.longitudes[5:6],
-                    "latitudes": TestData.latitudes[5:6],
+                    "longitudes": TestData.longitudes,
+                    "latitudes": TestData.latitudes,
                     "year": 2080,
                     "scenario": "rcp8p5",
                     "model": "MIROC-ESM-CHEM",

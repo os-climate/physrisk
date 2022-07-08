@@ -14,24 +14,47 @@ from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
 
 
 class ExampleChronicHeatModel(VulnerabilityModelBase):
+    """Example chronic vulnerability model for extreme heat (summary should fit on one line).
+
+    More decription below as per
+    https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html
+    """
+
     def __init__(self):
         super().__init__("", ChronicHeat)  # opportunity to give a model hint, but blank here
+        annual_time_loss_mins_per_degree_day = 8  # from paper...:
+        self.annual_fraction_loss_per_degree_day = annual_time_loss_mins_per_degree_day / (60 * 8 * 240)
         # load any data needed by the model here in the constructor
 
     def get_data_requests(
         self, asset: Asset, *, scenario: str, year: int
     ) -> Union[HazardDataRequest, Iterable[HazardDataRequest]]:
+        """Request the hazard data needed by the vulnerability model for a specific asset (this is a Google-style doc string)
 
-        # specify hazard data needed
-        baseline_model = "mean_degree_days/cooling/18C"
-        delta_cooling_model = "mean_delta_degree_days/cooling/18C"
+        Args:
+            asset: Asset for which data is requested.
+            scenario: Climate scenario of calculation.
+            year: Projection year of calculation.
+
+        Returns:
+            Single or multiple data requests.
+        """
+
+        # specify hazard data needed. Model string is hierarchical and '/' separated.
+        baseline_model = "mean_degree_days/above/32C"
+        delta_cooling_model = "mean_delta_degree_days/above/32C"
 
         return [
             HazardDataRequest(
-                self.event_type, asset.longitude, asset.latitude, scenario="historical", year=1980, model=baseline_model
+                self.hazard_type,
+                asset.longitude,
+                asset.latitude,
+                scenario="historical",
+                year=1980,
+                model=baseline_model,
             ),
             HazardDataRequest(
-                self.event_type,
+                self.hazard_type,
                 asset.longitude,
                 asset.latitude,
                 scenario=scenario,
@@ -41,17 +64,26 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
         ]
 
     def get_impact(self, asset: Asset, data_responses: Iterable[HazardDataResponse]) -> ImpactDistrib:
+        """Calcaulate impact (disruption) of asset based on the hazard data returned.
 
-        baseline_cooling_dd_resp, delta_cooling_dd_resp = data_responses
+        Args:
+            asset: Asset for which impact is calculated.
+            data_responses: responses to the hazard data requests generated in get_data_requests.
+
+        Returns:
+            Probability distribution of impacts.
+        """
+        baseline_dd_above_resp, delta_dd_above_resp = data_responses
 
         # check expected type; can maybe do this more nicely
-        assert isinstance(baseline_cooling_dd_resp, HazardParameterDataResponse)
-        assert isinstance(delta_cooling_dd_resp, HazardParameterDataResponse)
+        assert isinstance(baseline_dd_above_resp, HazardParameterDataResponse)
+        assert isinstance(delta_dd_above_resp, HazardParameterDataResponse)
 
         # TODO: add model here
         # use hazard data requests via:
-        delta_cooling_dd = delta_cooling_dd_resp.parameter  # typing: ignore
-        assert delta_cooling_dd is not None  # to remove: just to keep tox happy
+        delta_dd_above = delta_dd_above_resp.parameter
+        fraction_loss = self.annual_fraction_loss_per_degree_day * delta_dd_above
+        assert fraction_loss is not None  # to remove (just to keep tox happy that we are doing something with result!)
 
         impact_bins = np.array(
             [0.0, 0.01, 0.02]
@@ -69,6 +101,7 @@ class TestChronicAssetImpact(unittest.TestCase):
 
         store = mock_hazard_model_store_heat(TestData.longitudes, TestData.latitudes)
         hazard_model = ZarrHazardModel(source_paths=calculation.get_default_zarr_source_paths(), store=store)
+        # to run a live calculation, we omit the store parameter
 
         scenario = "ssp585"
         year = 2050

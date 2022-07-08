@@ -42,7 +42,7 @@ class PregeneratedHazardModel(HazardModel):
         responses: MutableMapping[HazardDataRequest, HazardDataResponse] = {}
         for key in batches.keys():
             batch: List[HazardDataRequest] = batches[key]
-            event_type, model, scenario, year = batch[0].event_type, batch[0].model, batch[0].scenario, batch[0].year
+            event_type, model, scenario, year = batch[0].hazard_type, batch[0].model, batch[0].scenario, batch[0].year
             longitudes = [req.longitude for req in batch]
             latitudes = [req.latitude for req in batch]
             if event_type.kind == HazardKind.acute:  # type: ignore

@@ -1,30 +1,23 @@
-import json
 import logging
 import os
 import pathlib
 import sys
-import time
+from pathlib import PurePosixPath
 from typing import List, Tuple
 
 import numpy as np
-import rasterio
 import s3fs
 import zarr
 from affine import Affine
 from dotenv import load_dotenv
-from tifffile.tifffile import TiffFile
 
 
-def get_geotiff_meta_data(path, s3):
-    with s3.open(path) as f:
-        with TiffFile(f) as tif:
-            scale: Tuple[float, float, float] = tif.geotiff_metadata["ModelPixelScale"]
-            tie_point: List[float] = tif.geotiff_metadata["ModelTiepoint"]
-            shape: List[int] = tif.series[0].shape
-            i, j, k, x, y, z = tie_point[0:6]
-            sx, sy, sz = scale
-            transform = Affine(sx, 0.0, x - i * sx, 0.0, -sy, y + j * sy)
-            return shape, transform
+def add_logging_output_to_stdout(LOG):
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setLevel(logging.DEBUG)
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    handler.setFormatter(formatter)
+    LOG.addHandler(handler)
 
 
 def get_coordinates(longitudes, latitudes, transform):
@@ -36,6 +29,27 @@ def get_coordinates(longitudes, latitudes, transform):
     return image_coords
 
 
+def get_geotiff_meta_data(path, s3):
+    from tifffile.tifffile import TiffFile
+
+    with s3.open(path) as f:
+        with TiffFile(f) as tif:
+            scale: Tuple[float, float, float] = tif.geotiff_metadata["ModelPixelScale"]
+            tie_point: List[float] = tif.geotiff_metadata["ModelTiepoint"]
+            shape: List[int] = tif.series[0].shape
+            i, j, k, x, y, z = tie_point[0:6]
+            sx, sy, sz = scale
+            transform = Affine(sx, 0.0, x - i * sx, 0.0, -sy, y + j * sy)
+            return shape, transform
+
+
+def set_credential_env_variables():
+    dotenv_dir = os.environ.get("CREDENTIAL_DOTENV_DIR", os.getcwd())
+    dotenv_path = pathlib.Path(dotenv_dir) / "credentials.env"
+    if os.path.exists(dotenv_path):
+        load_dotenv(dotenv_path=dotenv_path, override=True)
+
+
 def zarr_create(group_path, array_path, s3, shape, transform, return_periods):
     """
     Create zarr with given shape and affine transform
@@ -45,8 +59,8 @@ def zarr_create(group_path, array_path, s3, shape, transform, return_periods):
 
     z = root.create_dataset(
         array_path,
-        shape=(len(return_periods), shape[0], shape[1]),
-        chunks=(len(return_periods), 1000, 1000),
+        shape=(1 if return_periods is None else len(return_periods), shape[0], shape[1]),
+        chunks=(1 if return_periods is None else len(return_periods), 1000, 1000),
         dtype="f4",
         overwrite=True,
     )  # array_path interpreted as path within group
@@ -60,8 +74,9 @@ def zarr_create(group_path, array_path, s3, shape, transform, return_periods):
     ]
     mat3x3 = [x * 1.0 for x in trans_members] + [0.0, 0.0, 1.0]
     z.attrs["transform_mat3x3"] = mat3x3
-    z.attrs["index_values"] = return_periods
-    z.attrs["index_name"] = "return period (years)"
+    if return_periods is not None:
+        z.attrs["index_values"] = return_periods
+        z.attrs["index_name"] = "return period (years)"
     return z
 
 
@@ -74,21 +89,27 @@ def zarr_remove(group_path, array_path, s3):
     root.pop(array_path)
 
 
+def zarr_read(group_path, array_path, s3, index):
+    """
+    Read data and transform from zarr
+    """
+    store = s3fs.S3Map(root=group_path, s3=s3, check=False)
+    root = zarr.open(store, mode="r")
+    z = root[array_path]
+    t = z.attrs["transform_mat3x3"]  # type: ignore
+    transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
+    return z[index, :, :], transform
+
+
 def zarr_write(src_path, src_s3, dest_zarr, index):
     """
     Writes data from GeoTiff sepecified by src_path and src_s3 S3FileSystem to
     destination zarr array dest_zarr, putting data into index.
     """
+    from tifffile.tifffile import TiffFile
+
     with src_s3.open(src_path) as f:
         with TiffFile(f) as tif:
             store = tif.series[0].aszarr()
             z_in = zarr.open(store, mode="r")
             dest_zarr[index, :, :] = z_in[:, :]
-
-
-def add_logging_output_to_stdout(LOG):
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(logging.DEBUG)
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-    handler.setFormatter(formatter)
-    LOG.addHandler(handler)

@@ -10,10 +10,10 @@ import zarr
 from affine import Affine
 from botocore import UNSIGNED
 from dotenv import load_dotenv
-from mapbox_utilities import write_map_geotiff
-from zarr_utilities import add_logging_output_to_stdout, get_geotiff_meta_data, zarr_create, zarr_write
+from map_utilities import write_map_geotiff
+from zarr_utilities import get_geotiff_meta_data, zarr_create, zarr_write
 
-LOG = logging.getLogger("WRI onboarding")
+LOG = logging.getLogger("Hazard onboarding")
 LOG.setLevel(logging.INFO)
 
 dotenv_dir = os.environ.get("CREDENTIAL_DOTENV_DIR", os.environ.get("PWD", "/users/joemoorhouse/Code/physrisk/"))
@@ -154,6 +154,66 @@ def onboard_wri_coastal_inundation(dest_bucket="redhat-osc-physical-landing-6475
     )
 
 
+def create_map_geotiffs_riverine():
+    src_bucket = "wri-projects"
+    src_prefix = "AqueductFloodTool/download/v2"
+
+    circ_models = ["00000NorESM1-M", "0000GFDL-ESM2M", "0000HadGEM2-ES", "00IPSL-CM5A-LR", "MIROC-ESM-CHEM"]
+    years = ["2030", "2050", "2080"]
+    rcps = ["rcp4p5", "rcp8p5"]
+    src_returns = [2, 5, 10, 25, 50, 100, 250, 500, 1000]
+    circ_model = circ_models[4]
+    s3_source = s3fs.S3FileSystem(config_kwargs=dict(signature_version=UNSIGNED))
+
+    for rcp in rcps:
+        for year in years:
+            src_filenames = [
+                "inun{0}_{1}_{2}_{3}_rp{4:05d}".format("river", rcp, circ_model, year, i) for i in src_returns
+            ]
+            filename = os.path.join(src_filenames[8] + ".tif")
+            print(filename)
+            write_map_geotiff(
+                os.path.join(src_bucket, src_prefix), "/opt/app-root/src/map_tifs", filename, input_s3=s3_source
+            )
+
+    circ_model = "000000000WATCH"
+    rcp = "historical"
+    year = "1980"
+    src_filenames = ["inun{0}_{1}_{2}_{3}_rp{4:05d}".format("river", rcp, circ_model, year, i) for i in src_returns]
+    filename = os.path.join(src_filenames[8] + ".tif")
+    write_map_geotiff(os.path.join(src_bucket, src_prefix), "/opt/app-root/src/map_tifs", filename, input_s3=s3_source)
+
+
+def create_map_geotiffs_coastal():
+    models = ["0", "0_perc_05", "0_perc_50"]
+    subs = ["wtsub", "nosub"]
+    years = ["2030", "2050", "2080"]
+    rcps = ["rcp4p5", "rcp8p5"]
+
+    model = models[0]
+    sub = "wtsub"
+
+    for rcp in rcps:
+        for year in years:
+            src_filenames = [
+                "inun{0}_{1}_{2}_{3}_rp{4:04d}_{5}".format("coast", rcp, sub, year, i, model) for i in src_returns
+            ]
+            filename = os.path.join(src_filenames[8] + ".tif")
+            print(filename)
+            write_map_geotiff(
+                os.path.join(src_bucket, src_prefix), "/opt/app-root/src/map_tifs", filename, input_s3=s3_source
+            )
+
+    model = "0"
+    sub = "nosub"
+    year = "hist"
+    rcp = "historical"
+    src_filenames = ["inun{0}_{1}_{2}_{3}_rp{4:04d}_{5}".format("coast", rcp, sub, year, i, model) for i in src_returns]
+    filename = os.path.join(src_filenames[8] + ".tif")
+    print(filename)
+    write_map_geotiff(os.path.join(src_bucket, src_prefix), "/opt/app-root/src/map_tifs", filename, input_s3=s3_source)
+
+
 def geotiff_to_zarr_riverine(
     *, circ_model, year, rcp, src_bucket, src_prefix, s3_source, dest_bucket, dest_prefix, s3_dest
 ):
@@ -273,8 +333,3 @@ def check_test_data():
     d = test_data_zarr(coords, s3_dest, dest_bucket, dest_prefix)
     for i in range(8):
         print(np.max(np.abs(d[:, i] - res[i])))
-
-
-add_logging_output_to_stdout(LOG)
-onboard_wri_riverine_inundation()
-onboard_wri_coastal_inundation()

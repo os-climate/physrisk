@@ -3,22 +3,20 @@ import hashlib
 import json
 import logging
 import os
-import sys
 from os import listdir
 from os.path import isfile, join
 from time import sleep
-from typing import List, Tuple
 
 import numpy as np
 import rasterio
-import s3fs
 import seaborn as sns
-import zarr
 from affine import Affine
 from mapbox import Uploader
-from matplotlib import pyplot as plt
+from rasterio import CRS, profiles
 from rasterio.enums import Resampling
-from tifffile.tifffile import TiffFile
+
+LOG = logging.getLogger("Mapbox onboarding")
+LOG.setLevel(logging.INFO)
 
 
 def alphanumeric(text):
@@ -47,13 +45,29 @@ def base36encode(number, alphabet="0123456789abcdefghijklmnopqrstuvwxyz"):
     return base36
 
 
-def load_s3(s3_source, src_bucket, src_prefix, filename, target_width=None):
-    with s3_source.open(os.path.join(src_bucket, src_prefix, filename)) as f:
+def get_path(bucket, prefix, filename):
+    return os.path.join(bucket, prefix, filename)
+
+
+def load(path, s3=None):
+    if s3 is None:
+        return load_fs(path)
+    else:
+        return load_s3(s3, path)
+
+
+def load_fs(path, target_width=None):
+    with rasterio.open(path) as dataset:
+        return load_dataset(dataset, target_width)
+
+
+def load_s3(s3_source, path, target_width=None):
+    with s3_source.open(path) as f:
         with rasterio.open(f) as dataset:
-            return load(dataset, target_width)
+            return load_dataset(dataset, target_width)
 
 
-def load(dataset, target_width=None):
+def load_dataset(dataset, target_width=None):
     scaling = 1 if target_width is None else float(target_width) / dataset.width
     width = int(dataset.width * scaling)
     height = int(dataset.height * scaling)
@@ -76,26 +90,19 @@ def load(dataset, target_width=None):
     return (data, dataset.profile, width, height, transform)
 
 
-def load_fs(input_path, target_width=None):
-    with rasterio.open(input_path) as dataset:
-        return load(dataset, target_width)
+def new_geotiff():
+    crs = CRS.from_epsg(4326)
+    profile = profiles.Profile()
 
 
-def write_map_geotiff_s3(s3_source, src_bucket, src_prefix, filename, output_dir):
-    (data, profile, width, height, transform) = load_s3(s3_source, src_bucket, src_prefix, filename)
+def write_map_geotiff(input_dir, output_dir, filename, input_s3=None, output_s3=None):
+    (data, profile, width, height, transform) = load(os.path.join(input_dir, filename), s3=input_s3)
     LOG.info("Loaded")
 
-    write_map_geotiff(data, profile, width, height, transform, filename, output_dir)
+    write_map_geotiff_data(data, profile, width, height, transform, filename, output_dir)
 
 
-def write_map_geotiff_fs(input_dir, filename, output_dir):
-    (data, profile, width, height, transform) = load_fs(os.path.join(input_dir, filename))
-    LOG.info("Loaded")
-
-    write_map_geotiff(data, profile, width, height, transform, filename, output_dir)
-
-
-def write_map_geotiff(data, profile, width, height, transform, filename, output_dir):
+def write_map_geotiff_data(data, profile, width, height, transform, filename, output_dir, s3=None):
 
     max_intensity = 2.0  # 2 metres for inundation
 
@@ -124,7 +131,7 @@ def write_map_geotiff(data, profile, width, height, transform, filename, output_
     LOG.info(f"Hashing {filename_stub} as code: {alpha}")
 
     colormap_path_out = os.path.join(output_dir, "colormap_" + alpha + "_" + filename_stub + ".json")
-    with open(colormap_path_out, "w") as f:
+    with (s3.open(colormap_path_out, "w") if s3 is not None else open(colormap_path_out, "w")) as f:
         colormap_info = json.dumps(
             {
                 "colormap": map_for_json,
@@ -161,7 +168,7 @@ def write_map_geotiff(data, profile, width, height, transform, filename, output_
 
     path_out = os.path.join(output_dir, "map_" + alpha + "_" + filename)
 
-    with rasterio.open(path_out, "w", **profile) as dst:
+    def write_dataset(dst):
         # dst.colorinterp = [ ColorInterp.red, ColorInterp.green, ColorInterp.blue ]
         # dst.write(result, indexes=1)
         # dst.write_colormap(1, map)
@@ -173,14 +180,21 @@ def write_map_geotiff(data, profile, width, height, transform, filename, output_
         dst.write(blues[result], 3)
         LOG.info("Writing A 4/4")
         dst.write(a[result], 4)
+
+    if s3 is not None:
+        with s3.open(path_out, "w") as f:
+            with rasterio.open(f, "w", **profile) as dst:
+                write_dataset(dst)
+    else:
+        with rasterio.open(path_out, "w", **profile) as dst:
+            write_dataset(dst)
+
     LOG.info("Complete")
     return (path_out, colormap_path_out)
 
 
 def upload_geotiff(path, id):
-    uploader = Uploader(
-        access_token="***REMOVED***"
-    )
+    uploader = Uploader(access_token="...")
     attempt = 0
     with open(path, "rb") as src:
         while attempt < 5:

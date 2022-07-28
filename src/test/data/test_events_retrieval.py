@@ -77,7 +77,7 @@ class TestEventRetrieval(unittest.TestCase):
         )
         set_id = r"inundation/wri/v2\\inunriver_rcp8p5_MIROC-ESM-CHEM_2080"
         interpolation = "linear"
-        delta_km = 0.10
+        delta_km = 0.100
         n_grid = 10
         store_ = mock_hazard_model_store_inundation(lons_, lats_, curve)
         zarrreader_ = ZarrReader(store_)

@@ -109,7 +109,7 @@ class ZarrReader:
         else:
             raise ValueError("interpolation must have value 'floor' or 'linear'")
 
-    def get_max_curves(self,set_id,longitudes,latitudes,interpolation='floor',delta_km=1.0, n_grid=5):
+    def get_max_curves(self, set_id, longitudes, latitudes, interpolation="floor", delta_km=1.0, n_grid=5):
         """Get maximal intensity curve for a grid around a given latitude and longitude coordinate pair.
 
         Args:
@@ -126,16 +126,20 @@ class ZarrReader:
         """
         KILOMETRES_PER_DEGREE = 110.574
         n_data = len(latitudes)
-        delta_deg = delta_km/KILOMETRES_PER_DEGREE
-        grid = np.linspace(-0.5,0.5,n_grid)
-        lats_grid_baseline = np.broadcast_to(latitudes.reshape((n_data,1,1)), (len(latitudes),n_grid,n_grid))
-        lons_grid_baseline = np.broadcast_to(longitudes.reshape((n_data,1,1)), (len(longitudes),n_grid,n_grid))
-        lats_grid_offsets = delta_deg*grid.reshape((1,n_grid,1))
-        lons_grid_offsets = delta_deg*grid.reshape((1,1,n_grid))/(np.cos((np.pi/180)*latitudes).reshape(n_data,1,1))
+        delta_deg = delta_km / KILOMETRES_PER_DEGREE
+        grid = np.linspace(-0.5, 0.5, n_grid)
+        lats_grid_baseline = np.broadcast_to(latitudes.reshape((n_data, 1, 1)), (len(latitudes), n_grid, n_grid))
+        lons_grid_baseline = np.broadcast_to(longitudes.reshape((n_data, 1, 1)), (len(longitudes), n_grid, n_grid))
+        lats_grid_offsets = delta_deg * grid.reshape((1, n_grid, 1))
+        lons_grid_offsets = (
+            delta_deg * grid.reshape((1, 1, n_grid)) / (np.cos((np.pi / 180) * latitudes).reshape(n_data, 1, 1))
+        )
         lats_grid = lats_grid_baseline + lats_grid_offsets
         lons_grid = lons_grid_baseline + lons_grid_offsets
-        curves_, return_periods = self.get_curves(set_id,lons_grid.reshape(-1),lats_grid.reshape(-1),interpolation=interpolation)
-        curves_max = np.max(curves_.reshape((n_data,n_grid*n_grid,len(return_periods))),axis=1)
+        curves_, return_periods = self.get_curves(
+            set_id, lons_grid.reshape(-1), lats_grid.reshape(-1), interpolation=interpolation
+        )
+        curves_max = np.max(curves_.reshape((n_data, n_grid * n_grid, len(return_periods))), axis=1)
         return curves_max, return_periods
 
     @staticmethod

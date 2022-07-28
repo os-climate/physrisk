@@ -118,10 +118,12 @@ class ZarrReader:
             latitudes: list of latitudes.
             interpolation: interpolation method, "floor" or "linear".
             delta_km: linear distance in kilometres of the side of the square grid surrounding a given position.
-            n_grid: number of grid points along the latitude and longitude dimensions used for calculating the maximal value.
+            n_grid: number of grid points along the latitude and longitude dimensions used for
+                    calculating the maximal value.
 
         Returns:
-            curves_max: numpy array of maximum intensity on the grid for a given coordinate pair (no. coordinate pairs, no. return periods).
+            curves_max: numpy array of maximum intensity on the grid for a given coordinate pair
+            (no. coordinate pairs, no. return periods).
             return_periods: return periods in years.
         """
         KILOMETRES_PER_DEGREE = 110.574

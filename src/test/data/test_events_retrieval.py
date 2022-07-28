@@ -59,15 +59,46 @@ class TestEventRetrieval(unittest.TestCase):
         x = np.array([3.2, 6.7, 7.9])  # column indices
         image_coords = np.stack([x, y])
         data_zarr = zarr.array(data)
-        candidate = ZarrReader._linear_interp_frac_coordinates(data_zarr, image_coords, np.array([0, 1]))
+        candidate_lin = ZarrReader._linear_interp_frac_coordinates(
+            data_zarr, image_coords, np.array([0, 1]), interpolation="linear"
+        )
+        candidate_max = ZarrReader._linear_interp_frac_coordinates(
+            data_zarr, image_coords, np.array([0, 1]), interpolation="max"
+        )
+        candidate_min = ZarrReader._linear_interp_frac_coordinates(
+            data_zarr, image_coords, np.array([0, 1]), interpolation="min"
+        )
+
+        image_coords_surr = np.stack(
+            [
+                np.concatenate([np.floor(x), np.floor(x) + 1, np.floor(x), np.floor(x) + 1]),
+                np.concatenate([np.floor(y), np.floor(y), np.floor(y) + 1, np.floor(y) + 1]),
+            ]
+        )
+        values_surr = ZarrReader._linear_interp_frac_coordinates(
+            data_zarr, image_coords_surr, np.array([0, 1]), interpolation="linear"
+        ).reshape((4, 3, 2))
         interp_scipy0 = scipy.interpolate.interp2d(np.linspace(0, 9, 10), np.linspace(0, 9, 10), data0, kind="linear")
         interp_scipy1 = scipy.interpolate.interp2d(np.linspace(0, 9, 10), np.linspace(0, 9, 10), data1, kind="linear")
-        expected0 = interp_scipy0(x, y).diagonal().reshape(len(y))
-        expected1 = interp_scipy1(x, y).diagonal().reshape(len(y))
-        numpy.testing.assert_allclose(candidate[:, 0], expected0, rtol=1e-6)
-        numpy.testing.assert_allclose(candidate[:, 1], expected1, rtol=1e-6)
+        expected0_lin = interp_scipy0(x, y).diagonal().reshape(len(y))
+        expected1_lin = interp_scipy1(x, y).diagonal().reshape(len(y))
+        expected0_max = np.max(values_surr[:, :, 0], axis=0)
+        expected1_max = np.max(values_surr[:, :, 1], axis=0)
+        expected0_min = np.min(values_surr[:, :, 0], axis=0)
+        expected1_min = np.min(values_surr[:, :, 1], axis=0)
+
+        numpy.testing.assert_allclose(candidate_lin[:, 0], expected0_lin, rtol=1e-6)
+        numpy.testing.assert_allclose(candidate_lin[:, 1], expected1_lin, rtol=1e-6)
+        numpy.testing.assert_allclose(candidate_max[:, 0], expected0_max, rtol=1e-6)
+        numpy.testing.assert_allclose(candidate_max[:, 1], expected1_max, rtol=1e-6)
+        numpy.testing.assert_allclose(candidate_min[:, 0], expected0_min, rtol=1e-6)
+        numpy.testing.assert_allclose(candidate_min[:, 1], expected1_min, rtol=1e-6)
         # array([0.43854423, 0.62290176, 0.50660137])
         # array([0.58346331, 0.72702827, 0.62629474])
+        # array([0.60981554, 0.75222318, 0.72041193])
+        # array([0.72817392, 0.82838968, 0.79717553])
+        # array([0.34773063, 0.45343876, 0.45907147])
+        # array([0.50555484, 0.59275348, 0.58789487])
 
     def test_zarr_geomax(self):
         lons_ = np.array([3.92783])

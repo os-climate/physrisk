@@ -69,7 +69,7 @@ class ZarrReader:
             set_id: string or tuple representing data set, converted into path by path_provider.
             longitudes: list of longitudes.
             latitudes: list of latitudes.
-            interpolation: interpolation method, "floor" or "linear".
+            interpolation: interpolation method, "floor", "linear", "max" or "min".
 
         Returns:
             curves: numpy array of intensity (no. coordinate pairs, no. return periods).
@@ -102,12 +102,12 @@ class ZarrReader:
             data = z.get_coordinate_selection((iz, iy, ix))  # type: ignore
             return data.reshape([len(longitudes), len(index_values)]), np.array(index_values)
 
-        elif interpolation == "linear":
-            res = ZarrReader._linear_interp_frac_coordinates(z, image_coords, index_values)
+        elif interpolation in ["linear", "max", "min"]:
+            res = ZarrReader._linear_interp_frac_coordinates(z, image_coords, index_values, interpolation=interpolation)
             return res, np.array(index_values)
 
         else:
-            raise ValueError("interpolation must have value 'floor' or 'linear'")
+            raise ValueError("interpolation must have value 'floor', 'linear', 'max' or 'min")
 
     def get_max_curves(self, set_id, longitudes, latitudes, interpolation="floor", delta_km=1.0, n_grid=5):
         """Get maximal intensity curve for a grid around a given latitude and longitude coordinate pair.
@@ -116,7 +116,7 @@ class ZarrReader:
             set_id: string or tuple representing data set, converted into path by path_provider.
             longitudes: list of longitudes.
             latitudes: list of latitudes.
-            interpolation: interpolation method, "floor" or "linear".
+            interpolation: interpolation method, "floor", "linear", "max" or "min".
             delta_km: linear distance in kilometres of the side of the square grid surrounding a given position.
             n_grid: number of grid points along the latitude and longitude dimensions used for
                     calculating the maximal value.
@@ -145,17 +145,15 @@ class ZarrReader:
         return curves_max, return_periods
 
     @staticmethod
-    def _linear_interp_frac_coordinates(z, image_coords, return_periods):
+    def _linear_interp_frac_coordinates(z, image_coords, return_periods, interpolation="linear"):
         """Return linear interpolated data from fractional row and column coordinates."""
         icx = np.floor(image_coords[0, :]).astype(int)[..., None]
-        xf = image_coords[0, :][..., None] - icx  # type: ignore
         # note periodic boundary condition
         ix = np.concatenate([icx, icx, (icx + 1) % z.shape[2], (icx + 1) % z.shape[2]], axis=1)[..., None].repeat(
             len(return_periods), axis=2
         )  # points, 4, return_periods
 
         icy = np.floor(image_coords[1, :]).astype(int)[..., None]
-        yf = image_coords[1, :][..., None] - icy  # type: ignore
         iy = np.concatenate([icy, icy + 1, icy, icy + 1], axis=1)[..., None].repeat(len(return_periods), axis=2)
 
         iz = (
@@ -165,12 +163,24 @@ class ZarrReader:
         )
 
         data = z.get_coordinate_selection((iz, iy, ix))  # type: ignore # index, row, column
-        w0 = (1 - yf) * (1 - xf)
-        w1 = yf * (1 - xf)
-        w2 = (1 - yf) * xf
-        w3 = yf * xf
 
-        return data[:, 0, :] * w0 + data[:, 1, :] * w1 + data[:, 2, :] * w2 + data[:, 3, :] * w3
+        if interpolation == "linear":
+            xf = image_coords[0, :][..., None] - icx  # type: ignore
+            yf = image_coords[1, :][..., None] - icy  # type: ignore
+            w0 = (1 - yf) * (1 - xf)
+            w1 = yf * (1 - xf)
+            w2 = (1 - yf) * xf
+            w3 = yf * xf
+            return data[:, 0, :] * w0 + data[:, 1, :] * w1 + data[:, 2, :] * w2 + data[:, 3, :] * w3
+
+        elif interpolation == "max":
+            return np.maximum.reduce([data[:, 0, :], data[:, 1, :], data[:, 2, :], data[:, 3, :]])
+
+        elif interpolation == "min":
+            return np.minimum.reduce([data[:, 0, :], data[:, 1, :], data[:, 2, :], data[:, 3, :]])
+
+        else:
+            raise ValueError("interpolation must have value 'linear', 'max' or 'min")
 
     @staticmethod
     def _get_coordinates(longitudes, latitudes, transform: Affine):

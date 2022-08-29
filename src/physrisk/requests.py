@@ -1,9 +1,15 @@
+from importlib import import_module
 import json
 from typing import cast
+from urllib import response
 
-from .data.inventory import Inventory
-from .data.pregenerated_hazard_model import ZarrHazardModel
-from .data_objects.hazard_event_requests import (
+from .api.v1.impact_req_resp import (
+    AssetImpactRequest,
+    AssetImpactResponse,
+    Assets
+)
+
+from .api.v1.hazard_data import (
     HazardEventAvailabilityRequest,
     HazardEventAvailabilityResponse,
     HazardEventDataRequest,
@@ -11,7 +17,12 @@ from .data_objects.hazard_event_requests import (
     HazardEventDataResponseItem,
     IntensityCurve,
 )
-from .kernel import Hazard
+from .api.v1.impact_req_resp import (
+    AssetImpactRequest
+)
+from .data.inventory import Inventory
+from .data.pregenerated_hazard_model import ZarrHazardModel
+from .kernel import Asset, Hazard
 from .kernel import calculation as calc
 from .kernel.hazard_model import HazardDataRequest
 from .kernel.hazard_model import HazardEventDataResponse as hmHazardEventDataResponse
@@ -37,11 +48,8 @@ def _get_hazard_data_availability(request: HazardEventAvailabilityRequest):
 
 
 def _get_hazard_data(request: HazardEventDataRequest, source_paths=None, store=None):
+    hazard_model = _create_hazard_model(interpolation=request.interpolation, source_paths=source_paths, store=store)
 
-    if source_paths is None:
-        source_paths = calc.get_default_zarr_source_paths()
-
-    hazard_model = ZarrHazardModel(source_paths, store=store, interpolation=request.interpolation)
     # get hazard event types:
     event_types = Hazard.__subclasses__()
     event_dict = dict((et.__name__, et) for et in event_types)
@@ -86,3 +94,46 @@ def _get_hazard_data(request: HazardEventDataRequest, source_paths=None, store=N
         )
 
     return response
+
+def create_assets(assets: Assets):
+    """Create list of Asset objects from the Assets API object:"""
+    module = import_module("physrisk.kernel.assets")
+    asset_objs = []
+    for asset in assets.items:     
+        asset_obj = cast(Asset, getattr(module, asset.asset_class)(asset.latitude, asset.longitude,
+            type=asset.type, 
+            location=asset.location))
+        asset_objs.append(asset_obj)
+    return asset_objs
+
+def _create_hazard_model(interpolation='floor', source_paths=None, store=None):
+    if source_paths is None:
+        source_paths = calc.get_default_zarr_source_paths()
+
+    hazard_model = ZarrHazardModel(source_paths, store=store, interpolation=interpolation)
+
+    return hazard_model
+
+
+def _get_asset_impacts(request: AssetImpactRequest, source_paths=None, store=None):
+    hazard_model = _create_hazard_model(source_paths=source_paths, store=store)
+    vulnerability_models = calc.get_default_vulnerability_models()
+
+    # we keep API definition of asset separate from internal Asset class; convert by reflection
+    # based on asset_class:
+    assets = create_assets(request.assets)
+
+    results = calc.calculate_impacts(
+        assets, hazard_model, vulnerability_models, scenario=request.scenario, year=request.year
+    )
+
+    for asset, result in results.items():
+        # always an impact distribution...
+        impact = result.impact
+        # for acute hazards we can provide the hazard event distributions:
+        #if result.hazard_data is not None:
+    
+    response = AssetImpactResponse()
+    
+    return response
+

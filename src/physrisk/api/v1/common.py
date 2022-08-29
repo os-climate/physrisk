@@ -23,6 +23,28 @@ class Array(np.ndarray, metaclass=ArrayMeta):
     pass
 
 
+class Asset(BaseModel):
+    """Defines an asset. An asset is identified first by its asset_class and then by its type within the class.
+    An asset's value may be impacted through damage or through disruption
+    disruption being reduction of an asset's ability to generate cashflows
+    (or equivalent value, e.g. by reducing expenses or increasing sales).
+    """
+
+    asset_class: str = Field(
+        description="name of asset class; corresponds to physrisk class names, e.g. PowerGeneratingAsset"
+    )
+    type: str = Field(description="Type of the asset <level_1>/<level_2>/<level_3>")
+    location: str
+    latitude: float = Field(description="Latitude in degrees")
+    longitude: float = Field(description="Longitude in degrees")
+
+
+class Assets(BaseModel):
+    """Defines a collection of assets."""
+
+    items: List[Asset]
+
+
 class Country(BaseModel):
     """Country information."""
 
@@ -35,6 +57,12 @@ class Countries(BaseModel):
     """List of Country."""
 
     items: List[Country]
+
+
+class IntensityCurve(BaseModel):
+    """Intensity curve of an acute hazard."""
+    intensities: List[float]
+    return_periods: List[float]
 
 
 class VulnerabilityCurve(BaseModel):

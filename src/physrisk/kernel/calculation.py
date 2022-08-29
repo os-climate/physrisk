@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from ..data.hazard_data_provider import (
     get_source_path_osc_chronic_heat,
@@ -9,11 +9,12 @@ from ..data.hazard_data_provider import (
 )
 from ..data.pregenerated_hazard_model import ZarrHazardModel
 from ..models import power_generating_asset_models as pgam
+from ..models.real_estate_models import RealEstateCoastalInundationModel, RealEstateRiverineInundationModel
 from ..utils.helpers import get_iterable
-from .assets import Asset, PowerGeneratingAsset, TestAsset
+from .assets import Asset, PowerGeneratingAsset, RealEstateAsset, TestAsset
 from .hazard_event_distrib import HazardEventDistrib
-from .hazard_model import HazardModel
-from .hazards import ChronicHeat, CoastalInundation, RiverineInundation
+from .hazard_model import HazardDataResponse, HazardModel
+from .hazards import ChronicHeat, CoastalInundation, Hazard, RiverineInundation
 from .impact_distrib import ImpactDistrib
 from .vulnerability_distrib import VulnerabilityDistrib
 from .vulnerability_model import VulnerabilityModelAcuteBase, VulnerabilityModelBase
@@ -25,7 +26,7 @@ class AssetImpactResult:
         impact: ImpactDistrib,
         vulnerability: VulnerabilityDistrib = None,
         event: HazardEventDistrib = None,
-        hazard_data=None,
+        hazard_data: Iterable[HazardDataResponse] = None,
     ):
         self.impact = impact
         # optional detailed results for drill-dowwn
@@ -49,17 +50,21 @@ def get_default_hazard_model():
 
 def get_default_vulnerability_models():
     """Get default exposure/vulnerability models for different asset types."""
-    return {PowerGeneratingAsset: [pgam.InundationModel()], TestAsset: [pgam.TemperatureModel()]}
+    return {
+        PowerGeneratingAsset: [pgam.InundationModel()], 
+        RealEstateAsset: [RealEstateCoastalInundationModel(), RealEstateRiverineInundationModel()],
+        TestAsset: [pgam.TemperatureModel()],
+    }
 
 
 def calculate_impacts(
-    assets,
+    assets: Iterable[Asset],
     hazard_model: Optional[HazardModel] = None,
     vulnerability_models: Optional[Any] = None,  #: Optional[Dict[type, Sequence[VulnerabilityModelBase]]] = None,
     *,
     scenario: str,
     year: int,
-) -> Dict[Asset, AssetImpactResult]:
+) -> Dict[Tuple[Asset, Hazard], AssetImpactResult]:
     """ """
     if hazard_model is None:
         hazard_model = get_default_hazard_model()
@@ -97,9 +102,9 @@ def calculate_impacts(
             hazard_data = [responses[req] for req in get_iterable(requests)]
             if isinstance(model, VulnerabilityModelAcuteBase):
                 impact, vul, event = model.get_impact_details(asset, hazard_data)
-                results[asset] = AssetImpactResult(impact, vulnerability=vul, event=event, hazard_data=hazard_data)
+                results[(asset, model.hazard_type)] = AssetImpactResult(impact, vulnerability=vul, event=event, hazard_data=hazard_data)
             elif isinstance(model, VulnerabilityModelBase):
                 impact = model.get_impact(asset, hazard_data)
-                results[asset] = AssetImpactResult(impact, hazard_data=hazard_data)
+                results[(asset, model.hazard_type)] = AssetImpactResult(impact, hazard_data=hazard_data)
 
     return results

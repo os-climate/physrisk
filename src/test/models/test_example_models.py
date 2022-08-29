@@ -20,7 +20,7 @@ class ExampleRealEstateInundationModel(VulnerabilityModel):
         self.impact_means = np.array([0, 0.2, 0.44, 0.58, 0.68, 0.78, 0.85, 0.92, 0.96, 1.0])
         self.impact_stddevs = np.array([0, 0.17, 0.14, 0.14, 0.17, 0.14, 0.13, 0.10, 0.06, 0])
         impact_bin_edges = np.array([0, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
-        super().__init__(model="MIROC-ESM-CHEM", event_type=RiverineInundation, impact_bin_edges=impact_bin_edges)
+        super().__init__(model="MIROC-ESM-CHEM", hazard_type=RiverineInundation, impact_bin_edges=impact_bin_edges)
 
     def get_impact_curve(self, intensities, asset):
         # we interpolate the mean and standard deviation and use this to construct distributions
@@ -88,4 +88,4 @@ class TestExampleModels(unittest.TestCase):
             assets, hazard_model, vulnerability_models, scenario=scenario, year=year
         )
 
-        self.assertAlmostEqual(results[assets[0]].impact.to_exceedance_curve().probs[0], 0.499)
+        self.assertAlmostEqual(results[assets[0], RiverineInundation].impact.to_exceedance_curve().probs[0], 0.499)

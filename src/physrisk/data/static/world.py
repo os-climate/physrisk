@@ -5,7 +5,7 @@ from typing import Dict, List, Union
 import numpy as np
 
 import physrisk.data.static
-from physrisk.data_objects.vulnerability_curve import Countries, Country
+from physrisk.api.v1.common import Countries, Country
 
 
 def get_countries_from_resource():

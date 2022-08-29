@@ -19,7 +19,7 @@ class Aggregator(ABC):
 
 class DefaultAggregator(Aggregator):
     def get_aggregation_keys(self, asset: Asset, impact: ImpactDistrib) -> List:
-        return [(impact.event_type.__name__), ("root")]
+        return [(impact.hazard_type.__name__), ("root")]
 
 
 class LossModel:
@@ -57,7 +57,7 @@ class LossModel:
 
         rg = np.random.Generator(np.random.MT19937(seed=111))
 
-        for asset, result in results.items():
+        for (asset, hazard_type), result in results.items():
             # look up keys for results
             impact = result.impact
             keys = aggregator.get_aggregation_keys(asset, impact)

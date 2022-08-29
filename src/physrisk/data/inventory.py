@@ -3,7 +3,7 @@ from typing import Dict, List, Sequence
 
 from pydantic import parse_obj_as
 
-from ..data_objects.hazard_event_requests import HazardModel
+from ..api.v1.hazard_data import HazardModel
 
 
 class EventTypeInfo:
@@ -39,7 +39,7 @@ class Inventory:
                 "event_type": "RiverineInundation",
                 "path": "riverine_inundation/wri/v2",
                 "id": "000000000WATCH",
-                "display_name": "Baseline",
+                "display_name": "WRI/Baseline",
                 "description": "Baseline condition",
                 "filename": "inunriver_{scenario}_{id}_{year}",
                 "scenarios": [
@@ -50,7 +50,7 @@ class Inventory:
                 "event_type": "RiverineInundation",
                 "path": "riverine_inundation/wri/v2",
                 "id": "00000NorESM1-M",
-                "display_name": "NorESM1-M",
+                "display_name": "WRI/NorESM1-M",
                 "description": "GCM model: Bjerknes Centre for Climate Research, Norwegian Meteorological Institute",
                 "filename": "inunriver_{scenario}_{id}_{year}",
                 "scenarios": [
@@ -62,7 +62,7 @@ class Inventory:
                 "event_type": "RiverineInundation",
                 "path": "riverine_inundation/wri/v2",
                 "id": "0000GFDL-ESM2M",
-                "display_name": "GFDL-ESM2M",
+                "display_name": "WRI/GFDL-ESM2M",
                 "description": "GCM model: Geophysical Fluid Dynamics Laboratory (NOAA)",
                 "filename": "inunriver_{scenario}_{id}_{year}",
                 "scenarios": [
@@ -74,7 +74,7 @@ class Inventory:
                 "event_type": "RiverineInundation",
                 "path": "riverine_inundation/wri/v2",
                 "id": "0000HadGEM2-ES",
-                "display_name": "HadGEM2-ES",
+                "display_name": "WRI/HadGEM2-ES",
                 "description": "GCM model: Met Office Hadley Centre",
                 "filename": "inunriver_{scenario}_{id}_{year}",
                 "scenarios": [
@@ -86,7 +86,7 @@ class Inventory:
                 "event_type": "RiverineInundation",
                 "path": "riverine_inundation/wri/v2",
                 "id": "00IPSL-CM5A-LR",
-                "display_name": "IPSL-CM5A-LR",
+                "display_name": "WRI/IPSL-CM5A-LR",
                 "description": "GCM model: Institut Pierre Simon Laplace",
                 "filename": "inunriver_{scenario}_{id}_{year}",
                 "scenarios": [
@@ -98,7 +98,7 @@ class Inventory:
                 "event_type": "RiverineInundation",
                 "path": "riverine_inundation/wri/v2",
                 "id": "MIROC-ESM-CHEM",
-                "display_name": "MIROC-ESM-CHEM",
+                "display_name": "WRI/MIROC-ESM-CHEM",
                 "description": """GCM model: Atmosphere and Ocean Research Institute
  (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency
  for Marine-Earth Science and Technology""",
@@ -115,7 +115,7 @@ class Inventory:
                 "event_type": "CoastalInundation",
                 "path": "coastal_inundation/wri/v2",
                 "id": "nosub",
-                "display_name": "Baseline no subsidence",
+                "display_name": "WRI/Baseline no subsidence",
                 "description": "Baseline condition; no subsidence",
                 "filename": "inuncoast_{scenario}_nosub_{year}_0",
                 "scenarios": [{"id": "historical", "years": [1980]}],
@@ -124,7 +124,7 @@ class Inventory:
                 "event_type": "CoastalInundation",
                 "path": "coastal_inundation/wri/v2",
                 "id": "nosub/95",
-                "display_name": "95% no subsidence",
+                "display_name": "WRI/95% no subsidence",
                 "description": "No subsidence; 95th percentile sea level rise",
                 "filename": "inuncoast_{scenario}_nosub_{year}_0",
                 "scenarios": [
@@ -136,7 +136,7 @@ class Inventory:
                 "event_type": "CoastalInundation",
                 "path": "coastal_inundation/wri/v2",
                 "id": "nosub/5",
-                "display_name": "5% no subsidence",
+                "display_name": "WRI/5% no subsidence",
                 "description": "No subsidence; 5th percentile sea level rise",
                 "filename": "inuncoast_{scenario}_nosub_{year}_0_perc_05",
                 "scenarios": [
@@ -148,7 +148,7 @@ class Inventory:
                 "event_type": "CoastalInundation",
                 "path": "coastal_inundation/wri/v2",
                 "id": "nosub/50",
-                "display_name": "50% no subsidence",
+                "display_name": "WRI/50% no subsidence",
                 "description": "No subsidence; 50th percentile sea level rise",
                 "filename": "inuncoast_{scenario}_nosub_{year}_0_perc_50",
                 "scenarios": [
@@ -160,7 +160,7 @@ class Inventory:
                 "event_type": "CoastalInundation",
                 "path": "coastal_inundation/wri/v2",
                 "id": "wtsub",
-                "display_name": "Baseline with subsidence",
+                "display_name": "WRI/Baseline with subsidence",
                 "description": "Baseline condition; with subsidence",
                 "filename": "inuncoast_{scenario}_wtsub_{year}_0",
                 "scenarios": [{"id": "historical", "years": [1980]}],
@@ -169,7 +169,7 @@ class Inventory:
                 "event_type": "CoastalInundation",
                 "path": "coastal_inundation/wri/v2",
                 "id": "wtsub/95",
-                "display_name": "95% with subsidence",
+                "display_name": "WRI/95% with subsidence",
                 "description": "With subsidence; 95th percentile sea level rise",
                 "filename": "inuncoast_{scenario}_wtsub_{year}_0",
                 "scenarios": [
@@ -181,7 +181,7 @@ class Inventory:
                 "event_type": "CoastalInundation",
                 "path": "coastal_inundation/wri/v2",
                 "id": "wtsub/5",
-                "display_name": "5% with subsidence",
+                "display_name": "WRI/5% with subsidence",
                 "description": "With subsidence; 5th percentile sea level rise",
                 "filename": "inuncoast_{scenario}_wtsub_{year}_0_perc_05",
                 "scenarios": [
@@ -193,7 +193,7 @@ class Inventory:
                 "event_type": "CoastalInundation",
                 "path": "coastal_inundation/wri/v2",
                 "id": "wtsub/50",
-                "display_name": "50% with subsidence",
+                "display_name": "WRI/50% with subsidence",
                 "description": "With subsidence; 50th percentile sea level rise",
                 "filename": "inuncoast_{scenario}_wtsub_{year}_0_perc_50",
                 "scenarios": [

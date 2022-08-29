@@ -4,7 +4,8 @@ import numpy as np
 
 
 def add_x_value_to_curve(x, curve_x, curve_y):
-    """Add an x value to a curve, interpolated from the existing curve. curve_x and curve_y are the curve x and y values.
+    """Add an x value to a curve, interpolated from the existing curve.
+    curve_x and curve_y are the curve x and y values.
     curve_x is sorted non-decreasing. This function may be used to align curves and bins.
     """
     # note some care needed as multiple identical curve_x are permitted: cannot simply use np.interp

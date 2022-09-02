@@ -93,12 +93,36 @@ class TestEventRetrieval(unittest.TestCase):
         numpy.testing.assert_allclose(candidate_max[:, 1], expected1_max, rtol=1e-6)
         numpy.testing.assert_allclose(candidate_min[:, 0], expected0_min, rtol=1e-6)
         numpy.testing.assert_allclose(candidate_min[:, 1], expected1_min, rtol=1e-6)
-        # array([0.43854423, 0.62290176, 0.50660137])
-        # array([0.58346331, 0.72702827, 0.62629474])
-        # array([0.60981554, 0.75222318, 0.72041193])
-        # array([0.72817392, 0.82838968, 0.79717553])
-        # array([0.34773063, 0.45343876, 0.45907147])
-        # array([0.50555484, 0.59275348, 0.58789487])
+
+    def test_zarr_bilinear_with_bad_data(self):
+        # create suitable asymmetric data set and compare with scipy
+
+        xt, yt = np.meshgrid(np.linspace(0, 1, 2), np.linspace(0, 1, 2))
+        data = np.array([[[1.0, -9999.0], [2.0, 0.0]]])
+
+        # note that zarr array has index [z, y, x], e.g. 9, 21600, 43200 or [index, lat, lon]
+        y = np.array([0.4, 0.5, 0.8])  # row indices
+        x = np.array([0.1, 0.6, 0.7])  # column indices
+        image_coords = np.stack([x, y])
+        data_zarr = zarr.array(data)
+
+        candidate_lin = ZarrReader._linear_interp_frac_coordinates(
+            data_zarr, image_coords, np.array([0]), interpolation="linear"
+        ).flatten()
+        candidate_max = ZarrReader._linear_interp_frac_coordinates(
+            data_zarr, image_coords, np.array([0]), interpolation="max"
+        ).flatten()
+        candidate_min = ZarrReader._linear_interp_frac_coordinates(
+            data_zarr, image_coords, np.array([0]), interpolation="min"
+        ).flatten()
+
+        expected_lin = np.array([1.34042553, 0.85714286, 0.62790698])
+        expected_max = np.array([2.0, 2.0, 2.0])
+        expected_min = np.array([0.0, 0.0, 0.0])
+
+        numpy.testing.assert_allclose(candidate_lin, expected_lin, rtol=1e-6)
+        numpy.testing.assert_allclose(candidate_max, expected_max, rtol=1e-6)
+        numpy.testing.assert_allclose(candidate_min, expected_min, rtol=1e-6)
 
     def test_zarr_geomax(self):
         lons_ = np.array([3.92783])

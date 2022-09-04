@@ -1,6 +1,5 @@
 """ Test asset impact calculations."""
 import unittest
-from physrisk.kernel.hazards import CoastalInundation, RiverineInundation
 from test.data.hazard_model_store import TestData, mock_hazard_model_store_inundation
 
 import numpy as np
@@ -8,6 +7,7 @@ import numpy as np
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.kernel import calculation
 from physrisk.kernel.assets import RealEstateAsset
+from physrisk.kernel.hazards import CoastalInundation, RiverineInundation
 from physrisk.models.real_estate_models import RealEstateCoastalInundationModel, RealEstateRiverineInundationModel
 
 

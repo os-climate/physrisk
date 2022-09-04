@@ -14,7 +14,7 @@ from ..utils.helpers import get_iterable
 from .assets import Asset, PowerGeneratingAsset, RealEstateAsset, TestAsset
 from .hazard_event_distrib import HazardEventDistrib
 from .hazard_model import HazardDataResponse, HazardModel
-from .hazards import ChronicHeat, CoastalInundation, Hazard, RiverineInundation
+from .hazards import ChronicHeat, CoastalInundation, RiverineInundation
 from .impact_distrib import ImpactDistrib
 from .vulnerability_distrib import VulnerabilityDistrib
 from .vulnerability_model import VulnerabilityModelAcuteBase, VulnerabilityModelBase
@@ -51,7 +51,7 @@ def get_default_hazard_model():
 def get_default_vulnerability_models():
     """Get default exposure/vulnerability models for different asset types."""
     return {
-        PowerGeneratingAsset: [pgam.InundationModel()], 
+        PowerGeneratingAsset: [pgam.InundationModel()],
         RealEstateAsset: [RealEstateCoastalInundationModel(), RealEstateRiverineInundationModel()],
         TestAsset: [pgam.TemperatureModel()],
     }
@@ -64,7 +64,7 @@ def calculate_impacts(
     *,
     scenario: str,
     year: int,
-) -> Dict[Tuple[Asset, Hazard], AssetImpactResult]:
+) -> Dict[Tuple[Asset, type], AssetImpactResult]:
     """ """
     if hazard_model is None:
         hazard_model = get_default_hazard_model()
@@ -102,7 +102,9 @@ def calculate_impacts(
             hazard_data = [responses[req] for req in get_iterable(requests)]
             if isinstance(model, VulnerabilityModelAcuteBase):
                 impact, vul, event = model.get_impact_details(asset, hazard_data)
-                results[(asset, model.hazard_type)] = AssetImpactResult(impact, vulnerability=vul, event=event, hazard_data=hazard_data)
+                results[(asset, model.hazard_type)] = AssetImpactResult(
+                    impact, vulnerability=vul, event=event, hazard_data=hazard_data
+                )
             elif isinstance(model, VulnerabilityModelBase):
                 impact = model.get_impact(asset, hazard_data)
                 results[(asset, model.hazard_type)] = AssetImpactResult(impact, hazard_data=hazard_data)

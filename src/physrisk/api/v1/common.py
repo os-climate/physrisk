@@ -61,8 +61,19 @@ class Countries(BaseModel):
 
 class IntensityCurve(BaseModel):
     """Intensity curve of an acute hazard."""
+
     intensities: List[float]
     return_periods: List[float]
+
+
+class HazardEventDistrib(BaseModel):
+    """Intensity curve of an acute hazard."""
+
+    intensity_bin_edges: np.ndarray = Field(default_factory=lambda: np.zeros(10), description="")
+    probabilities: np.ndarray = Field(default_factory=lambda: np.zeros(10), description="")
+
+    class Config:
+        arbitrary_types_allowed = True
 
 
 class VulnerabilityCurve(BaseModel):
@@ -87,3 +98,14 @@ class VulnerabilityCurves(BaseModel):
     """List of VulnerabilityCurve."""
 
     items: List[VulnerabilityCurve]
+
+
+class VulnerabilityDistrib(BaseModel):
+    """Defines a vulnerability matrix."""
+
+    intensity_bin_edges: np.ndarray = Field(default_factory=lambda: np.zeros(10), description="")
+    impact_bin_edges: np.ndarray = Field(default_factory=lambda: np.zeros(10), description="")
+    prob_matrix: np.ndarray = Field(default_factory=lambda: np.zeros(10), description="")
+
+    class Config:
+        arbitrary_types_allowed = True

@@ -1,21 +1,16 @@
 import unittest
-from test.data.hazard_model_store import (
-    mock_hazard_model_store_inundation,
-)
+from test.data.hazard_model_store import mock_hazard_model_store_inundation
 
 import numpy as np
 import numpy.testing
 import scipy.interpolate
 import zarr
-from dotenv import load_dotenv
 
-from physrisk.data.hazard_data_provider import get_source_path_wri_riverine_inundation
 from physrisk.data.inventory import Inventory
 from physrisk.data.zarr_reader import ZarrReader
 
 
 class TestEventRetrieval(unittest.TestCase):
-
     def test_hazard_data_availability_summary(self):
         summary = Inventory().get_models_summary()
         self.assertEqual(summary["RiverineInundation"].years, [1980, 2030, 2050, 2080])
@@ -94,4 +89,3 @@ class TestEventRetrieval(unittest.TestCase):
             [[0.00, 0.04917953, 0.1883151, 0.3619907, 0.49083358, 0.61872474, 0.78648075, 0.91052965, 1.03448614]]
         )
         numpy.testing.assert_allclose(curves_max_candidate, curves_max_expected, rtol=1e-6)
-

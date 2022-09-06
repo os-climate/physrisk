@@ -2,6 +2,8 @@ from typing import List, Union
 
 from pydantic import BaseModel
 
+from physrisk.api.v1.common import IntensityCurve
+
 
 class Scenario(BaseModel):
     """Scenario ID and the list of available years for that scenario e.g. RCP8.5 = 'rcp8.5'"""
@@ -51,11 +53,6 @@ class HazardEventDataRequestItem(BaseModel):
 class HazardEventDataRequest(BaseModel):
     interpolation: str = "floor"
     items: List[HazardEventDataRequestItem]
-
-
-class IntensityCurve(BaseModel):
-    intensities: List[float]
-    return_periods: List[float]
 
 
 class HazardEventDataResponseItem(BaseModel):

@@ -4,7 +4,7 @@ from typing import Dict, Tuple
 import numpy as np
 import scipy.stats as stats
 
-from physrisk.data_objects.vulnerability_curve import VulnerabilityCurve, VulnerabilityCurves
+from physrisk.api.v1.common import VulnerabilityCurve, VulnerabilityCurves
 from physrisk.kernel.assets import RealEstateAsset
 from physrisk.kernel.vulnerability_model import VulnerabilityModel, VulnMatrixProvider
 
@@ -44,7 +44,7 @@ class RealEstateInundationModel(VulnerabilityModel):
             self.vuln_curves_by_type[item.asset_type].append(item)
 
         # global circulation parameter 'model' is a hint; can be overriden by hazard model
-        super().__init__(model=model, event_type=event_type, impact_bin_edges=impact_bin_edges)
+        super().__init__(model=model, hazard_type=event_type, impact_bin_edges=impact_bin_edges)
 
     def get_impact_curve(self, intensities, asset: RealEstateAsset):
         # we interpolate the mean and standard deviation and use this to construct distributions

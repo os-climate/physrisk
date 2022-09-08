@@ -132,10 +132,10 @@ def mock_hazard_model_store_for_paths(longitudes, latitudes, curve, paths):
 def degree_day_heat_parameter_set():
     paths = []
     for model, scenario, year in [
-        ("mean_degree_days/above/32C", "historical", 1980),  # 2005
-        ("mean_degree_days/below/32C", "historical", 1980),
-        ("mean_degree_days/above/32C", "ssp585", 2050),
-        ("mean_degree_days/below/32C", "ssp585", 2050),
+        ("mean_degree_days/above/32c", "historical", 1980),  # 2005
+        ("mean_degree_days/below/32c", "historical", 1980),
+        ("mean_degree_days/above/32c", "ssp585", 2050),
+        ("mean_degree_days/below/32c", "ssp585", 2050),
     ]:
         paths.append(get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year))
     parameters = [100, 900, 300, -200]

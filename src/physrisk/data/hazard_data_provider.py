@@ -152,7 +152,12 @@ def get_source_path_osc_chronic_heat(*, model: str, scenario: str, year: int):
     if type not in valid_types:
         raise ValueError("valid types are {valid_types}")
 
-    return os.path.join(_osc_chronic_heat_prefix(), f"{type}_{heating_cooling}_{ref_temp}_{scenario}_{year}")
+    source_path_osc_chronic_heat = (
+        _osc_chronic_heat_prefix() + "/" + f"{type}_{heating_cooling}_{ref_temp}_{scenario}_{year}"
+    )
+    # os.path.join(_osc_chronic_heat_prefix(), f"{type}_{heating_cooling}_{ref_temp}_{scenario}_{year}")
+
+    return source_path_osc_chronic_heat
 
 
 # endregion

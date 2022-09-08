@@ -21,8 +21,8 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
     https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html
     """
 
-    def __init__(self):
-        super().__init__("", ChronicHeat)  # opportunity to give a model hint, but blank here
+    def __init__(self, model: str = "mean_degree_days_above_32c"):
+        super().__init__(model, ChronicHeat)  # opportunity to give a model hint, but blank here
         annual_time_loss_mins_per_degree_day_mean = 8  # from paper...:
         annual_time_loss_mins_per_degree_day_std = 2
         MINS_IN_YEAR = 60 * 8 * 240
@@ -46,7 +46,7 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
         """
 
         # specify hazard data needed. Model string is hierarchical and '/' separated.
-        model = "mean_degree_days/above/32C"
+        model = "mean_degree_days/above/32c"
 
         return [
             HazardDataRequest(

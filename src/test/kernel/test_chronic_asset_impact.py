@@ -33,7 +33,8 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
     def get_data_requests(
         self, asset: Asset, *, scenario: str, year: int
     ) -> Union[HazardDataRequest, Iterable[HazardDataRequest]]:
-        """Request the hazard data needed by the vulnerability model for a specific asset (this is a Google-style doc string)
+        """Request the hazard data needed by the vulnerability model for a specific asset
+        (this is a Google-style doc string)
 
         Args:
             asset: Asset for which data is requested.

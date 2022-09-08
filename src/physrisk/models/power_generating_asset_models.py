@@ -25,6 +25,7 @@ class InundationModel(VulnerabilityModelAcuteBase):
         self.__curve_impact = np.array([0, 1, 2, 7, 14, 30, 60, 180, 365])
         self.__model = model
         self.__base_model = "000000000WATCH"
+        super().__init__(model, RiverineInundation)
         pass
 
     def get_data_requests(

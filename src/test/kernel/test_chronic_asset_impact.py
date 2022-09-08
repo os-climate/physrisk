@@ -3,6 +3,7 @@ from test.data.hazard_model_store import TestData, mock_hazard_model_store_heat
 from typing import Iterable, Union
 
 import numpy as np
+from scipy.stats import norm
 
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.kernel import calculation
@@ -22,8 +23,11 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
 
     def __init__(self):
         super().__init__("", ChronicHeat)  # opportunity to give a model hint, but blank here
-        annual_time_loss_mins_per_degree_day = 8  # from paper...:
-        self.annual_fraction_loss_per_degree_day = annual_time_loss_mins_per_degree_day / (60 * 8 * 240)
+        annual_time_loss_mins_per_degree_day_mean = 8  # from paper...:
+        annual_time_loss_mins_per_degree_day_std = 2
+        MINS_IN_YEAR = 60 * 8 * 240
+        self.annual_fraction_loss_per_degree_day_mean = annual_time_loss_mins_per_degree_day_mean / MINS_IN_YEAR
+        self.annual_fraction_loss_per_degree_day_std = annual_time_loss_mins_per_degree_day_std / MINS_IN_YEAR
         # load any data needed by the model here in the constructor
 
     def get_data_requests(
@@ -41,8 +45,7 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
         """
 
         # specify hazard data needed. Model string is hierarchical and '/' separated.
-        baseline_model = "mean_degree_days/above/32C"
-        delta_cooling_model = "mean_delta_degree_days/above/32C"
+        model = "mean_degree_days/above/32C"
 
         return [
             HazardDataRequest(
@@ -51,7 +54,7 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
                 asset.latitude,
                 scenario="historical",
                 year=1980,
-                model=baseline_model,
+                model=model,
             ),
             HazardDataRequest(
                 self.hazard_type,
@@ -59,7 +62,7 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
                 asset.latitude,
                 scenario=scenario,
                 year=year,
-                model=delta_cooling_model,
+                model=model,
             ),
         ]
 
@@ -73,24 +76,43 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
         Returns:
             Probability distribution of impacts.
         """
-        baseline_dd_above_resp, delta_dd_above_resp = data_responses
+        baseline_dd_above_mean, scenario_dd_above_mean = data_responses
 
         # check expected type; can maybe do this more nicely
-        assert isinstance(baseline_dd_above_resp, HazardParameterDataResponse)
-        assert isinstance(delta_dd_above_resp, HazardParameterDataResponse)
+        assert isinstance(baseline_dd_above_mean, HazardParameterDataResponse)
+        assert isinstance(scenario_dd_above_mean, HazardParameterDataResponse)
 
         # TODO: add model here
         # use hazard data requests via:
-        delta_dd_above = delta_dd_above_resp.parameter
-        fraction_loss = self.annual_fraction_loss_per_degree_day * delta_dd_above
-        assert fraction_loss is not None  # to remove (just to keep tox happy that we are doing something with result!)
+        delta_dd_above_mean = scenario_dd_above_mean.parameter - baseline_dd_above_mean.parameter
+        delta_dd_above_std = 0.1 * delta_dd_above_mean
+        fraction_loss_mean = self.annual_fraction_loss_per_degree_day_mean * delta_dd_above_mean
+        fraction_loss_std = np.sqrt(
+            (self.annual_fraction_loss_per_degree_day_std * delta_dd_above_std) ** 2
+            + (self.annual_fraction_loss_per_degree_day_std * delta_dd_above_mean) ** 2
+            + (self.annual_fraction_loss_per_degree_day_mean * delta_dd_above_std) ** 2
+        )
 
-        impact_bins = np.array(
-            [0.0, 0.01, 0.02]
-        )  # bins defining fractional disruption of business activity revenue (0 to 0.01; 0.01 to 0.02)
-        prob = np.array([0.1, 0.05])  # fractional disruption of business activity revenue for each bin
+        impact_bins = np.concatenate(
+            [
+                np.linspace(0, 0.01, 10, endpoint=False),
+                np.linspace(0.01, 0.1, 10, endpoint=False),
+                np.linspace(0.1, 1.0, 10),
+            ]
+        )
+        probs = np.diff(
+            np.vectorize(lambda x: norm.cdf(x, loc=fraction_loss_mean, scale=fraction_loss_std))(impact_bins)
+        )
+        probs_norm = np.sum(probs)
+        if probs_norm < 1e-8:
+            if fraction_loss_mean <= 0.0:
+                probs = np.concatenate((np.array([1.0]), np.zeros(len(impact_bins) - 2)))
+            elif fraction_loss_mean >= 1.0:
+                probs = np.concatenate((np.zeros(len(impact_bins) - 2), np.array([1.0])))
+        else:
+            probs = probs / probs_norm
 
-        return ImpactDistrib(ChronicHeat, impact_bins, prob, ImpactType.disruption)
+        return ImpactDistrib(ChronicHeat, impact_bins, probs, ImpactType.disruption)
 
 
 class TestChronicAssetImpact(unittest.TestCase):
@@ -111,10 +133,45 @@ class TestChronicAssetImpact(unittest.TestCase):
         assets = [
             IndustrialActivity(lat, lon, type="Construction")
             for lon, lat in zip(TestData.longitudes, TestData.latitudes)
-        ]
+        ][:1]
 
         results = calculation.calculate_impacts(
             assets, hazard_model, vulnerability_models, scenario=scenario, year=year
         )
 
-        self.assertIsNot(results, None)
+        value_test = results[assets[0]].impact.prob
+        value_exp = np.array(
+            [
+                1.91224237e-04,
+                4.74308449e-04,
+                1.09639069e-03,
+                2.36187760e-03,
+                4.74174235e-03,
+                8.87172145e-03,
+                1.54692053e-02,
+                2.51373199e-02,
+                3.80681185e-02,
+                5.37274038e-02,
+                7.63072998e-01,
+                8.67017571e-02,
+                8.59320680e-05,
+                3.79059780e-10,
+                0.00000000e00,
+                0.00000000e00,
+                0.00000000e00,
+                0.00000000e00,
+                0.00000000e00,
+                0.00000000e00,
+                0.00000000e00,
+                0.00000000e00,
+                0.00000000e00,
+                0.00000000e00,
+                0.00000000e00,
+                0.00000000e00,
+                0.00000000e00,
+                0.00000000e00,
+                0.00000000e00,
+            ]
+        )
+        value_diff = np.sum(np.abs(value_test - value_exp))
+        self.assertAlmostEqual(value_diff, 0.0, delta=1e-8)

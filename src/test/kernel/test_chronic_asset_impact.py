@@ -140,7 +140,7 @@ class TestChronicAssetImpact(unittest.TestCase):
             assets, hazard_model, vulnerability_models, scenario=scenario, year=year
         )
 
-        value_test = results[assets[0]].impact.prob
+        value_test = list(results.values())[0].impact.prob
         value_exp = np.array(
             [
                 1.91224237e-04,
@@ -175,4 +175,4 @@ class TestChronicAssetImpact(unittest.TestCase):
             ]
         )
         value_diff = np.sum(np.abs(value_test - value_exp))
-        self.assertAlmostEqual(value_diff, 0.0, delta=1e-8)
+        self.assertAlmostEqual(value_diff, 0.0, places=8)

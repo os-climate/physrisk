@@ -94,26 +94,7 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
             + (self.annual_fraction_loss_per_degree_day_mean * delta_dd_above_std) ** 2
         )
 
-        impact_bins = np.concatenate(
-            [
-                np.linspace(0, 0.01, 10, endpoint=False),
-                np.linspace(0.01, 0.1, 10, endpoint=False),
-                np.linspace(0.1, 1.0, 10),
-            ]
-        )
-        probs = np.diff(
-            np.vectorize(lambda x: norm.cdf(x, loc=fraction_loss_mean, scale=fraction_loss_std))(impact_bins)
-        )
-        probs_norm = np.sum(probs)
-        if probs_norm < 1e-8:
-            if fraction_loss_mean <= 0.0:
-                probs = np.concatenate((np.array([1.0]), np.zeros(len(impact_bins) - 2)))
-            elif fraction_loss_mean >= 1.0:
-                probs = np.concatenate((np.zeros(len(impact_bins) - 2), np.array([1.0])))
-        else:
-            probs = probs / probs_norm
-
-        return ImpactDistrib(ChronicHeat, impact_bins, probs, ImpactType.disruption)
+        return get_impact_distrib(fraction_loss_mean, fraction_loss_std, ChronicHeat, ImpactType.disruption)
 
 
 class TestChronicAssetImpact(unittest.TestCase):
@@ -140,23 +121,26 @@ class TestChronicAssetImpact(unittest.TestCase):
             assets, hazard_model, vulnerability_models, scenario=scenario, year=year
         )
 
+        value_test = list(results.values())[0].impact.mean_impact()
         value_test = list(results.values())[0].impact.prob
         value_exp = np.array(
             [
-                1.91224237e-04,
-                4.74308449e-04,
-                1.09639069e-03,
-                2.36187760e-03,
-                4.74174235e-03,
-                8.87172145e-03,
-                1.54692053e-02,
-                2.51373199e-02,
-                3.80681185e-02,
-                5.37274038e-02,
-                7.63072998e-01,
-                8.67017571e-02,
-                8.59320680e-05,
-                3.79059780e-10,
+                2.63052640e-04,
+                4.74274374e-04,
+                1.09631192e-03,
+                2.36170792e-03,
+                4.74140169e-03,
+                8.87108408e-03,
+                1.54680940e-02,
+                2.51355139e-02,
+                3.80653836e-02,
+                5.37235439e-02,
+                7.63018177e-01,
+                8.66955283e-02,
+                8.59258945e-05,
+                3.79032547e-10,
+                0.00000000e00,
+                0.00000000e00,
                 0.00000000e00,
                 0.00000000e00,
                 0.00000000e00,
@@ -176,3 +160,41 @@ class TestChronicAssetImpact(unittest.TestCase):
         )
         value_diff = np.sum(np.abs(value_test - value_exp))
         self.assertAlmostEqual(value_diff, 0.0, places=8)
+
+
+def get_impact_distrib(
+    fraction_loss_mean: float, fraction_loss_std: float, hazard_type: type, impact_type: ImpactType
+) -> ImpactDistrib:
+    """Calcaulate impact (disruption) of asset based on the hazard data returned.
+
+    Args:
+        fraction_loss_mean: mean of the impact distribution
+        fraction_loss_std: standard deviation of the impact distribution
+        hazard_type: Hazard Type.
+        impact_type: Impact Type.
+
+    Returns:
+        Probability distribution of impacts.
+    """
+    impact_bins = np.concatenate(
+        [
+            np.linspace(-0.001, 0.001, 1, endpoint=False),
+            np.linspace(0.001, 0.01, 9, endpoint=False),
+            np.linspace(0.01, 0.1, 10, endpoint=False),
+            np.linspace(0.1, 0.999, 10, endpoint=False),
+            np.linspace(0.999, 1.001, 2),
+        ]
+    )
+    probs = np.diff(
+        np.vectorize(lambda x: norm.cdf(x, loc=fraction_loss_mean, scale=max(1e-12, fraction_loss_std)))(impact_bins)
+    )
+    probs_norm = np.sum(probs)
+    if probs_norm < 1e-8:
+        if fraction_loss_mean <= 0.0:
+            probs = np.concatenate((np.array([1.0]), np.zeros(len(impact_bins) - 2)))
+        elif fraction_loss_mean >= 1.0:
+            probs = np.concatenate((np.zeros(len(impact_bins) - 2), np.array([1.0])))
+    else:
+        probs = probs / probs_norm
+
+    return ImpactDistrib(hazard_type, impact_bins, probs, impact_type)

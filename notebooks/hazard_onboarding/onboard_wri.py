@@ -154,7 +154,7 @@ def onboard_wri_coastal_inundation(dest_bucket="redhat-osc-physical-landing-6475
     )
 
 
-def create_map_geotiffs_riverine():
+def create_map_geotiffs_riverine(dest_dir):
     src_bucket = "wri-projects"
     src_prefix = "AqueductFloodTool/download/v2"
 
@@ -173,7 +173,7 @@ def create_map_geotiffs_riverine():
             filename = os.path.join(src_filenames[8] + ".tif")
             print(filename)
             write_map_geotiff(
-                os.path.join(src_bucket, src_prefix), "/opt/app-root/src/map_tifs", filename, input_s3=s3_source
+                os.path.join(src_bucket, src_prefix), dest_dir, filename, input_s3=s3_source
             )
 
     circ_model = "000000000WATCH"
@@ -181,17 +181,22 @@ def create_map_geotiffs_riverine():
     year = "1980"
     src_filenames = ["inun{0}_{1}_{2}_{3}_rp{4:05d}".format("river", rcp, circ_model, year, i) for i in src_returns]
     filename = os.path.join(src_filenames[8] + ".tif")
-    write_map_geotiff(os.path.join(src_bucket, src_prefix), "/opt/app-root/src/map_tifs", filename, input_s3=s3_source)
+    write_map_geotiff(os.path.join(src_bucket, src_prefix), dest_dir, filename, input_s3=s3_source)
 
 
-def create_map_geotiffs_coastal():
+def create_map_geotiffs_coastal(dest_dir):
+    src_bucket = "wri-projects"
+    src_prefix = "AqueductFloodTool/download/v2"
+    
     models = ["0", "0_perc_05", "0_perc_50"]
     subs = ["wtsub", "nosub"]
     years = ["2030", "2050", "2080"]
     rcps = ["rcp4p5", "rcp8p5"]
+    src_returns = [2, 5, 10, 25, 50, 100, 250, 500, 1000]
 
     model = models[0]
     sub = "wtsub"
+    s3_source = s3fs.S3FileSystem(config_kwargs=dict(signature_version=UNSIGNED))
 
     for rcp in rcps:
         for year in years:
@@ -201,7 +206,7 @@ def create_map_geotiffs_coastal():
             filename = os.path.join(src_filenames[8] + ".tif")
             print(filename)
             write_map_geotiff(
-                os.path.join(src_bucket, src_prefix), "/opt/app-root/src/map_tifs", filename, input_s3=s3_source
+                os.path.join(src_bucket, src_prefix), dest_dir, filename, input_s3=s3_source
             )
 
     model = "0"
@@ -211,7 +216,7 @@ def create_map_geotiffs_coastal():
     src_filenames = ["inun{0}_{1}_{2}_{3}_rp{4:04d}_{5}".format("coast", rcp, sub, year, i, model) for i in src_returns]
     filename = os.path.join(src_filenames[8] + ".tif")
     print(filename)
-    write_map_geotiff(os.path.join(src_bucket, src_prefix), "/opt/app-root/src/map_tifs", filename, input_s3=s3_source)
+    write_map_geotiff(os.path.join(src_bucket, src_prefix), dest_dir, filename, input_s3=s3_source)
 
 
 def geotiff_to_zarr_riverine(

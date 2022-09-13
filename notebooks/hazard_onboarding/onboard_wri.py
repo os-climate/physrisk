@@ -172,9 +172,7 @@ def create_map_geotiffs_riverine(dest_dir):
             ]
             filename = os.path.join(src_filenames[8] + ".tif")
             print(filename)
-            write_map_geotiff(
-                os.path.join(src_bucket, src_prefix), dest_dir, filename, input_s3=s3_source
-            )
+            write_map_geotiff(os.path.join(src_bucket, src_prefix), dest_dir, filename, input_s3=s3_source)
 
     circ_model = "000000000WATCH"
     rcp = "historical"
@@ -187,7 +185,7 @@ def create_map_geotiffs_riverine(dest_dir):
 def create_map_geotiffs_coastal(dest_dir):
     src_bucket = "wri-projects"
     src_prefix = "AqueductFloodTool/download/v2"
-    
+
     models = ["0", "0_perc_05", "0_perc_50"]
     subs = ["wtsub", "nosub"]
     years = ["2030", "2050", "2080"]
@@ -205,9 +203,7 @@ def create_map_geotiffs_coastal(dest_dir):
             ]
             filename = os.path.join(src_filenames[8] + ".tif")
             print(filename)
-            write_map_geotiff(
-                os.path.join(src_bucket, src_prefix), dest_dir, filename, input_s3=s3_source
-            )
+            write_map_geotiff(os.path.join(src_bucket, src_prefix), dest_dir, filename, input_s3=s3_source)
 
     model = "0"
     sub = "nosub"

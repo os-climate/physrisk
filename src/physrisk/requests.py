@@ -26,8 +26,9 @@ from .data.inventory import Inventory
 from .data.pregenerated_hazard_model import ZarrHazardModel
 from .kernel import Asset, Hazard
 from .kernel import calculation as calc
-from .kernel.hazard_model import HazardDataRequest, HazardParameterDataResponse
+from .kernel.hazard_model import HazardDataRequest
 from .kernel.hazard_model import HazardEventDataResponse as hmHazardEventDataResponse
+from .kernel.hazard_model import HazardParameterDataResponse
 
 
 class NumpyArrayEncoder(json.JSONEncoder):
@@ -58,7 +59,7 @@ def get(*, request_id, request_dict, store=None):
 
 def _get_hazard_data_availability(request: HazardEventAvailabilityRequest):
     inventory = Inventory()
-    #models = inventory.models
+    # models = inventory.models
     models = inventory.to_hazard_models()
     colormaps = inventory.colormaps()
     response = HazardEventAvailabilityResponse(models=models, colormaps=colormaps)  # type: ignore
@@ -95,7 +96,7 @@ def _get_hazard_data(request: HazardEventDataRequest, source_paths=None, store=N
 
     for i, item in enumerate(request.items):
         requests = item_requests[i]
-        #resps = (cast(hmHazardEventDataResponse, response_dict[req]) for req in requests)
+        # resps = (cast(hmHazardEventDataResponse, response_dict[req]) for req in requests)
         resps = (response_dict[req] for req in requests)
         intensity_curves = [
             IntensityCurve(intensities=list(resp.intensities), return_periods=list(resp.return_periods))

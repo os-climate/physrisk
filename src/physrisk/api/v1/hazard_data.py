@@ -7,12 +7,14 @@ from physrisk.api.v1.common import IntensityCurve
 
 class MapInfo(BaseModel):
     """Provides information about map layer"""
+
     colormap: str
     filename: Optional[str]
 
 
 class Period(BaseModel):
     """A period belonging to a scenario"""
+
     year: int
     map_id: str
 

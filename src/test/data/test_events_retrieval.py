@@ -1,5 +1,4 @@
 import unittest
-from physrisk.requests import _get_hazard_data_availability
 from test.data.hazard_model_store import mock_hazard_model_store_inundation
 
 import numpy as np
@@ -7,18 +6,14 @@ import numpy.testing
 import scipy.interpolate
 import zarr
 
-from physrisk.data.inventory import Inventory
 from physrisk.data.zarr_reader import ZarrReader
+from physrisk.requests import _get_hazard_data_availability
 
 
 class TestEventRetrieval(unittest.TestCase):
     def test_hazard_data_availability_summary(self):
-        # check validation passes in creating summary 
-        summary = Inventory().get_models_summary()
-        self.assertEqual(summary["RiverineInundation"].years, [1980, 2030, 2050, 2080])
         # check validation passes calling in service-like way
         _get_hazard_data_availability(None)
-
 
     def test_zarr_bilinear(self):
         # create suitable asymmetric data set and compare with scipy

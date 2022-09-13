@@ -7,8 +7,8 @@ from os import listdir
 from os.path import isfile, join
 from time import sleep
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 import rasterio
 import seaborn as sns
 from affine import Affine
@@ -104,31 +104,34 @@ def write_map_geotiff(input_dir, output_dir, filename, input_s3=None, output_s3=
     write_map_geotiff_data(data, profile, width, height, transform, filename, output_dir)
 
 
-def write_map_geotiff_data(data,
-                        profile,
-                        width,
-                        height,
-                        transform,
-                        filename,
-                        output_dir,
-                        s3=None,
-                        nodata_threshold=0,
-                        zero_transparent=True,
-                        max_intensity=2.0,
-                        palette="flare"):
+def write_map_geotiff_data(
+    data,
+    profile,
+    width,
+    height,
+    transform,
+    filename,
+    output_dir,
+    s3=None,
+    nodata_threshold=0,
+    zero_transparent=True,
+    max_intensity=2.0,
+    palette="flare",
+):
 
     # the Seaborn 'flare' palette is the default for representing intensity
     # perceptually uniform, use of hue and luminance, smaller values have lighter colours
-    
+
     def get_colors(i):
         if palette == "heating":
             cmap = sns.color_palette("coolwarm", as_cmap=True)
-            return cmap(0.5 + 0.5 * i / 256.0 )
+            return cmap(0.5 + 0.5 * i / 256.0)
         else:
-            cmap = sns.color_palette(palette, as_cmap=True) if palette=="flare" else plt.get_cmap(palette) #  plt.get_cmap("Reds") as alternative
+            cmap = (
+                sns.color_palette(palette, as_cmap=True) if palette == "flare" else plt.get_cmap(palette)
+            )  #  plt.get_cmap("Reds") as alternative
             return cmap(i)
 
-    
     map = {}
     map_for_json = {}
     reds = np.zeros(256)
@@ -148,8 +151,8 @@ def write_map_geotiff_data(data,
         map[1] = (255, 255, 255, 0)
         map_for_json[1] = (255, 255, 255, 0)
         a[1] = 0
-        
-    map[0]= (255, 255, 255, 0)
+
+    map[0] = (255, 255, 255, 0)
     map_for_json[0] = (255, 255, 255, 0)  # index 0, no data is transparent
     a[0] = 0
 
@@ -246,4 +249,3 @@ def upload_geotiff(path, id, access_token):
                 break
             LOG.info("Uploading...")
             sleep(5)
-

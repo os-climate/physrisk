@@ -42,7 +42,7 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
         """
 
         # specify hazard data needed. Model string is hierarchical and '/' separated.
-        baseline_model = "mean_degree_days/above/3c"
+        baseline_model = "mean_degree_days/above/32c"
         delta_cooling_model = "mean_delta_degree_days/above/32c"
 
         return [

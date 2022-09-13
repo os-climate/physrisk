@@ -88,6 +88,8 @@ class ZarrReader:
 
         # in the case of acute risks, index_values will contain the return periods
         index_values = z.attrs.get("index_values", [0])
+        if index_values is None:
+            index_values = [0]
 
         image_coords = self._get_coordinates(longitudes, latitudes, transform)
 

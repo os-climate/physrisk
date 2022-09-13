@@ -80,6 +80,12 @@ def zarr_create(group_path, array_path, s3, shape, transform, return_periods):
     return z
 
 
+def zarr_get_transform(zarr_array):
+    t = zarr_array.attrs["transform_mat3x3"]  # type: ignore
+    transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
+    return transform
+
+
 def zarr_remove(group_path, array_path, s3):
     """
     Remove zarr array

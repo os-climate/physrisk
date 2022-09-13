@@ -7,6 +7,7 @@ from os import listdir
 from os.path import isfile, join
 from time import sleep
 
+import matplotlib.pyplot as plt
 import numpy as np
 import rasterio
 import seaborn as sns
@@ -90,9 +91,10 @@ def load_dataset(dataset, target_width=None):
     return (data, dataset.profile, width, height, transform)
 
 
-def new_geotiff():
+def geotiff_profile():
     crs = CRS.from_epsg(4326)
-    profile = profiles.Profile()
+    profile = profiles.Profile(crs=crs)
+    return profile
 
 
 def write_map_geotiff(input_dir, output_dir, filename, input_s3=None, output_s3=None):
@@ -102,12 +104,34 @@ def write_map_geotiff(input_dir, output_dir, filename, input_s3=None, output_s3=
     write_map_geotiff_data(data, profile, width, height, transform, filename, output_dir)
 
 
-def write_map_geotiff_data(data, profile, width, height, transform, filename, output_dir, s3=None):
+def write_map_geotiff_data(
+    data,
+    profile,
+    width,
+    height,
+    transform,
+    filename,
+    output_dir,
+    s3=None,
+    nodata_threshold=0,
+    zero_transparent=True,
+    max_intensity=2.0,
+    palette="flare",
+):
 
-    max_intensity = 2.0  # 2 metres for inundation
+    # the Seaborn 'flare' palette is the default for representing intensity
+    # perceptually uniform, use of hue and luminance, smaller values have lighter colours
 
-    # we use a color map from Seaborn: looks good
-    orig_map = sns.color_palette("flare", as_cmap=True)  #  plt.get_cmap("Reds") as alternative
+    def get_colors(i):
+        if palette == "heating":
+            cmap = sns.color_palette("coolwarm", as_cmap=True)
+            return cmap(0.5 + 0.5 * i / 256.0)
+        else:
+            cmap = (
+                sns.color_palette(palette, as_cmap=True) if palette == "flare" else plt.get_cmap(palette)
+            )  #  plt.get_cmap("Reds") as alternative
+            return cmap(i)
+
     map = {}
     map_for_json = {}
     reds = np.zeros(256)
@@ -115,16 +139,22 @@ def write_map_geotiff_data(data, profile, width, height, transform, filename, ou
     blues = np.zeros(256)
     a = np.zeros(256)
     for i in range(256):
-        cols = (np.array(orig_map(i)) * 255).astype(np.uint8)
+        cols = (np.array(get_colors(i)) * 255).astype(np.uint8)
         map[i] = (cols[0], cols[1], cols[2], 200)
         map_for_json[i] = (int(cols[0]), int(cols[1]), int(cols[2]), 200)
         reds[i] = cols[0]
         greens[i] = cols[1]
         blues[i] = cols[2]
         a[i] = 200
-    map[0] = map[1] = (255, 255, 255, 0)
-    map_for_json[0] = map_for_json[1] = (255, 255, 255, 0)  # no data and zero are transparent
-    a[0] = a[1] = 0
+    if zero_transparent:
+        # index 1 is zero
+        map[1] = (255, 255, 255, 0)
+        map_for_json[1] = (255, 255, 255, 0)
+        a[1] = 0
+
+    map[0] = (255, 255, 255, 0)
+    map_for_json[0] = (255, 255, 255, 0)  # index 0, no data is transparent
+    a[0] = 0
 
     filename_stub = filename.split(".")[0]
     alpha = alphanumeric(filename_stub)[0:6]
@@ -137,12 +167,12 @@ def write_map_geotiff_data(data, profile, width, height, transform, filename, ou
                 "colormap": map_for_json,
                 "nodata": {"color_index": 0},
                 "min": {"data": 0.0, "color_index": 1},
-                "max": {"data": 2.0, "color_index": 255},
+                "max": {"data": max_intensity, "color_index": 255},
             }
         )
         f.writelines(colormap_info)
 
-    mask = data < 0  # == -9999.0 is alternative
+    mask = data < nodata_threshold  # == -9999.0 is alternative
     mask2 = data > max_intensity
 
     np.multiply(data, 254.0 / max_intensity, out=data, casting="unsafe")
@@ -165,6 +195,8 @@ def write_map_geotiff_data(data, profile, width, height, transform, filename, ou
     profile["width"] = width
     profile["height"] = height
     profile["transform"] = transform
+
+    bounds = rasterio.transform.array_bounds(height, width, transform)
 
     path_out = os.path.join(output_dir, "map_" + alpha + "_" + filename)
 
@@ -193,8 +225,8 @@ def write_map_geotiff_data(data, profile, width, height, transform, filename, ou
     return (path_out, colormap_path_out)
 
 
-def upload_geotiff(path, id):
-    uploader = Uploader(access_token="...")
+def upload_geotiff(path, id, access_token):
+    uploader = Uploader(access_token=access_token)
     attempt = 0
     with open(path, "rb") as src:
         while attempt < 5:
@@ -217,21 +249,3 @@ def upload_geotiff(path, id):
                 break
             LOG.info("Uploading...")
             sleep(5)
-
-
-# LOG = logging.getLogger("Mapbox onboarding")
-# LOG.setLevel(logging.INFO)
-
-# input_dir = r"/root/code/osc/inputs/"
-# input_file = "inunriver_rcp8p5_MIROC-ESM-CHEM_2080_rp01000.tif"
-# output_dir = r"/root/code/osc/inputs/"
-
-# # print((colormap, map))
-# handler = logging.StreamHandler(sys.stdout)
-# handler.setLevel(logging.DEBUG)
-# formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-# handler.setFormatter(formatter)
-# LOG.addHandler(handler)
-
-# (colormap, map) = write_map_geotiff(input_dir, input_file, output_dir)
-# upload_geotiff("/root/code/osc/inputs/map_inunriver_rcp8p5_MIROC-ESM-CHEM_2080_rp01000.tif", "test3")

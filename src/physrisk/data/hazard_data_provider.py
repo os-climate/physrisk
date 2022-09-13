@@ -147,7 +147,7 @@ def get_source_path_osc_chronic_heat(*, model: str, scenario: str, year: int):
     type, heating_cooling, ref_temp = model.split("/")
     valid_types = ["mean_degree_days", "mean_delta_degree_days"]
     # valid_heating_cooling = ["above", "below"]
-    # valid_ref_temp = ["18C", "32C"]
+    # valid_ref_temp = ["18c", "32c"]
 
     if type not in valid_types:
         raise ValueError("valid types are {valid_types}")

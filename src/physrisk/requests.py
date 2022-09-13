@@ -42,6 +42,17 @@ def dumps(dict):
     return json.dumps(dict, cls=NumpyArrayEncoder)
 
 
+class NumpyArrayEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return json.JSONEncoder.default(self, obj)
+
+
+def dumps(dict):
+    return json.dumps(dict, cls=NumpyArrayEncoder)
+
+
 def get(*, request_id, request_dict, store=None):
 
     if request_id == "get_hazard_data":

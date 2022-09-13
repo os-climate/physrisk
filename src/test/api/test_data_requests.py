@@ -4,7 +4,11 @@ import pathlib
 import shutil
 import tempfile
 import unittest
-from test.data.hazard_model_store import TestData, get_mock_hazard_model_store_single_curve
+from test.data.hazard_model_store import (
+    TestData,
+    get_mock_hazard_model_store_single_curve,
+    mock_hazard_model_store_heat,
+)
 
 import numpy as np
 import numpy.testing
@@ -60,6 +64,29 @@ class TestDataRequests(unittest.TestCase):
             result.items[0].intensity_curve_set[1].intensities, np.linspace(0.1, 1.0, 8, dtype="f4")
         )
         numpy.testing.assert_array_almost_equal_nulp(result.items[0].intensity_curve_set[2].intensities, np.zeros((8)))
+
+    def test_zarr_reading_chronic(self):
+
+        request_dict = {
+            "items": [
+                {
+                    "request_item_id": "test_inundation",
+                    "event_type": "ChronicHeat",
+                    "longitudes": TestData.longitudes[0:3],  # coords['longitudes'][0:100],
+                    "latitudes": TestData.latitudes[0:3],  # coords['latitudes'][0:100],
+                    "year": 2050,
+                    "scenario": "ssp585",
+                    "model": "mean_degree_days/above/32c",
+                }
+            ],
+        }
+        # validate request
+        request = requests.HazardEventDataRequest(**request_dict)  # type: ignore
+
+        store = mock_hazard_model_store_heat(TestData.longitudes, TestData.latitudes)
+
+        result = requests._get_hazard_data(request, store=store)
+        numpy.testing.assert_array_almost_equal_nulp(result.items[0].intensity_curve_set[0].intensities[0], 1100.0)
 
     @unittest.skip("requires OSC environment variables set")
     def test_zarr_reading_live(self):

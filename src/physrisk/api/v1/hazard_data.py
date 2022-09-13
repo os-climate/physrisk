@@ -1,8 +1,20 @@
-from typing import List, Union
+from typing import List, Optional, Union
 
 from pydantic import BaseModel
 
 from physrisk.api.v1.common import IntensityCurve
+
+
+class MapInfo(BaseModel):
+    """Provides information about map layer"""
+    colormap: str
+    filename: Optional[str]
+
+
+class Period(BaseModel):
+    """A period belonging to a scenario"""
+    year: int
+    map_id: str
 
 
 class Scenario(BaseModel):
@@ -10,6 +22,7 @@ class Scenario(BaseModel):
 
     id: str
     years: List[int]
+    periods: Optional[List[Period]]
 
 
 class HazardModel(BaseModel):
@@ -21,7 +34,9 @@ class HazardModel(BaseModel):
     display_name: str
     description: str
     filename: str
+    map: Optional[MapInfo]
     scenarios: List[Scenario]
+    units: str
 
 
 # region HazardAvailability
@@ -33,6 +48,7 @@ class HazardEventAvailabilityRequest(BaseModel):
 
 class HazardEventAvailabilityResponse(BaseModel):
     models: List[HazardModel]
+    colormaps: dict
 
 
 # endregion

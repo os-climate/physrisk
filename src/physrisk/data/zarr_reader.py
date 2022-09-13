@@ -86,10 +86,8 @@ class ZarrReader:
         t = z.attrs["transform_mat3x3"]  # type: ignore
         transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
 
-        index_values = z.attrs["index_values"]  # type: ignore
         # in the case of acute risks, index_values will contain the return periods
-        if index_values is None:
-            index_values = [0]
+        index_values = z.attrs.get("index_values", [0])
 
         image_coords = self._get_coordinates(longitudes, latitudes, transform)
 

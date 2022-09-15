@@ -136,9 +136,11 @@ def degree_day_heat_parameter_set():
         ("mean_degree_days/below/32c", "historical", 1980),
         ("mean_degree_days/above/32c", "ssp585", 2050),
         ("mean_degree_days/below/32c", "ssp585", 2050),
+        ("mean_delta_degree_days/above/32c", "ssp585", 2050),
+        ("mean_delta_degree_days/below/32c", "ssp585", 2050),
     ]:
         paths.append(get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year))
-    parameters = [100, 900, 300, -200]
+    parameters = [1000, 900, 1100, 700, 300, -200]
     return dict(zip(paths, parameters))
 
 

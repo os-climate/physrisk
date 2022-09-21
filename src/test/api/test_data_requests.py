@@ -86,7 +86,8 @@ class TestDataRequests(unittest.TestCase):
         store = mock_hazard_model_store_heat(TestData.longitudes, TestData.latitudes)
 
         result = requests._get_hazard_data(request, store=store)
-        numpy.testing.assert_array_almost_equal_nulp(result.items[0].intensity_curve_set[0].intensities[0], 300.0)
+        print(result.items[0].intensity_curve_set[0].intensities[0])
+        numpy.testing.assert_array_almost_equal_nulp(result.items[0].intensity_curve_set[0].intensities[0], 600.0)
 
     @unittest.skip("requires OSC environment variables set")
     def test_zarr_reading_live(self):

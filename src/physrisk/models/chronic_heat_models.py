@@ -16,12 +16,9 @@ class ChronicHeatGZN(VulnerabilityModelBase):
     Time allocated to work under varying climate and labor market conditions."
     Average annual work hours are based on USA values reported by the OECD for 2021."""
 
-    _default_prob_bins = [0.01, 0.05, 0.1, 0.3, 0.5, 0.7, 0.9, 0.95, 0.99]
-
-    def __init__(self, probability_bins=_default_prob_bins):
+    def __init__(self):
         self.time_lost_per_degree_day = 4.671  # This comes from the paper converted to celsius
         self.time_lost_per_degree_day_se = 2.2302  # This comes from the paper converted to celsius
-        self.probability_bins = probability_bins
         self.total_labour_hours = 107460
         super().__init__("", ChronicHeat)  # opportunity to give a model hint, but blank here
 
@@ -116,13 +113,16 @@ def get_impact_distrib(
     probs = np.diff(
         np.vectorize(lambda x: norm.cdf(x, loc=fraction_loss_mean, scale=max(1e-12, fraction_loss_std)))(impact_bins)
     )
+
+    # Other Proposal
     probs_norm = np.sum(probs)
+    prob_differetial = 1 - probs_norm
     if probs_norm < 1e-8:
         if fraction_loss_mean <= 0.0:
             probs = np.concatenate((np.array([1.0]), np.zeros(len(impact_bins) - 2)))
         elif fraction_loss_mean >= 1.0:
             probs = np.concatenate((np.zeros(len(impact_bins) - 2), np.array([1.0])))
     else:
-        probs = probs / probs_norm
+        probs[0] = probs[0] + prob_differetial
 
     return ImpactDistrib(hazard_type, impact_bins, probs, impact_type)

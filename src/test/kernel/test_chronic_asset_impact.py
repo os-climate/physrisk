@@ -122,15 +122,17 @@ def get_impact_distrib(
         np.vectorize(lambda x: norm.cdf(x, loc=fraction_loss_mean, scale=max(1e-12, fraction_loss_std)))(impact_bins)
     )
 
+    # Other Proposal
     probs_norm = np.sum(probs)
+    prob_differetial = 1 - probs_norm
     if probs_norm < 1e-8:
         if fraction_loss_mean <= 0.0:
             probs = np.concatenate((np.array([1.0]), np.zeros(len(impact_bins) - 2)))
         elif fraction_loss_mean >= 1.0:
             probs = np.concatenate((np.zeros(len(impact_bins) - 2), np.array([1.0])))
     else:
-        probs = probs / probs_norm
-    print(probs)
+        probs[0] = probs[0] + prob_differetial
+
     return ImpactDistrib(hazard_type, impact_bins, probs, impact_type)
 
 
@@ -162,21 +164,21 @@ class TestChronicAssetImpact(unittest.TestCase):
         value_test = list(results.values())[0].impact.prob
         value_exp = np.array(
             [
-                0.01467962167,
-                0.01167046643,
-                0.01550636950,
-                0.02007948962,
-                0.02534053927,
-                0.03116733667,
-                0.03735977062,
-                0.04364448671,
-                0.04969071771,
-                0.05513683679,
-                0.52443044533,
-                0.16305827032,
-                0.00817544423,
-                0.00006014449,
-                0.00000006063,
+                0.02656777935,
+                0.01152965908,
+                0.01531928095,
+                0.01983722513,
+                0.02503479879,
+                0.03079129430,
+                0.03690901485,
+                0.04311790414,
+                0.04909118572,
+                0.05447159590,
+                0.51810304973,
+                0.16109092806,
+                0.00807680527,
+                0.00005941883,
+                0.00000005990,
                 0.00000000001,
                 0.00000000000,
                 0.00000000000,

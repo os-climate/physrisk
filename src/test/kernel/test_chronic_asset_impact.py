@@ -12,6 +12,7 @@ from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse, 
 from physrisk.kernel.hazards import ChronicHeat
 from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
 from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
+from physrisk.models.chronic_heat_models import ChronicHeatGZN
 
 
 class ExampleChronicHeatModel(VulnerabilityModelBase):
@@ -21,11 +22,12 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
     https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html
     """
 
-    def __init__(self, model: str = "mean_degree_days_above_32c"):
+    def __init__(self, model: str = "mean_degree_days_above_32c", delta: bool = True):
         super().__init__(model, ChronicHeat)  # opportunity to give a model hint, but blank here
         self.time_lost_per_degree_day = 4.671  # This comes from the paper converted to celsius
         self.time_lost_per_degree_day_se = 2.2302  # This comes from the paper converted to celsius
-        self.total_labour_hours = 107460
+        self.total_labour_hours = 107460  # OECD Average hours worked within the USA in one year.
+        self.delta = delta
         # load any data needed by the model here in the constructor
 
     def get_data_requests(
@@ -87,7 +89,8 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
         # TODO: add model here
         # use hazard data requests via:
 
-        delta_dd_above_mean = np.maximum(scenario_dd_above_mean.parameter - baseline_dd_above_mean.parameter, 0)
+        # Allow for either a delta approach or a level estimate.
+        delta_dd_above_mean: float = scenario_dd_above_mean.parameter - baseline_dd_above_mean.parameter * self.delta
         hours_worked = self.total_labour_hours
         fraction_loss_mean = (delta_dd_above_mean * self.time_lost_per_degree_day) / hours_worked
         fraction_loss_std = (delta_dd_above_mean * self.time_lost_per_degree_day_se) / hours_worked
@@ -111,8 +114,8 @@ def get_impact_distrib(
     """
     impact_bins = np.concatenate(
         [
-            np.linspace(-0.001, 0.001, 1, endpoint=False),
-            np.linspace(0.001, 0.01, 9, endpoint=False),
+            np.linspace(-0.001, 0.000, 1, endpoint=False),
+            np.linspace(0.000, 0.01, 10, endpoint=False),
             np.linspace(0.01, 0.1, 10, endpoint=False),
             np.linspace(0.1, 0.999, 10, endpoint=False),
             np.linspace(0.999, 1.001, 2),
@@ -124,14 +127,14 @@ def get_impact_distrib(
 
     # Other Proposal
     probs_norm = np.sum(probs)
-    prob_differetial = 1 - probs_norm
+    prob_differential = 1 - probs_norm
     if probs_norm < 1e-8:
         if fraction_loss_mean <= 0.0:
             probs = np.concatenate((np.array([1.0]), np.zeros(len(impact_bins) - 2)))
         elif fraction_loss_mean >= 1.0:
             probs = np.concatenate((np.zeros(len(impact_bins) - 2), np.array([1.0])))
     else:
-        probs[0] = probs[0] + prob_differetial
+        probs[0] = probs[0] + prob_differential
 
     return ImpactDistrib(hazard_type, impact_bins, probs, impact_type)
 
@@ -149,7 +152,7 @@ class TestChronicAssetImpact(unittest.TestCase):
         scenario = "ssp585"
         year = 2050
 
-        vulnerability_models = {IndustrialActivity: [ExampleChronicHeatModel()]}
+        vulnerability_models = {IndustrialActivity: [ChronicHeatGZN()]}
 
         assets = [
             IndustrialActivity(lat, lon, type="Construction")
@@ -164,7 +167,8 @@ class TestChronicAssetImpact(unittest.TestCase):
         value_test = list(results.values())[0].impact.prob
         value_exp = np.array(
             [
-                0.02656777935,
+                0.01811080216,
+                0.00845697720,
                 0.01152965908,
                 0.01531928095,
                 0.01983722513,

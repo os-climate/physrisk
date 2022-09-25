@@ -16,11 +16,12 @@ class ChronicHeatGZN(VulnerabilityModelBase):
     Time allocated to work under varying climate and labor market conditions."
     Average annual work hours are based on USA values reported by the OECD for 2021."""
 
-    def __init__(self):
+    def __init__(self, model: str = "mean_degree_days_above_32c", delta=True):
+        super().__init__(model, ChronicHeat)  # opportunity to give a model hint, but blank here
         self.time_lost_per_degree_day = 4.671  # This comes from the paper converted to celsius
         self.time_lost_per_degree_day_se = 2.2302  # This comes from the paper converted to celsius
         self.total_labour_hours = 107460
-        super().__init__("", ChronicHeat)  # opportunity to give a model hint, but blank here
+        self.delta = delta
 
     def get_data_requests(
         self, asset: Asset, *, scenario: str, year: int
@@ -78,7 +79,9 @@ class ChronicHeatGZN(VulnerabilityModelBase):
         assert isinstance(baseline_dd_above_mean, HazardParameterDataResponse)
         assert isinstance(scenario_dd_above_mean, HazardParameterDataResponse)
 
-        delta_dd_above_mean = np.maximum(scenario_dd_above_mean.parameter - baseline_dd_above_mean.parameter, 0)
+        # Is a delta expected?
+
+        delta_dd_above_mean: float = scenario_dd_above_mean.parameter - baseline_dd_above_mean.parameter * self.delta
 
         hours_worked = self.total_labour_hours
         fraction_loss_mean = (delta_dd_above_mean * self.time_lost_per_degree_day) / hours_worked
@@ -103,8 +106,8 @@ def get_impact_distrib(
     """
     impact_bins = np.concatenate(
         [
-            np.linspace(-0.001, 0.001, 1, endpoint=False),
-            np.linspace(0.001, 0.01, 9, endpoint=False),
+            np.linspace(-0.001, 0.000, 1, endpoint=False),
+            np.linspace(0.000, 0.01, 10, endpoint=False),
             np.linspace(0.01, 0.1, 10, endpoint=False),
             np.linspace(0.1, 0.999, 10, endpoint=False),
             np.linspace(0.999, 1.001, 2),
@@ -116,13 +119,13 @@ def get_impact_distrib(
 
     # Other Proposal
     probs_norm = np.sum(probs)
-    prob_differetial = 1 - probs_norm
+    prob_differential = 1 - probs_norm
     if probs_norm < 1e-8:
         if fraction_loss_mean <= 0.0:
             probs = np.concatenate((np.array([1.0]), np.zeros(len(impact_bins) - 2)))
         elif fraction_loss_mean >= 1.0:
             probs = np.concatenate((np.zeros(len(impact_bins) - 2), np.array([1.0])))
     else:
-        probs[0] = probs[0] + prob_differetial
+        probs[0] = probs[0] + prob_differential
 
     return ImpactDistrib(hazard_type, impact_bins, probs, impact_type)

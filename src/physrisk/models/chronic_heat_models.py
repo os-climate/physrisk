@@ -4,7 +4,7 @@ import numpy as np
 from scipy.stats import norm
 
 from physrisk.kernel.assets import Asset
-from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse, HazardParameterDataResponse
+from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse
 from physrisk.kernel.hazards import ChronicHeat
 from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
 from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
@@ -71,15 +71,10 @@ class ChronicHeatGZN(VulnerabilityModelBase):
             Probability distribution of impacts.
         """
 
-        # isinstance(data_response,HazardParameterDataResponse)
-
-        # There is only a single data response for a given scenario and year for chronic heat.
         baseline_dd_above_mean, scenario_dd_above_mean = data_responses
 
-        assert isinstance(baseline_dd_above_mean, HazardParameterDataResponse)
-        assert isinstance(scenario_dd_above_mean, HazardParameterDataResponse)
-
-        # Is a delta expected?
+        # assert isinstance(baseline_dd_above_mean, HazardParameterDataResponse)
+        # assert isinstance(scenario_dd_above_mean, HazardParameterDataResponse)
 
         delta_dd_above_mean: float = scenario_dd_above_mean.parameter - baseline_dd_above_mean.parameter * self.delta
 
@@ -106,18 +101,20 @@ def get_impact_distrib(
     """
     impact_bins = np.concatenate(
         [
-            np.linspace(-0.001, 0.000, 1, endpoint=False),
-            np.linspace(0.000, 0.01, 10, endpoint=False),
+            np.linspace(-0.001, 0.001, 1, endpoint=False),
+            np.linspace(0.001, 0.01, 9, endpoint=False),
             np.linspace(0.01, 0.1, 10, endpoint=False),
             np.linspace(0.1, 0.999, 10, endpoint=False),
             np.linspace(0.999, 1.001, 2),
         ]
     )
-    probs = np.diff(
-        np.vectorize(lambda x: norm.cdf(x, loc=fraction_loss_mean, scale=max(1e-12, fraction_loss_std)))(impact_bins)
-    )
 
-    # Other Proposal
+    probs_cumulative = np.vectorize(lambda x: norm.cdf(x, loc=fraction_loss_mean, scale=max(1e-12, fraction_loss_std)))(
+        impact_bins
+    )
+    probs_cumulative[-1] = np.maximum(probs_cumulative[-1], 1.0)
+    probs = np.diff(probs_cumulative)
+
     probs_norm = np.sum(probs)
     prob_differential = 1 - probs_norm
     if probs_norm < 1e-8:

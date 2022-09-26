@@ -28,7 +28,6 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
         self.time_lost_per_degree_day_se = 2.2302  # This comes from the paper converted to celsius
         self.total_labour_hours = 107460  # OECD Average hours worked within the USA in one year.
         self.delta = delta
-        # load any data needed by the model here in the constructor
 
     def get_data_requests(
         self, asset: Asset, *, scenario: str, year: int
@@ -86,7 +85,6 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
         assert scenario_dd_above_mean.parameter >= 0
         assert baseline_dd_above_mean.parameter >= 0
 
-        # TODO: add model here
         # use hazard data requests via:
 
         # Allow for either a delta approach or a level estimate.
@@ -114,18 +112,20 @@ def get_impact_distrib(
     """
     impact_bins = np.concatenate(
         [
-            np.linspace(-0.001, 0.000, 1, endpoint=False),
-            np.linspace(0.000, 0.01, 10, endpoint=False),
+            np.linspace(-0.001, 0.001, 1, endpoint=False),
+            np.linspace(0.001, 0.01, 9, endpoint=False),
             np.linspace(0.01, 0.1, 10, endpoint=False),
             np.linspace(0.1, 0.999, 10, endpoint=False),
             np.linspace(0.999, 1.001, 2),
         ]
     )
-    probs = np.diff(
-        np.vectorize(lambda x: norm.cdf(x, loc=fraction_loss_mean, scale=max(1e-12, fraction_loss_std)))(impact_bins)
-    )
 
-    # Other Proposal
+    probs_cumulative = np.vectorize(lambda x: norm.cdf(x, loc=fraction_loss_mean, scale=max(1e-12, fraction_loss_std)))(
+        impact_bins
+    )
+    probs_cumulative[-1] = np.maximum(probs_cumulative[-1], 1.0)
+    probs = np.diff(probs_cumulative)
+
     probs_norm = np.sum(probs)
     prob_differential = 1 - probs_norm
     if probs_norm < 1e-8:
@@ -167,8 +167,7 @@ class TestChronicAssetImpact(unittest.TestCase):
         value_test = list(results.values())[0].impact.prob
         value_exp = np.array(
             [
-                0.01811080216,
-                0.00845697720,
+                0.02656777935,
                 0.01152965908,
                 0.01531928095,
                 0.01983722513,

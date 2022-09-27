@@ -18,7 +18,7 @@ from physrisk import RiverineInundation, requests
 from physrisk.data.hazard_data_provider import get_source_path_wri_riverine_inundation
 
 
-class TestDataRequests(unittest.TestCase):
+class TestRequests(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.mkdtemp()
         dotenv_dir = os.environ.get("CREDENTIAL_DOTENV_DIR", os.getcwd())
@@ -29,6 +29,8 @@ class TestDataRequests(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.test_dir)
 
+
+class TestDataRequests(TestRequests):
     def test_hazard_data_availability(self):
         # test that validation passes:
         _ = requests.get(request_id="get_hazard_data_availability", request_dict={})
@@ -105,9 +107,9 @@ class TestDataRequests(unittest.TestCase):
                 }
             ],
         }
-        response_floor = requests.get(request_id="get_hazard_data", request_dict=request1)
+        response_floor = requests.get(request_type="get_hazard_data", request_dict=request1)
         request1["interpolation"] = "linear"  # type: ignore
-        response_linear = requests.get(request_id="get_hazard_data", request_dict=request1)
+        response_linear = requests.get(request_type="get_hazard_data", request_dict=request1)
         print(response_linear)
 
         floor = json.loads(response_floor)["items"][0]["intensity_curve_set"][5]["intensities"]
@@ -129,5 +131,5 @@ class TestDataRequests(unittest.TestCase):
                 }
             ],
         }
-        response = requests.get(request_id="get_hazard_data", request_dict=request2)
+        response = requests.get(request_type="get_hazard_data", request_dict=request2)
         print(response)

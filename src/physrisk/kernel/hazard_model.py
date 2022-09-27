@@ -35,7 +35,7 @@ class HazardDataRequest:
 
 
 class HazardDataResponse:
-    pass
+    parameter: np.ndarray
 
 
 class HazardEventDataResponse(HazardDataResponse):

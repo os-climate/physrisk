@@ -1,32 +1,26 @@
-import unittest
-from test.data.hazard_model_store import TestData, mock_hazard_model_store_heat
 from typing import Iterable, Union
 
 import numpy as np
 from scipy.stats import norm
 
-from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
-from physrisk.kernel import calculation
-from physrisk.kernel.assets import Asset, IndustrialActivity
-from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse, HazardParameterDataResponse
+from physrisk.kernel.assets import Asset
+from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse
 from physrisk.kernel.hazards import ChronicHeat
 from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
 from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
-from physrisk.models.chronic_heat_models import ChronicHeatGZN
 
 
-class ExampleChronicHeatModel(VulnerabilityModelBase):
-    """Example chronic vulnerability model for extreme heat (summary should fit on one line).
+class ChronicHeatGZN(VulnerabilityModelBase):
+    """Model which estiamtes the labour productivity impact based on chronic heat based on the paper "Neidell M,
+    Graff Zivin J, Sheahan M,  Willwerth J, Fant C, Sarofim M, et al. (2021) Temperature and work:
+    Time allocated to work under varying climate and labor market conditions."
+    Average annual work hours are based on USA values reported by the OECD for 2021."""
 
-    More decription below as per
-    https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html
-    """
-
-    def __init__(self, model: str = "mean_degree_days_above_32c", delta: bool = True):
+    def __init__(self, model: str = "mean_degree_days_above_32c", delta=True):
         super().__init__(model, ChronicHeat)  # opportunity to give a model hint, but blank here
         self.time_lost_per_degree_day = 4.671  # This comes from the paper converted to celsius
         self.time_lost_per_degree_day_se = 2.2302  # This comes from the paper converted to celsius
-        self.total_labour_hours = 107460  # OECD Average hours worked within the USA in one year.
+        self.total_labour_hours = 107460
         self.delta = delta
 
     def get_data_requests(
@@ -41,7 +35,7 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
             year: Projection year of calculation.
 
         Returns:
-            Single or multiple data requests.
+            Single data requests.
         """
 
         # specify hazard data needed. Model string is hierarchical and '/' separated.
@@ -76,19 +70,14 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
         Returns:
             Probability distribution of impacts.
         """
+
         baseline_dd_above_mean, scenario_dd_above_mean = data_responses
 
-        # check expected type; can maybe do this more nicely
-        assert isinstance(baseline_dd_above_mean, HazardParameterDataResponse)
-        assert isinstance(scenario_dd_above_mean, HazardParameterDataResponse)
-        # Ensuring that the values are greater than zero. Should be by defition.
-        assert scenario_dd_above_mean.parameter >= 0
-        assert baseline_dd_above_mean.parameter >= 0
+        # assert isinstance(baseline_dd_above_mean, HazardParameterDataResponse)
+        # assert isinstance(scenario_dd_above_mean, HazardParameterDataResponse)
 
-        # use hazard data requests via:
-
-        # Allow for either a delta approach or a level estimate.
         delta_dd_above_mean: float = scenario_dd_above_mean.parameter - baseline_dd_above_mean.parameter * self.delta
+
         hours_worked = self.total_labour_hours
         fraction_loss_mean = (delta_dd_above_mean * self.time_lost_per_degree_day) / hours_worked
         fraction_loss_std = (delta_dd_above_mean * self.time_lost_per_degree_day_se) / hours_worked
@@ -137,68 +126,3 @@ def get_impact_distrib(
         probs[0] = probs[0] + prob_differential
 
     return ImpactDistrib(hazard_type, impact_bins, probs, impact_type)
-
-
-class TestChronicAssetImpact(unittest.TestCase):
-    """Tests the impact on an asset of a chronic hazard model."""
-
-    def test_chronic_vulnerability_model(self):
-        """Testing the generation of an asset when only an impact curve (e.g. damage curve is available)"""
-
-        store = mock_hazard_model_store_heat(TestData.longitudes, TestData.latitudes)
-        hazard_model = ZarrHazardModel(source_paths=calculation.get_default_zarr_source_paths(), store=store)
-        # to run a live calculation, we omit the store parameter
-
-        scenario = "ssp585"
-        year = 2050
-
-        vulnerability_models = {IndustrialActivity: [ChronicHeatGZN()]}
-
-        assets = [
-            IndustrialActivity(lat, lon, type="Construction")
-            for lon, lat in zip(TestData.longitudes, TestData.latitudes)
-        ][:1]
-
-        results = calculation.calculate_impacts(
-            assets, hazard_model, vulnerability_models, scenario=scenario, year=year
-        )
-
-        value_test = list(results.values())[0].impact.mean_impact()
-        value_test = list(results.values())[0].impact.prob
-        value_exp = np.array(
-            [
-                0.02656777935,
-                0.01152965908,
-                0.01531928095,
-                0.01983722513,
-                0.02503479879,
-                0.03079129430,
-                0.03690901485,
-                0.04311790414,
-                0.04909118572,
-                0.05447159590,
-                0.51810304973,
-                0.16109092806,
-                0.00807680527,
-                0.00005941883,
-                0.00000005990,
-                0.00000000001,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-            ]
-        )
-        value_diff = np.sum(np.abs(value_test - value_exp))
-        self.assertAlmostEqual(value_diff, 0.0, places=8)

@@ -140,7 +140,7 @@ def degree_day_heat_parameter_set():
     ]:
 
         paths.append(get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year))
-    parameters = [100, 900, 300, -200]
+    parameters = [300, 300, 600, -200]
     return dict(zip(paths, parameters))
 
 

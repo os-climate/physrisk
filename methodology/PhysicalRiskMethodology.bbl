@@ -127,4 +127,27 @@
   to climate change.
 \newblock {\em Climatic change 164}, 3 (2021), 1--18.
 
+
+%%%%% Original GLZ model
+@article{TemperatureAndTheAllocationofTime:2014,
+  title={Temperature and the Allocation of Time: Implications for Climate Change},
+  author={Matthew Neidell, Joshua Graff Zivin},
+  journal={Journal of Labor Economics},
+  volume={32},
+  number={1},
+  pages={1--26},
+  year={2006},
+  publisher={The University of Chicago Press on behalf of the Society of Labor Economists and the NORC at the University of Chicago}
+}
+
+%%%%% Temperature And Work artcle - which starts from original GZL model
+@article{TemperatureAndWork:2021,
+  title={Temperature and work: Time allocated to work under varying climate and labor market conditions},
+  author={Matthew Neidell, Joshua Graff Zivin, Megan Sheahan, Jacqueline Willwerth, Charles Fant, Marcus Sarofim, Jeremy Martinich},
+  journal={PLOS ONE},
+  year={2021},
+}
+
+
+
 \end{thebibliography}

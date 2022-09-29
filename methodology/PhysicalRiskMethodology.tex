@@ -579,7 +579,7 @@ While the results are relevant and significant, is it important to highlight the
 The paper attempts to estimate economic cost (assuming the impact of 4.7 minutes lost per degree of temperature above $32.2^\circ C$ during normal economic periods) however it only focuses on the direct costs and does not account for feedback effects (reducing the labour productivity will result in a decrease of the products available, wages, demand, etc.). Figure \ref{fig:economiccost} provides the results, as extracted from the paper:
 \begin{figure}[h]
     \centering
-    \includegraphics[scale = 0.6]{economic cost.png}
+    \includegraphics[scale = 0.6]{plots/economic cost.png}
     \caption{Economic cost}
     \label{fig:economiccost}
 \end{figure}
@@ -597,7 +597,7 @@ The assessment is based on the research performed by Zhang and Shindel, which re
 
 \begin{figure}[h]
     \centering
-    \includegraphics{WBGT.png}
+    \includegraphics{plots/WBGT.png}
     \caption{WBGT method}
     \label{fig:WBGT}
 \end{figure}
@@ -609,7 +609,7 @@ Figure \ref{fig:CostsByRCP} \footnote{Extracted from \cite{ZhangAndShindell:2021
 
 \begin{figure}[h]
     \centering
-    \includegraphics{CostsByRCP.png}
+    \includegraphics{plots/CostsByRCP.png}
     \caption{Costs By RCP under GLZ method versus WBGT method}
     \label{fig:CostsByRCP}
 \end{figure}
@@ -630,15 +630,6 @@ Where $X$ is the variable that refers to Minutes Lost during normal economic cyc
 The second approach is attractive in its simplicity and ensuring the model does not lose its focus. 
 One concern is that the probability of recession, in reality, may be related to the realisation of climate related risks. Hence, there might be a over/under estimation of the probability unless the impact of the climate risk is also considered. Historical model estimated recession probabilities can be sourced from \cite{SmoothedU.S.RecessionProbabilities:2022}. However, we did not go further in the measurement of the uncertainty explained by the economic cycle because it requires us to focus on the modelling of another parameter ($p$, the probability of the recession to occur), which is not the purpose of this work. 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% to add in the references: https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodologyBibliography.bib
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%@article{SmoothedU.S.RecessionProbabilities:2022,
-%  title={Smoothed U.S. Recession Probabilities},
-%  author={Jeremy Piger},
-%  publisher={University of Oregon}
-%  year={2022},
-%}
 Instead, we focus on the \textbf{model parameter uncertainty approach}. In \cite{ZhangAndShindell:2021}, there is a linear relationship between temperature and work minutes lost ($\beta$),and a constraint is applied to ensure that total time allocation sums to 24 hours, which returns a non-linear regression model at the end. Given that the main coefficient of interest is denoted $\beta$, an inference is applied assuming that $\beta$ follows a $Student-T$ distribution: 
 \begin{equation}
  \label{Eq:uncertaintyStudentT}   
@@ -651,14 +642,11 @@ Where $SE$ is the Standard Error of the coefficient and $(N-K)$ is the number of
 \end{equation}
 Where $T(p)$ donates the probability density function (pdf) of the student $T$ distribution with probability $p$ which corresponds to the $CI\%$, the standard error $SE = 2.23 \ min$ and $\beta =  - 4.68$.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%START HERE
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Figure \ref{fig:GZL-Vulnerability} shows the uncertainly around the GZN vulnerability model, based on the assumptions above, at $95\%$ confidence level\footnote{In order to compute the figure, N is taken from the paper \cite{TemperatureAndWork:2021}: N 11,732, and K is assumed to be 0 as it is very small relatively to N. One could do further researches to check the exact number of K, but that will not impact the results. K includes the number of control variables which provide information on demographic data -- age, gender, education, employment status, income, etc. -- and climate variables such as level of precipitation and snow.}.
 \begin{figure}[h]
     \centering
-    \includegraphics[scale = 0.8]{GZL-Vulnerability.png}
+    \includegraphics[scale = 0.8]{plots/GZL-Vulnerability.png}
     \caption{Estimate of daily minutes of labour loss}
     \label{fig:GZL-Vulnerability}
 \end{figure}
@@ -673,7 +661,6 @@ As the degrees of freedom increases, the t distributions converge to the standar
 
 As an example, consider an $1.5^\circ C$ degree day increase in the temperature. We can then multiply through the normal distribution as shown below: 
 
-%The buckets of the daily maximum temperature above $32.2^\circ C$  are defined as an incremental increase of $1.5^\circ %C$, starting from $0^\circ C$ to $18^\circ C$: $\begin{pmatrix} 0 & 1.5 & 3 & ... & 18 \end{pmatrix}$. For a $1.5^\circ %C$ daily temperature increase, the uncertainty around the daily labour productivity impact is given by the following %normal distribution:
 \begin{equation}
     \label{Eq:uncertainty2}
     1.5 \times \beta \sim \mathcal{N}(1.5 \times \beta,\, (1.5 \times SE)^{2})\, 
@@ -688,7 +675,6 @@ This can be generalised for a degree day increase of x using the following distr
 \end{equation}
 For example, there is 1\% chance that the lost labour productivity exceeds $29.6$ minutes per day if the maximum daily temperature exceeds at $32.2^\circ C$ by $3^\circ C$. This number is computed as $\mathcal{N}^{-1} (m',SE'^2)(1\%)$ where $m'= 3 \times m = -14.013 \ min$ and $SE'= 3 \times SE = 6.69 \ min$. The $99\%CI$ of the lost labour productivity per day if the maximum daily temperature exceeds at $32.2^\circ C$ by $3^\circ C$ is $[+1.6 \ min, -29.6 \ min]$.
 
-%Adding point regarding impact as a percentage of total labour 
 
 
 \item The estimated loss of labour time is then transformed into a percentage estimate:

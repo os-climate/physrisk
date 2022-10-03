@@ -1,9 +1,8 @@
 from typing import List, Optional
 
-import numpy as np
 from pydantic import BaseModel, Field
 
-from physrisk.api.v1.common import Assets, HazardEventDistrib, IntensityCurve, VulnerabilityDistrib
+from physrisk.api.v1.common import Assets, Distribution, ExceedanceCurve, VulnerabilityDistrib
 
 # region Request
 
@@ -34,8 +33,8 @@ class AssetImpactRequest(BaseModel):
 class AcuteHazardCalculationDetails(BaseModel):
     """Details of an acute hazard calculation."""
 
-    hazard_exceedance: IntensityCurve
-    hazard_distribution: HazardEventDistrib
+    hazard_exceedance: ExceedanceCurve
+    hazard_distribution: Distribution
     vulnerability_distribution: VulnerabilityDistrib
 
 
@@ -49,10 +48,10 @@ class AssetSingleHazardImpact(BaseModel):
         ('damage') or disruption to the annual economic benefit obtained from the asset ('disruption'), expressed as
         fractional decrease to an equivalent cash amount.""",
     )
-    impact_bin_edges: np.ndarray = Field(default_factory=lambda: np.zeros(10), description="Edges of the impact bins.")
-    probabilities: np.ndarray = Field(
-        default_factory=lambda: np.zeros(10), description="Probabilities of impact in each bin."
-    )
+    impact_distribution: Distribution
+    impact_exceedance: ExceedanceCurve
+    impact_mean: float
+    impact_std_deviation: float
     calc_details: Optional[AcuteHazardCalculationDetails] = Field(
         None,
         description="""Details of impact calculation for acute hazard calculations.""",

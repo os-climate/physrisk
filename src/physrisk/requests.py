@@ -4,7 +4,7 @@ from typing import Dict, List, cast
 
 import numpy as np
 
-from physrisk.api.v1.common import HazardEventDistrib, VulnerabilityDistrib
+from physrisk.api.v1.common import Distribution, ExceedanceCurve, VulnerabilityDistrib
 
 from .api.v1.hazard_data import (
     HazardEventAvailabilityRequest,
@@ -52,7 +52,7 @@ def get(*, request_id, request_dict, store=None):
         return json.dumps(_get_hazard_data_availability(request).dict())
     elif request_id == "get_asset_impact":
         request = AssetImpactRequest(**request_dict)
-        return dumps(_get_asset_impacts(request).dict())
+        return dumps(_get_asset_impacts(request, store=store).dict())
     else:
         raise ValueError(f"request type '{request_id}' not found")
 
@@ -161,13 +161,8 @@ def _get_asset_impacts(request: AssetImpactRequest, source_paths=None, store=Non
     for (asset, hazard_type), v in results.items():
         # calculation details
         if v.event is not None and v.vulnerability is not None:
-            exceedance = v.event.to_exceedance_curve()
-            exceedance_curve = IntensityCurve(
-                intensities=exceedance.values.tolist(), return_periods=(1.0 / exceedance.probs).tolist()
-            )
-            hazard_event_distrib = HazardEventDistrib(
-                intensity_bin_edges=v.event.intensity_bin_edges, probabilities=v.event.prob
-            )
+            hazard_exceedance = v.event.to_exceedance_curve()
+
             vulnerability_distribution = VulnerabilityDistrib(
                 intensity_bin_edges=v.vulnerability.intensity_bins,
                 impact_bin_edges=v.vulnerability.impact_bins,
@@ -175,16 +170,23 @@ def _get_asset_impacts(request: AssetImpactRequest, source_paths=None, store=Non
             )
 
             calc_details = AcuteHazardCalculationDetails(
-                hazard_exceedance=exceedance_curve,
-                hazard_distribution=hazard_event_distrib,
+                hazard_exceedance=ExceedanceCurve(
+                    values=hazard_exceedance.values, exceed_probabilities=hazard_exceedance.probs
+                ),
+                hazard_distribution=Distribution(bin_edges=v.event.intensity_bin_edges, probabilities=v.event.prob),
                 vulnerability_distribution=vulnerability_distribution,
             )
 
+        impact_exceedance = v.impact.to_exceedance_curve()
         hazard_impacts = AssetSingleHazardImpact(
             hazard_type=v.impact.hazard_type.__name__,
             impact_type=v.impact.impact_type.name,
-            impact_bin_edges=v.impact.impact_bins,
-            probabilities=v.impact.prob,
+            impact_exceedance=ExceedanceCurve(
+                values=impact_exceedance.values, exceed_probabilities=impact_exceedance.probs
+            ),
+            impact_distribution=Distribution(bin_edges=v.impact.impact_bins, probabilities=v.impact.prob),
+            impact_mean=v.impact.mean_impact(),
+            impact_std_deviation=0,  # TODO!
             calc_details=None if v.event is None else calc_details,
         )
 

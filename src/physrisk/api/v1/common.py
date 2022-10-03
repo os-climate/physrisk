@@ -66,6 +66,26 @@ class IntensityCurve(BaseModel):
     return_periods: List[float]
 
 
+class ExceedanceCurve(BaseModel):
+    """General exceedance curve (e.g. hazazrd, impact)."""
+
+    values: np.ndarray = Field(default_factory=lambda: np.zeros(10), description="")
+    exceed_probabilities: np.ndarray = Field(default_factory=lambda: np.zeros(10), description="")
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
+class Distribution(BaseModel):
+    """General exceedance curve (e.g. hazazrd, impact)."""
+
+    bin_edges: np.ndarray = Field(default_factory=lambda: np.zeros(11), description="")
+    probabilities: np.ndarray = Field(default_factory=lambda: np.zeros(10), description="")
+
+    class Config:
+        arbitrary_types_allowed = True
+
+
 class HazardEventDistrib(BaseModel):
     """Intensity curve of an acute hazard."""
 

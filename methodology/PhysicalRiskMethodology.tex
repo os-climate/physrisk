@@ -511,37 +511,190 @@ whole globe, leading to a potentially large mismatch between historical and futu
 
 
 
-\section{Hazard and vulnerability models}
+%\section{Hazard and vulnerability models}
 
-\subsection{Inundation}
-\paragraph{Hazard models}
+\section{Inundation}
+\subsection{Hazard models}
 Inundation is modelled as an acute risk using the approach of Section~\ref{SubSec:AcuteAssetImpactModel}. Hazard event models compatible with this method provide inundation depths for different annual probabilities of occurrence -- or equivalently return periods. The need for sufficient granularity in the set of return periods is discussed in \cite{WardEtAl:2011}. 
 
 Inundation hazards are incorporated into physical risk calculations using the World Resource Institute (WRI) Aqueduct flood model \cite{WardEtAl:2020} which has relatively high return-period granularity. This is based on the global modelling approach of \cite{WardEtAl:2013}.
 
 {\textcolor{red}{\emph{[Discuss and include refs for approaches based on flooded area?]}}}
 
-\paragraph{Vulnerability models}
+\subsection{Vulnerability models}
 Notable damage models for real estate assets include the FEMA FAST `HAZUS' model \cite{ScawthornEtAl:2006} and an European Commission Joint Research Centre (JRC) model \cite{HuizingaEtAl:2017}. The latter is implemented in the \emph{physrisk} library. 
  
 
-\subsection{Heat}
 
-Heat is classified as both a chronic and an acute hazard.  For example, increased average temperature in a particular area can lower average productivity from labour or make the area less desirable as a place to live, lowering real estate prices. These we classify as risks from chronic hazards. Heat waves are examples of acute hazard events; a period of particularly high temperature might lead to the complete suspension of industrial activity.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% HEAT MODEL
+
+\section{Heat}
+
+Heat is classified as both a chronic and an acute hazard.  For example, increased average temperature in a particular area can lower average productivity from labour or make the area less desirable as a place to live, lowering real estate prices. We classify these as risks from chronic hazards. Heat waves are examples of acute hazard events; a period of particularly high temperature might lead to the complete suspension of industrial activity.
 
 Multiple indexes for quantifying heat hazards have been suggested and multiple approaches for the modelling of acute events are present in the literature, e.g. \cite{MazdiyasniEtAl:2019}. Similarly, various methods for modelling the vulnerability to heat hazards have been suggested. Analyses of heat wave events are commonly based on Global and Regional Circulation Model (GCM and RCM) outputs \cite{DosioEtAl:2018}. In \cite{Christidis:2021} and \cite{Christidis:2013} the authors analyse ensembles of CMIP6 simulations with and without anthropogenic forcings in order to determine if extreme heat events are attributable to (anthropogenic) climate change. Such attribution analysis is based in part on finding return periods of events (see also \cite{StottEtAl:2016}). This estimation of return periods for events is directly applicable to acute hazard models.  
 
 In order to support a wide range of hazard and vulnerability models,  \emph{physrisk} includes the derivation of heat statistics from CMIP6 data\footnote{This is somewhat in contrast to the use of the Aqueduct model of \cite{WardEtAl:2020} for modelling inundation where the complete hazard model is used as-is within \emph{physrisk} -- albeit reformatted to handle efficiently the access patterns needed for physical risk calculations.}. 
 
-\paragraph{Chronic hazard models}
+\subsection{Hazard Models}
+
+\subsubsection{Chronic hazard models}
 As mentioned above, hazard models and vulnerability models are closely coupled. \cite{ZhangAndShindell:2021} describes the `GZN' and `WBGT' methods. The statistics required for these methods are derived using bias-corrected and down-scaled data sets. There are multiple sources of data suitable for the estimation of the required statistics, notably the NEX-GDDP-NASA set \cite{ThrasherEtAl:2022}.
 
-\paragraph{Chronic vulnerability models}
 
-Vulnerability models are presented in \cite{DunneEtAl:2013} and \cite{ZhangAndShindell:2021}. \emph{physrisk} implements the `GZN' and `WBGT' approaches of the latter.
 
-\paragraph{Accute hazard models}
-Acute hazard modelling approaches are based on calculating return periods of events in a way analagous to acute inundation models. The calculation of return periods from data sets presents a statistical challenge, dealt with for example by \cite{MentaschiEtAl:2016}.
+\subsubsection{Acute hazard models}
+Acute hazard modelling approaches are based on calculating return periods of events in a way analogous to acute inundation models. The calculation of return periods from data sets presents a statistical challenge, dealt with for example by \cite{MentaschiEtAl:2016}.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%% Changes - Heat Vulnerability Model %%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\subsection{Heat Vulnerability Model}
+
+\label{SubSec:HeatVulnerabilityModel}
+
+\subsubsection{Impact of Temperature on labour productivity}
+
+The Heat vulnerability model presented in this section is based on the approach introduced in 'Temperature And Work: Time allocated to work under varying climate and labor market conditions' (2021)\cite{TemperatureAndWork:2021}. The paper uses survey data to estimate labour allocation decisions in the United States (US) based on temperature. It does not extend the analysis beyond the US. It replicates previous research done (original GZN method \cite{TemperatureAndTheAllocationofTime:2014}.) whilst extending the period of data used and adding an assessment based on the economic cycle: the main innovation is that it includes the economic cycle by splitting out the 2008 financial crisis first through segmented regressions and following them by using an indicator variable: the non-recession period is 2003-2007 and 2015-2018. The Great Recessions period is 2008-2014. The methodology in only applied to climate exposed sectors: agriculture, forestry, fishing and hunting, construction, mining, and transportation and utilities.
+
+\newline
+The paper main conclusions are:
+\begin{itemize}
+    \item A statistically significant impact of 2.6 minutes lost per degree of temperature above $90^\circ F$ during normal economic periods and no relationship during a recession. This result is converted into the Celsius scale as \emph{physrisk} decided to take that scale as a reference. The 2.6 minutes is multiplied by a scaling factor of 1.8, which returns \textbf{an impact of 4.7 minutes lost per degree of temperature above $32.2^\circ C$}. 
+    \item When using an indicator variable and linear regression the estimated impact was 5.6 minutes under Fahrenheit scale (respectively 10.08 minutes under Celsius scale) during normal economic periods, but the parameter was insignificant. 
+    \item No relationship between temperature and work allocation with temperatures below  $32.2^\circ C$. 
+    \item Focus on labour allocation decisions, it does not account for other impacts such as reducing productivity. 
+\end{itemize}
+
+While the results are relevant and significant, is it important to highlight the following disclaimers on the results:
+\begin{itemize}
+    \item There are some questions of the reliability of the forecasts in the long run as climate change will likely result in structural changes: on a long-term basis, adaptive solutions might be considered by people to adjust their work productivity with respect to temperature rise.
+    \item The conclusion holds for US (so maybe also for the EU as well other developed countries), but not for developing countries which experience more economic turmoil periods.
+\end{itemize}
+
+The paper attempts to estimate economic cost (assuming the impact of 4.7 minutes lost per degree of temperature above $32.2^\circ C$ during normal economic periods) however it only focuses on the direct costs and does not account for feedback effects (reducing the labour productivity will result in a decrease of the products available, wages, demand, etc.). Figure \ref{fig:economiccost} provides the results, as extracted from the paper:
+\begin{figure}[h]
+    \centering
+    \includegraphics[scale = 0.6]{plots/economic cost.png}
+    \caption{Economic cost}
+    \label{fig:economiccost}
+\end{figure}
+
+Last but not least, it is worth to note that the results of this paper are interpreted as the impact of \textbf{chronic increase in temperature}. The hazard data is the projected average number of daily degrees above $32.2^\circ C$ per year, over a 20 year horizon.
+
+\subsubsection{Uncertainty around the vulnerability Heat model}
+
+\paragraph{Overview}
+The assessment is based on the research performed by Zhang and Shindel, which reviews the uncertainty in the heat risk literature \cite{ZhangAndShindell:2021}. This paper provides context around the uncertainty that exists in the result discussed in previous section, which is mainly explained by the methodology used for the estimation of the impact of temperature on labour productivity. 
+\begin{itemize}
+    \item \cite{ZhangAndShindell:2021} provides an analysis of the \textbf{differential forecasts} between using the \textbf{GZN method} (as reference to Graff-Zivin and Neidell) documented in \cite{TemperatureAndWork:2021}, versus the WetBulb Globe Temperature methodology (\textbf{WBGT method}) which includes other climate factors in addition to temperature: humidity, wind speed and heat radiation -- figure \ref{fig:WBGT} \footnote{Extracted from \cite{ZhangAndShindell:2021} -- p.4} provides the WBGT detailed approach. 
+    \item Another major source of differentiation is that the GZN method focuses on changes in labour allocation decisions while the WBGT method focuses on the physiological impacts of rising temperatures. 
+\end{itemize}
+
+\begin{figure}[h]
+    \centering
+    \includegraphics{plots/WBGT.png}
+    \caption{WBGT method}
+    \label{fig:WBGT}
+\end{figure}
+
+
+Note that there are differences in the functional forms applied in the original GZN method \cite{TemperatureAndTheAllocationofTime:2014} and the approach presented in \cite{TemperatureAndWork:2021}, with original GZN method using one linear regression with dummy variables for temperature buckets, while \cite{TemperatureAndWork:2021} uses multiple linear regressions with one variable reflecting the breach of the maximum temperature around anchor points (less than $70^\circ F$, $90^\circ F$, $90^\circ F$ and above). The WBGT methodology uses a non-linear function to relate labour loss to the WBGT consolidated measure.   
+
+Figure \ref{fig:CostsByRCP} \footnote{Extracted from \cite{ZhangAndShindell:2021} -- p.11} provides the forecasts of labour lost millions of 2016 USD (constant USD value). Most notably the original GZN produces more optimistic forecasts of the cost of labour lost (lower) than the WBGT method. Note that RCP8.5\footnote{The Intergovernmental Panel on Climate Chance modelling are based on representative concentration pathways (RCPs), which represent different emissions projections under basic, plausible economic and social assumptions, while staying within physical constraints. RPCs are constructed by back-calculating the amount of emissions that would result in a given amount of radiative forcing (which is the difference between solar radiation (energy) absorbed by the Earth and energy radiated back into the space) that would then result in a given amount of warming} refers to the scenario of high emissions and RCP4.5 refers to the scenario of moderate emissions.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics{plots/CostsByRCP.png}
+    \caption{Costs By RCP under GLZ method versus WBGT method}
+    \label{fig:CostsByRCP}
+\end{figure}
+
+
+
+\paragraph{Detailed approach: vulnerability around GLZ model}
+
+There are 2 identified areas where uncertainty in the forecasts in \cite{TemperatureAndWork:2021} paper: the economic cycle and the model parameter uncertainty.
+\newline
+The \textbf{economic cycle} is one area where uncertainty exists in the forecasts. 
+The paper shows that labour allocation decisions are sensitive to where in the economic cycle the US is; during a recession there does not appear to be a relationship between labour allocation and temperature. In order to measure the uncertainty explained by the economic cycle, one might consider the probability of a recession as a Bernoulli random variable with a probability p. Based on this there are two possibly approaches. A first approach is a Monte-Carlo like approach where one can randomly sample the 1, 0 value whether a recession occurs at each period on a time path. A second approach would be to use the expected value of the probability of the recession and estimate the impact as: 
+\begin{equation}
+    \label{Eq:economiccycle}
+    	Forecasted \ Minutes \ Lost = p \times 0 + (1-p) \times EV(X)
+\end{equation}
+Where $X$ is the variable that refers to Minutes Lost during normal economic cycle
+The second approach is attractive in its simplicity and ensuring the model does not lose its focus. 
+One concern is that the probability of recession, in reality, may be related to the realisation of climate related risks. Hence, there might be a over/under estimation of the probability unless the impact of the climate risk is also considered. Historical model estimated recession probabilities can be sourced from \cite{SmoothedU.S.RecessionProbabilities:2022}. However, we did not go further in the measurement of the uncertainty explained by the economic cycle because it requires us to focus on the modelling of another parameter ($p$, the probability of the recession to occur), which is not the purpose of this work. 
+
+Instead, we focus on the \textbf{model parameter uncertainty approach}. In \cite{ZhangAndShindell:2021}, there is a linear relationship between temperature and work minutes lost ($\beta$),and a constraint is applied to ensure that total time allocation sums to 24 hours, which returns a non-linear regression model at the end. Given that the main coefficient of interest is denoted $\beta$, an inference is applied assuming that $\beta$ follows a $Student-T$ distribution: 
+\begin{equation}
+ \label{Eq:uncertaintyStudentT}   
+ d\beta \sim T(\beta, SE, N-K)
+\end{equation}
+Where $SE$ is the Standard Error of the coefficient and $(N-K)$ is the number of degrees of freedom, $N$ is the number of observations and $K$ is the number of model parameters. Hence, one can estimate the coefficients of the confidence interval (CI) at a given level of confidence $CI\%$: 
+\begin{equation}
+ \label{Eq:CIStudent}   
+ d\beta_{CI\%} = \beta \pm T(p) \times SE
+\end{equation}
+Where $T(p)$ donates the probability density function (pdf) of the student $T$ distribution with probability $p$ which corresponds to the $CI\%$, the standard error $SE = 2.23 \ min$ and $\beta =  - 4.68$.
+
+
+Figure \ref{fig:GZL-Vulnerability} shows the uncertainly around the GZN vulnerability model, based on the assumptions above, at $95\%$ confidence level\footnote{In order to compute the figure, N is taken from the paper \cite{TemperatureAndWork:2021}: N 11,732, and K is assumed to be 0 as it is very small relatively to N. One could do further researches to check the exact number of K, but that will not impact the results. K includes the number of control variables which provide information on demographic data -- age, gender, education, employment status, income, etc. -- and climate variables such as level of precipitation and snow.}.
+\begin{figure}[h]
+    \centering
+    \includegraphics[scale = 0.8]{plots/GZL-Vulnerability.png}
+    \caption{Estimate of daily minutes of labour loss}
+    \label{fig:GZL-Vulnerability}
+\end{figure}
+
+
+As the degrees of freedom increases, the t distributions converge to the standard normal. Therefore, for simplicity reasons in the context of this work, it is assumed that that the daily labour productivity impact $\beta$ can be measured as:
+\begin{equation}
+    \label{Eq:uncertainty1}
+    	\beta \sim \mathcal{N}(m,\,SE^{2})\,\ where \ m = 4.68 \ min \ and \ SE = 2.23 \ min
+\end{equation}
+
+
+As an example, consider an $1.5^\circ C$ degree day increase in the temperature. We can then multiply through the normal distribution as shown below: 
+
+\begin{equation}
+    \label{Eq:uncertainty2}
+    1.5 \times \beta \sim \mathcal{N}(1.5 \times \beta,\, (1.5 \times SE)^{2})\, 
+\end{equation}
+
+This can be generalised for a degree day increase of x using the following distribution: 
+
+
+\begin{equation}
+    \label{Eq:uncertainty3}
+    x \times \beta \sim \mathcal{N}(x \times \beta,\, (x \times SE)^{2})\, 
+\end{equation}
+For example, there is 1\% chance that the lost labour productivity exceeds $29.6$ minutes per day if the maximum daily temperature exceeds at $32.2^\circ C$ by $3^\circ C$. This number is computed as $\mathcal{N}^{-1} (m',SE'^2)(1\%)$ where $m'= 3 \times m = -14.013 \ min$ and $SE'= 3 \times SE = 6.69 \ min$. The $99\%CI$ of the lost labour productivity per day if the maximum daily temperature exceeds at $32.2^\circ C$ by $3^\circ C$ is $[+1.6 \ min, -29.6 \ min]$.
+
+
+
+\item The estimated loss of labour time is then transformed into a percentage estimate:
+
+\begin{equation}
+    \label{Eq:uncertainty3}
+    Estimated \ loss \ of \ labour \ time \ (\%)=  \frac{Labour \ lost}{Total \ minutes \ worked \ in \ a \  year}\
+\end{equation}
+For this the figures reported by the Organisation for Economic Co-operation and Development (OECD) are used, specifically the 2021 estimate for the United States of America. This is to ensure the alignment with the region where the labour parameters are estimated in. Buckets of labour lost are defined within the range of no impact to 100\%, with estimated marginal probabilities for each bucket returned.
+
+
+The main weakness of the Temperature and Work article (which is more likely to be close to the original GZN method than to the WBGT method) is that it does not take into account of higher levels of optimism in the original GZN method which was noted in figure \ref{fig:CostsByRCP}. Hence, the results might be underestimating the actual impact. The next paragraph explores the vulnerability model around the WBGT method and its uncertainty.
+
+\paragraph{Detailed approach: vulnerability around WBGT model}
+
+
+
+
+
+
 
 
 \clearpage

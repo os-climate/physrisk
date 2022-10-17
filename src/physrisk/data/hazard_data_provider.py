@@ -144,20 +144,19 @@ def _osc_chronic_heat_prefix():
 
 
 def get_source_path_osc_chronic_heat(*, model: str, scenario: str, year: int):
-    type, heating_cooling, ref_temp = model.split("/")
-    valid_types = ["mean_degree_days"]
-    # valid_heating_cooling = ["above", "below"]
-    # valid_ref_temp = ["18c", "32c"]
+    type, *levels = model.split("/")
 
-    if type not in valid_types:
+    if type == "mean_degree_days":
+        assert levels[0] in ["above", "below"]  # above or below
+        assert levels[1] in ["18c", "32c"]  # threshold temperature
+        return _osc_chronic_heat_prefix() + "/" + f"{type}_{levels[0]}_{levels[1]}_{scenario}_{year}"
+
+    elif type == "mean_work_loss":
+        assert levels[0] in ["low", "medium", "high"]  # work intensity
+        return _osc_chronic_heat_prefix() + "/" + f"{type}_{levels[0]}_{scenario}_{year}"
+
+    else:
         raise ValueError("valid types are {valid_types}")
-
-    source_path_osc_chronic_heat = (
-        _osc_chronic_heat_prefix() + "/" + f"{type}_{heating_cooling}_{ref_temp}_{scenario}_{year}"
-    )
-    # os.path.join(_osc_chronic_heat_prefix(), f"{type}_{heating_cooling}_{ref_temp}_{scenario}_{year}")
-
-    return source_path_osc_chronic_heat
 
 
 # endregion

@@ -26,7 +26,21 @@ class Inventory:
                     {"id": "ssp585", "years": [2030, 2040, 2050]},
                     {"id": "historical", "years": [1980]},
                 ],
-            }
+            },
+            {
+                "event_type": "ChronicHeat",
+                "path": "",
+                "id": "mean_work_loss/high",
+                "display_name": "Mean work loss",
+                "description": "Description here!",
+                "filename": "mean_work_loss_high_{scenario}_{year}",
+                "map": {"colormap": "mean_work_loss/high"},
+                "units": "degree days",
+                "scenarios": [
+                    {"id": "ssp585", "years": [2030, 2040, 2050]},
+                    {"id": "historical", "years": [1980]},
+                ],
+            },
         ]
 
         wri_riverine_inundation_models = [

@@ -35,6 +35,7 @@ class TestImpactRequests(TestRequests):
 
     def test_impact_request(self):
         """Runs short asset-level impact request."""
+
         assets = {
             "items": [
                 {
@@ -53,6 +54,10 @@ class TestImpactRequests(TestRequests):
                 },
             ],
         }
+        # cache_folder = r"/users/joemoorhouse/code/data"
+        # import os, json
+        # with open(os.path.join(cache_folder, 'assets_test_real_estate.json')) as f:
+        #    assets = json.loads(f.read())
 
         # longitudes = [item["longitude"] for item in assets["items"]]
         # latitudes = [item["latitude"] for item in assets["items"]]

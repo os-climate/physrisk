@@ -3,7 +3,7 @@ from collections import defaultdict
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 from ..data.hazard_data_provider import (
-    get_source_path_osc_chronic_heat_generic,
+    get_source_path_osc_chronic_heat,
     get_source_path_wri_coastal_inundation,
     get_source_path_wri_riverine_inundation,
 )
@@ -39,7 +39,7 @@ def get_default_zarr_source_paths():
     return {
         RiverineInundation: get_source_path_wri_riverine_inundation,
         CoastalInundation: get_source_path_wri_coastal_inundation,
-        ChronicHeat: get_source_path_osc_chronic_heat_generic,
+        ChronicHeat: get_source_path_osc_chronic_heat,
     }
 
 

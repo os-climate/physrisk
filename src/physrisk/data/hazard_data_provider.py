@@ -155,7 +155,20 @@ def get_source_path_osc_chronic_heat(*, model: str, scenario: str, year: int):
     source_path_osc_chronic_heat = (
         _osc_chronic_heat_prefix() + "/" + f"{type}_{heating_cooling}_{ref_temp}_{scenario}_{year}"
     )
-    # os.path.join(_osc_chronic_heat_prefix(), f"{type}_{heating_cooling}_{ref_temp}_{scenario}_{year}")
+
+    return source_path_osc_chronic_heat
+
+
+def get_source_path_osc_chronic_heat_generic(*, model: str, scenario: str, year: int):
+    """
+    Generic version of the source path formatter to work for both chronic heat models.
+    """
+
+    model_params = model.split("/")
+
+    model_params = model_params + [scenario, str(year)]
+
+    source_path_osc_chronic_heat = _osc_chronic_heat_prefix() + "/" + "_".join(model_params)
 
     return source_path_osc_chronic_heat
 

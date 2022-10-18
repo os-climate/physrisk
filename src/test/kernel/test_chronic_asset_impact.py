@@ -24,6 +24,7 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
 
     def __init__(self, model: str = "mean_degree_days_above_32c", delta: bool = True):
         super().__init__(model, ChronicHeat)  # opportunity to give a model hint, but blank here
+
         self.time_lost_per_degree_day = 4.671  # This comes from the paper converted to celsius
         self.time_lost_per_degree_day_se = 2.2302  # This comes from the paper converted to celsius
         self.total_labour_hours = 107460  # OECD Average hours worked within the USA in one year.

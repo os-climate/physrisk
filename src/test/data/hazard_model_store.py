@@ -5,7 +5,6 @@ from affine import Affine
 
 from physrisk.data.hazard_data_provider import (
     get_source_path_osc_chronic_heat,
-    get_source_path_osc_chronic_heat_generic,
     get_source_path_wri_coastal_inundation,
     get_source_path_wri_riverine_inundation,
 )
@@ -159,14 +158,14 @@ def WBGT_GZN_Joint_parameter_set():
         ("mean_degree_days/below/32c", "ssp585", 2050),
     ]:
 
-        paths.append(get_source_path_osc_chronic_heat_generic(model=model, scenario=scenario, year=year))
+        paths.append(get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year))
     for model, scenario, year in [
         ("mean_work_loss/high", "historical", 1980),  # 2005
         ("mean_work_loss/medium", "historical", 1980),
         ("mean_work_loss/high", "ssp585", 2050),
         ("mean_work_loss/medium", "ssp585", 2050),
     ]:
-        paths.append(get_source_path_osc_chronic_heat_generic(model=model, scenario=scenario, year=year))
+        paths.append(get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year))
     parameters = [300, 300, 600, -200, 0.00084, 0.00044, 0.0037, 0.0015]
     return dict(zip(paths, parameters))
 

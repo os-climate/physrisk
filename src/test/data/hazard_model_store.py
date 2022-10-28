@@ -86,6 +86,10 @@ def mock_hazard_model_store_heat(longitudes, latitudes):
     return mock_hazard_model_store_for_parameter_sets(longitudes, latitudes, degree_day_heat_parameter_set())
 
 
+def mock_hazard_model_store_heat_WBGT(longitudes, latitudes):
+    return mock_hazard_model_store_for_parameter_sets(longitudes, latitudes, WBGT_GZN_Joint_parameter_set())
+
+
 def mock_hazard_model_store_inundation(longitudes, latitudes, curve):
     return mock_hazard_model_store_for_paths(longitudes, latitudes, curve, inundation_paths)
 
@@ -141,6 +145,28 @@ def degree_day_heat_parameter_set():
 
         paths.append(get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year))
     parameters = [300, 300, 600, -200]
+    return dict(zip(paths, parameters))
+
+
+def WBGT_GZN_Joint_parameter_set():
+    paths = []
+    # Getting paths for both hazards.
+    for model, scenario, year in [
+        ("mean_degree_days/above/32c", "historical", 1980),  # 2005
+        ("mean_degree_days/below/32c", "historical", 1980),
+        ("mean_degree_days/above/32c", "ssp585", 2050),
+        ("mean_degree_days/below/32c", "ssp585", 2050),
+    ]:
+
+        paths.append(get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year))
+    for model, scenario, year in [
+        ("mean_work_loss/high", "historical", 1980),  # 2005
+        ("mean_work_loss/medium", "historical", 1980),
+        ("mean_work_loss/high", "ssp585", 2050),
+        ("mean_work_loss/medium", "ssp585", 2050),
+    ]:
+        paths.append(get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year))
+    parameters = [300, 300, 600, -200, 0.00084, 0.00044, 0.0037, 0.0015]
     return dict(zip(paths, parameters))
 
 

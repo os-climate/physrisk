@@ -115,6 +115,8 @@ def write_map_geotiff_data(
     s3=None,
     nodata_threshold=0,
     zero_transparent=True,
+    zero_tolerance=1e-6,
+    lowest_bin_transparent=False,
     max_intensity=2.0,
     palette="flare",
 ):
@@ -146,7 +148,7 @@ def write_map_geotiff_data(
         greens[i] = cols[1]
         blues[i] = cols[2]
         a[i] = 200
-    if zero_transparent:
+    if lowest_bin_transparent:
         # index 1 is zero
         map[1] = (255, 255, 255, 0)
         map_for_json[1] = (255, 255, 255, 0)
@@ -162,32 +164,39 @@ def write_map_geotiff_data(
 
     colormap_path_out = os.path.join(output_dir, "colormap_" + alpha + "_" + filename_stub + ".json")
     with (s3.open(colormap_path_out, "w") if s3 is not None else open(colormap_path_out, "w")) as f:
-        colormap_info = json.dumps(
-            {
-                "colormap": map_for_json,
-                "nodata": {"color_index": 0},
-                "min": {"data": 0.0, "color_index": 1},
-                "max": {"data": max_intensity, "color_index": 255},
-            }
-        )
+        json_dict = {
+            "colormap": map_for_json,
+            "nodata": {"color_index": 0},
+            "min": {"data": 0.0, "color_index": 2 if zero_transparent else 1},
+            "max": {"data": float(max_intensity), "color_index": 255},
+        }
+        colormap_info = json.dumps(json_dict)
         f.writelines(colormap_info)
 
-    mask = data < nodata_threshold  # == -9999.0 is alternative
-    mask2 = data > max_intensity
+    mask_nodata = data < nodata_threshold  # == -9999.0 is alternative
+    mask_ge_max = data > max_intensity
+    if zero_transparent:
+        mask_zero = data < (0.0 + zero_tolerance)
 
+    # by zero_transparent, we mean, _exactly_ zero
     np.multiply(data, 254.0 / max_intensity, out=data, casting="unsafe")
     np.add(data, 1.0, out=data, casting="unsafe")  # np.clip seems a bit slow so we do not use
 
     # 0 is no data
-    # 1 is zero
-    # 255 is max intensity
+    # 1 is zero (to max_intensity / 254)
+    # 254 is max_intensity - max_intensity / 254 to max_intensity
+    # 255 is >= max_intensity
 
     result = data.astype(np.uint8, casting="unsafe", copy=False)
     del data
 
-    result[mask] = 0
-    result[mask2] = 255
-    del (mask, mask2)
+    result[mask_nodata] = 0
+    if zero_transparent:
+        result[mask_zero] = 0
+        del mask_zero
+
+    result[mask_ge_max] = 255
+    del (mask_nodata, mask_ge_max)
 
     profile["dtype"] = "uint8"
     profile["nodata"] = 0

@@ -1,3 +1,4 @@
+import itertools
 import logging
 import os
 from dataclasses import dataclass
@@ -18,11 +19,22 @@ LOG.setLevel(logging.INFO)
 # ref_temp is for example "18c"
 # scenario is for example "ssp585"
 # {type}_{above_below}_{ref_temp}_{scenario}_{year}"
-file_mapping = {
+file_mapping_degree_days = {
+    # degree days
     "mean_hdd32C_hist": ["mean_degree_days", "above", "32c", "historical", "1980"],
     "mean_hdd32C_ssp585_2030": ["mean_degree_days", "above", "32c", "ssp585", "2030"],
     "mean_hdd32C_ssp585_2040": ["mean_degree_days", "above", "32c", "ssp585", "2040"],
     "mean_hdd32C_ssp585_2050": ["mean_degree_days", "above", "32c", "ssp585", "2050"],
+}
+
+file_mapping_work_loss = {
+    "mean_work_loss_hist": ["mean_work_loss", "high", "historical", "1980"],
+    "mean_work_loss_ssp585_2030": ["mean_work_loss", "high", "ssp585", "2030"],
+    "mean_work_loss_ssp585_2040": ["mean_work_loss", "high", "ssp585", "2040"],
+    "mean_work_loss_ssp585_2050": ["mean_work_loss", "high", "ssp585", "2050"],
+    "mean_work_loss_ssp245_2030": ["mean_work_loss", "high", "ssp245", "2030"],
+    "mean_work_loss_ssp245_2040": ["mean_work_loss", "high", "ssp245", "2040"],
+    "mean_work_loss_ssp245_2050": ["mean_work_loss", "high", "ssp245", "2050"],
 }
 
 longitudes = [
@@ -62,9 +74,9 @@ latitudes = [
 ]
 
 
-def filenames(src_dir):
-    for file in file_mapping.keys():
-        type, above_below, ref_temp, scenario, year = file_mapping[file]
+def filenames_degree_days(src_dir):
+    for file in file_mapping_degree_days.keys():
+        type, above_below, ref_temp, scenario, year = file_mapping_degree_days[file]
 
         src_path = os.path.join(src_dir, file + ".tiff")
         dest_filename = f"{type}_{above_below}_{ref_temp}_{scenario}_{year}"
@@ -72,9 +84,20 @@ def filenames(src_dir):
         yield (file, src_path, dest_filename)
 
 
+def filenames_work_loss(src_dir):
+    for file in file_mapping_work_loss.keys():
+        type, category, scenario, year = file_mapping_work_loss[file]
+
+        src_path = os.path.join(src_dir, file + ".tiff")
+        dest_filename = f"{type}_{category}_{scenario}_{year}"
+
+        yield (file, src_path, dest_filename)
+
+
 def create_map_geotiffs_chronic_heat(*, dest_bucket, dest_prefix, map_working_dir, account="osc", dest_s3):
 
-    array_names = [dest_filename for (file, src_path, dest_filename) in filenames("")]
+    # array_names = [dest_filename for (file, src_path, dest_filename) in filenames_degree_days("")]
+    array_names = [dest_filename for (file, src_path, dest_filename) in filenames_work_loss("")]
 
     profile = geotiff_profile()
     group_path = os.path.join(dest_bucket, dest_prefix, "hazard.zarr")
@@ -95,6 +118,7 @@ def create_map_geotiffs_chronic_heat(*, dest_bucket, dest_prefix, map_working_di
     for array_name in array_names:
         array_path = os.path.join("chronic_heat/osc/v1", array_name)
         data, transform = zarr_read(group_path=group_path, array_path=array_path, s3=dest_s3, index=0)
+
         path_out, colormap_path_out = write_map_geotiff_data(
             data,
             profile,
@@ -109,10 +133,11 @@ def create_map_geotiffs_chronic_heat(*, dest_bucket, dest_prefix, map_working_di
             palette="heating",
         )
 
-        access_token = os.environ["OSC_MAPBOX_UPLOAD_TOKEN"]
-        filename = os.path.basename(path_out)
-        id = filename[4:10]
-        upload_geotiff(path_out, id, access_token)
+        if account == "osc":
+            access_token = os.environ["OSC_MAPBOX_UPLOAD_TOKEN"]
+            filename = os.path.basename(path_out)
+            id = filename[4:10]
+            upload_geotiff(path_out, id, access_token)
 
 
 def load_geotiff_rasterio(path):
@@ -126,13 +151,10 @@ def onboard_chronic_heat(
 ):
     LOG.info("Chronic heat")
 
-    # need credentials for target
-    # s3_dest = s3fs.S3FileSystem(anon=False, key=os.environ["OSC_S3_ACCESS_KEY"], secret=os.environ["OSC_S3_SECRET_KEY"])
-
-    for (file, src_path, dest_filename) in filenames(src_dir):
-
+    def onboard_inner(file, src_path, dest_filename, max_valid=None):
         data, transform = load_geotiff_rasterio(src_path)
-
+        # useful check:
+        transform = Affine(2 * 180 / data.shape[1], 0, -180.0, 0, -2 * 90 / data.shape[0], 90)
         group_path = os.path.join(dest_bucket, dest_prefix, "hazard.zarr")
         array_path = os.path.join("chronic_heat/osc/v1", dest_filename)
         LOG.info(f"Loaded file: {file} with shape {data.shape} and transform {transform}")
@@ -148,12 +170,21 @@ def onboard_chronic_heat(
         )
 
         LOG.info(f"Created array; populating with data")
+        if max_valid is not None:
+            data[data > max_valid] = 0
+
         z[0, :, :] = data[:, :]
 
         with rasterio.open(src_path) as dataset:
             diff = check_rasterio_versus_zarr(dataset, z, np.array(longitudes), np.array(latitudes))
 
         LOG.info(f"Checking max difference is {np.max(np.abs(diff))}.")
+
+    for (file, src_path, dest_filename) in filenames_work_loss(src_dir):
+        onboard_inner(file, src_path, dest_filename, max_valid=1.0)
+
+    # for (file, src_path, dest_filename) in filenames_degree_days(src_dir):
+    #    onboard_inner(file, src_path, dest_filename)
 
 
 def check_rasterio_versus_zarr(rasterio_dataset, zarr_array, longitudes, latitudes):

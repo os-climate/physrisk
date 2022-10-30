@@ -94,22 +94,36 @@ class TestDataRequests(TestRequests):
     def test_zarr_reading_live(self):
         # needs valid OSC_S3_BUCKET, OSC_S3_ACCESS_KEY, OSC_S3_SECRET_KEY
 
+        # request1 = {
+        #     "items": [
+        #         {
+        #             "request_item_id": "test_inundation",
+        #             "event_type": "RiverineInundation",
+        #             "longitudes": TestData.longitudes,
+        #             "latitudes": TestData.latitudes,
+        #             "year": 2080,
+        #             "scenario": "rcp8p5",
+        #             "model": "MIROC-ESM-CHEM",
+        #         }
+        #     ],
+        # }
         request1 = {
             "items": [
                 {
                     "request_item_id": "test_inundation",
-                    "event_type": "RiverineInundation",
+                    "event_type": "ChronicHeat",
                     "longitudes": TestData.longitudes,
                     "latitudes": TestData.latitudes,
-                    "year": 2080,
-                    "scenario": "rcp8p5",
-                    "model": "MIROC-ESM-CHEM",
+                    "year": 2030,
+                    "scenario": "ssp585",
+                    "model": "mean_work_loss/high",
                 }
             ],
         }
-        response_floor = requests.get(request_type="get_hazard_data", request_dict=request1)
+
+        response_floor = requests.get(request_id="get_hazard_data", request_dict=request1)
         request1["interpolation"] = "linear"  # type: ignore
-        response_linear = requests.get(request_type="get_hazard_data", request_dict=request1)
+        response_linear = requests.get(request_id="get_hazard_data", request_dict=request1)
         print(response_linear)
 
         floor = json.loads(response_floor)["items"][0]["intensity_curve_set"][5]["intensities"]

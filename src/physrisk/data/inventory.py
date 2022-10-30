@@ -1,3 +1,4 @@
+# flake8: noqa: E501
 import hashlib
 from typing import List
 
@@ -12,17 +13,21 @@ For more details and relevant citations see the
 [OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).
 """
 
-aqueduct_description = """
-The World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and 
-coastal flood hazard model with a spatial resolution of 30 × 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided 
-as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as 
+aqueduct_description = (
+    """
+The World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and
+coastal flood hazard model with a spatial resolution of 30 × 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided
+as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as
 reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood
-event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. 
+event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_.
 
 Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications)
 for more details.
 
-""" + methodology_doc
+"""
+    + methodology_doc
+)
+
 
 class Inventory:
     """Contains an inventory of available hazard data.
@@ -37,23 +42,24 @@ class Inventory:
                 "id": "mean_degree_days/above/32c",
                 "display_name": "Mean degree days above 32°C",
                 "description": """
-Degree days indicators are calculated by integrating over time the absolute difference in temperature 
-of the medium over a reference temperature. The exact method of calculation may vary; 
-here the daily average temperature is used to calculate an annual indicator:  
-$$ 
-I^\\text{dd} = \\sum_{i = 1}^{365} |  T^\\text{avg}_i - T^\\text{ref} | \\nonumber 
+Degree days indicators are calculated by integrating over time the absolute difference in temperature
+of the medium over a reference temperature. The exact method of calculation may vary;
+here the daily average temperature is used to calculate an annual indicator:
 $$
-$I^\\text{dd}$ is the indicator, $T^\\text{avg}$ is the daily average surface temperature 
-and $T^\\text{ref}$ is the reference temperature of 32°C. The OS-Climate-generated indicators are inferred 
-from CMIP6 data, averaged over 6 models: ACCESS-CM2, CMCC-ESM2, CNRM-CM6-1, MPI-ESM1-2-LR, MIROC6 and NorESM2-MM. 
-The indicators are generated for periods: 'historical' (averaged over 1995-2014), 2030 (2021-2040), 2040 (2031-2050) 
+I^\\text{dd} = \\sum_{i = 1}^{365} |  T^\\text{avg}_i - T^\\text{ref} | \\nonumber
+$$
+$I^\\text{dd}$ is the indicator, $T^\\text{avg}$ is the daily average surface temperature
+and $T^\\text{ref}$ is the reference temperature of 32°C. The OS-Climate-generated indicators are inferred
+from CMIP6 data, averaged over 6 models: ACCESS-CM2, CMCC-ESM2, CNRM-CM6-1, MPI-ESM1-2-LR, MIROC6 and NorESM2-MM.
+The indicators are generated for periods: 'historical' (averaged over 1995-2014), 2030 (2021-2040), 2040 (2031-2050)
 and 2050 (2041-2060).
 
 Applications for indicators based on surface temperature degree days include models of:
 - heating and cooling requirements
 - labour loss caused by extreme heat
 
-                """ + methodology_doc,
+                """
+                + methodology_doc,
                 "filename": "mean_degree_days_above_32c_{scenario}_{year}",
                 "map": {"colormap": "mean_degree_days/above/32c"},
                 "units": "degree days",
@@ -69,13 +75,13 @@ Applications for indicators based on surface temperature degree days include mod
                 "display_name": "Mean work loss",
                 "description": """
 The mean work loss indicator is calculated from the 'Wet Bulb Globe Temperature' (WBGT) indicator:
-$$ 
-I^\\text{WBGT}_i = 0.567 \\times T^\\text{avg}_i + 0.393 \\times P^\\text{vapour}_i 
+$$
+I^\\text{WBGT}_i = 0.567 \\times T^\\text{avg}_i + 0.393 \\times P^\\text{vapour}_i
 $$
 $I^\\text{WBGT}_i$ is the WBGT indicator, $T^\\text{avg}_i$ is the daily average surface temperature (in degress Celsius) on day index, $i$, and $P^\\text{vapour}$
 is the water vapour partial pressure (in kPa). $P^\\text{vapour}$ is calculated from relative humidity $H_R$ via:
-$$ 
-P^\\text{vapour}_i = \\frac{H_R}{100} \\times 6.105 \\times \\exp \\left( \\frac{17.27 \\times T^\\text{avg}_i}{237.7 \\times T^\\text{avg}_i} \\right) 
+$$
+P^\\text{vapour}_i = \\frac{H_R}{100} \\times 6.105 \\times \\exp \\left( \\frac{17.27 \\times T^\\text{avg}_i}{237.7 \\times T^\\text{avg}_i} \\right)
 $$
 The work ability indicator, $I^{\\text{WA}}$ is finally calculated via:
 $$
@@ -87,8 +93,9 @@ I^{\\text{WA}} = \\frac{1}{365} \\sum_{i = 1}^{365} I^{\\text{WA}}_i
 $$
 The OS-Climate-generated indicators are inferred from CMIP6 data, averaged over 6 models: ACCESS-CM2, CMCC-ESM2, CNRM-CM6-1, MPI-ESM1-2-LR, MIROC6 and NorESM2-MM.
 The indicators are generated for periods: 'historical' (averaged over 1995-2014), 2030 (2021-2040), 2040 (2031-2050) and 2050 (2041-2060).
-                
-                """ + methodology_doc,
+
+                """
+                + methodology_doc,
                 "filename": "mean_work_loss_high_{scenario}_{year}",
                 "map": {"colormap": "mean_work_loss/high"},
                 "units": "fractional loss",
@@ -109,7 +116,8 @@ The indicators are generated for periods: 'historical' (averaged over 1995-2014)
                 "description": """
 World Resources Institute Aqueduct Floods baseline riverine model using historical data.
 
-                """ + aqueduct_description,
+                """
+                + aqueduct_description,
                 "filename": "inunriver_{scenario}_{id}_{year}",
                 "map": {
                     "colormap": "flare_intensity_0_2",
@@ -127,7 +135,8 @@ World Resources Institute Aqueduct Floods baseline riverine model using historic
 World Resources Institute Aqueduct Floods riverine model using GCM model from
 Bjerknes Centre for Climate Research, Norwegian Meteorological Institute.
 
-                """ + aqueduct_description,  # noqa: E501
+                """
+                + aqueduct_description,
                 "filename": "inunriver_{scenario}_{id}_{year}",
                 "map": {
                     "colormap": "flare_intensity_0_2",
@@ -148,7 +157,8 @@ Bjerknes Centre for Climate Research, Norwegian Meteorological Institute.
 World Resource Institute Aqueduct Floods riverine model using GCM model from
 Geophysical Fluid Dynamics Laboratory (NOAA).
 
-                """ + aqueduct_description,  # noqa: E501
+                """
+                + aqueduct_description,
                 "filename": "inunriver_{scenario}_{id}_{year}",
                 "map": {
                     "colormap": "flare_intensity_0_2",
@@ -169,7 +179,8 @@ Geophysical Fluid Dynamics Laboratory (NOAA).
 World Resource Institute Aqueduct Floods riverine model using GCM model:
 Met Office Hadley Centre.
 
-                """ + aqueduct_description,  # noqa: E501
+                """
+                + aqueduct_description,
                 "filename": "inunriver_{scenario}_{id}_{year}",
                 "map": {
                     "colormap": "flare_intensity_0_2",
@@ -190,7 +201,8 @@ Met Office Hadley Centre.
 World Resource Institute Aqueduct Floods riverine model using GCM model from
 Institut Pierre Simon Laplace
 
-                """ + aqueduct_description,  # noqa: E501
+                """
+                + aqueduct_description,
                 "filename": "inunriver_{scenario}_{id}_{year}",
                 "map": {
                     "colormap": "flare_intensity_0_2",
@@ -211,8 +223,9 @@ Institut Pierre Simon Laplace
  GCM model from Atmosphere and Ocean Research Institute
  (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency
  for Marine-Earth Science and Technology.
- 
-                """ + aqueduct_description,  # noqa: E501
+
+                """
+                + aqueduct_description,
                 "filename": "inunriver_{scenario}_{id}_{year}",
                 "map": {
                     "colormap": "flare_intensity_0_2",
@@ -241,9 +254,10 @@ Institut Pierre Simon Laplace
                 "id": "nosub",
                 "display_name": "WRI/Baseline no subsidence",
                 "description": """
-World Resources Institute Aqueduct Floods baseline coastal model using historical data. Model excludes subsidence.                
+World Resources Institute Aqueduct Floods baseline coastal model using historical data. Model excludes subsidence.
 
-                """ + aqueduct_description,  # noqa: E501
+                """
+                + aqueduct_description,
                 "filename": "inuncoast_historical_nosub_hist_0",
                 "map": {
                     "colormap": "flare_intensity_0_2",
@@ -260,7 +274,8 @@ World Resources Institute Aqueduct Floods baseline coastal model using historica
                 "description": """
 World Resource Institute Aqueduct Floods coastal model, exclusing subsidence; 95th percentile sea level rise.
 
-                """ + aqueduct_description,  # noqa: E501
+                """
+                + aqueduct_description,
                 "filename": "inuncoast_{scenario}_nosub_{year}_0",
                 "map": {
                     "colormap": "flare_intensity_0_2",
@@ -280,7 +295,8 @@ World Resource Institute Aqueduct Floods coastal model, exclusing subsidence; 95
                 "description": """
 World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 5th percentile sea level rise.
 
-                """ + aqueduct_description,  # noqa: E501
+                """
+                + aqueduct_description,
                 "filename": "inuncoast_{scenario}_nosub_{year}_0_perc_05",
                 "map": {
                     "colormap": "flare_intensity_0_2",
@@ -300,7 +316,8 @@ World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 5t
                 "description": """
 World Resource Institute Aqueduct Floods model, excluding subsidence; 50th percentile sea level rise.
 
-                """ + aqueduct_description,  # noqa: E501
+                """
+                + aqueduct_description,
                 "filename": "inuncoast_{scenario}_nosub_{year}_0_perc_50",
                 "map": {
                     "colormap": "flare_intensity_0_2",
@@ -320,7 +337,8 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; 50th perce
                 "description": """
 World Resource Institute Aqueduct Floods model, excluding subsidence; baseline (based on historical data).
 
-                """ + aqueduct_description,  # noqa: E501
+                """
+                + aqueduct_description,
                 "filename": "inuncoast_historical_wtsub_hist_0",
                 "map": {
                     "colormap": "flare_intensity_0_2",
@@ -337,7 +355,8 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; baseline (
                 "description": """
 World Resource Institute Aqueduct Floods model, including subsidence; 95th percentile sea level rise.
 
-                """ + aqueduct_description,  # noqa: E501
+                """
+                + aqueduct_description,
                 "filename": "inuncoast_{scenario}_wtsub_{year}_0",
                 "map": {
                     "colormap": "flare_intensity_0_2",
@@ -357,7 +376,8 @@ World Resource Institute Aqueduct Floods model, including subsidence; 95th perce
                 "description": """
 World Resource Institute Aqueduct Floods model, including subsidence; 5th percentile sea level rise.
 
-                """ + aqueduct_description,  # noqa: E501
+                """
+                + aqueduct_description,
                 "filename": "inuncoast_{scenario}_wtsub_{year}_0_perc_05",
                 "map": {
                     "colormap": "flare_intensity_0_2",
@@ -377,7 +397,8 @@ World Resource Institute Aqueduct Floods model, including subsidence; 5th percen
                 "description": """
 World Resource Institute Aqueduct Floods model, including subsidence; 50th percentile sea level rise.
 
-                """ + aqueduct_description,  # noqa: E501
+                """
+                + aqueduct_description,
                 "filename": "inuncoast_{scenario}_wtsub_{year}_0_perc_50",
                 "map": {
                     "colormap": "flare_intensity_0_2",

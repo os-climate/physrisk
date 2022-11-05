@@ -1,6 +1,6 @@
 import logging
 from collections import defaultdict
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 from ..data.hazard_data_provider import (
     get_source_path_osc_chronic_heat,
@@ -9,11 +9,12 @@ from ..data.hazard_data_provider import (
 )
 from ..data.pregenerated_hazard_model import ZarrHazardModel
 from ..models import power_generating_asset_models as pgam
+from ..models.chronic_heat_models import ChronicHeatGZN
 from ..models.real_estate_models import RealEstateCoastalInundationModel, RealEstateRiverineInundationModel
 from ..utils.helpers import get_iterable
-from .assets import Asset, PowerGeneratingAsset, RealEstateAsset, TestAsset
+from .assets import Asset, IndustrialActivity, PowerGeneratingAsset, RealEstateAsset, TestAsset
 from .hazard_event_distrib import HazardEventDistrib
-from .hazard_model import HazardDataResponse, HazardModel
+from .hazard_model import HazardDataRequest, HazardDataResponse, HazardModel
 from .hazards import ChronicHeat, CoastalInundation, RiverineInundation
 from .impact_distrib import ImpactDistrib
 from .vulnerability_distrib import VulnerabilityDistrib
@@ -53,11 +54,12 @@ def get_default_vulnerability_models():
     return {
         PowerGeneratingAsset: [pgam.InundationModel()],
         RealEstateAsset: [RealEstateCoastalInundationModel(), RealEstateRiverineInundationModel()],
+        IndustrialActivity: [ChronicHeatGZN()],
         TestAsset: [pgam.TemperatureModel()],
     }
 
 
-def calculate_impacts(
+def calculate_impacts(  # noqa: C901
     assets: Iterable[Asset],
     hazard_model: Optional[HazardModel] = None,
     vulnerability_models: Optional[Any] = None,  #: Optional[Dict[type, Sequence[VulnerabilityModelBase]]] = None,
@@ -65,7 +67,7 @@ def calculate_impacts(
     scenario: str,
     year: int,
 ) -> Dict[Tuple[Asset, type], AssetImpactResult]:
-    """ """
+    """Calculate asset level impacts"""
     if hazard_model is None:
         hazard_model = get_default_hazard_model()
 
@@ -83,6 +85,24 @@ def calculate_impacts(
             model_assets[m].append(asset)
 
     results = {}
+
+    # as an important performance optimisation, data requests are consolidated for all vulnerability models
+    # because different vulnerability models may query the same hazard data sets
+    # note that key for request is [vulnerability model, asset]
+    assetRequests: Dict[
+        Tuple[VulnerabilityModelBase, Asset], Union[HazardDataRequest, Iterable[HazardDataRequest]]
+    ] = {}
+
+    logging.info("Generating vulnerability model hazard data requests")
+    for model, assets in model_assets.items():
+        for asset in assets:
+            assetRequests[(model, asset)] = model.get_data_requests(asset, scenario=scenario, year=year)
+
+    logging.info("Retrieving hazard data")
+    event_requests = [req for requests in assetRequests.values() for req in get_iterable(requests)]
+    responses = hazard_model.get_hazard_events(event_requests)
+
+    logging.info("Calculating impacts")
     for model, assets in model_assets.items():
         logging.info(
             "Applying model {0} to {1} assets of type {2}".format(
@@ -90,15 +110,8 @@ def calculate_impacts(
             )
         )
 
-        event_requests_by_asset = [model.get_data_requests(asset, scenario=scenario, year=year) for asset in assets]
-
-        event_requests = [
-            req for event_request_by_asset in event_requests_by_asset for req in get_iterable(event_request_by_asset)
-        ]
-
-        responses = hazard_model.get_hazard_events(event_requests)
-
-        for asset, requests in zip(assets, event_requests_by_asset):
+        for asset in assets:
+            requests = assetRequests[(model, asset)]
             hazard_data = [responses[req] for req in get_iterable(requests)]
             if isinstance(model, VulnerabilityModelAcuteBase):
                 impact, vul, event = model.get_impact_details(asset, hazard_data)

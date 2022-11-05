@@ -1,10 +1,15 @@
 """ Test asset impact calculations."""
 import unittest
+from typing import Dict, List, Tuple
 
 import numpy as np
 
 from physrisk import ExceedanceCurve, HazardEventDistrib, RiverineInundation, VulnerabilityDistrib
+from physrisk.kernel.assets import Asset, RealEstateAsset
+from physrisk.kernel.hazard_model import HazardDataRequest
 from physrisk.kernel.impact_distrib import ImpactDistrib
+from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
+from physrisk.models.real_estate_models import RealEstateCoastalInundationModel, RealEstateRiverineInundationModel
 
 
 class TestAssetImpact(unittest.TestCase):
@@ -91,3 +96,36 @@ class TestAssetImpact(unittest.TestCase):
         mean = impact.mean_impact()
 
         self.assertAlmostEqual(mean, 4.8453897)
+
+    def test_performance_hazardlookup(self):
+        """Just for reference: not true test"""
+        assetRequests: Dict[Tuple[VulnerabilityModelBase, Asset], List[HazardDataRequest]] = {}
+        import time
+
+        start = time.time()
+
+        assets = [RealEstateAsset(latitude=0, longitude=0, location="", type="") for _ in range(10000)]
+
+        vulnerability_models = [RealEstateCoastalInundationModel(), RealEstateRiverineInundationModel()]
+
+        time_assets = time.time() - start
+        print(f"Time for asset generation {time_assets}s ")
+        start = time.time()
+        # we key requests via model and assets; let's check dictionary look-up is fast enough
+        # (there are less simple alternatives)
+
+        # create requests:
+        for v in vulnerability_models:
+            for a in assets:
+                assetRequests[(v, a)] = [HazardDataRequest(RiverineInundation, 0, 0, model="", scenario="", year=2030)]
+
+        time_requests = time.time() - start
+        print(f"Time for requests dictionary creation {time_requests}s ")
+        start = time.time()
+        # read requests:
+        for key in assetRequests:
+            if assetRequests[key][0].longitude != 0:
+                raise Exception()
+
+        time_responses = time.time() - start
+        print(f"Time for response dictionary creation {time_responses}s ")

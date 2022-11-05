@@ -1,9 +1,11 @@
+import importlib
 import json
 from importlib import import_module
 from typing import Dict, List, cast
 
 import numpy as np
 
+import physrisk.data.static.example_portfolios
 from physrisk.api.v1.common import Distribution, ExceedanceCurve, VulnerabilityDistrib
 
 from .api.v1.hazard_data import (
@@ -53,6 +55,8 @@ def get(*, request_id, request_dict, store=None):
     elif request_id == "get_asset_impact":
         request = AssetImpactRequest(**request_dict)
         return dumps(_get_asset_impacts(request, store=store).dict())
+    elif request_id == "get_example_portfolios":
+        return dumps(_get_example_portfolios())
     else:
         raise ValueError(f"request type '{request_id}' not found")
 
@@ -195,3 +199,14 @@ def _get_asset_impacts(request: AssetImpactRequest, source_paths=None, store=Non
     asset_impacts = [AssetLevelImpact(asset_id="", impacts=a) for a in impacts.values()]
 
     return AssetImpactResponse(asset_impacts=asset_impacts)
+
+
+def _get_example_portfolios() -> List[Assets]:
+    portfolios = []
+    for file in importlib.resources.contents(physrisk.data.static.example_portfolios):
+        if not str(file).endswith(".json"):
+            continue
+        with importlib.resources.open_text(physrisk.data.static.example_portfolios, file) as f:
+            portfolio = Assets(**json.load(f))
+            portfolios.append(portfolio)
+    return portfolios

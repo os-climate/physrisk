@@ -25,6 +25,7 @@ class HazardDataProvider(ABC):
         get_source_path: SourcePath,
         *,
         store: Optional[MutableMapping] = None,
+        zarr_reader: Optional[ZarrReader] = None,
         interpolation: Optional[str] = "floor",
     ):
         """Create an EventProvider.
@@ -33,7 +34,7 @@ class HazardDataProvider(ABC):
             get_source_path: provides the path to the hazard event data source depending on year/scenario/model.
         """
         self._get_source_path = get_source_path
-        self._reader = ZarrReader(store=store)
+        self._reader = zarr_reader if zarr_reader is not None else ZarrReader(store=store)
         if interpolation not in ["floor", "linear"]:
             raise ValueError("interpolation must be 'floor' or 'linear'")
         self._interpolation = interpolation
@@ -47,9 +48,10 @@ class AcuteHazardDataProvider(HazardDataProvider):
         get_source_path: SourcePath,
         *,
         store: Optional[MutableMapping] = None,
+        zarr_reader: Optional[ZarrReader] = None,
         interpolation: Optional[str] = "floor",
     ):
-        super().__init__(get_source_path, store=store, interpolation=interpolation)
+        super().__init__(get_source_path, store=store, zarr_reader=zarr_reader, interpolation=interpolation)
 
     def get_intensity_curves(
         self, longitudes: List[float], latitudes: List[float], *, model: str, scenario: str, year: int
@@ -83,9 +85,10 @@ class ChronicHazardDataProvider(HazardDataProvider):
         get_source_path: SourcePath,
         *,
         store: Optional[MutableMapping] = None,
+        zarr_reader: Optional[ZarrReader] = None,
         interpolation: Optional[str] = "floor",
     ):
-        super().__init__(get_source_path, store=store, interpolation=interpolation)
+        super().__init__(get_source_path, store=store, zarr_reader=zarr_reader, interpolation=interpolation)
 
     def get_parameters(self, longitudes: List[float], latitudes: List[float], *, model: str, scenario: str, year: int):
         """Get hazard parameters for each latitude and longitude coordinate pair.
@@ -126,12 +129,35 @@ def get_source_path_wri_coastal_inundation(*, model: str, scenario: str, year: i
     if sub not in _subsidence_set:
         raise ValueError("expected model input of the form {subsidence/percentile}, e.g. wtsub/95, nosub/5, wtsub/50")
     perc = "95" if len(model_components) == 1 else model_components[1]
-    return os.path.join(_wri_inundation_prefix(), f"inun{type}_{scenario}_{sub}_{year}_{_percentiles_map[perc]}")
+    return os.path.join(
+        _wri_inundation_prefix(), f"inun{type}_{cmip6_scenario_to_rcp(scenario)}_{sub}_{year}_{_percentiles_map[perc]}"
+    )
 
 
 def get_source_path_wri_riverine_inundation(*, model: str, scenario: str, year: int):
     type = "river"
-    return os.path.join(_wri_inundation_prefix(), f"inun{type}_{scenario}_{model}_{year}")
+    return os.path.join(_wri_inundation_prefix(), f"inun{type}_{cmip6_scenario_to_rcp(scenario)}_{model}_{year}")
+
+
+def cmip6_scenario_to_rcp(scenario: str):
+    """Convention is that CMIP6 scenarios are expressed by identifiers:
+    SSP1-2.6: 'ssp126'
+    SSP2-4.5: 'ssp245'
+    SSP5-8.5: 'ssp585' etc.
+    Here we translate to form
+    RCP-4.5: 'rcp4p5'
+    RCP-8.5: 'rcp8p5' etc.
+    """
+    if scenario == "ssp126":
+        return "rcp2p6"
+    elif scenario == "ssp245":
+        return "rcp4p5"
+    elif scenario == "ssp585":
+        return "rcp8p5"
+    else:
+        if scenario not in ["rcp2p6" "rcp4p5", "rcp8p5", "historical"]:
+            raise ValueError(f"unexpcted scneario {scenario}")
+        return scenario
 
 
 # endregion

@@ -1,6 +1,7 @@
 from collections import defaultdict
 from typing import Dict, List, Mapping, MutableMapping, Optional, cast
 
+from physrisk.data.zarr_reader import ZarrReader
 from physrisk.kernel import calculation
 from physrisk.kernel.hazards import Hazard, HazardKind
 
@@ -72,14 +73,17 @@ class ZarrHazardModel(PregeneratedHazardModel):
         if source_paths is None:
             source_paths = calculation.get_default_zarr_source_paths()
 
+        # share ZarrReaders across HazardDataProviders
+        zarr_reader = ZarrReader(store=store)
+
         super().__init__(
             dict(
                 (
                     t,
                     (
-                        AcuteHazardDataProvider(sp, store=store, interpolation=interpolation)
+                        AcuteHazardDataProvider(sp, zarr_reader=zarr_reader, interpolation=interpolation)
                         if Hazard.kind(t) == HazardKind.acute
-                        else ChronicHazardDataProvider(sp, store=store, interpolation=interpolation)
+                        else ChronicHazardDataProvider(sp, zarr_reader=zarr_reader, interpolation=interpolation)
                     ),
                 )
                 for t, sp in source_paths.items()

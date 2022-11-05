@@ -1,9 +1,6 @@
 import json
-import os
-import pathlib
-import shutil
-import tempfile
 import unittest
+from test.base_test import TestWithCredentials
 from test.data.hazard_model_store import (
     TestData,
     get_mock_hazard_model_store_single_curve,
@@ -12,25 +9,12 @@ from test.data.hazard_model_store import (
 
 import numpy as np
 import numpy.testing
-from dotenv import load_dotenv
 
 from physrisk import RiverineInundation, requests
 from physrisk.data.hazard_data_provider import get_source_path_wri_riverine_inundation
 
 
-class TestRequests(unittest.TestCase):
-    def setUp(self):
-        self.test_dir = tempfile.mkdtemp()
-        dotenv_dir = os.environ.get("CREDENTIAL_DOTENV_DIR", os.getcwd())
-        dotenv_path = pathlib.Path(dotenv_dir) / "credentials.env"
-        if os.path.exists(dotenv_path):
-            load_dotenv(dotenv_path=dotenv_path, override=True)
-
-    def tearDown(self):
-        shutil.rmtree(self.test_dir)
-
-
-class TestDataRequests(TestRequests):
+class TestDataRequests(TestWithCredentials):
     def test_hazard_data_availability(self):
         # test that validation passes:
         _ = requests.get(request_id="get_hazard_data_availability", request_dict={})

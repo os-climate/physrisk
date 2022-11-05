@@ -1,0 +1,74 @@
+{
+    "items": [
+        {
+            "asset_class": "RealEstateAsset",
+            "type": "Buildings/Industrial",
+            "location": "Asia",
+            "latitude": 24.0426,
+            "longitude": 91.0158
+        },
+        {
+            "asset_class": "RealEstateAsset",
+            "type": "Buildings/Industrial",
+            "location": "Asia",
+            "latitude": 22.6588,
+            "longitude": 90.3373
+        },
+        {
+            "asset_class": "RealEstateAsset",
+            "type": "Buildings/Industrial",
+            "location": "Asia",
+            "latitude": 23.6473,
+            "longitude": 90.3473
+        },
+        {
+            "asset_class": "RealEstateAsset",
+            "type": "Buildings/Industrial",
+            "location": "Asia",
+            "latitude": 23.9186,
+            "longitude": 90.6926
+        },
+        {
+            "asset_class": "RealEstateAsset",
+            "type": "Buildings/Industrial",
+            "location": "Asia",
+            "latitude": 23.6839,
+            "longitude": 90.5314
+        },
+        {
+            "asset_class": "RealEstateAsset",
+            "type": "Buildings/Industrial",
+            "location": "Asia",
+            "latitude": 22.2972,
+            "longitude": 91.8062
+        },
+        {
+            "asset_class": "RealEstateAsset",
+            "type": "Buildings/Industrial",
+            "location": "Asia",
+            "latitude": 23.6783,
+            "longitude": 90.4295
+        },
+        {
+            "asset_class": "RealEstateAsset",
+            "type": "Buildings/Industrial",
+            "location": "Asia",
+            "latitude": 23.5699,
+            "longitude": 90.4804
+        },
+        {
+            "asset_class": "RealEstateAsset",
+            "type": "Buildings/Industrial",
+            "location": "Asia",
+            "latitude": 22.8646,
+            "longitude": 89.5357
+        },
+        {
+            "asset_class": "RealEstateAsset",
+            "type": "Buildings/Industrial",
+            "location": "Asia",
+            "latitude": 23.9904,
+            "longitude": 90.3429
+        }
+    ]
+}

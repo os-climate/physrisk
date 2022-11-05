@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 from pydantic import BaseModel, Field
@@ -33,8 +33,8 @@ class Asset(BaseModel):
     asset_class: str = Field(
         description="name of asset class; corresponds to physrisk class names, e.g. PowerGeneratingAsset"
     )
-    type: str = Field(description="Type of the asset <level_1>/<level_2>/<level_3>")
-    location: str
+    type: Optional[str] = Field(description="Type of the asset <level_1>/<level_2>/<level_3>")
+    location: Optional[str]
     latitude: float = Field(description="Latitude in degrees")
     longitude: float = Field(description="Longitude in degrees")
 

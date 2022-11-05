@@ -1,0 +1,25 @@
+{
+    "items": [
+        {
+            "asset_class": "IndustrialActivity",
+            "type": "Construction",
+            "location": "South America",
+            "latitude": -39.1009,
+            "longitude": -68.5982
+        },
+        {
+            "asset_class": "PowerGeneratingAsset",
+            "type": "Hydro",
+            "location": "Europe",
+            "latitude": 39.9116,
+            "longitude": 20.1047
+        },
+        {
+            "asset_class": "RealEstateAsset",
+            "type": "Buildings/Industrial",
+            "location": "Asia",
+            "latitude": 23.6839,
+            "longitude": 90.5314
+        }
+    ]
+}

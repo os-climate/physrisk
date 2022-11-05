@@ -1,4 +1,5 @@
-from test.api.test_data_requests import TestRequests
+import unittest
+from test.base_test import TestWithCredentials
 from test.data.hazard_model_store import TestData, mock_hazard_model_store_inundation
 
 import numpy as np
@@ -10,7 +11,7 @@ from physrisk.api.v1.common import Assets
 # from physrisk.data.static.world import get_countries_and_continents
 
 
-class TestImpactRequests(TestRequests):
+class TestImpactRequests(TestWithCredentials):
     def test_asset_list_json(self):
         assets = {
             "items": [
@@ -81,3 +82,19 @@ class TestImpactRequests(TestRequests):
         # response = AssetImpactResponse(**json.loads(response_dict))
 
         self.assertEqual(response.asset_impacts[0].impacts[0].hazard_type, "CoastalInundation")
+
+    @unittest.skip("example, not test")
+    def test_example_portfolios(self):
+        example_portfolios = requests._get_example_portfolios()
+        for assets in example_portfolios:
+            request_dict = {
+                "assets": assets,
+                "include_asset_level": True,
+                "include_calc_details": True,
+                "year": 2050,
+                "scenario": "ssp585",
+            }
+
+            request = requests.AssetImpactRequest(**request_dict)  # type: ignore
+            response = requests._get_asset_impacts(request)
+            assert response is not None

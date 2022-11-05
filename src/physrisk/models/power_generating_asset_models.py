@@ -44,7 +44,7 @@ class InundationModel(VulnerabilityModelAcuteBase):
         )
 
         future = HazardDataRequest(
-            RiverineInundation, asset.longitude, asset.latitude, scenario="rcp8p5", year=2080, model=self.__model
+            RiverineInundation, asset.longitude, asset.latitude, scenario=scenario, year=year, model=self.__model
         )
 
         return histo, future

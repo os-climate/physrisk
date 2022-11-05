@@ -43,7 +43,7 @@ class TestAssetImpact(unittest.TestCase):
 
         assets = [PowerGeneratingAsset(lat, lon) for lon, lat in zip(TestData.longitudes, TestData.latitudes)]
         measures = model.get_financial_impacts(
-            assets, financial_model=financial_model, scenario="rcp8p5", year=2050, sims=100000
+            assets, financial_model=financial_model, scenario="ssp585", year=2080, sims=100000
         )
 
         np.testing.assert_array_almost_equal_nulp(

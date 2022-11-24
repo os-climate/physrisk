@@ -97,11 +97,11 @@ def geotiff_profile():
     return profile
 
 
-def write_map_geotiff(input_dir, output_dir, filename, input_s3=None, output_s3=None):
+def write_map_geotiff(input_dir, output_dir, filename, input_s3=None, output_s3=None, lowest_bin_transparent=False):
     (data, profile, width, height, transform) = load(os.path.join(input_dir, filename), s3=input_s3)
     LOG.info("Loaded")
 
-    write_map_geotiff_data(data, profile, width, height, transform, filename, output_dir)
+    write_map_geotiff_data(data, profile, width, height, transform, filename, output_dir, lowest_bin_transparent=lowest_bin_transparent)
 
 
 def write_map_geotiff_data(
@@ -167,7 +167,7 @@ def write_map_geotiff_data(
         json_dict = {
             "colormap": map_for_json,
             "nodata": {"color_index": 0},
-            "min": {"data": 0.0, "color_index": 2 if zero_transparent else 1},
+            "min": {"data": 0.0, 1},
             "max": {"data": float(max_intensity), "color_index": 255},
         }
         colormap_info = json.dumps(json_dict)

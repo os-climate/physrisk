@@ -172,7 +172,13 @@ def create_map_geotiffs_riverine(dest_dir):
             ]
             filename = os.path.join(src_filenames[8] + ".tif")
             print(filename)
-            write_map_geotiff(os.path.join(src_bucket, src_prefix), dest_dir, filename, input_s3=s3_source)
+            write_map_geotiff(
+                os.path.join(src_bucket, src_prefix),
+                dest_dir,
+                filename,
+                input_s3=s3_source,
+                lowest_bin_transparent=True,
+            )
 
     circ_model = "000000000WATCH"
     rcp = "historical"

@@ -25,15 +25,15 @@ map_working_dir = "/Users/joemoorhouse/Code/working"
 s3 = s3fs.S3FileSystem(anon=False, key=os.environ["OSC_S3_ACCESS_KEY"], secret=os.environ["OSC_S3_SECRET_KEY"])
 
 # on board chronic heat
-onboard_chronic_heat(
-    src_dir, dest_bucket=dest_bucket, dest_prefix=dest_prefix, s3_dest=s3
-)  # create zarr from file as one-off
+# onboard_chronic_heat(
+#    src_dir, dest_bucket=dest_bucket, dest_prefix=dest_prefix, s3_dest=s3
+# )  # create zarr from file as one-off
 # create map geotiffs from zarr
-create_map_geotiffs_chronic_heat(
-    dest_bucket=dest_bucket, dest_prefix=dest_prefix, map_working_dir=map_working_dir, dest_s3=s3, account="osc"
-)  # account=None|"osc"
+# create_map_geotiffs_chronic_heat(
+#    dest_bucket=dest_bucket, dest_prefix=dest_prefix, map_working_dir=map_working_dir, dest_s3=s3, account="osc"
+# )  # account=None|"osc"
 
 
 # onboard_wri_riverine_inundation(dest_bucket)
 # onboard_wri_coastal_inundation(dest_bucket)
-# create_map_geotiffs_riverine()
+create_map_geotiffs_riverine(map_working_dir)

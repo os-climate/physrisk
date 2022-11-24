@@ -6,7 +6,8 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
-testpaths = "src/test"
+testpaths = ["src/test","datasets/test"]
+pythonpath = ["datasets", "src"]
 addopts = "-v"
 
 [tool.mypy]

@@ -18,6 +18,18 @@ working_dir = "/Users/joemoorhouse/Code/data/heat"
 def test_simple():
     assert True
 
+def test_degree_days_s3():
+    store = NexGddpCmip6()
+    gcm = "NorESM2-MM"
+    scenario = "ssp585"
+    year = 2030
+
+    # load from local files
+    open_dataset = store.open_dataset
+    path, filename =store.path(gcm, scenario, "tas", year)
+
+    res = DegreeDays.average_degree_days(open_dataset, gcm, scenario, year, 1)
+
 
 def test_degree_days():
     store = NexGddpCmip6()
@@ -57,7 +69,7 @@ def test_download():
     assert True
 
 
-def test_load_dataset():
+def test_load_dataset():    
     import zarr.storage
 
     fs = local.LocalFileSystem()

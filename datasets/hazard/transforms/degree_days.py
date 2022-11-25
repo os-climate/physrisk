@@ -22,8 +22,11 @@ class DegreeDays:
     def average_degree_days(open_dataset: IOpenDatasetForYear, gcm: str, scenario: str, central_year: int, window_years: int = 9):
         """Caclulate average annual degree days for given window"""
         years = range(central_year - window_years // 2, central_year + window_years // 2 + 1)
-        
-        deg_days = [DegreeDays.degree_days(open_dataset(gcm, scenario, "tas", year)) for year in years]
+        deg_days = []
+        for year in years:
+            with open_dataset(gcm, scenario, "tas", year) as ds:
+                deg_days.append(DegreeDays.degree_days(ds))
+
         return sum(deg_days) / float(len(years))
 
 

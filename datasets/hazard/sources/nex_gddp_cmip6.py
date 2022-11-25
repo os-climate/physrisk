@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from dataclasses import dataclass
 import os
 from typing import Dict, List
@@ -48,9 +49,14 @@ class NexGddpCmip6(IOpenDatasetForYear):
     def gcms(self) -> List[str]:
         return self.subset.keys()
 
-
+    @contextmanager
     def open_dataset(self, gcm: str, scenario: str, quantity: str, year: int) -> xr.Dataset:
         # use "s3://bucket/root" ?
         path, _ = self.path(gcm, scenario, quantity, year)
-        f = self.fs.open(path, 'rb')
-        return xr.open_dataset(f)
+        try:
+            f = self.fs.open(path, 'rb')
+            ds = xr.open_dataset(f)
+            yield ds
+        finally:
+            ds.close()
+            f.close()

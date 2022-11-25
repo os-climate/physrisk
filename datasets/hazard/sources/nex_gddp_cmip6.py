@@ -51,6 +51,6 @@ class NexGddpCmip6(IOpenDatasetForYear):
 
     def open_dataset(self, gcm: str, scenario: str, quantity: str, year: int) -> xr.Dataset:
         # use "s3://bucket/root" ?
-        path, _ = self.s3_path(gcm, scenario, quantity, year)
-        with self.fs.open(path, 'rb') as f:
-            return xr.open_dataset(f)
+        path, _ = self.path(gcm, scenario, quantity, year)
+        f = self.fs.open(path, 'rb')
+        return xr.open_dataset(f)

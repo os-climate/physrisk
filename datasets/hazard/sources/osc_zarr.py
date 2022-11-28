@@ -1,14 +1,17 @@
 import os
-from typing import MutableMapping
+from typing import MutableMapping, Tuple
+from affine import Affine
 import numpy as np
 import s3fs
+import hazard.utilities.xarray_utilities as xarray_utilities
 import hazard.utilities.zarr_utilities as zarr_utilities
+import xarray as xr
 import zarr
 
 class OscZarr:
     default_staging_bucket = "redhat-osc-physical-landing-647521352890"
     
-    def __init__(self, bucket: str, prefix: str="hazard", store: MutableMapping=None, s3: s3fs.S3File=None):
+    def __init__(self, bucket: str=default_staging_bucket, prefix: str="hazard", store: MutableMapping=None, s3: s3fs.S3File=None):
         """For reading and writing to OSC Climate Zarr storage. If store is provided this is used, otherwise if S3File is provided, this is used.
         Otherwise, store is created using credentials in environment variables.
         
@@ -29,7 +32,29 @@ class OscZarr:
         self.root = zarr.group(store=store) 
 
 
-    def zarr_create(self, array_path, shape, transform, overwrite=False, return_periods=None):
+    def read_numpy(self, path, index=0) -> Tuple[np.ndarray, Affine]:
+        """Read index as two dimensional numpy array and affine transform.
+        This is intended for small datasets, otherwise recommended to 
+        use xarray.open_zarr."""
+        z = self.root[path]
+        t = z.attrs["transform_mat3x3"]  # type: ignore
+        transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
+        return z[index, :, :], transform
+
+
+    def if_exists_remove(self, path):
+        if path in self.root:
+            self.root.pop(path)
+
+
+    def write(self, path: str, da: xr.DataArray):
+        """Write DataArray to provided relative path."""
+        data, transform, crs = xarray_utilities.get_array_components(da)
+        z = self._zarr_create(path, da.shape, transform)
+        z[0, :, :] = data[:,:]
+
+
+    def _zarr_create(self, array_path, shape, transform, overwrite=False, return_periods=None):
         """
         Create Zarr array with given shape and affine transform.
         """

@@ -167,7 +167,7 @@ def write_map_geotiff_data(
         json_dict = {
             "colormap": map_for_json,
             "nodata": {"color_index": 0},
-            "min": {"data": 0.0, 1},
+            "min": {"data": 0.0},
             "max": {"data": float(max_intensity), "color_index": 255},
         }
         colormap_info = json.dumps(json_dict)

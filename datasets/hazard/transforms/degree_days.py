@@ -34,7 +34,12 @@ class DegreeDays(PTransform):
         self.window_years = window_years
         self.gcms = self.source.gcms if gcms is None else gcms
         self.scenarios = ["historical", "ssp126", "ssp245", "ssp585"] if scenarios is None else scenarios
-        self.central_years = [2030, 2050, 2080] if central_years is None else central_years
+        # 1995, 2014 (2010)
+        # 2021, 2040 (2030)
+        # 2031, 2050 (2040)
+        # 2041, 2060 (2050)
+        
+        self.central_years = [2010, 2030, 2040, 2050] if central_years is None else central_years
 
 
     @staticmethod
@@ -74,9 +79,9 @@ class DegreeDays(PTransform):
 
     def item_path(self, item: BatchItem) -> str:
         path = "chronic_heat/osc/v2" # v2 uses downscaled data
-        typ = "v2_mean_degree_days" # need v2 in filename to make unique
+        typ = "mean_degree_days_v2" # need v2 in filename to make unique
         levels = ['above', '32c']
-        return os.path.join(path, f"{typ}_{levels[0]}_{levels[1]}_{item.scenario}_{item.year}")
+        return os.path.join(path, f"{typ}_{levels[0]}_{levels[1]}_{item.gcm}_{item.scenario}_{item.year}")
 
 
 

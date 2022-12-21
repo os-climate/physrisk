@@ -1,8 +1,9 @@
-import logging, os
+import logging, os, sys
+import logging.handlers
 
 import dask
 import fsspec.implementations.local as local
-from datasets.hazard.map_builder import MapBuilder
+from hazard.map_builder import MapBuilder
 import hazard.utilities.xarray_utilities as xarray_utilities
 import hazard.utilities.zarr_utilities as zarr_utilities
 import hazard.utilities.map_utilities as map_utilities
@@ -28,6 +29,14 @@ def test_simple():
 
 
 def test_degree_days_s3():
+    #self.test_dir = tempfile.mkdtemp()
+    #dotenv_dir = os.environ.get("CREDENTIAL_DOTENV_DIR", os.getcwd())
+    #dotenv_path = pathlib.Path(dotenv_dir) / "credentials.env"
+    #if os.path.exists(dotenv_path):
+    #    load_dotenv(dotenv_path=dotenv_path, override=True)
+
+    zarr_utilities.set_credential_env_variables()
+    
     gcm = "NorESM2-MM"
     scenario = "ssp585"
     year = 2030
@@ -40,8 +49,19 @@ def test_degree_days_s3():
     assert True
 
 
-def test_degree_days(caplog):
-    caplog.set_level(logging.INFO)
+def test_degree_days(): #caplog):
+    #caplog.set_level(logging.INFO)
+
+    handler = logging.handlers.WatchedFileHandler(filename=os.path.join(working_dir, "log.txt"),
+        mode='a')
+
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    handler.setFormatter(formatter)
+    root = logging.getLogger("hazard")
+    root.setLevel(logging.DEBUG) 
+    root.addHandler(handler)
+
+    root.debug("Test")
 
     gcm = "NorESM2-MM"
     scenario = "ssp585"
@@ -58,7 +78,8 @@ def test_degree_days(caplog):
     store = zarr.DirectoryStore(os.path.join(working_dir, 'hazard', 'hazard.zarr'))
     zarr_store = OscZarr(store=store)
 
-    runner = TaskRunner(transform, zarr_store, map_builder=MapBuilder(zarr_store, working_directory=working_dir))
+    map_builder=MapBuilder(zarr_store, working_directory=working_dir)
+    runner = TaskRunner(transform, zarr_store, map_builder=None)
     runner.run_batch()
 
     map_utilities 

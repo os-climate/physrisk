@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from typing import Iterable
 import dask
-from datasets.hazard.map_builder import MapBuilder
+from hazard.map_builder import MapBuilder
 from hazard.protocols import PTransform
 import hazard.utilities.zarr_utilities as zarr_utilities
 from hazard.sources.osc_zarr import OscZarr

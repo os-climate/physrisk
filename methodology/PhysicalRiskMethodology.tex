@@ -140,11 +140,12 @@
 The changing climate introduces new risks. These can be grouped into:
 \begin{enumerate}
 	\item Physical risks -- risks arising from the physical effects of climate change
-	\item Transition risks -- risks arising from the transition to a low-carbon economy\footnote{Liability risks are considered a third by some\cite{WoetzelEtAl:2020}. These are risks arising from those affected by anthropogenic climate change seeking compensation.}   
+	\item Transition risks -- risks arising from the transition to a low-carbon economy
+	\item Liability risks -- considered a third by some \cite{WoetzelEtAl:2020}, these are risks arising from those affected by anthropogenic climate change seeking compensation  
 \end{enumerate}
 
 
-The methodology presented in this document concerns the assessment of physical risk. Physical risk comes from changes in climate \emph{\gls{hazard}s}, climate-related physical phenomena that have the potential to impact natural and socioeconomic systems \cite{WoetzelEtAl:2020}\cite{MitchellEtAl:2017}. Hazards can be divided into \emph{\gls{acute_hazard}s} and \emph{\gls{chronic_hazard}s}. Acute hazards are those associated with \emph{events}, for example heat waves, inundations (floods) and hurricanes. Chronic hazards are long-term shifts in climate parameters such as average temperature, sea-level or water stress indices.  
+The methodology presented in this document concerns the assessment of physical risk. Physical risk comes from changes in climate \emph{\gls{hazard}s}, climate-related physical phenomena that have the potential to impact natural and socioeconomic systems \cite{WoetzelEtAl:2020}\cite{MitchellEtAl:2017}. Hazards can be divided into \emph{\gls{acute_hazard}s} and \emph{\gls{chronic_hazard}s}. Acute hazards are \emph{events}, for example heat waves, inundations (floods) and hurricanes. Chronic hazards are long-term shifts in climate parameters such as average temperature, sea-level or water stress indices.  
 
 
 \newglossaryentry{hazard}
@@ -174,7 +175,7 @@ The methodology presented in this document concerns the assessment of physical r
 }
 
 
-A model designed to quantify physical risk must take into account: a) hazards' likelihood of occurrence  b) the damage or disruption caused by a hazard c) the consequence of this damage/disruption. Damage/disruption caused by a hazard is determined by the \emph{vulnerability} of the asset that is exposed\footnote{\emph{Exposure} of an asset to a hazard is defined after \cite{MaskreyEtAl:2011}; for most purposes this is determined by asset location.}. With a focus on financial risk, damage/disruption refers to damage of financial assets and disruption to business activities. More generally, damage can refer to natural assets and disruption to populations and ecosystems. Hereafter we use the word `asset' to describe both physical assets and business activities. As an example, the physical infrastructure of a power generating asset may be damaged by inundation and its electricity production may be disrupted, leading to a loss in revenue. 
+A model designed to quantify physical risk must take into account: a) hazards' likelihood of occurrence  b) the damage or disruption caused by a hazard c) the consequence of this damage/disruption. Damage/disruption caused by a hazard is determined by the \emph{vulnerability} of the asset that is exposed\footnote{\emph{Exposure} of an asset to a hazard is defined after \cite{MaskreyEtAl:2011}; for most purposes this is determined by asset location.}. With a focus on financial risk, damage/disruption refers to damage of financial assets and disruption to economic activities. More generally, damage can refer to natural assets and disruption to populations and ecosystems. Hereafter we use the word `asset' to describe both physical assets and economic activities. As an example, the physical infrastructure of a power generating asset may be damaged by inundation and its electricity production may be disrupted, leading to a loss in revenue. 
 
 We assign explicit names to these three components, a), b) and c) for the financial risk case:
 \begin{enumerate}[a)]
@@ -183,9 +184,9 @@ We assign explicit names to these three components, a), b) and c) for the financ
 \item Financial
 \end{enumerate}
 
-A precise model of the physical risk from a single (localized) asset or business activity must consider a hazard's likelihood of occurrence \emph{at the asset's locale} (i.e. if the asset is exposed to the hazard) and vulnerability to the hazard particular to that asset. This requires specific knowledge of the asset. For example a power station that relies on air-cooling might be disrupted by a period of extremely high air temperature. In addition, an asset may be impacted through its reliance on other assets; a manufacturing facility may rely on continuity of electricity supply for example.
+A precise model of the physical risk from a single (localized) asset or economic activity must consider a hazard's likelihood of occurrence \emph{at the asset's locale} (i.e. if the asset is exposed to the hazard) and vulnerability to the hazard particular to that asset. This requires specific knowledge of the asset. For example a power station that relies on air-cooling might be disrupted by a period of extremely high air temperature. In addition, an asset may be impacted through its reliance on other assets; a manufacturing facility may rely on continuity of electricity supply for example.
 
-Such precise models of physical risk can be complex and may rely on information that is not readily available. For these reasons, approximations are commonly used, although approximate models still typically include hazard, vulnerability and financial components \cite{BertramEtAl:2020}\cite{WoetzelEtAl:2020} -- even highly-approximate global-scale impact analyses used in macroeconomic models.
+Such precise models of physical risk can be complex and may rely on information that is not readily available. For these reasons, approximations are commonly used. Approximate models still typically include hazard, vulnerability and financial components \cite{BertramEtAl:2020}\cite{WoetzelEtAl:2020} -- even highly-approximate global-scale impact analyses used in macroeconomic models.
 
 The purpose of this paper is to present the methodology of a framework that is sufficiently generic to be used for a wide range of physical climate risk models, both precise and approximate as required. The ability to perform precise, fine-grained calculations is an important requirement therefore. This paper serves as a specification for use in the \emph{`physrisk'} OS-Climate (OS-C) \cite{OSC} physical climate risk calculation module.
 
@@ -194,36 +195,30 @@ OS-C aims to provide an platform unconstrained by any one particular methodology
 In the following, models of hazards, vulnerability and financial impact are discussed in more detail. In a later section these are presented more formally.
 
 \subsection{Hazard model}
-Hazard models come in two varieties: models of acute hazards and models of chronic hazards.
+As noted above, hazard models come in two varieties: models of acute hazards -- events -- and models of chronic hazards -- long-term shifts in climate parameters.
 \begin{enumerate}[label=\Alph*.]
 \item{\emph{Accute hazard models.}}
-Models of accute hazards provide probabilities that accute hazards of a certain intensity occur within a given future time period. For example a hazard model may provide the probability that an inundation occurs in a certain location in th year 2050 with a flood depth greater than 30~cm. 
 
-Accute hazard models may or may not be \emph{event-based}
-\paragraph{Event-based hazard models}
-What we term `event-based hazard models' are the models common in natural catastrophe modelling. These provide a spatial distribution of hazard probabilities -- the `hazard footprint' -- conditional on the occurrence of some catastrophic event. This event might be, for example, a Noth American hurricane, a European heat wave or a South Asian inundation. 
+Accute hazard models may be \emph{event-based} or \emph{return-period-based}.
+\emph{Event-based hazard models} are models of individual events and are common in natural catastrophe modelling. Typically, for a large number of events, a model provides spatial distributions (i.e. a map) of the probabilities of occurrence of different event intensities. These distributions are sometimes called `hazard footprints' \cite{OasisFinancialModule}. As an example, in the case of inundation, the hazard footprint would provide for different locations the probability of occurrence of different inundation depths -- associated with one particular inundation event. 
 
-Event-based hazard models are important when the \emph{correlation} of hazards to which assets are exposed is material to the analysis being performed. Non-event-based hazard models provide probabilities that accute hazards occur in a certain location but with no information about how likely it is that two assets may experience the hazards at the same time. For example, if one house on a street is exposed to an inundation it is quite possible that the house two doors down will also be exposed. This is captured by event-based hazard models when both houses appear in the same event footprint.
+Event-based hazard models are important when the \emph{correlation} of hazards to which assets are exposed is material to the analysis being performed. For example, if one house on a street is exposed to an inundation it is likely that the house two doors down will also be exposed. This is captured by event-based hazard models: both houses might well appear in the same hazard footprint. The models are therefore important for reinsurance, say, where the ability to calculate accurately `worst-case' losses is highly desirable.
 
-Of the face of it, non-event-based hazard models may appear to be missing important information  
+\emph{Return-period-based hazard models}, in contrast, provide at each location the return-period of an accute hazard of a given intensity. For example an inundation model may specify that at a certain latitude and longitude an inundation event with intensity of 50~cm will occur with a return period of 100 years\footnote{For inundation models, 10 return periods for each location may be specified, say.}. Such a return-period map provides no correlation information.
 
+Return-period-based approaches offer a significant computational advantage at the expense of the missing correlation information. Appropriate use-cases are:
 
+\begin{itemize}
+
+\item when correlation of hazards is not relevant to the calculation, for example when modelling a single asset, or for certain calculations, such as annual average ground-up loss\footnote{For calculation of certain measures only marginal probability of occurrence of a hazard at a given location is relevant. This is discussed in more detail later, but may be true for certain average measures; for measures of tail-risk, in contrast, joint probability is needed for the calculation.}, or 
+\item when it is satisfactory to model correlation using a heuristic approach (e.g. when obtaining a rough estimate based on 0\% ot 100\% correlation or some estimated average spatial correlation). This may be used in cases where it is desirable to separate low-risk from high risk lending portfolios for example. 
+
+\end{itemize}
 
 \item{\emph{Chronic hazards.}}
-Risk factors are modelled using probability distributions calibrated to historically-observed returns; simplifying assumptions such as a multivariate normal distribution are made in order to obtain closed-form expressions for the VaR.
-
-Risk factors are again reflected by probability distributions calibrated to historically-observed returns. The joint distributions are typically fitted to historical data more closely than in the case of a Parametric~VaR and, as such, usually do not allow for closed-form expressions.
+As discussed above, acute hazard models provide probability distributions for future events. In contrast chronic hazard models provide climate parameters only. The models are therefore non-probabilistic for a given scenario. For example, a model of average surface temperature would provide values for different latitudes and longitudes under a particular climate scenario (e.g. particular social-economic and representative concentration pathway). \emph{Under this particular scenario}, the assumption is that the climate parameter is certain to take the value. 
 
 \end{enumerate}
-
-\begin{enumerate}[a)]
-	\item For \emph{acute hazards} distributions 
-	\item Vulnerability
-	\item Financial
-\end{enumerate}
-  such as the probability of an inundation above a certain depth, or a period of drought, in a specific area. 
-
-Models of acute hazards produce probability distributions for future events whereas chronic hazard models produce climate parameters only. Hazard models are pure climate models, whose outputs can be used as an input for the next steps of the analysis. 
 
 \paragraph{Vulnerability model}
 The vulnerability component measures the potential impact of a catastrophic event on an asset. Vulnerability models, like acute hazard models, are probabilistic.  loss of output suffered by my power station if an inundation of a certain intensity happens?". 
@@ -561,7 +556,7 @@ Acute hazard modelling approaches are based on calculating return periods of eve
 
 The Heat vulnerability model presented in this section is based on the approach introduced in 'Temperature And Work: Time allocated to work under varying climate and labor market conditions' (2021)\cite{TemperatureAndWork:2021}. The paper uses survey data to estimate labour allocation decisions in the United States (US) based on temperature. It does not extend the analysis beyond the US. It replicates previous research done (original GZN method \cite{TemperatureAndTheAllocationofTime:2014}.) whilst extending the period of data used and adding an assessment based on the economic cycle: the main innovation is that it includes the economic cycle by splitting out the 2008 financial crisis first through segmented regressions and following them by using an indicator variable: the non-recession period is 2003-2007 and 2015-2018. The Great Recessions period is 2008-2014. The methodology in only applied to climate exposed sectors: agriculture, forestry, fishing and hunting, construction, mining, and transportation and utilities.
 
-\newline
+
 The paper main conclusions are:
 \begin{itemize}
     \item A statistically significant impact of 2.6 minutes lost per degree of temperature above $90^\circ F$ during normal economic periods and no relationship during a recession. This result is converted into the Celsius scale as \emph{physrisk} decided to take that scale as a reference. The 2.6 minutes is multiplied by a scaling factor of 1.8, which returns \textbf{an impact of 4.7 minutes lost per degree of temperature above $32.2^\circ C$}. 
@@ -677,7 +672,7 @@ For example, there is 1\% chance that the lost labour productivity exceeds $29.6
 
 
 
-\item The estimated loss of labour time is then transformed into a percentage estimate:
+The estimated loss of labour time is then transformed into a percentage estimate:
 
 \begin{equation}
     \label{Eq:uncertainty3}

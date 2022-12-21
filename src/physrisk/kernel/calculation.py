@@ -25,9 +25,9 @@ class AssetImpactResult:
     def __init__(
         self,
         impact: ImpactDistrib,
-        vulnerability: VulnerabilityDistrib = None,
-        event: HazardEventDistrib = None,
-        hazard_data: Iterable[HazardDataResponse] = None,
+        vulnerability: Optional[VulnerabilityDistrib] = None,
+        event: Optional[HazardEventDistrib] = None,
+        hazard_data: Optional[Iterable[HazardDataResponse]] = None,
     ):
         self.impact = impact
         # optional detailed results for drill-dowwn

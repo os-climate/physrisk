@@ -18,10 +18,12 @@ class ImageCreator:
         self.reader = ZarrReader(store=store)
 
     def convert(
-        self, path, format="PNG",
+        self,
+        path,
+        format="PNG",
         colormap: str = "heating",
         min_value: Optional[float] = None,
-        max_value: Optional[float] = None
+        max_value: Optional[float] = None,
     ) -> bytes:
         """Get image for path specified as array of bytes."""
         data = self.reader.all_data(path)
@@ -29,10 +31,10 @@ class ImageCreator:
             data = data[:, :, :].squeeze(axis=0)
         if any(dim > 1500 for dim in data.shape):
             raise Exception("dimension too large (over 1500).")
-        colormap = colormap_provider.colormap(colormap)
-        
+        map_defn = colormap_provider.colormap(colormap)
+
         def get_colors(index: int):
-            return colormap[str(index)]
+            return map_defn[str(index)]
 
         rgba = self.to_rgba(data, get_colors, min_value=min_value, max_value=max_value)
         image = Image.fromarray(rgba, mode="RGBA")

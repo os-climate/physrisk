@@ -28,17 +28,27 @@ for more details.
     + methodology_doc
 )
 
+wri_colormap = {
+    "name": "flare",
+    "nodata_index": 0,
+    "min_index": 1,
+    "min_value": 0.0,
+    "max_index": 255,
+    "max_value": 2.0,
+    "units": "m",
+}
+
 
 class Inventory:
-    """Contains an inventory of available hazard data.
-    model id is given by {event_type}/{model group identifier}/{version}/{model identifier}
+    """Contains an  of available hazard data.
+    model id is given by {type}/{model group identifier}/{version}/{model identifier}
     """
 
     def __init__(self):
         osc_chronic_heat_models = [
             {
-                "event_type": "ChronicHeat",
-                "path": "",
+                "type": "ChronicHeat",
+                "path": "chronic_heat/osc/v1",
                 "id": "mean_degree_days/above/32c",
                 "display_name": "Mean degree days above 32°C",
                 "description": """
@@ -60,8 +70,20 @@ Applications for indicators based on surface temperature degree days include mod
 
                 """
                 + methodology_doc,
-                "filename": "mean_degree_days_above_32c_{scenario}_{year}",
-                "map": {"colormap": "mean_degree_days/above/32c"},
+                "array_name": "mean_degree_days_above_32c_{scenario}_{year}",
+                "map": {
+                    "colormap": {
+                        "name": "heating",
+                        "nodata_index": 0,
+                        "min_index": 1,
+                        "min_value": 0.0,
+                        "max_index": 255,
+                        "max_value": 3158.1914,
+                        "units": "degree-days",
+                    },
+                    "array_name": "mean_degree_days_above_32c_{scenario}_{year}",
+                    "source": "mapbox",
+                },
                 "units": "degree days",
                 "scenarios": [
                     {"id": "ssp585", "years": [2030, 2040, 2050]},
@@ -69,10 +91,11 @@ Applications for indicators based on surface temperature degree days include mod
                 ],
             },
             {
-                "event_type": "ChronicHeat",
-                "path": "",
-                "id": "mean_work_loss/high",
-                "display_name": "Mean work loss",
+                "type": "ChronicHeat",
+                "path": "chronic_heat/osc/v1",
+                "id": "mean_work_loss/{intensity}",
+                "params": {"intensity": ["high", "medium", "low"]},
+                "display_name": "Mean work loss ({intensity} intensity)",
                 "description": """
 The mean work loss indicator is calculated from the 'Wet Bulb Globe Temperature' (WBGT) indicator:
 $$
@@ -87,7 +110,7 @@ The work ability indicator, $I^{\\text{WA}}$ is finally calculated via:
 $$
 I^{\\text{WA}}_i = 0.1 + 0.9 / \\left( 1 + (I^\\text{WBGT}_i / \\alpha_1)^{\\alpha_2} \\right)
 $$
-An annual average work ability indiator, $I^{\\text{WA}}$ is calculated via:
+An annual average work ability indicator, $I^{\\text{WA}}$ is calculated via:
 $$
 I^{\\text{WA}} = \\frac{1}{365} \\sum_{i = 1}^{365} I^{\\text{WA}}_i
 $$
@@ -96,20 +119,32 @@ The indicators are generated for periods: 'historical' (averaged over 1995-2014)
 
                 """
                 + methodology_doc,
-                "filename": "mean_work_loss_high_{scenario}_{year}",
-                "map": {"colormap": "mean_work_loss/high"},
+                "array_name": "mean_work_loss_{intensity}_{scenario}_{year}",
+                "map": {
+                    "colormap": {
+                        "name": "heating",
+                        "nodata_index": 0,
+                        "min_index": 1,
+                        "min_value": 0.0,
+                        "max_index": 255,
+                        "max_value": 0.8,
+                        "units": "fractional loss",
+                    },
+                    "array_name": "mean_work_loss_{intensity}_{scenario}_{year}_map",
+                    "source": "array",
+                },
                 "units": "fractional loss",
                 "scenarios": [
                     {"id": "ssp585", "years": [2030, 2040, 2050]},
                     {"id": "ssp245", "years": [2030, 2040, 2050]},
-                    {"id": "historical", "years": [1980]},
+                    {"id": "historical", "years": [2010]},
                 ],
             },
         ]
 
         wri_riverine_inundation_models = [
             {
-                "event_type": "RiverineInundation",
+                "type": "RiverineInundation",
                 "path": "riverine_inundation/wri/v2",
                 "id": "000000000WATCH",
                 "display_name": "WRI/Baseline",
@@ -118,16 +153,17 @@ World Resources Institute Aqueduct Floods baseline riverine model using historic
 
                 """
                 + aqueduct_description,
-                "filename": "inunriver_{scenario}_{id}_{year}",
+                "array_name": "inunriver_{scenario}_{id}_{year}",
                 "map": {
-                    "colormap": "flare_intensity_0_2",
-                    "filename": "inunriver_{scenario}_{id}_{year}_rp{return_period:05d}",
+                    "colormap": wri_colormap,
+                    "array_name": "inunriver_{scenario}_{id}_{year}_rp{return_period:05d}",
+                    "source": "mapbox",
                 },
                 "units": "metres",
                 "scenarios": [{"id": "historical", "years": [1980], "periods": [{"year": 1980, "map_id": "gw4vgq"}]}],
             },
             {
-                "event_type": "RiverineInundation",
+                "type": "RiverineInundation",
                 "path": "riverine_inundation/wri/v2",
                 "id": "00000NorESM1-M",
                 "display_name": "WRI/NorESM1-M",
@@ -137,10 +173,11 @@ Bjerknes Centre for Climate Research, Norwegian Meteorological Institute.
 
                 """
                 + aqueduct_description,
-                "filename": "inunriver_{scenario}_{id}_{year}",
+                "array_name": "inunriver_{scenario}_{id}_{year}",
                 "map": {
-                    "colormap": "flare_intensity_0_2",
-                    "filename": "inunriver_{scenario}_{id}_{year}_rp{return_period:05d}",
+                    "colormap": wri_colormap,
+                    "array_name": "inunriver_{scenario}_{id}_{year}_rp{return_period:05d}",
+                    "source": "mapbox",
                 },
                 "units": "metres",
                 "scenarios": [
@@ -149,7 +186,7 @@ Bjerknes Centre for Climate Research, Norwegian Meteorological Institute.
                 ],
             },
             {
-                "event_type": "RiverineInundation",
+                "type": "RiverineInundation",
                 "path": "riverine_inundation/wri/v2",
                 "id": "0000GFDL-ESM2M",
                 "display_name": "WRI/GFDL-ESM2M",
@@ -159,10 +196,10 @@ Geophysical Fluid Dynamics Laboratory (NOAA).
 
                 """
                 + aqueduct_description,
-                "filename": "inunriver_{scenario}_{id}_{year}",
+                "array_name": "inunriver_{scenario}_{id}_{year}",
                 "map": {
-                    "colormap": "flare_intensity_0_2",
-                    "filename": "inunriver_{scenario}_{id}_{year}_rp{return_period:05d}",
+                    "colormap": wri_colormap,
+                    "array_name": "inunriver_{scenario}_{id}_{year}_rp{return_period:05d}",
                 },
                 "units": "metres",
                 "scenarios": [
@@ -171,7 +208,7 @@ Geophysical Fluid Dynamics Laboratory (NOAA).
                 ],
             },
             {
-                "event_type": "RiverineInundation",
+                "type": "RiverineInundation",
                 "path": "riverine_inundation/wri/v2",
                 "id": "0000HadGEM2-ES",
                 "display_name": "WRI/HadGEM2-ES",
@@ -181,10 +218,11 @@ Met Office Hadley Centre.
 
                 """
                 + aqueduct_description,
-                "filename": "inunriver_{scenario}_{id}_{year}",
+                "array_name": "inunriver_{scenario}_{id}_{year}",
                 "map": {
-                    "colormap": "flare_intensity_0_2",
-                    "filename": "inunriver_{scenario}_{id}_{year}_rp{return_period:05d}",
+                    "colormap": wri_colormap,
+                    "array_name": "inunriver_{scenario}_{id}_{year}_rp{return_period:05d}",
+                    "source": "mapbox",
                 },
                 "units": "metres",
                 "scenarios": [
@@ -193,7 +231,7 @@ Met Office Hadley Centre.
                 ],
             },
             {
-                "event_type": "RiverineInundation",
+                "type": "RiverineInundation",
                 "path": "riverine_inundation/wri/v2",
                 "id": "00IPSL-CM5A-LR",
                 "display_name": "WRI/IPSL-CM5A-LR",
@@ -203,10 +241,11 @@ Institut Pierre Simon Laplace
 
                 """
                 + aqueduct_description,
-                "filename": "inunriver_{scenario}_{id}_{year}",
+                "array_name": "inunriver_{scenario}_{id}_{year}",
                 "map": {
-                    "colormap": "flare_intensity_0_2",
-                    "filename": "inunriver_{scenario}_{id}_{year}_rp{return_period:05d}",
+                    "colormap": wri_colormap,
+                    "array_name": "inunriver_{scenario}_{id}_{year}_rp{return_period:05d}",
+                    "source": "mapbox",
                 },
                 "units": "metres",
                 "scenarios": [
@@ -215,7 +254,7 @@ Institut Pierre Simon Laplace
                 ],
             },
             {
-                "event_type": "RiverineInundation",
+                "type": "RiverineInundation",
                 "path": "riverine_inundation/wri/v2",
                 "id": "MIROC-ESM-CHEM",
                 "display_name": "WRI/MIROC-ESM-CHEM",
@@ -226,10 +265,11 @@ Institut Pierre Simon Laplace
 
                 """
                 + aqueduct_description,
-                "filename": "inunriver_{scenario}_{id}_{year}",
+                "array_name": "inunriver_{scenario}_{id}_{year}",
                 "map": {
-                    "colormap": "flare_intensity_0_2",
-                    "filename": "inunriver_{scenario}_{id}_{year}_rp{return_period:05d}",
+                    "colormap": wri_colormap,
+                    "array_name": "inunriver_{scenario}_{id}_{year}_rp{return_period:05d}",
+                    "source": "mapbox",
                 },
                 "units": "metres",
                 "scenarios": [
@@ -249,7 +289,7 @@ Institut Pierre Simon Laplace
 
         wri_coastal_inundation_models = [
             {
-                "event_type": "CoastalInundation",
+                "type": "CoastalInundation",
                 "path": "coastal_inundation/wri/v2",
                 "id": "nosub",
                 "display_name": "WRI/Baseline no subsidence",
@@ -258,16 +298,17 @@ World Resources Institute Aqueduct Floods baseline coastal model using historica
 
                 """
                 + aqueduct_description,
-                "filename": "inuncoast_historical_nosub_hist_0",
+                "array_name": "inuncoast_historical_nosub_hist_0",
                 "map": {
-                    "colormap": "flare_intensity_0_2",
-                    "filename": "inuncoast_historical_nosub_hist_rp{return_period:04d}_0",
+                    "colormap": wri_colormap,
+                    "array_name": "inuncoast_historical_nosub_hist_rp{return_period:04d}_0",
+                    "source": "mapbox",
                 },
                 "units": "metres",
                 "scenarios": [{"id": "historical", "years": [1980]}],
             },
             {
-                "event_type": "CoastalInundation",
+                "type": "CoastalInundation",
                 "path": "coastal_inundation/wri/v2",
                 "id": "nosub/95",
                 "display_name": "WRI/95% no subsidence",
@@ -276,10 +317,11 @@ World Resource Institute Aqueduct Floods coastal model, exclusing subsidence; 95
 
                 """
                 + aqueduct_description,
-                "filename": "inuncoast_{scenario}_nosub_{year}_0",
+                "array_name": "inuncoast_{scenario}_nosub_{year}_0",
                 "map": {
-                    "colormap": "flare_intensity_0_2",
-                    "filename": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0",
+                    "colormap": wri_colormap,
+                    "array_name": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0",
+                    "source": "mapbox",
                 },
                 "units": "metres",
                 "scenarios": [
@@ -288,7 +330,7 @@ World Resource Institute Aqueduct Floods coastal model, exclusing subsidence; 95
                 ],
             },
             {
-                "event_type": "CoastalInundation",
+                "type": "CoastalInundation",
                 "path": "coastal_inundation/wri/v2",
                 "id": "nosub/5",
                 "display_name": "WRI/5% no subsidence",
@@ -297,10 +339,11 @@ World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 5t
 
                 """
                 + aqueduct_description,
-                "filename": "inuncoast_{scenario}_nosub_{year}_0_perc_05",
+                "array_name": "inuncoast_{scenario}_nosub_{year}_0_perc_05",
                 "map": {
-                    "colormap": "flare_intensity_0_2",
-                    "filename": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0_perc_05",
+                    "colormap": wri_colormap,
+                    "array_name": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0_perc_05",
+                    "source": "mapbox",
                 },
                 "units": "metres",
                 "scenarios": [
@@ -309,7 +352,7 @@ World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 5t
                 ],
             },
             {
-                "event_type": "CoastalInundation",
+                "type": "CoastalInundation",
                 "path": "coastal_inundation/wri/v2",
                 "id": "nosub/50",
                 "display_name": "WRI/50% no subsidence",
@@ -318,10 +361,11 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; 50th perce
 
                 """
                 + aqueduct_description,
-                "filename": "inuncoast_{scenario}_nosub_{year}_0_perc_50",
+                "array_name": "inuncoast_{scenario}_nosub_{year}_0_perc_50",
                 "map": {
-                    "colormap": "flare_intensity_0_2",
-                    "filename": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0_perc_50",
+                    "colormap": wri_colormap,
+                    "array_name": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0_perc_50",
+                    "source": "mapbox",
                 },
                 "units": "metres",
                 "scenarios": [
@@ -330,7 +374,7 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; 50th perce
                 ],
             },
             {
-                "event_type": "CoastalInundation",
+                "type": "CoastalInundation",
                 "path": "coastal_inundation/wri/v2",
                 "id": "wtsub",
                 "display_name": "WRI/Baseline with subsidence",
@@ -339,16 +383,17 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; baseline (
 
                 """
                 + aqueduct_description,
-                "filename": "inuncoast_historical_wtsub_hist_0",
+                "array_name": "inuncoast_historical_wtsub_hist_0",
                 "map": {
-                    "colormap": "flare_intensity_0_2",
-                    "filename": "inuncoast_historical_wtsub_hist_rp{return_period:04d}_0",
+                    "colormap": wri_colormap,
+                    "array_name": "inuncoast_historical_wtsub_hist_rp{return_period:04d}_0",
+                    "source": "mapbox",
                 },
                 "units": "metres",
                 "scenarios": [{"id": "historical", "years": [1980]}],
             },
             {
-                "event_type": "CoastalInundation",
+                "type": "CoastalInundation",
                 "path": "coastal_inundation/wri/v2",
                 "id": "wtsub/95",
                 "display_name": "WRI/95% with subsidence",
@@ -357,10 +402,11 @@ World Resource Institute Aqueduct Floods model, including subsidence; 95th perce
 
                 """
                 + aqueduct_description,
-                "filename": "inuncoast_{scenario}_wtsub_{year}_0",
+                "array_name": "inuncoast_{scenario}_wtsub_{year}_0",
                 "map": {
-                    "colormap": "flare_intensity_0_2",
-                    "filename": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0",
+                    "colormap": wri_colormap,
+                    "array_name": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0",
+                    "source": "mapbox",
                 },
                 "units": "metres",
                 "scenarios": [
@@ -369,7 +415,7 @@ World Resource Institute Aqueduct Floods model, including subsidence; 95th perce
                 ],
             },
             {
-                "event_type": "CoastalInundation",
+                "type": "CoastalInundation",
                 "path": "coastal_inundation/wri/v2",
                 "id": "wtsub/5",
                 "display_name": "WRI/5% with subsidence",
@@ -378,10 +424,11 @@ World Resource Institute Aqueduct Floods model, including subsidence; 5th percen
 
                 """
                 + aqueduct_description,
-                "filename": "inuncoast_{scenario}_wtsub_{year}_0_perc_05",
+                "array_name": "inuncoast_{scenario}_wtsub_{year}_0_perc_05",
                 "map": {
-                    "colormap": "flare_intensity_0_2",
-                    "filename": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0_perc_05",
+                    "colormap": wri_colormap,
+                    "array_name": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0_perc_05",
+                    "source": "mapbox",
                 },
                 "units": "metres",
                 "scenarios": [
@@ -390,7 +437,7 @@ World Resource Institute Aqueduct Floods model, including subsidence; 5th percen
                 ],
             },
             {
-                "event_type": "CoastalInundation",
+                "type": "CoastalInundation",
                 "path": "coastal_inundation/wri/v2",
                 "id": "wtsub/50",
                 "display_name": "WRI/50% with subsidence",
@@ -399,10 +446,11 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
 
                 """
                 + aqueduct_description,
-                "filename": "inuncoast_{scenario}_wtsub_{year}_0_perc_50",
+                "array_name": "inuncoast_{scenario}_wtsub_{year}_0_perc_50",
                 "map": {
-                    "colormap": "flare_intensity_0_2",
-                    "filename": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0_perc_50",
+                    "colormap": wri_colormap,
+                    "array_name": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0_perc_50",
+                    "source": "mapbox",
                 },
                 "units": "metres",
                 "scenarios": [
@@ -416,21 +464,24 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
 
     def to_hazard_models(self) -> List[HazardModel]:
         models = parse_obj_as(List[HazardModel], self.models)
-
+        expanded_models = [e for model in models for e in model.expand()]
         # we populate map_id hashes programmatically
-        for model in models:
+        for model in expanded_models:
 
             for scenario in model.scenarios:
                 test_periods = scenario.periods
                 scenario.periods = []
                 for year in scenario.years:
-                    name_format = (
-                        model.filename if model.map is None or model.map.filename is None else model.map.filename
-                    )
-                    filename = name_format.format(scenario=scenario.id, year=year, id=model.id, return_period=1000)
-                    id = alphanumeric(filename)[0:6]
+                    if model.map and model.map.array_name:
+                        name_format = model.map.array_name
+                        array_name = name_format.format(
+                            scenario=scenario.id, year=year, id=model.id, return_period=1000
+                        )
+                        id = alphanumeric(array_name)[0:6]
+                    else:
+                        id = ""
                     scenario.periods.append(Period(year=year, map_id=id))
-                # if a period was specifed explicitly, we check that hash is the same: a build-in check
+                # if a period was specified explicitly, we check that hash is the same: a build-in check
                 if test_periods is not None:
                     for (period, test_period) in zip(scenario.periods, test_periods):
                         if period.map_id != test_period.map_id:
@@ -438,11 +489,11 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
                                 f"validation error: hash {period.map_id} different to specified hash {test_period.map_id}"  # noqa: E501
                             )
 
-        return models
+        return expanded_models
 
     def colormaps(self):
         """Color maps. Key can be identical to a model identifier or more descriptive (if shared by many models)."""
-        return colormap_provider.colormaps()
+        return colormap_provider.colormaps
 
 
 def alphanumeric(text):

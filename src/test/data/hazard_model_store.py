@@ -11,7 +11,6 @@ from physrisk.data.hazard_data_provider import (
 
 
 class TestData:
-
     longitudes = [
         69.4787,
         68.71,
@@ -105,7 +104,7 @@ def mock_hazard_model_store_for_parameter_sets(longitudes, latitudes, path_param
     store = zarr.storage.MemoryStore(root="hazard.zarr")
     root = zarr.open(store=store, mode="w")
 
-    for (path, parameter) in path_parameters.items():
+    for path, parameter in path_parameters.items():
         _add_curves(root, longitudes, latitudes, path, shape, parameter, return_periods, t)
 
     return store
@@ -142,7 +141,6 @@ def degree_day_heat_parameter_set():
         ("mean_degree_days/above/32c", "ssp585", 2050),
         ("mean_degree_days/below/32c", "ssp585", 2050),
     ]:
-
         paths.append(get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year))
     parameters = [300, 300, 600, -200]
     return dict(zip(paths, parameters))
@@ -157,7 +155,6 @@ def WBGT_GZN_Joint_parameter_set():
         ("mean_degree_days/above/32c", "ssp585", 2050),
         ("mean_degree_days/below/32c", "ssp585", 2050),
     ]:
-
         paths.append(get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year))
     for model, scenario, year in [
         ("mean_work_loss/high", "historical", 1980),  # 2005

@@ -95,7 +95,6 @@ def filenames_work_loss(src_dir):
 
 
 def create_map_geotiffs_chronic_heat(*, dest_bucket, dest_prefix, map_working_dir, account="osc", dest_s3):
-
     # array_names = [dest_filename for (file, src_path, dest_filename) in filenames_degree_days("")]
     array_names = [dest_filename for (file, src_path, dest_filename) in filenames_work_loss("")]
 
@@ -180,7 +179,7 @@ def onboard_chronic_heat(
 
         LOG.info(f"Checking max difference is {np.max(np.abs(diff))}.")
 
-    for (file, src_path, dest_filename) in filenames_work_loss(src_dir):
+    for file, src_path, dest_filename in filenames_work_loss(src_dir):
         onboard_inner(file, src_path, dest_filename, max_valid=1.0)
 
     # for (file, src_path, dest_filename) in filenames_degree_days(src_dir):

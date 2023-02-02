@@ -467,7 +467,6 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
         expanded_models = [e for model in models for e in model.expand()]
         # we populate map_id hashes programmatically
         for model in expanded_models:
-
             for scenario in model.scenarios:
                 test_periods = scenario.periods
                 scenario.periods = []
@@ -483,7 +482,7 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
                     scenario.periods.append(Period(year=year, map_id=id))
                 # if a period was specified explicitly, we check that hash is the same: a build-in check
                 if test_periods is not None:
-                    for (period, test_period) in zip(scenario.periods, test_periods):
+                    for period, test_period in zip(scenario.periods, test_periods):
                         if period.map_id != test_period.map_id:
                             raise Exception(
                                 f"validation error: hash {period.map_id} different to specified hash {test_period.map_id}"  # noqa: E501

@@ -20,7 +20,6 @@ class TestDataRequests(TestWithCredentials):
         _ = requests.get(request_id="get_hazard_data_availability", request_dict={})
 
     def test_zarr_reading(self):
-
         request_dict = {
             "items": [
                 {
@@ -52,7 +51,6 @@ class TestDataRequests(TestWithCredentials):
         numpy.testing.assert_array_almost_equal_nulp(result.items[0].intensity_curve_set[2].intensities, np.zeros((8)))
 
     def test_zarr_reading_chronic(self):
-
         request_dict = {
             "items": [
                 {

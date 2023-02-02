@@ -64,11 +64,11 @@ def get(*, request_id, request_dict, store=None):
 
 
 def get_image(
-    path: str, min_value: Optional[float] = None, max_value: Optional[float] = None, colormap: str = "heating"
+    path: str, colormap: str = "heating", min_value: Optional[float] = None, max_value: Optional[float] = None
 ):
     # creator = ImageCreator(path)
     creator = ImageCreator()  # store=ImageCreator.test_store(path))
-    return creator.convert(path, min_value=min_value, max_value=max_value)
+    return creator.convert(path, colormap=colormap, min_value=min_value, max_value=max_value)
 
 
 def _get_hazard_data_availability(request: HazardEventAvailabilityRequest):

@@ -104,7 +104,7 @@ class ImageCreator:
 
         np.add(data, -min_value, out=data)
         np.multiply(data, 253.0 / (max_value - min_value), out=data)
-        np.add(data, 1.0, out=data)  # np.clip seems a bit slow so we do not use
+        np.add(data, 2.0, out=data)  # np.clip seems a bit slow so we do not use
 
         result = data.astype(np.uint8, casting="unsafe", copy=False)
         del data

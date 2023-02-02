@@ -781,12 +781,8 @@ map_heating_2 = {
 # for test cases
 map_test = dict((str(i), [i, 0, 0, 0]) for i in range(256))
 
-colormaps = { 
-    "flare": map_flare,
-    "heating": map_heating,
-    "heating_2": map_heating_2,
-    "test": map_test
-}
+colormaps = {"flare": map_flare, "heating": map_heating, "heating_2": map_heating_2, "test": map_test}
+
 
 def colormap(id: str):
     return colormaps[id]

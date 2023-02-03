@@ -120,7 +120,6 @@ def write_map_geotiff_data(
     max_intensity=2.0,
     palette="flare",
 ):
-
     # the Seaborn 'flare' palette is the default for representing intensity
     # perceptually uniform, use of hue and luminance, smaller values have lighter colours
 
@@ -163,7 +162,7 @@ def write_map_geotiff_data(
     LOG.info(f"Hashing {filename_stub} as code: {alpha}")
 
     colormap_path_out = os.path.join(output_dir, "colormap_" + alpha + "_" + filename_stub + ".json")
-    with (s3.open(colormap_path_out, "w") if s3 is not None else open(colormap_path_out, "w")) as f:
+    with s3.open(colormap_path_out, "w") if s3 is not None else open(colormap_path_out, "w") as f:
         json_dict = {
             "colormap": map_for_json,
             "nodata": {"color_index": 0},

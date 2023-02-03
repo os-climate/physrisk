@@ -236,7 +236,7 @@ def geotiff_to_zarr_riverine(
     )
 
     LOG.info("Destination: " + dest_filename)
-    for (i, filename) in enumerate(src_filenames):
+    for i, filename in enumerate(src_filenames):
         print(f"File {i + 1}/{len(src_filenames)}", end="...")
         zarr_write(os.path.join(src_bucket, src_prefix, filename + ".tif"), s3_source, z, i)
 
@@ -262,7 +262,7 @@ def geotiff_to_zarr_coastal(
     )
 
     LOG.info("Destination: " + dest_filename)
-    for (i, filename) in enumerate(src_filenames):
+    for i, filename in enumerate(src_filenames):
         print(f"File {i + 1}/{len(src_filenames)}", end="...")
         zarr_write(os.path.join(src_bucket, src_prefix, filename + ".tif"), s3_source, z, i)
 
@@ -279,7 +279,7 @@ def test_data_rasterio(coords, s3_source, src_bucket, src_prefix, dest_bucket, d
     latitudes = np.array(coords["latitudes"])[0:100]
 
     res = []
-    for (i, filename) in enumerate(src_filenames):
+    for i, filename in enumerate(src_filenames):
         with s3_source.open(os.path.join(src_bucket, src_prefix, filename + ".tif")) as f:
             with rasterio.open(f) as dataset:
                 points = [[lon, lat] for (lon, lat) in zip(longitudes, latitudes)]

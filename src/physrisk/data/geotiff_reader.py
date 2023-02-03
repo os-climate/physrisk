@@ -57,7 +57,7 @@ def dataset_read_windows(dataset, longitudes, latitudes, window_half_width=0.01)
     # seem to need to do one window at a time: potentially slow
     hw = window_half_width
     samples = []
-    for (lon, lat) in zip(longitudes, latitudes):
+    for lon, lat in zip(longitudes, latitudes):
         win = rasterio.windows.from_bounds(
             lon - hw, lat - hw, lon + hw, lat + hw, dataset.transform
         )  # left, bottom, right, top

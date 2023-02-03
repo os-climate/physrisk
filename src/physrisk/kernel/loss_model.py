@@ -46,7 +46,6 @@ class LossModel:
         currency: str = "EUR",
         sims: int = 100000
     ):
-
         if aggregator is None:
             aggregator = DefaultAggregator()
 

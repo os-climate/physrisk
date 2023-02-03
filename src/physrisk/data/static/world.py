@@ -49,5 +49,4 @@ def get_countries_and_continents(longitudes: Union[List[float], np.ndarray], lat
 
 
 class World:
-
     countries: Dict[str, Country] = get_countries_from_resource()

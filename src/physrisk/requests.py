@@ -1,7 +1,7 @@
 import importlib
 import json
 from importlib import import_module
-from typing import Dict, List, cast
+from typing import Any, Dict, List, Optional, cast
 
 import numpy as np
 
@@ -14,7 +14,9 @@ from .api.v1.hazard_data import (
     HazardEventDataRequest,
     HazardEventDataResponse,
     HazardEventDataResponseItem,
+    HazardModel,
     IntensityCurve,
+    InventorySource,
 )
 from .api.v1.impact_req_resp import (
     AcuteHazardCalculationDetails,
@@ -24,6 +26,7 @@ from .api.v1.impact_req_resp import (
     Assets,
     AssetSingleHazardImpact,
 )
+from .data.image_creator import ImageCreator
 from .data.inventory import Inventory
 from .data.pregenerated_hazard_model import ZarrHazardModel
 from .kernel import Asset, Hazard
@@ -45,7 +48,6 @@ def dumps(dict):
 
 
 def get(*, request_id, request_dict, store=None):
-
     if request_id == "get_hazard_data":
         request = HazardEventDataRequest(**request_dict)
         return json.dumps(_get_hazard_data(request, store=store).dict())
@@ -61,12 +63,27 @@ def get(*, request_id, request_dict, store=None):
         raise ValueError(f"request type '{request_id}' not found")
 
 
+def get_image(
+    path: str, colormap: str = "heating", min_value: Optional[float] = None, max_value: Optional[float] = None
+):
+    # creator = ImageCreator(path)
+    creator = ImageCreator()  # store=ImageCreator.test_store(path))
+    return creator.convert(path, colormap=colormap, min_value=min_value, max_value=max_value)
+
+
 def _get_hazard_data_availability(request: HazardEventAvailabilityRequest):
-    inventory = Inventory()
-    # models = inventory.models
-    models = inventory.to_hazard_models()
-    colormaps = inventory.colormaps()
-    response = HazardEventAvailabilityResponse(models=models, colormaps=colormaps)  # type: ignore
+    models: Dict[str, HazardModel] = {}
+    colormaps: Dict[str, Dict[str, Any]] = {}
+    request_source = request.source or InventorySource.EMBEDDED
+    for source in InventorySource:
+        if source in request_source:
+            if source == InventorySource.EMBEDDED:
+                inventory = Inventory()
+                for model in inventory.to_hazard_models():
+                    models[model.id] = model
+                colormaps.update(inventory.colormaps())
+            # can add support for S3 reads here
+    response = HazardEventAvailabilityResponse(models=list(models.values()), colormaps=colormaps)  # type: ignore
     return response
 
 

@@ -118,7 +118,6 @@ class TestChronicAssetImpact(unittest.TestCase):
     """Tests the impact on an asset of a chronic hazard model."""
 
     def test_wbgt_vulnerability(self):
-
         store = mock_hazard_model_store_heat_WBGT(TestData.longitudes, TestData.latitudes)
         hazard_model = ZarrHazardModel(source_paths=calculation.get_default_zarr_source_paths(), store=store)
 

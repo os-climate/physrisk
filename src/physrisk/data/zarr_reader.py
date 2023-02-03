@@ -62,6 +62,11 @@ class ZarrReader:
         self._path_provider = path_provider
         pass
 
+    def all_data(self, set_id: str):
+        path = self._path_provider(set_id) if self._path_provider is not None else set_id
+        z = self._root[path]  # e.g. inundation/wri/v2/<filename>
+        return z
+
     def get_curves(self, set_id, longitudes, latitudes, interpolation="floor"):
         """Get intensity curve for each latitude and longitude coordinate pair.
 

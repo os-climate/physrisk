@@ -22,7 +22,6 @@ class PregeneratedHazardModel(HazardModel):
         self,
         hazard_data_providers: Dict[type, HazardDataProvider],
     ):
-
         self.acute_hazard_data_providers = dict(
             (k, cast(AcuteHazardDataProvider, v))
             for (k, v) in hazard_data_providers.items()
@@ -35,7 +34,6 @@ class PregeneratedHazardModel(HazardModel):
         )
 
     def get_hazard_events(self, requests: List[HazardDataRequest]) -> Mapping[HazardDataRequest, HazardDataResponse]:
-
         batches = defaultdict(list)
         for request in requests:
             batches[request.group_key()].append(request)

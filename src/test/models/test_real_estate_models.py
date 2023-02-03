@@ -15,7 +15,6 @@ class TestRealEstateModels(unittest.TestCase):
     """Tests RealEstateInundationModel."""
 
     def test_real_estate_model_details(self):
-
         curve = np.array([0.0596, 0.333, 0.505, 0.715, 0.864, 1.003, 1.149, 1.163, 1.163])
         store = mock_hazard_model_store_inundation(TestData.longitudes, TestData.latitudes, curve)
         hazard_model = ZarrHazardModel(source_paths=calculation.get_default_zarr_source_paths(), store=store)

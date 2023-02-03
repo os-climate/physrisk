@@ -213,7 +213,6 @@ def update_map_fig_layers(map_fig, layers):
 
 
 def get_fig_for_asset(asset, detailed_results):
-
     fig = make_subplots(rows=1, cols=2)
     go1, go2 = get_fig_gos_for_asset(asset, detailed_results)
 
@@ -249,7 +248,6 @@ def get_fig_for_asset(asset, detailed_results):
 
 
 def get_fig_gos_for_asset(asset, detailed_results):
-
     res = detailed_results[asset]
 
     impact_bins = res.impact.impact_bins
@@ -274,7 +272,6 @@ def get_fig_gos_for_asset(asset, detailed_results):
 
 
 def get_fig_for_model(asset, detailed_results):
-
     fig = make_subplots(rows=1, cols=2)
     go1, go2, headline = get_fig_gos_for_model(asset, detailed_results)
 
@@ -301,7 +298,6 @@ def get_fig_for_model(asset, detailed_results):
 
 
 def get_fig_gos_for_model(asset, detailed_results):
-
     res: AssetImpactResult = detailed_results[asset]
 
     intensity_bins = res.event.intensity_bins
@@ -324,7 +320,6 @@ def get_fig_gos_for_model(asset, detailed_results):
 
 
 def get_fig_for_vulnerability(asset, detailed_results):
-
     fig = make_subplots(rows=1, cols=1)
     go1 = get_fig_gos_for_vulnerability(asset, detailed_results)
 
@@ -345,7 +340,6 @@ def get_fig_for_vulnerability(asset, detailed_results):
 
 
 def get_fig_gos_for_vulnerability(asset, detailed_results):
-
     res: AssetImpactResult = detailed_results[asset]
 
     go1 = go.Heatmap(
@@ -607,7 +601,6 @@ def display_click_data(click_data):
     [Input("layer-select", "value"), State("map-chart", "figure")],
 )
 def update_map_layers(value, fig):
-
     lon = fig["layout"]["mapbox"]["center"]["lon"]
     lat = fig["layout"]["mapbox"]["center"]["lat"]
     zoom = fig["layout"]["mapbox"].get("zoom", 1.0)

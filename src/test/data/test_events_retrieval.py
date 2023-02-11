@@ -1,20 +1,49 @@
 import unittest
+from test.base_test import TestWithCredentials
 from test.data.hazard_model_store import mock_hazard_model_store_inundation
 
 import numpy as np
 import numpy.testing
 import scipy.interpolate
 import zarr
+from fsspec.implementations.memory import MemoryFileSystem
 
-from physrisk.api.v1.hazard_data import HazardEventAvailabilityRequest, InventorySource
+from physrisk.api.v1.hazard_data import HazardEventAvailabilityRequest, HazardModel, Scenario
+from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.requests import _get_hazard_data_availability
 
 
-class TestEventRetrieval(unittest.TestCase):
+class TestEventRetrieval(TestWithCredentials):
     def test_hazard_data_availability_summary(self):
         # check validation passes calling in service-like way
-        _get_hazard_data_availability(HazardEventAvailabilityRequest(source=InventorySource.EMBEDDED))
+        response = _get_hazard_data_availability(
+            HazardEventAvailabilityRequest(sources=["embedded"])
+        )  # , "hazard_test"]))
+        assert len(response.models) > 0  # rely on Pydantic validation for test
+
+    def test_set_get_inventory(self):
+        fs = MemoryFileSystem()
+        reader = InventoryReader(fs=fs)
+        reader.append("hazard_test", [self._test_hazard_model()])
+        assert reader.read("hazard_test")[0].id == "test_model_id"
+
+    @unittest.skip("S3 access needed")
+    def test_set_get_inventory_s3(self):
+        reader = InventoryReader()
+        reader.append("hazard_test", [self._test_hazard_model()])
+        assert reader.read("hazard_test")[0].id == "test_model_id"
+
+    def _test_hazard_model(self):
+        return HazardModel(
+            type="TestHazardType",
+            path="test_sub_type",
+            id="test_model_id",
+            display_name="Test model",
+            description="Description of test model",
+            scenarios=[Scenario(id="historical", years=[2010])],
+            units="K",
+        )
 
     def test_zarr_bilinear(self):
         # create suitable asymmetric data set and compare with scipy

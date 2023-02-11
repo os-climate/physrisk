@@ -7,6 +7,7 @@ import numpy as np
 
 import physrisk.data.static.example_portfolios
 from physrisk.api.v1.common import Distribution, ExceedanceCurve, VulnerabilityDistrib
+from physrisk.data.inventory_reader import InventoryReader
 
 from .api.v1.hazard_data import (
     HazardEventAvailabilityRequest,
@@ -16,7 +17,6 @@ from .api.v1.hazard_data import (
     HazardEventDataResponseItem,
     HazardModel,
     IntensityCurve,
-    InventorySource,
 )
 from .api.v1.impact_req_resp import (
     AcuteHazardCalculationDetails,
@@ -66,23 +66,26 @@ def get(*, request_id, request_dict, store=None):
 def get_image(
     path: str, colormap: str = "heating", min_value: Optional[float] = None, max_value: Optional[float] = None
 ):
-    # creator = ImageCreator(path)
     creator = ImageCreator()  # store=ImageCreator.test_store(path))
     return creator.convert(path, colormap=colormap, min_value=min_value, max_value=max_value)
 
 
 def _get_hazard_data_availability(request: HazardEventAvailabilityRequest):
-    models: Dict[str, HazardModel] = {}
+    models: Dict[Any, HazardModel] = {}
     colormaps: Dict[str, Dict[str, Any]] = {}
-    request_source = request.source or InventorySource.EMBEDDED
-    for source in InventorySource:
-        if source in request_source:
-            if source == InventorySource.EMBEDDED:
-                inventory = Inventory()
-                for model in inventory.to_hazard_models():
-                    models[model.id] = model
-                colormaps.update(inventory.colormaps())
-            # can add support for S3 reads here
+    request_sources = ["embedded"] if request.sources is None else [s.lower() for s in request.sources]
+    reader = None
+    for source in request_sources:
+        if source == "embedded":
+            inventory = Inventory()
+            for model in inventory.to_hazard_models():
+                models[model.key] = model
+            colormaps.update(inventory.colormaps())
+        elif source == "hazard" or source == "hazard_test":
+            if reader is None:
+                reader = InventoryReader()
+            for model in reader.read(source):
+                models[model.key] = model
     response = HazardEventAvailabilityResponse(models=list(models.values()), colormaps=colormaps)  # type: ignore
     return response
 

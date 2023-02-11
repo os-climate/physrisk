@@ -5,6 +5,8 @@ from pydantic import BaseModel, Field
 
 from physrisk.api.v1.common import IntensityCurve
 
+# region HazardModel
+
 
 class Colormap(BaseModel):
     """Provides details of colormap."""
@@ -27,7 +29,7 @@ class Colormap(BaseModel):
 
 
 class MapInfo(BaseModel):
-    """Provides information about map layer"""
+    """Provides information about map layer."""
 
     colormap: Optional[Colormap] = Field(description="Details of colormap.")
     array_name: Optional[str] = Field(
@@ -42,7 +44,7 @@ class MapInfo(BaseModel):
 
 
 class Period(BaseModel):
-    """A period belonging to a scenario"""
+    """Provides information about a period, which currently corresponds to a year, belonging to a scenario."""
 
     year: int
     map_id: str = Field(description="If present, identifier to be used for looking up map tiles from server.")
@@ -61,7 +63,7 @@ def expanded(item: str, key: str, param: str):
 
 
 class HazardModel(BaseModel):
-    """Provides the scenarios associated with a hazard model."""
+    """Provides scenarios associated with a hazard model."""
 
     type: Optional[str] = Field(description="Type of hazard.")
     path: str
@@ -92,6 +94,11 @@ class HazardModel(BaseModel):
                 },
             )
 
+    def key(self):
+        return (self.type, self.id)
+
+
+# endregion
 
 # region HazardAvailability
 
@@ -107,8 +114,10 @@ class InventorySource(Flag):
 
 
 class HazardEventAvailabilityRequest(BaseModel):
-    event_types: Optional[List[str]]  # e.g. RiverineInundation
-    source: Optional[InventorySource]
+    types: Optional[List[str]]  # e.g. ["RiverineInundation"]
+    sources: Optional[List[str]] = Field(
+        description="Sources of inventory, can be 'embedded', 'hazard' or 'hazard_test'."
+    )
 
 
 class HazardEventAvailabilityResponse(BaseModel):

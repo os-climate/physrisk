@@ -2,8 +2,8 @@ import io
 from typing import Callable, List, MutableMapping, Optional
 
 import numpy as np
+import PIL.Image as Image
 import zarr.storage
-from PIL import Image
 
 from physrisk.data import colormap_provider
 from physrisk.data.zarr_reader import ZarrReader
@@ -11,7 +11,7 @@ from physrisk.data.zarr_reader import ZarrReader
 
 class ImageCreator:
     """Convert small arrays into images for map display.
-    Intended for arrays <~1500x1500 (otherwise, recommended to use Mapbox tiles).
+    Intended for arrays <~1500x1500 (otherwise, recommended to use Mapbox tiles - or similar).
     """
 
     def __init__(self, store: Optional[MutableMapping] = None):
@@ -19,12 +19,54 @@ class ImageCreator:
 
     def convert(
         self,
-        path,
+        path: str,
         format="PNG",
         colormap: str = "heating",
         min_value: Optional[float] = None,
         max_value: Optional[float] = None,
     ) -> bytes:
+        """Create image for path specified as array of bytes.
+
+        Args:
+            resource (str): Full path to array.
+            format (str, optional): Image format. Defaults to "PNG".
+            colormap (str, optional): Colormap name. Defaults to "heating".
+            min_value (Optional[float], optional): Min value. Defaults to None.
+            max_value (Optional[float], optional): Max value. Defaults to None.
+
+        Returns:
+            bytes: Image data.
+        """
+        image = self._to_image(path, colormap, min_value=min_value, max_value=max_value)
+        image_bytes = io.BytesIO()
+        image.save(image_bytes, format=format)
+        return image_bytes.getvalue()
+
+    def to_file(
+        self,
+        filename: str,
+        path: str,
+        format="PNG",
+        colormap: str = "heating",
+        min_value: Optional[float] = None,
+        max_value: Optional[float] = None,
+    ):
+        """Create image for path specified and save as file.
+
+        Args:
+            filename (str): Filename.
+            path (str): Path to array.
+            format (str, optional): Image format. Defaults to "PNG".
+            colormap (str, optional): Colormap name. Defaults to "heating".
+            min_value (Optional[float], optional): Min value. Defaults to None.
+            max_value (Optional[float], optional): Max value. Defaults to None.
+        """
+        image = self._to_image(path, colormap, min_value=min_value, max_value=max_value)
+        image.save(filename, format=format)
+
+    def _to_image(
+        self, path, colormap: str = "heating", min_value: Optional[float] = None, max_value: Optional[float] = None
+    ) -> Image.Image:
         """Get image for path specified as array of bytes."""
         data = self.reader.all_data(path)
         if len(data.shape) == 3:
@@ -36,15 +78,11 @@ class ImageCreator:
         def get_colors(index: int):
             return map_defn[str(index)]
 
-        rgba = self.to_rgba(data, get_colors, min_value=min_value, max_value=max_value)
+        rgba = self._to_rgba(data, get_colors, min_value=min_value, max_value=max_value)
         image = Image.fromarray(rgba, mode="RGBA")
-        image_bytes = io.BytesIO()
-        image.save(image_bytes, format=format)
-        return image_bytes.getvalue()
-        # final = image_bytes.read()
-        # image.save("test_image.tiff", format='TIFF')
+        return image
 
-    def to_rgba(  # noqa: C901
+    def _to_rgba(  # noqa: C901
         self,
         data: np.ndarray,
         get_colors: Callable[[int], List[int]],
@@ -88,16 +126,16 @@ class ImageCreator:
             a[0] = 0
         if min_bin_transparent:
             a[1] = 0
-        mask_nodata = None
+        mask_nodata = np.isnan(data)
         if nodata_lower:
             mask_nodata = data <= nodata_lower
         if nodata_upper:
             mask_nodata = (mask_nodata | (data >= nodata_upper)) if mask_nodata is not None else (data >= nodata_upper)
 
         if min_value is None:
-            min_value = data.min()
+            min_value = np.nanmin(data)
         if max_value is None:
-            max_value = data.max()
+            max_value = np.nanmax(data)
 
         mask_ge_max = data >= max_value
         mask_le_min = data <= min_value

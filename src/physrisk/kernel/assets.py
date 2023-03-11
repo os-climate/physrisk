@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Optional
 
 
@@ -6,6 +7,19 @@ class Asset:
         self.latitude = latitude
         self.longitude = longitude
         self.__dict__.update(kwargs)
+
+
+# WindFarm as separate
+
+
+@dataclass
+class WindTurbine(Asset):
+    capacity: float
+    hub_height: float
+    cut_in_speed: float
+    cut_out_speed: float
+    fixed_base: bool = True
+    rotor_diameter: Optional[float] = None
 
 
 class PowerGeneratingAsset(Asset):

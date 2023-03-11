@@ -1,12 +1,14 @@
 # flake8: noqa: E501
 import hashlib
-from typing import List
+from collections import defaultdict
+from pathlib import PosixPath
+from typing import DefaultDict, Dict, Iterable, List, Tuple
 
 from pydantic import parse_obj_as
 
 import physrisk.data.colormap_provider as colormap_provider
 
-from ..api.v1.hazard_data import HazardModel, Period
+from ..api.v1.hazard_data import HazardResource, Period
 
 methodology_doc = """
 For more details and relevant citations see the
@@ -40,8 +42,24 @@ wri_colormap = {
 
 
 class Inventory:
+    def __init__(self, hazard_resources: Iterable[HazardResource]):
+        """Store the hazard resources with look up via:
+        - key: combination of path and model identifier which is unique, or
+        - type and model identifier: (requires choice of provider/version)
+
+        Args:
+            hazard_resources (Iterable[HazardResource]): list of resources
+        """
+        self.resources: Dict[str, HazardResource] = {}
+        self.resources_by_type_id: DefaultDict[Tuple[str, str], List[HazardResource]] = defaultdict(list)
+        for resource in hazard_resources:
+            self.resources[resource.key()] = resource
+            self.resources_by_type_id[(resource.type, resource.id)].append(resource)
+
+
+class EmbeddedInventory:
     """Contains an  of available hazard data.
-    model id is given by {type}/{model group identifier}/{version}/{model identifier}
+    path is given by {type}/{model group identifier}/{version}/{model identifier}
     """
 
     def __init__(self):
@@ -104,7 +122,7 @@ $$
 $I^\\text{WBGT}_i$ is the WBGT indicator, $T^\\text{avg}_i$ is the daily average surface temperature (in degress Celsius) on day index, $i$, and $P^\\text{vapour}$
 is the water vapour partial pressure (in kPa). $P^\\text{vapour}$ is calculated from relative humidity $H_R$ via:
 $$
-P^\\text{vapour}_i = \\frac{H_R}{100} \\times 6.105 \\times \\exp \\left( \\frac{17.27 \\times T^\\text{avg}_i}{237.7 \\times T^\\text{avg}_i} \\right)
+P^\\text{vapour}_i = \\frac{H_R}{100} \\times 6.105 \\times \\exp \\left( \\frac{17.27 + T^\\text{avg}_i}{237.7 + T^\\text{avg}_i} \\right)
 $$
 The work ability indicator, $I^{\\text{WA}}$ is finally calculated via:
 $$
@@ -145,7 +163,7 @@ The indicators are generated for periods: 'historical' (averaged over 1995-2014)
         wri_riverine_inundation_models = [
             {
                 "type": "RiverineInundation",
-                "path": "riverine_inundation/wri/v2",
+                "path": "inundation/wri/v2",
                 "id": "000000000WATCH",
                 "display_name": "WRI/Baseline",
                 "description": """
@@ -164,7 +182,7 @@ World Resources Institute Aqueduct Floods baseline riverine model using historic
             },
             {
                 "type": "RiverineInundation",
-                "path": "riverine_inundation/wri/v2",
+                "path": "inundation/wri/v2",
                 "id": "00000NorESM1-M",
                 "display_name": "WRI/NorESM1-M",
                 "description": """
@@ -187,7 +205,7 @@ Bjerknes Centre for Climate Research, Norwegian Meteorological Institute.
             },
             {
                 "type": "RiverineInundation",
-                "path": "riverine_inundation/wri/v2",
+                "path": "inundation/wri/v2",
                 "id": "0000GFDL-ESM2M",
                 "display_name": "WRI/GFDL-ESM2M",
                 "description": """
@@ -209,7 +227,7 @@ Geophysical Fluid Dynamics Laboratory (NOAA).
             },
             {
                 "type": "RiverineInundation",
-                "path": "riverine_inundation/wri/v2",
+                "path": "inundation/wri/v2",
                 "id": "0000HadGEM2-ES",
                 "display_name": "WRI/HadGEM2-ES",
                 "description": """
@@ -232,7 +250,7 @@ Met Office Hadley Centre.
             },
             {
                 "type": "RiverineInundation",
-                "path": "riverine_inundation/wri/v2",
+                "path": "inundation/wri/v2",
                 "id": "00IPSL-CM5A-LR",
                 "display_name": "WRI/IPSL-CM5A-LR",
                 "description": """
@@ -255,7 +273,7 @@ Institut Pierre Simon Laplace
             },
             {
                 "type": "RiverineInundation",
-                "path": "riverine_inundation/wri/v2",
+                "path": "inundation/wri/v2",
                 "id": "MIROC-ESM-CHEM",
                 "display_name": "WRI/MIROC-ESM-CHEM",
                 "description": """World Resource Institute Aqueduct Floods riverine model using
@@ -290,7 +308,7 @@ Institut Pierre Simon Laplace
         wri_coastal_inundation_models = [
             {
                 "type": "CoastalInundation",
-                "path": "coastal_inundation/wri/v2",
+                "path": "inundation/wri/v2",
                 "id": "nosub",
                 "display_name": "WRI/Baseline no subsidence",
                 "description": """
@@ -309,7 +327,7 @@ World Resources Institute Aqueduct Floods baseline coastal model using historica
             },
             {
                 "type": "CoastalInundation",
-                "path": "coastal_inundation/wri/v2",
+                "path": "inundation/wri/v2",
                 "id": "nosub/95",
                 "display_name": "WRI/95% no subsidence",
                 "description": """
@@ -331,7 +349,7 @@ World Resource Institute Aqueduct Floods coastal model, exclusing subsidence; 95
             },
             {
                 "type": "CoastalInundation",
-                "path": "coastal_inundation/wri/v2",
+                "path": "inundation/wri/v2",
                 "id": "nosub/5",
                 "display_name": "WRI/5% no subsidence",
                 "description": """
@@ -353,7 +371,7 @@ World Resource Institute Aqueduct Floods coastal model, excluding subsidence; 5t
             },
             {
                 "type": "CoastalInundation",
-                "path": "coastal_inundation/wri/v2",
+                "path": "inundation/wri/v2",
                 "id": "nosub/50",
                 "display_name": "WRI/50% no subsidence",
                 "description": """
@@ -375,7 +393,7 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; 50th perce
             },
             {
                 "type": "CoastalInundation",
-                "path": "coastal_inundation/wri/v2",
+                "path": "inundation/wri/v2",
                 "id": "wtsub",
                 "display_name": "WRI/Baseline with subsidence",
                 "description": """
@@ -394,7 +412,7 @@ World Resource Institute Aqueduct Floods model, excluding subsidence; baseline (
             },
             {
                 "type": "CoastalInundation",
-                "path": "coastal_inundation/wri/v2",
+                "path": "inundation/wri/v2",
                 "id": "wtsub/95",
                 "display_name": "WRI/95% with subsidence",
                 "description": """
@@ -416,7 +434,7 @@ World Resource Institute Aqueduct Floods model, including subsidence; 95th perce
             },
             {
                 "type": "CoastalInundation",
-                "path": "coastal_inundation/wri/v2",
+                "path": "inundation/wri/v2",
                 "id": "wtsub/5",
                 "display_name": "WRI/5% with subsidence",
                 "description": """
@@ -438,7 +456,7 @@ World Resource Institute Aqueduct Floods model, including subsidence; 5th percen
             },
             {
                 "type": "CoastalInundation",
-                "path": "coastal_inundation/wri/v2",
+                "path": "inundation/wri/v2",
                 "id": "wtsub/50",
                 "display_name": "WRI/50% with subsidence",
                 "description": """
@@ -462,8 +480,8 @@ World Resource Institute Aqueduct Floods model, including subsidence; 50th perce
 
         self.models = osc_chronic_heat_models + wri_riverine_inundation_models + wri_coastal_inundation_models
 
-    def to_hazard_models(self) -> List[HazardModel]:
-        models = parse_obj_as(List[HazardModel], self.models)
+    def to_resources(self) -> List[HazardResource]:
+        models = parse_obj_as(List[HazardResource], self.models)
         expanded_models = [e for model in models for e in model.expand()]
         # we populate map_id hashes programmatically
         for model in expanded_models:

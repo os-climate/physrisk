@@ -12,12 +12,27 @@ import numpy.testing
 
 from physrisk import RiverineInundation, requests
 from physrisk.data.hazard_data_provider import get_source_path_wri_riverine_inundation
+from physrisk.data.inventory import EmbeddedInventory, Inventory
+from physrisk.kernel.calculation import get_source_paths_from_inventory
+from physrisk.kernel.hazards import ChronicHeat
 
 
 class TestDataRequests(TestWithCredentials):
     def test_hazard_data_availability(self):
         # test that validation passes:
         _ = requests.get(request_id="get_hazard_data_availability", request_dict={})
+
+    def test_hazard_data_description(self):
+        # test that validation passes:
+        _ = requests.get(request_id="get_hazard_data_description", request_dict={"paths": ["test_path.md"]})
+
+    def test_generic_source_path(self):
+        inventory = Inventory(EmbeddedInventory().to_resources())
+        source_paths = get_source_paths_from_inventory(inventory, None)
+        result_heat = source_paths[ChronicHeat](model="mean_degree_days/above/32c", scenario="rcp8p5", year=2050)
+        result_flood = source_paths[RiverineInundation](model="000000000WATCH", scenario="rcp8p5", year=2050)
+        assert result_heat == "chronic_heat/osc/v1/mean_degree_days_above_32c_rcp8p5_2050"
+        assert result_flood == "inundation/wri/v2/inunriver_rcp8p5_000000000WATCH_2050"
 
     def test_zarr_reading(self):
         request_dict = {
@@ -75,20 +90,6 @@ class TestDataRequests(TestWithCredentials):
     @unittest.skip("requires OSC environment variables set")
     def test_zarr_reading_live(self):
         # needs valid OSC_S3_BUCKET, OSC_S3_ACCESS_KEY, OSC_S3_SECRET_KEY
-
-        # request1 = {
-        #     "items": [
-        #         {
-        #             "request_item_id": "test_inundation",
-        #             "event_type": "RiverineInundation",
-        #             "longitudes": TestData.longitudes,
-        #             "latitudes": TestData.latitudes,
-        #             "year": 2080,
-        #             "scenario": "rcp8p5",
-        #             "model": "MIROC-ESM-CHEM",
-        #         }
-        #     ],
-        # }
         request1 = {
             "items": [
                 {

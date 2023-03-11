@@ -1,18 +1,18 @@
 import json
 from pathlib import PurePosixPath
-from typing import Callable, Iterable, List, Optional
+from typing import Callable, Dict, Iterable, List, Optional
 
 import s3fs
 from fsspec import AbstractFileSystem
 from pydantic import BaseModel, parse_obj_as
 
-from physrisk.api.v1.hazard_data import HazardModel
+from physrisk.api.v1.hazard_data import HazardResource
 
 from .zarr_reader import get_env
 
 
 class HazardModels(BaseModel):
-    hazard_models: List[HazardModel]
+    hazard_models: List[HazardResource]
 
 
 class InventoryReader:
@@ -23,8 +23,10 @@ class InventoryReader:
 
     def __init__(
         self,
+        *,
         get_env: Callable[[str, Optional[str]], str] = get_env,
         fs: Optional[AbstractFileSystem] = None,
+        base_path: Optional[AbstractFileSystem] = None
     ):
         """Class to read and update inventory stored in S3 or supplied AbstractFileSystem.
 
@@ -37,23 +39,36 @@ class InventoryReader:
             secret_key = get_env(self.__secret_key, None)
             fs = s3fs.S3FileSystem(anon=False, key=access_key, secret=secret_key)
 
-        self._bucket = get_env(self.__S3_bucket, "redhat-osc-physical-landing-647521352890")
+        bucket = get_env(self.__S3_bucket, "redhat-osc-physical-landing-647521352890")
+        self._base_path = bucket if base_path is None else base_path
         self._fs = fs
 
-    def read(self, path: str) -> List[HazardModel]:
-        """Read"""
+    def read(self, path: str) -> List[HazardResource]:
+        """Read inventory at path provided and return HazardModels."""
         if not self._fs.exists(self._full_path(path)):
             return []
         json_str = self.read_json(path)
         models = parse_obj_as(HazardModels, json.loads(json_str)).hazard_models
         return models
 
+    def read_description_markdown(self, paths: List[str]) -> Dict[str, str]:
+        """Read description markdown at path provided."""
+        md: Dict[str, str] = {}
+        for path in paths:
+            try:
+                with self._fs.open(self._full_path(path), "r") as f:
+                    md[path] = f.read()
+            finally:
+                continue
+        return md
+
     def read_json(self, path: str) -> str:
+        """Read inventory at path provided and return json."""
         with self._fs.open(self._full_path(path), "r") as f:
             json_str = f.read()
         return json_str
 
-    def append(self, path: str, hazard_models: Iterable[HazardModel]):
+    def append(self, path: str, hazard_models: Iterable[HazardResource]):
         combined = dict((i.key(), i) for i in self.read(path))
         for model in hazard_models:
             combined[model.key()] = model
@@ -65,4 +80,4 @@ class InventoryReader:
     def _full_path(self, path: str):
         if path not in ["hazard", "hazard_test"]:
             raise ValueError("not supported path.")
-        return str(PurePosixPath(self._bucket, path, "inventory.json"))
+        return str(PurePosixPath(self._base_path, path, "inventory.json"))

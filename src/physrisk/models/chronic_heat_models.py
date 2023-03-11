@@ -10,7 +10,7 @@ from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
 from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
 
 
-class ChronicHeatGZN(VulnerabilityModelBase):
+class ChronicHeatGznModel(VulnerabilityModelBase):
     """Model which estiamtes the labour productivity impact based on chronic heat based on the paper "Neidell M,
     Graff Zivin J, Sheahan M,  Willwerth J, Fant C, Sarofim M, et al. (2021) Temperature and work:
     Time allocated to work under varying climate and labor market conditions."

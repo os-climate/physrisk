@@ -55,14 +55,6 @@ class TestImpactRequests(TestWithCredentials):
                 },
             ],
         }
-        # cache_folder = r"/users/joemoorhouse/code/data"
-        # import os, json
-        # with open(os.path.join(cache_folder, 'assets_test_real_estate.json')) as f:
-        #    assets = json.loads(f.read())
-
-        # longitudes = [item["longitude"] for item in assets["items"]]
-        # latitudes = [item["latitude"] for item in assets["items"]]
-        # (countries, continents) = get_countries_and_continents(longitudes, latitudes)
 
         request_dict = {
             "assets": assets,
@@ -78,8 +70,6 @@ class TestImpactRequests(TestWithCredentials):
         store = mock_hazard_model_store_inundation(TestData.longitudes, TestData.latitudes, curve)
 
         response = requests._get_asset_impacts(request, store=store)
-        # response_dict = requests.get(request_id="get_asset_impact", request_dict=request_dict, store=store)
-        # response = AssetImpactResponse(**json.loads(response_dict))
 
         self.assertEqual(response.asset_impacts[0].impacts[0].hazard_type, "CoastalInundation")
 

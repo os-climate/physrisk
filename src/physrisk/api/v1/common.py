@@ -45,6 +45,15 @@ class Assets(BaseModel):
     items: List[Asset]
 
 
+class BaseHazardRequest(BaseModel):
+    group_ids: List[str] = Field(
+        ["public"],
+        description="""List of data groups which can be used to service the request,
+            e.g. 'osc': available to OS-Climate members (e.g. pending license decision),
+                 'public'.""",
+    )
+
+
 class Country(BaseModel):
     """Country information."""
 

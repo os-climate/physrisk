@@ -2,14 +2,19 @@ import logging
 from collections import defaultdict
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
+from physrisk.data.inventory import Inventory
+from physrisk.kernel import hazards
+
 from ..data.hazard_data_provider import (
+    SourcePath,
+    get_source_path_generic,
     get_source_path_osc_chronic_heat,
     get_source_path_wri_coastal_inundation,
     get_source_path_wri_riverine_inundation,
 )
 from ..data.pregenerated_hazard_model import ZarrHazardModel
 from ..models import power_generating_asset_models as pgam
-from ..models.chronic_heat_models import ChronicHeatGZN
+from ..models.chronic_heat_models import ChronicHeatGznModel
 from ..models.real_estate_models import RealEstateCoastalInundationModel, RealEstateRiverineInundationModel
 from ..utils.helpers import get_iterable
 from .assets import Asset, IndustrialActivity, PowerGeneratingAsset, RealEstateAsset, TestAsset
@@ -30,7 +35,7 @@ class AssetImpactResult:
         hazard_data: Optional[Iterable[HazardDataResponse]] = None,
     ):
         self.impact = impact
-        # optional detailed results for drill-dowwn
+        # optional detailed results for drill-down
         self.hazard_data = hazard_data
         self.vulnerability = vulnerability
         self.event = event
@@ -44,6 +49,13 @@ def get_default_zarr_source_paths():
     }
 
 
+def get_source_paths_from_inventory(inventory: Inventory, embedded: Optional[Dict[type, SourcePath]] = None):
+    source_paths: Dict[type, SourcePath] = {}
+    for key, resource in inventory.resources.items():
+        source_paths[hazards.hazard_class(resource.type)] = get_source_path_generic(inventory, resource.type, embedded)
+    return source_paths
+
+
 def get_default_hazard_model():
     # Model that gets hazard event data from Zarr storage
     return ZarrHazardModel(get_default_zarr_source_paths())
@@ -54,7 +66,7 @@ def get_default_vulnerability_models():
     return {
         PowerGeneratingAsset: [pgam.InundationModel()],
         RealEstateAsset: [RealEstateCoastalInundationModel(), RealEstateRiverineInundationModel()],
-        IndustrialActivity: [ChronicHeatGZN()],
+        IndustrialActivity: [ChronicHeatGznModel()],
         TestAsset: [pgam.TemperatureModel()],
     }
 

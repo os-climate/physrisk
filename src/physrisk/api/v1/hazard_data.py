@@ -1,9 +1,12 @@
 from enum import Flag, auto
+from pathlib import PosixPath
 from typing import Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, Field
 
-from physrisk.api.v1.common import IntensityCurve
+from physrisk.api.v1.common import BaseHazardRequest, IntensityCurve
+
+# region HazardModel
 
 
 class Colormap(BaseModel):
@@ -27,7 +30,7 @@ class Colormap(BaseModel):
 
 
 class MapInfo(BaseModel):
-    """Provides information about map layer"""
+    """Provides information about map layer."""
 
     colormap: Optional[Colormap] = Field(description="Details of colormap.")
     array_name: Optional[str] = Field(
@@ -42,7 +45,7 @@ class MapInfo(BaseModel):
 
 
 class Period(BaseModel):
-    """A period belonging to a scenario"""
+    """Provides information about a period, which currently corresponds to a year, belonging to a scenario."""
 
     year: int
     map_id: str = Field(description="If present, identifier to be used for looking up map tiles from server.")
@@ -60,16 +63,17 @@ def expanded(item: str, key: str, param: str):
     return item and item.replace("{" + key + "}", param)
 
 
-class HazardModel(BaseModel):
-    """Provides the scenarios associated with a hazard model."""
+class HazardResource(BaseModel):
+    """Describes a set of data arrays that provide models of a hazard."""
 
-    type: Optional[str] = Field(description="Type of hazard.")
+    type: str = Field(description="Type of hazard.")
+    group_id: Optional[str] = Field("public")
     path: str
     id: str
     params: Optional[Dict[str, List[str]]]
     display_name: str
     description: str
-    array_name: Optional[str]  # alias of filename
+    array_name: str
     map: Optional[MapInfo]
     scenarios: List[Scenario]
     units: str
@@ -92,6 +96,12 @@ class HazardModel(BaseModel):
                 },
             )
 
+    def key(self):
+        return str(PosixPath(self.path, self.id))
+
+
+# endregion
+
 
 # region HazardAvailability
 
@@ -106,17 +116,34 @@ class InventorySource(Flag):
     HAZARD_TEST = auto()  # inventory stored in the S3 hazard_test location
 
 
-class HazardEventAvailabilityRequest(BaseModel):
-    event_types: Optional[List[str]]  # e.g. RiverineInundation
-    source: Optional[InventorySource]
+class HazardAvailabilityRequest(BaseModel):
+    types: Optional[List[str]]  # e.g. ["RiverineInundation"]
+    sources: Optional[List[str]] = Field(
+        description="Sources of inventory, can be 'embedded', 'hazard' or 'hazard_test'."
+    )
 
 
-class HazardEventAvailabilityResponse(BaseModel):
-    models: List[HazardModel]
+class HazardAvailabilityResponse(BaseModel):
+    models: List[HazardResource]
     colormaps: dict
 
 
 # endregion
+
+
+# region HazardDescription
+
+
+class HazardDescriptionRequest(BaseModel):
+    paths: List[str] = Field(description="List of paths to markdown objects.")
+
+
+class HazardDescriptionResponse(BaseModel):
+    descriptions: Dict[str, str] = Field(description="For each path (key), the description markdown (value).")
+
+
+# endregion
+
 
 # region HazardEventData
 
@@ -131,7 +158,7 @@ class HazardEventDataRequestItem(BaseModel):
     year: int
 
 
-class HazardEventDataRequest(BaseModel):
+class HazardEventDataRequest(BaseHazardRequest):
     interpolation: str = "floor"
     items: List[HazardEventDataRequestItem]
 

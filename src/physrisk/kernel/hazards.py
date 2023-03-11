@@ -1,3 +1,4 @@
+import sys
 from enum import Enum
 from typing import cast
 
@@ -18,7 +19,13 @@ class Hazard:
         return cast(HazardKind, hazard_type.kind)
 
 
-class Drought(Hazard):
+class Inundation(Hazard):
+    kind = HazardKind.acute
+    pass
+
+
+class CoastalInundation(Inundation):
+    kind = HazardKind.acute
     pass
 
 
@@ -27,8 +34,28 @@ class ChronicHeat(Hazard):
     pass
 
 
-class Inundation(Hazard):
-    kind = HazardKind.acute
+class CombinedInundation(Hazard):
+    kind = HazardKind.chronic
+    pass
+
+
+class Drought(Hazard):
+    kind = HazardKind.chronic
+    pass
+
+
+class Fire(Hazard):
+    kind = HazardKind.chronic
+    pass
+
+
+class Hail(Hazard):
+    kind = HazardKind.chronic
+    pass
+
+
+class Precipitation(Hazard):
+    kind = HazardKind.chronic
     pass
 
 
@@ -37,6 +64,10 @@ class RiverineInundation(Inundation):
     pass
 
 
-class CoastalInundation(Inundation):
-    kind = HazardKind.acute
+class Wind(Hazard):
+    kind = HazardKind.chronic
     pass
+
+
+def hazard_class(name: str):
+    return getattr(sys.modules[__name__], name)

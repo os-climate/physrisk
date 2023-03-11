@@ -46,7 +46,7 @@ class Assets(BaseModel):
 
 
 class BaseHazardRequest(BaseModel):
-    group_ids: Optional[List[str]] = Field(
+    group_ids: List[str] = Field(
         ["public"],
         description="""List of data groups which can be used to service the request,
             e.g. 'osc': available to OS-Climate members (e.g. pending license decision),

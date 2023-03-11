@@ -43,12 +43,11 @@ from .kernel.hazard_model import HazardEventDataResponse as hmHazardEventDataRes
 from .kernel.hazard_model import HazardParameterDataResponse
 
 # module level singletons, populated/updated on hazard data availability request
-_inventory: Optional[Inventory]
-_colormaps: Optional[Dict[str, Any]]
+_inventory: Optional[Inventory] = None
+_colormaps: Optional[Dict[str, Any]] = None
 
 # hooks to facilitate testing
 _hazard_test_local_path = ""
-# _hazard_test_local_path = "/Users/joemoorhouse/Code/hazard/src/test/test_output"
 
 
 def _create_inventory_reader():
@@ -78,7 +77,7 @@ def dumps(dict):
     return json.dumps(dict, cls=NumpyArrayEncoder)
 
 
-def hazard_models() -> Inventory:
+def hazard_resources() -> Inventory:
     global _inventory, _colormaps
     if _inventory is None:
         _inventory, _colormaps = _get_updated_hazard_resources()
@@ -116,17 +115,25 @@ def get(*, request_id, request_dict, store=None):
 def get_image(*, request_dict):
     global _create_zarr_store
     request = HazardImageRequest(**request_dict)
-    if not _read_permitted(request.group_ids, request.resource):
+    if not _read_permitted(request.group_ids, hazard_resources().resources[request.resource]):
         raise PermissionError()
-    model = hazard_models().resources[request.resource]
+    model = hazard_resources().resources[request.resource]
     path = str(PosixPath(model.path, model.map.array_name)).format(scenario=request.scenarioId, year=request.year)
     creator = ImageCreator(_create_zarr_store())  # store=ImageCreator.test_store(path))
     return creator.convert(path, colormap=request.colormap, min_value=request.min_value, max_value=request.max_value)
 
 
-def _read_permitted(group_ids: List[str], resource: str):
-    # can be extended as needed
-    return ("osc" in group_ids) or hazard_models().resources[resource].group_id == "public"
+def _read_permitted(group_ids: List[str], resource: HazardResource):
+    """_summary_
+
+    Args:
+        group_ids (List[str]): Groups to which requester belongs.
+        resourceId (str): Resource identifier.
+
+    Returns:
+        bool: True is requester is permitted access to models comprising resource.
+    """
+    return ("osc" in group_ids) or resource.group_id == "public"
 
 
 def _get_hazard_data_availability(request: HazardAvailabilityRequest):
@@ -146,10 +153,13 @@ def _get_hazard_data_description(request: HazardDescriptionRequest):
 
 
 def _get_hazard_data(request: HazardEventDataRequest, source_paths=None, store=None):
-    # if any(not _read_permitted(request.group_ids, i.model) for i in request.items):
-    #    raise PermissionError()
+    if any(
+        not _read_permitted(request.group_ids, hazard_resources().resources_by_type_id[(i.event_type, i.model)][0])
+        for i in request.items
+    ):
+        raise PermissionError()
     hazard_model = _create_hazard_model(
-        interpolation=request.interpolation, inventory=hazard_models(), source_paths=source_paths, store=store
+        interpolation=request.interpolation, inventory=hazard_resources(), source_paths=source_paths, store=store
     )
 
     # get hazard event types:

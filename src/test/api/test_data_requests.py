@@ -22,6 +22,7 @@ class TestDataRequests(TestWithCredentials):
         # test that validation passes:
         _ = requests.get(request_id="get_hazard_data_availability", request_dict={})
 
+    @unittest.skip("requires mocking.")
     def test_hazard_data_description(self):
         # test that validation passes:
         _ = requests.get(request_id="get_hazard_data_description", request_dict={"paths": ["test_path.md"]})

@@ -33,7 +33,7 @@ class TestImageCreation(TestWithCredentials):
         converter.convert(path, colormap="test")  # check no error running through mocked example.
         np.testing.assert_equal(result, expected.astype(np.uint8))
 
-    @unittest.skip("Just example")
+    @unittest.skip("just example")
     def test_write_file(self):
         # show how to create image from zarr array
         # useful for testing image generation

@@ -10,10 +10,10 @@ from physrisk.kernel.assets import Asset, IndustrialActivity
 from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse, HazardParameterDataResponse
 from physrisk.kernel.hazards import ChronicHeat
 from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
-from physrisk.models.chronic_heat_models import ChronicHeatGZN, get_impact_distrib
+from physrisk.models.chronic_heat_models import ChronicHeatGznModel, get_impact_distrib
 
 
-class ExamplewbgtGZJoinModel(ChronicHeatGZN):
+class ExampleWbgtGzJointModel(ChronicHeatGznModel):
 
     """Example implementation of the wbgt chronic heat model. This model
     inherits attributes from the ChronicHeatGZN model and estimate the
@@ -124,7 +124,7 @@ class TestChronicAssetImpact(unittest.TestCase):
         scenario = "ssp585"
         year = 2050
 
-        vulnerability_models = {IndustrialActivity: [ExamplewbgtGZJoinModel()]}
+        vulnerability_models = {IndustrialActivity: [ExampleWbgtGzJointModel()]}
 
         assets = [
             IndustrialActivity(lat, lon, type="Construction")

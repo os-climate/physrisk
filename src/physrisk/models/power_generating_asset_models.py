@@ -80,6 +80,11 @@ class InundationModel(VulnerabilityModelAcuteBase):
         return vul, event
 
 
+class WindTurbineModel:
+    def prob_collapse(self, turbine: Asset, wind_speed_hub: np.ndarray):
+        pass
+
+
 @applies_to_events([ChronicHeat])
 @applies_to_assets([PowerGeneratingAsset])
 class TemperatureModel(DeterministicVulnerabilityModel):

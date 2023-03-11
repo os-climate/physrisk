@@ -1,8 +1,12 @@
 import os
 from abc import ABC
-from typing import List, MutableMapping, Optional
+from pathlib import PosixPath
+from typing import Dict, List, MutableMapping, Optional
 
 from typing_extensions import Protocol
+
+from physrisk.data.inventory import Inventory
+from physrisk.kernel import hazards
 
 from .zarr_reader import ZarrReader
 
@@ -186,3 +190,21 @@ def get_source_path_osc_chronic_heat(*, model: str, scenario: str, year: int):
 
 
 # endregion
+
+
+def get_source_path_generic(inventory: Inventory, hazard_type: str, embedded: Optional[Dict[type, SourcePath]]):
+    resources_dict = dict(
+        (id, resources[0])
+        for ((htype, id), resources) in inventory.resources_by_type_id.items()
+        if htype == hazard_type
+    )
+
+    def get_source_path(*, model: str, scenario: str, year: int):
+        if model not in resources_dict:
+            if embedded is None:
+                return None
+            return embedded[hazards.hazard_class(hazard_type)](model=model, scenario=scenario, year=year)
+        resource = resources_dict[model]
+        return str(PosixPath(resource.path, resource.array_name.format(id=model, scenario=scenario, year=year)))
+
+    return get_source_path

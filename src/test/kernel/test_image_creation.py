@@ -8,6 +8,7 @@ import zarr.storage
 
 from physrisk.data import colormap_provider
 from physrisk.data.image_creator import ImageCreator
+from physrisk.data.zarr_reader import ZarrReader
 
 
 class TestImageCreation(TestWithCredentials):
@@ -21,7 +22,7 @@ class TestImageCreation(TestWithCredentials):
             path, shape=(1, im.shape[0], im.shape[1]), chunks=(1, im.shape[0], im.shape[1]), dtype="f4"
         )
         z[0, :, :] = im
-        converter = ImageCreator(store=store)
+        converter = ImageCreator(reader=ZarrReader(store))
         colormap = colormap_provider.colormap("test")
 
         def get_colors(index: int):
@@ -40,5 +41,5 @@ class TestImageCreation(TestWithCredentials):
         test_output_dir = "{set me}"
         test_path = "wildfire/jupiter/v1/wildfire_probability_ssp585_2050_map"
         store = zarr.DirectoryStore(os.path.join(test_output_dir, "hazard_test", "hazard.zarr"))
-        creator = ImageCreator(store)
+        creator = ImageCreator(ZarrReader(store))
         creator.to_file(os.path.join(test_output_dir, "test.png"), test_path)

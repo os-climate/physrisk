@@ -11,21 +11,33 @@ import numpy as np
 import numpy.testing
 
 from physrisk import RiverineInundation, requests
-from physrisk.data.hazard_data_provider import get_source_path_wri_riverine_inundation
+from physrisk.container import Container
 from physrisk.data.inventory import EmbeddedInventory, Inventory
+from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
+from physrisk.data.zarr_reader import ZarrReader
 from physrisk.kernel.calculation import get_source_paths_from_inventory
 from physrisk.kernel.hazards import ChronicHeat
 
 
 class TestDataRequests(TestWithCredentials):
+    def setUp(self):
+        super().setUp()
+
+    def tearDown(self):
+        super().tearDown()
+
     def test_hazard_data_availability(self):
         # test that validation passes:
-        _ = requests.get(request_id="get_hazard_data_availability", request_dict={})
+        container = Container()
+        requester = container.requester()
+        _ = requester.get(request_id="get_hazard_data_availability", request_dict={})
 
     @unittest.skip("requires mocking.")
     def test_hazard_data_description(self):
         # test that validation passes:
-        _ = requests.get(request_id="get_hazard_data_description", request_dict={"paths": ["test_path.md"]})
+        container = Container()
+        requester = container.requester
+        _ = requester.get(request_id="get_hazard_data_description", request_dict={"paths": ["test_path.md"]})
 
     def test_generic_source_path(self):
         inventory = Inventory(EmbeddedInventory().to_resources())
@@ -55,7 +67,7 @@ class TestDataRequests(TestWithCredentials):
         store = get_mock_hazard_model_store_single_curve()
 
         result = requests._get_hazard_data(
-            request, {RiverineInundation: get_source_path_wri_riverine_inundation}, store=store
+            request, Inventory(EmbeddedInventory().to_resources()), ZarrHazardModel(ZarrReader(store=store))
         )
 
         result.items[0].intensity_curve_set[0].intensities
@@ -85,12 +97,19 @@ class TestDataRequests(TestWithCredentials):
 
         store = mock_hazard_model_store_heat(TestData.longitudes, TestData.latitudes)
 
-        result = requests._get_hazard_data(request, store=store)
+        inventory = Inventory(EmbeddedInventory().to_resources())
+        source_paths = get_source_paths_from_inventory(inventory)
+        result = requests._get_hazard_data(
+            request, inventory, ZarrHazardModel(ZarrReader(store), source_paths=source_paths)
+        )
         numpy.testing.assert_array_almost_equal_nulp(result.items[0].intensity_curve_set[0].intensities[0], 600.0)
 
     @unittest.skip("requires OSC environment variables set")
     def test_zarr_reading_live(self):
         # needs valid OSC_S3_BUCKET, OSC_S3_ACCESS_KEY, OSC_S3_SECRET_KEY
+        container = Container()
+        requester = container.requester()
+
         request1 = {
             "items": [
                 {
@@ -105,9 +124,9 @@ class TestDataRequests(TestWithCredentials):
             ],
         }
 
-        response_floor = requests.get(request_id="get_hazard_data", request_dict=request1)
+        response_floor = requester.get(request_id="get_hazard_data", request_dict=request1)
         request1["interpolation"] = "linear"  # type: ignore
-        response_linear = requests.get(request_id="get_hazard_data", request_dict=request1)
+        response_linear = requester.get(request_id="get_hazard_data", request_dict=request1)
         print(response_linear)
 
         floor = json.loads(response_floor)["items"][0]["intensity_curve_set"][5]["intensities"]
@@ -129,5 +148,5 @@ class TestDataRequests(TestWithCredentials):
                 }
             ],
         }
-        response = requests.get(request_type="get_hazard_data", request_dict=request2)
+        response = requester.get(request_type="get_hazard_data", request_dict=request2)
         print(response)

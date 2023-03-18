@@ -5,7 +5,7 @@ import numpy as np
 import zarr
 import zarr.core
 
-from ..utils.lazy_importing import lazy_import
+from ..utils.lazy import lazy_import
 
 rasterio = lazy_import("rasterio")
 tifffile = lazy_import("tifffile")

@@ -9,6 +9,7 @@ import zarr
 from fsspec.implementations.memory import MemoryFileSystem
 
 from physrisk.api.v1.hazard_data import HazardAvailabilityRequest, HazardResource, Scenario
+from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.requests import _get_hazard_data_availability
@@ -17,7 +18,11 @@ from physrisk.requests import _get_hazard_data_availability
 class TestEventRetrieval(TestWithCredentials):
     def test_hazard_data_availability_summary(self):
         # check validation passes calling in service-like way
-        response = _get_hazard_data_availability(HazardAvailabilityRequest(sources=["embedded"]))  # , "hazard_test"])
+        embedded = EmbeddedInventory()
+        inventory = Inventory(embedded.to_resources())
+        response = _get_hazard_data_availability(
+            HazardAvailabilityRequest(sources=["embedded"]), inventory, embedded.colormaps()
+        )  # , "hazard_test"])
         assert len(response.models) > 0  # rely on Pydantic validation for test
 
     def test_set_get_inventory(self):

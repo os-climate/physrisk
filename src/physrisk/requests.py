@@ -1,18 +1,16 @@
 import importlib
 import json
-import os
 from importlib import import_module
 from pathlib import PosixPath
 from typing import Any, Dict, List, Optional, cast
 
-import fsspec.implementations.local as local
 import numpy as np
-import zarr
 
 import physrisk.data.static.example_portfolios
 from physrisk.api.v1.common import Distribution, ExceedanceCurve, VulnerabilityDistrib
 from physrisk.api.v1.hazard_image import HazardImageRequest
 from physrisk.data.inventory_reader import InventoryReader
+from physrisk.data.zarr_reader import ZarrReader
 
 from .api.v1.hazard_data import (
     HazardAvailabilityRequest,
@@ -35,35 +33,83 @@ from .api.v1.impact_req_resp import (
 )
 from .data.image_creator import ImageCreator
 from .data.inventory import EmbeddedInventory, Inventory
-from .data.pregenerated_hazard_model import ZarrHazardModel
 from .kernel import Asset, Hazard
 from .kernel import calculation as calc
 from .kernel.hazard_model import HazardDataRequest
 from .kernel.hazard_model import HazardEventDataResponse as hmHazardEventDataResponse
-from .kernel.hazard_model import HazardParameterDataResponse
+from .kernel.hazard_model import HazardModel, HazardParameterDataResponse
 
-# module level singletons, populated/updated on hazard data availability request
-_inventory: Optional[Inventory] = None
-_colormaps: Optional[Dict[str, Any]] = None
-
-# hooks to facilitate testing
-_hazard_test_local_path = ""
+Colormaps = Dict[str, Any]
 
 
-def _create_inventory_reader():
-    global _hazard_test_local_path
-    if _hazard_test_local_path == "":
-        return InventoryReader()
-    # otherwise, use local test version
-    return InventoryReader(fs=local.LocalFileSystem(), base_path=_hazard_test_local_path)
+class Requester:
+    def __init__(
+        self,
+        hazard_model: HazardModel,
+        inventory: Inventory,
+        inventory_reader: InventoryReader,
+        reader: ZarrReader,
+        colormaps: Colormaps,
+    ):
+        self.colormaps = colormaps
+        self.hazard_model = hazard_model
+        self.inventory = inventory
+        self.inventory_reader = inventory_reader
+        self.zarr_reader = reader
+
+    def get(self, *, request_id, request_dict, store=None):
+        if request_id == "get_hazard_data":
+            request = HazardEventDataRequest(**request_dict)
+            return json.dumps(
+                _get_hazard_data(request, inventory=self.inventory, hazard_model=self.hazard_model).dict()
+            )
+        elif request_id == "get_hazard_data_availability":
+            request = HazardAvailabilityRequest(**request_dict)
+            return json.dumps(_get_hazard_data_availability(request, self.inventory, self.colormaps).dict())
+        elif request_id == "get_hazard_data_description":
+            request = HazardDescriptionRequest(**request_dict)
+            return json.dumps(_get_hazard_data_description(request).dict())
+        elif request_id == "get_asset_impact":
+            request = AssetImpactRequest(**request_dict)
+            return dumps(_get_asset_impacts(request, self.hazard_model).dict())
+        elif request_id == "get_example_portfolios":
+            return dumps(_get_example_portfolios())
+        else:
+            raise ValueError(f"request type '{request_id}' not found")
+
+    def get_image(self, *, request_dict):
+        inventory = self.inventory
+        zarr_reader = self.zarr_reader
+        request = HazardImageRequest(**request_dict)
+        if not _read_permitted(request.group_ids, inventory.resources[request.resource]):
+            raise PermissionError()
+        model = inventory.resources[request.resource]
+        path = str(PosixPath(model.path, model.map.array_name)).format(scenario=request.scenarioId, year=request.year)
+        creator = ImageCreator(zarr_reader)  # store=ImageCreator.test_store(path))
+        return creator.convert(
+            path, colormap=request.colormap, min_value=request.min_value, max_value=request.max_value
+        )
 
 
-def _create_zarr_store():
-    global _hazard_test_local_path
-    if _hazard_test_local_path == "":
-        return None
-    # otherwise, use local test version
-    return zarr.DirectoryStore(os.path.join(_hazard_test_local_path, "hazard_test", "hazard.zarr"))
+def _create_inventory(reader: Optional[InventoryReader] = None, sources: Optional[List[str]] = None):
+    models: List[HazardResource] = []
+    colormaps: Dict[str, Dict[str, Any]] = {}
+    request_sources = ["embedded"] if sources is None else [s.lower() for s in sources]
+    for source in request_sources:
+        if source == "embedded":
+            inventory = EmbeddedInventory()
+            for model in inventory.to_resources():
+                models.append(model)
+            colormaps.update(inventory.colormaps())
+        elif source == "hazard" or source == "hazard_test":
+            if reader is not None:
+                for model in reader.read(source):
+                    models.append(model)
+    return Inventory(models)
+
+
+def create_source_paths(inventory: Inventory):
+    return calc.get_source_paths_from_inventory(inventory, embedded=calc.get_default_zarr_source_paths())
 
 
 class NumpyArrayEncoder(json.JSONEncoder):
@@ -75,52 +121,6 @@ class NumpyArrayEncoder(json.JSONEncoder):
 
 def dumps(dict):
     return json.dumps(dict, cls=NumpyArrayEncoder)
-
-
-def hazard_resources() -> Inventory:
-    global _inventory, _colormaps
-    if _inventory is None:
-        _inventory, _colormaps = _get_updated_hazard_resources()
-    return _inventory
-
-
-def colormaps() -> Dict[str, Any]:
-    global _inventory, _colormaps
-    if _colormaps is None:
-        _inventory, _colormaps = _get_updated_hazard_resources(["embedded", "hazard_test"])
-    return _colormaps
-
-
-def get(*, request_id, request_dict, store=None):
-    if store is None:
-        store = _create_zarr_store()
-    if request_id == "get_hazard_data":
-        request = HazardEventDataRequest(**request_dict)
-        return json.dumps(_get_hazard_data(request, store=store).dict())
-    elif request_id == "get_hazard_data_availability":
-        request = HazardAvailabilityRequest(**request_dict)
-        return json.dumps(_get_hazard_data_availability(request).dict())
-    elif request_id == "get_hazard_data_description":
-        request = HazardDescriptionRequest(**request_dict)
-        return json.dumps(_get_hazard_data_description(request).dict())
-    elif request_id == "get_asset_impact":
-        request = AssetImpactRequest(**request_dict)
-        return dumps(_get_asset_impacts(request, store=store).dict())
-    elif request_id == "get_example_portfolios":
-        return dumps(_get_example_portfolios())
-    else:
-        raise ValueError(f"request type '{request_id}' not found")
-
-
-def get_image(*, request_dict):
-    global _create_zarr_store
-    request = HazardImageRequest(**request_dict)
-    if not _read_permitted(request.group_ids, hazard_resources().resources[request.resource]):
-        raise PermissionError()
-    model = hazard_resources().resources[request.resource]
-    path = str(PosixPath(model.path, model.map.array_name)).format(scenario=request.scenarioId, year=request.year)
-    creator = ImageCreator(_create_zarr_store())  # store=ImageCreator.test_store(path))
-    return creator.convert(path, colormap=request.colormap, min_value=request.min_value, max_value=request.max_value)
 
 
 def _read_permitted(group_ids: List[str], resource: HazardResource):
@@ -136,31 +136,24 @@ def _read_permitted(group_ids: List[str], resource: HazardResource):
     return ("osc" in group_ids) or resource.group_id == "public"
 
 
-def _get_hazard_data_availability(request: HazardAvailabilityRequest):
-    global _inventory, _colormaps
-    _inventory, _colormaps = _get_updated_hazard_resources(request.sources)
-    assert _inventory is not None
+def _get_hazard_data_availability(request: HazardAvailabilityRequest, inventory: Inventory, colormaps: dict):
     response = HazardAvailabilityResponse(
-        models=list(_inventory.resources.values()), colormaps=_colormaps
+        models=list(inventory.resources.values()), colormaps=colormaps
     )  # type: ignore
     return response
 
 
-def _get_hazard_data_description(request: HazardDescriptionRequest):
-    reader = InventoryReader()
+def _get_hazard_data_description(request: HazardDescriptionRequest, reader: InventoryReader):
     descriptions = reader.read_description_markdown(request.paths)
     return HazardDescriptionResponse(descriptions=descriptions)
 
 
-def _get_hazard_data(request: HazardEventDataRequest, source_paths=None, store=None):
+def _get_hazard_data(request: HazardEventDataRequest, inventory: Inventory, hazard_model: HazardModel):
     if any(
-        not _read_permitted(request.group_ids, hazard_resources().resources_by_type_id[(i.event_type, i.model)][0])
+        not _read_permitted(request.group_ids, inventory.resources_by_type_id[(i.event_type, i.model)][0])
         for i in request.items
     ):
         raise PermissionError()
-    hazard_model = _create_hazard_model(
-        interpolation=request.interpolation, inventory=hazard_resources(), source_paths=source_paths, store=store
-    )
 
     # get hazard event types:
     event_types = Hazard.__subclasses__()
@@ -212,26 +205,6 @@ def _get_hazard_data(request: HazardEventDataRequest, source_paths=None, store=N
     return response
 
 
-def _get_updated_hazard_resources(sources: Optional[List[str]] = None):
-    global _create_inventory_reader
-    models: List[HazardResource] = []
-    colormaps: Dict[str, Dict[str, Any]] = {}
-    request_sources = ["embedded"] if sources is None else [s.lower() for s in sources]
-    reader = None
-    for source in request_sources:
-        if source == "embedded":
-            inventory = EmbeddedInventory()
-            for model in inventory.to_resources():
-                models.append(model)
-            colormaps.update(inventory.colormaps())
-        elif source == "hazard" or source == "hazard_test":
-            if reader is None:
-                reader = _create_inventory_reader()
-            for model in reader.read(source):
-                models.append(model)
-    return Inventory(models), colormaps
-
-
 def create_assets(assets: Assets):
     """Create list of Asset objects from the Assets API object:"""
     module = import_module("physrisk.kernel.assets")
@@ -247,20 +220,7 @@ def create_assets(assets: Assets):
     return asset_objs
 
 
-def _create_hazard_model(interpolation="floor", inventory: Optional[Inventory] = None, source_paths=None, store=None):
-    if source_paths is None:
-        source_paths = calc.get_default_zarr_source_paths()
-
-    if inventory is not None:
-        source_paths = calc.get_source_paths_from_inventory(inventory, source_paths)
-
-    hazard_model = ZarrHazardModel(source_paths, store=store, interpolation=interpolation)
-
-    return hazard_model
-
-
-def _get_asset_impacts(request: AssetImpactRequest, source_paths=None, store=None):
-    hazard_model = _create_hazard_model(source_paths=source_paths, store=store)
+def _get_asset_impacts(request: AssetImpactRequest, hazard_model: HazardModel):
     vulnerability_models = calc.get_default_vulnerability_models()
 
     # we keep API definition of asset separate from internal Asset class; convert by reflection

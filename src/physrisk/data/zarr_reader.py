@@ -45,18 +45,7 @@ class ZarrReader:
             if get_env is None:
                 raise TypeError("if no store specified, get_env is required to provide credentials")
 
-            access_key = get_env(self.__access_key, None)
-            secret_key = get_env(self.__secret_key, None)
-            s3_bucket = get_env(self.__S3_bucket, "redhat-osc-physical-landing-647521352890")
-            zarr_path = get_env(self.__zarr_path, "hazard/hazard.zarr")
-
-            s3 = s3fs.S3FileSystem(anon=False, key=access_key, secret=secret_key)
-
-            store = s3fs.S3Map(
-                root=str(PurePosixPath(s3_bucket, zarr_path)),
-                s3=s3,
-                check=False,
-            )
+            store = ZarrReader.create_s3_zarr_store(get_env)
 
         self._root = zarr.open(store, mode="r")
         self._path_provider = path_provider
@@ -66,6 +55,22 @@ class ZarrReader:
         path = self._path_provider(set_id) if self._path_provider is not None else set_id
         z = self._root[path]  # e.g. inundation/wri/v2/<filename>
         return z
+
+    @classmethod
+    def create_s3_zarr_store(cls, get_env: Callable[[str, Optional[str]], str] = get_env):
+        access_key = get_env(cls.__access_key, None)
+        secret_key = get_env(cls.__secret_key, None)
+        s3_bucket = get_env(cls.__S3_bucket, "redhat-osc-physical-landing-647521352890")
+        zarr_path = get_env(cls.__zarr_path, "hazard/hazard.zarr")
+
+        s3 = s3fs.S3FileSystem(anon=False, key=access_key, secret=secret_key)
+
+        store = s3fs.S3Map(
+            root=str(PurePosixPath(s3_bucket, zarr_path)),
+            s3=s3,
+            check=False,
+        )
+        return store
 
     def get_curves(self, set_id, longitudes, latitudes, interpolation="floor"):
         """Get intensity curve for each latitude and longitude coordinate pair.

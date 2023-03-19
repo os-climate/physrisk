@@ -159,8 +159,8 @@ def cmip6_scenario_to_rcp(scenario: str):
     elif scenario == "ssp585":
         return "rcp8p5"
     else:
-        if scenario not in ["rcp2p6" "rcp4p5", "rcp8p5", "historical"]:
-            raise ValueError(f"unexpcted scneario {scenario}")
+        if scenario not in ["rcp2p6", "rcp4p5", "rcp8p5", "historical"]:
+            raise ValueError(f"unexpected scenario {scenario}")
         return scenario
 
 
@@ -205,6 +205,8 @@ def get_source_path_generic(inventory: Inventory, hazard_type: str, embedded: Op
                 return None
             return embedded[hazards.hazard_class(hazard_type)](model=model, scenario=scenario, year=year)
         resource = resources_dict[model]
-        return str(PosixPath(resource.path, resource.array_name.format(id=model, scenario=scenario, year=year)))
+        # if scenario not in [s.id for s in resource.scenarios]
+        proxy_scenario = cmip6_scenario_to_rcp(scenario) if resource.scenarios[0].id.startswith("rcp") else scenario
+        return str(PosixPath(resource.path, resource.array_name.format(id=model, scenario=proxy_scenario, year=year)))
 
     return get_source_path

@@ -1,5 +1,5 @@
 import io
-from typing import Callable, List, MutableMapping, Optional
+from typing import Callable, List, Optional
 
 import numpy as np
 import PIL.Image as Image
@@ -14,8 +14,8 @@ class ImageCreator:
     Intended for arrays <~1500x1500 (otherwise, recommended to use Mapbox tiles - or similar).
     """
 
-    def __init__(self, store: Optional[MutableMapping] = None):
-        self.reader = ZarrReader(store=store)
+    def __init__(self, reader: Optional[ZarrReader] = None):
+        self.reader = ZarrReader() if reader is None else reader
 
     def convert(
         self,

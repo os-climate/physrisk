@@ -8,11 +8,13 @@ from physrisk.requests import Requester, _create_inventory, create_source_paths
 
 
 class Container(containers.DeclarativeContainer):
+    config = providers.Configuration(default={"zarr_sources": ["embedded", "hazard"]})
+
     colormaps = providers.Singleton(lambda: EmbeddedInventory().colormaps())
 
     inventory_reader = providers.Singleton(InventoryReader)
 
-    inventory = providers.Singleton(_create_inventory, reader=inventory_reader, sources=["embedded", "hazard"])
+    inventory = providers.Singleton(_create_inventory, reader=inventory_reader, sources=config.zarr_sources)
 
     source_paths = providers.Factory(create_source_paths, inventory=inventory)
 

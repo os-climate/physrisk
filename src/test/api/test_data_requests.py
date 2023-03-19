@@ -1,5 +1,6 @@
 import json
 import unittest
+from test.api.container import TestContainer
 from test.base_test import TestWithCredentials
 from test.data.hazard_model_store import (
     TestData,
@@ -29,6 +30,7 @@ class TestDataRequests(TestWithCredentials):
     def test_hazard_data_availability(self):
         # test that validation passes:
         container = Container()
+        container.override(TestContainer())
         requester = container.requester()
         _ = requester.get(request_id="get_hazard_data_availability", request_dict={})
 

@@ -114,7 +114,8 @@ def __next_non_equal_index(ndarray, i):
 
 class ExceedanceCurve:
     """A point on an exceedance curve comprises an value, v, and a probability, p.
-    p is the probability that the random variable >= v, e.g. an event occurs with event value (e.g. intensity) >= v."""
+    p is the probability that the random variable >= v, e.g. an event occurs with event value (e.g. intensity) >= v.
+    """
 
     __slots__ = ["probs", "values"]
 

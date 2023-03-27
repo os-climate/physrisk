@@ -4,7 +4,7 @@ import numpy as np
 from scipy.stats import norm
 
 from physrisk.kernel.assets import Asset
-from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse
+from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse, HazardParameterDataResponse
 from physrisk.kernel.hazards import ChronicHeat
 from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
 from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
@@ -73,8 +73,8 @@ class ChronicHeatGznModel(VulnerabilityModelBase):
 
         baseline_dd_above_mean, scenario_dd_above_mean = data_responses
 
-        # assert isinstance(baseline_dd_above_mean, HazardParameterDataResponse)
-        # assert isinstance(scenario_dd_above_mean, HazardParameterDataResponse)
+        assert isinstance(baseline_dd_above_mean, HazardParameterDataResponse)
+        assert isinstance(scenario_dd_above_mean, HazardParameterDataResponse)
 
         delta_dd_above_mean: float = scenario_dd_above_mean.parameter - baseline_dd_above_mean.parameter * self.delta
 

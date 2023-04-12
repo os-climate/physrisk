@@ -35,7 +35,7 @@ class HazardDataRequest:
 
 
 class HazardDataResponse:
-    parameter: np.ndarray
+    pass
 
 
 class HazardEventDataResponse(HazardDataResponse):
@@ -46,8 +46,9 @@ class HazardEventDataResponse(HazardDataResponse):
 
         Args:
             return_periods: return periods in years.
-            intensities: hazard event intensity for each return period.
+            intensities: hazard event intensity for each return period, or set of hazard event intensities corresponding to different events. # noqa: E501
         """
+
         self.return_periods = return_periods
         self.intensities = intensities
 

@@ -14,11 +14,11 @@ class Asset:
 
 @dataclass
 class WindTurbine(Asset):
-    capacity: float
-    hub_height: float
-    cut_in_speed: float
-    cut_out_speed: float
-    fixed_base: bool = True
+    capacity: Optional[float] = None
+    hub_height: Optional[float] = None
+    cut_in_speed: Optional[float] = None
+    cut_out_speed: Optional[float] = None
+    fixed_base: Optional[bool] = True
     rotor_diameter: Optional[float] = None
 
 

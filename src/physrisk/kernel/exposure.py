@@ -5,7 +5,7 @@ from typing import Dict, Iterable, Tuple
 import numpy as np
 
 from physrisk.kernel.assets import Asset
-from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse
+from physrisk.kernel.hazard_model import HazardDataRequest, HazardParameterDataResponse
 from physrisk.kernel.hazards import ChronicHeat, CombinedInundation, Drought, Fire, Hail, Wind
 
 
@@ -43,7 +43,7 @@ class JupterExposureMeasure:
             for (hazard_type, model) in self.exposure_bins.keys()
         ]
 
-    def get_exposures(self, asset: Asset, data_responses: Iterable[HazardDataResponse]):
+    def get_exposures(self, asset: Asset, data_responses: Iterable[HazardParameterDataResponse]):
         result: Dict[type, Category] = {}
         for (k, v), resp in zip(self.exposure_bins.items(), data_responses):
             (hazard_type, _) = k

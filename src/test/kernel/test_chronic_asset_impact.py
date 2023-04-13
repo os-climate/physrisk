@@ -1,6 +1,6 @@
 import unittest
 from test.data.hazard_model_store import TestData, mock_hazard_model_store_heat
-from typing import Iterable, Union
+from typing import Iterable, List, Union
 
 import numpy as np
 from scipy.stats import norm
@@ -67,7 +67,7 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
             ),
         ]
 
-    def get_impact(self, asset: Asset, data_responses: Iterable[HazardDataResponse]) -> ImpactDistrib:
+    def get_impact(self, asset: Asset, data_responses: List[HazardDataResponse]) -> ImpactDistrib:
         """Calcaulate impact (disruption) of asset based on the hazard data returned.
 
         Args:
@@ -77,6 +77,7 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
         Returns:
             Probability distribution of impacts.
         """
+        assert isinstance(asset, IndustrialActivity)
         baseline_dd_above_mean, scenario_dd_above_mean = data_responses
 
         # check expected type; can maybe do this more nicely

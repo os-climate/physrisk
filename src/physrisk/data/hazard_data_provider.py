@@ -1,6 +1,6 @@
 import os
 from abc import ABC
-from pathlib import PosixPath
+from pathlib import PurePosixPath
 from typing import Dict, List, MutableMapping, Optional
 
 from typing_extensions import Protocol
@@ -207,6 +207,8 @@ def get_source_path_generic(inventory: Inventory, hazard_type: str, embedded: Op
         resource = resources_dict[model]
         # if scenario not in [s.id for s in resource.scenarios]
         proxy_scenario = cmip6_scenario_to_rcp(scenario) if resource.scenarios[0].id.startswith("rcp") else scenario
-        return str(PosixPath(resource.path, resource.array_name.format(id=model, scenario=proxy_scenario, year=year)))
+        return str(
+            PurePosixPath(resource.path, resource.array_name.format(id=model, scenario=proxy_scenario, year=year))
+        )
 
     return get_source_path

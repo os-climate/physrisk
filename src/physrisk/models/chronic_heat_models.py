@@ -73,9 +73,6 @@ class ChronicHeatGznModel(VulnerabilityModelBase):
         assert isinstance(asset, IndustrialActivity)
         baseline_dd_above_mean, scenario_dd_above_mean = data_responses
 
-        # assert isinstance(baseline_dd_above_mean, HazardParameterDataResponse)
-        # assert isinstance(scenario_dd_above_mean, HazardParameterDataResponse)
-
         delta_dd_above_mean: float = scenario_dd_above_mean.parameter - baseline_dd_above_mean.parameter * self.delta
 
         hours_worked = self.total_labour_hours

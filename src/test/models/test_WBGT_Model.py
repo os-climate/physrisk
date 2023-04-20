@@ -1,10 +1,8 @@
-import os
 import unittest
 from test.data.hazard_model_store import TestData, mock_hazard_model_store_heat_WBGT
 from typing import Iterable, List, Union
 
 import numpy as np
-from dotenv import load_dotenv
 
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.kernel import calculation
@@ -13,16 +11,6 @@ from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse, 
 from physrisk.kernel.hazards import ChronicHeat
 from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
 from physrisk.models.chronic_heat_models import ChronicHeatGznModel, get_impact_distrib
-
-
-def set_environmental_variables():
-    dotenv_dir = os.environ.get("CREDENTIALS_DOTENV-DIR", os.getcwd())
-    dotenv_path = os.path.join(dotenv_dir, "credentials.env")
-    if os.path.exists(dotenv_path):
-        load_dotenv(dotenv_path=dotenv_path, override=True)
-
-
-set_environmental_variables()
 
 
 class ExampleWbgtGzJointModel(ChronicHeatGznModel):

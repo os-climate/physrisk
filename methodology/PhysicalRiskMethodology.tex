@@ -1,3 +1,11 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{graphicx}
+\usepackage{amsmath}
+
+\title{OS-Climate documentation - Heat}
+\author{mariem.bouchaala}
+\date{September 2022}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Generic Methodology for Physical Climate Risk Modelling
@@ -94,18 +102,19 @@
 \title{Physical Climate Risk Methodology}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\author{Joe Moorhouse\thanks{\textit{E-mail}: Joe.Moorhouse@gmail.com.}
+\author{Joe Moorhouse\thanks{\textit{E-mail}: Joe.Moorhouse@gmail.com}
         \and
         Florian Gallo\thanks{}
         \and
-        Davide Ferri\thanks{\textit{E-mail}:
-        davide.ferri.94@gmail.com
+        Mariem Bouchaala\thanks{{E-mail}: mariem.bouchaala@essec.edu}
+        \and
+        Davide Ferri\thanks{\textit{E-mail}:davide.ferri.94@gmail.com
         \smallskip
         \newline% \indent
     The views expressed in this paper are those of the authors and do not necessarily reflect the views and policies of their respective employers.}
     }
 
-\date{June 2022 [Draft]}
+\date{October 2022 [Draft]}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -140,12 +149,11 @@
 The changing climate introduces new risks. These can be grouped into:
 \begin{enumerate}
 	\item Physical risks -- risks arising from the physical effects of climate change
-	\item Transition risks -- risks arising from the transition to a low-carbon economy
-	\item Liability risks -- considered a third by some \cite{WoetzelEtAl:2020}, these are risks arising from those affected by anthropogenic climate change seeking compensation  
+	\item Transition risks -- risks arising from the transition to a low-carbon economy\footnote{Liability risks are considered a third by some\cite{WoetzelEtAl:2020}. These are risks arising from those affected by anthropogenic climate change seeking compensation.}   
 \end{enumerate}
 
 
-The methodology presented in this document concerns the assessment of physical risk. Physical risk comes from changes in climate \emph{\gls{hazard}s}, climate-related physical phenomena that have the potential to impact natural and socioeconomic systems \cite{WoetzelEtAl:2020}\cite{MitchellEtAl:2017}. Hazards can be divided into \emph{\gls{acute_hazard}s} and \emph{\gls{chronic_hazard}s}. Acute hazards are \emph{events}, for example heat waves, inundations (floods) and hurricanes. Chronic hazards are long-term shifts in climate parameters such as average temperature, sea-level or water stress indices.  
+The methodology presented in this document concerns the assessment of physical risk. Physical risk comes from changes in climate \emph{\gls{hazard}s}, climate-related physical phenomena that have the potential to impact natural and socioeconomic systems \cite{WoetzelEtAl:2020}\cite{MitchellEtAl:2017}. Hazards can be divided into \emph{\gls{acute_hazard}s} and \emph{\gls{chronic_hazard}s}. Acute hazards are those associated with \emph{events}, for example heat waves, inundations (floods) and hurricanes. Chronic hazards are long-term shifts in climate parameters such as average temperature, sea-level or water stress indices.  
 
 
 \newglossaryentry{hazard}
@@ -175,7 +183,7 @@ The methodology presented in this document concerns the assessment of physical r
 }
 
 
-A model designed to quantify physical risk must take into account: a) hazards' likelihood of occurrence  b) the damage or disruption caused by a hazard c) the consequence of this damage/disruption. Damage/disruption caused by a hazard is determined by the \emph{vulnerability} of the asset that is exposed\footnote{\emph{Exposure} of an asset to a hazard is defined after \cite{MaskreyEtAl:2011}; for most purposes this is determined by asset location.}. With a focus on financial risk, damage/disruption refers to damage of financial assets and disruption to economic activities. More generally, damage can refer to natural assets and disruption to populations and ecosystems. Hereafter we use the word `asset' to describe both physical assets and economic activities. As an example, the physical infrastructure of a power generating asset may be damaged by inundation and its electricity production may be disrupted, leading to a loss in revenue. 
+A model designed to quantify physical risk must take into account: a) hazards' likelihood of occurrence  b) the damage or disruption caused by a hazard c) the consequence of this damage/disruption. Damage/disruption caused by a hazard is determined by the \emph{vulnerability} of the asset that is exposed\footnote{\emph{Exposure} of an asset to a hazard is defined after \cite{MaskreyEtAl:2011}; for most purposes this is determined by asset location.}. With a focus on financial risk, damage/disruption refers to damage of financial assets and disruption to business activities. More generally, damage can refer to natural assets and disruption to populations and ecosystems. Hereafter we use the word `asset' to describe both physical assets and business activities. As an example, the physical infrastructure of a power generating asset may be damaged by inundation and its electricity production may be disrupted, leading to a loss in revenue. 
 
 We assign explicit names to these three components, a), b) and c) for the financial risk case:
 \begin{enumerate}[a)]
@@ -184,9 +192,9 @@ We assign explicit names to these three components, a), b) and c) for the financ
 \item Financial
 \end{enumerate}
 
-A precise model of the physical risk from a single (localized) asset or economic activity must consider a hazard's likelihood of occurrence \emph{at the asset's locale} (i.e. if the asset is exposed to the hazard) and vulnerability to the hazard particular to that asset. This requires specific knowledge of the asset. For example a power station that relies on air-cooling might be disrupted by a period of extremely high air temperature. In addition, an asset may be impacted through its reliance on other assets; a manufacturing facility may rely on continuity of electricity supply for example.
+A precise model of the physical risk from a single (localized) asset or business activity must consider a hazard's likelihood of occurrence \emph{at the asset's locale} (i.e. if the asset is exposed to the hazard) and vulnerability to the hazard particular to that asset. This requires specific knowledge of the asset. For example a power station that relies on air-cooling might be disrupted by a period of extremely high air temperature. In addition, an asset may be impacted through its reliance on other assets; a manufacturing facility may rely on continuity of electricity supply for example.
 
-Such precise models of physical risk can be complex and may rely on information that is not readily available. For these reasons, approximations are commonly used. Approximate models still typically include hazard, vulnerability and financial components \cite{BertramEtAl:2020}\cite{WoetzelEtAl:2020} -- even highly-approximate global-scale impact analyses used in macroeconomic models.
+Such precise models of physical risk can be complex and may rely on information that is not readily available. For these reasons, approximations are commonly used, although approximate models still typically include hazard, vulnerability and financial components \cite{BertramEtAl:2020}\cite{WoetzelEtAl:2020} -- even highly-approximate global-scale impact analyses used in macroeconomic models.
 
 The purpose of this paper is to present the methodology of a framework that is sufficiently generic to be used for a wide range of physical climate risk models, both precise and approximate as required. The ability to perform precise, fine-grained calculations is an important requirement therefore. This paper serves as a specification for use in the \emph{`physrisk'} OS-Climate (OS-C) \cite{OSC} physical climate risk calculation module.
 
@@ -195,37 +203,41 @@ OS-C aims to provide an platform unconstrained by any one particular methodology
 In the following, models of hazards, vulnerability and financial impact are discussed in more detail. In a later section these are presented more formally.
 
 \subsection{Hazard model}
-As noted above, hazard models come in two varieties: models of acute hazards -- events -- and models of chronic hazards -- long-term shifts in climate parameters.
+Hazard models come in two varieties: models of acute hazards and models of chronic hazards.
 \begin{enumerate}[label=\Alph*.]
 \item{\emph{Accute hazard models.}}
+Models of accute hazards provide probabilities that accute hazards of a certain intensity occur within a given future time period. For example a hazard model may provide the probability that an inundation occurs in a certain location in th year 2050 with a flood depth greater than 30~cm. 
 
-Accute hazard models may be \emph{event-based} or \emph{return-period-based}.
-\emph{Event-based hazard models} are models of individual events and are common in natural catastrophe modelling. Typically, for a large number of events, a model provides spatial distributions (i.e. a map) of the probabilities of occurrence of different event intensities. These distributions are sometimes called `hazard footprints' \cite{OasisFinancialModule}. As an example, in the case of inundation, the hazard footprint would provide for different locations the probability of occurrence of different inundation depths -- associated with one particular inundation event. 
+Accute hazard models may or may not be \emph{event-based}
+\paragraph{Event-based hazard models}
+What we term `event-based hazard models' are the models common in natural catastrophe modelling. These provide a spatial distribution of hazard probabilities -- the `hazard footprint' -- conditional on the occurrence of some catastrophic event. This event might be, for example, a Noth American hurricane, a European heat wave or a South Asian inundation. 
 
-Event-based hazard models are important when the \emph{correlation} of hazards to which assets are exposed is material to the analysis being performed. For example, if one house on a street is exposed to an inundation it is likely that the house two doors down will also be exposed. This is captured by event-based hazard models: both houses might well appear in the same hazard footprint. The models are therefore important for reinsurance, say, where the ability to calculate accurately `worst-case' losses is highly desirable.
+Event-based hazard models are important when the \emph{correlation} of hazards to which assets are exposed is material to the analysis being performed. Non-event-based hazard models provide probabilities that accute hazards occur in a certain location but with no information about how likely it is that two assets may experience the hazards at the same time. For example, if one house on a street is exposed to an inundation it is quite possible that the house two doors down will also be exposed. This is captured by event-based hazard models when both houses appear in the same event footprint.
 
-\emph{Return-period-based hazard models}, in contrast, provide at each location the return-period of an accute hazard of a given intensity. For example an inundation model may specify that at a certain latitude and longitude an inundation event with intensity of 50~cm will occur with a return period of 100 years\footnote{For inundation models, 10 return periods for each location may be specified, say.}. Such a return-period map provides no correlation information.
+Of the face of it, non-event-based hazard models may appear to be missing important information  
 
-Return-period-based approaches offer a significant computational advantage at the expense of the missing correlation information. Appropriate use-cases are:
 
-\begin{itemize}
-
-\item when correlation of hazards is not relevant to the calculation, for example when modelling a single asset, or for certain calculations, such as annual average ground-up loss\footnote{For calculation of certain measures only marginal probability of occurrence of a hazard at a given location is relevant. This is discussed in more detail later, but may be true for certain average measures; for measures of tail-risk, in contrast, joint probability is needed for the calculation.}, or 
-\item when it is satisfactory to model correlation using a heuristic approach (e.g. when obtaining a rough estimate based on 0\% ot 100\% correlation or some estimated average spatial correlation). This may be used in cases where it is desirable to separate low-risk from high risk lending portfolios for example. 
-
-\end{itemize}
 
 \item{\emph{Chronic hazards.}}
-As discussed above, acute hazard models provide probability distributions for future events. In contrast chronic hazard models provide climate parameters only. The models are therefore non-probabilistic for a given scenario. For example, a model of average surface temperature would provide values for different latitudes and longitudes under a particular climate scenario (e.g. particular social-economic and representative concentration pathway). \emph{Under this particular scenario}, the assumption is that the climate parameter is certain to take the value. 
+Risk factors are modelled using probability distributions calibrated to historically-observed returns; simplifying assumptions such as a multivariate normal distribution are made in order to obtain closed-form expressions for the VaR.
+
+Risk factors are again reflected by probability distributions calibrated to historically-observed returns. The joint distributions are typically fitted to historical data more closely than in the case of a Parametric~VaR and, as such, usually do not allow for closed-form expressions.
 
 \end{enumerate}
+
+\begin{enumerate}[a)]
+	\item For \emph{acute hazards} distributions 
+	\item Vulnerability
+	\item Financial
+\end{enumerate}
+  such as the probability of an inundation above a certain depth, or a period of drought, in a specific area. 
+
+Models of acute hazards produce probability distributions for future events whereas chronic hazard models produce climate parameters only. Hazard models are pure climate models, whose outputs can be used as an input for the next steps of the analysis. 
 
 \paragraph{Vulnerability model}
 The vulnerability component measures the potential impact of a catastrophic event on an asset. Vulnerability models, like acute hazard models, are probabilistic.  loss of output suffered by my power station if an inundation of a certain intensity happens?". 
 
 Finally, the Financial module is concerned with translating the asset damage to a loss of profitability for the company, or a loss of value for a lender, insurer, equity stakeholder etc. Clearly, the models used in the Financial module answer questions specific to a certain user: is the ultimate objective that of measuring the physical risk for the company or for one of the asset's insurer? Depending on the answer to that question, a different Financial model might be needed. 
-
-
 At time of writing, physical risk calculations may make use of `bulk-assessment' approaches where accurate asset vulnerability information is unavailable and approximations are therefore required. The modelling framework accommodates bulk-assessment-type models as well as approaches capable of modelling vulnerability more precisely\footnote{There is potentially great value in the results obtained from very simple models, as long as the model error can be quantified. The aim is to be able to accommodate both simple and complex models in combination.}. The framework is designed to control the model risk that this creates by incorporating a model of the uncertainty of the approximations into the calculation.
 
  The different elements can be modelled in a variety of ways, under different approximations. However we consider that a `micro' or `fine-granularity' method is pre-requisite for all of these. For example, 
@@ -263,7 +275,9 @@ Within the OS-C modelling framework, models are interchangeable and allow forms 
 
     \begin{framed}
         % left, bottom, right, top
-        \includegraphics[clip, trim=0cm 7cm 0cm 1cm, width=1.00\textwidth]{plots/top_level_view.pdf}
+        %\includegraphics[clip, trim=0cm 7cm 0cm 1cm, width=1.00\textwidth]{plots/top_level_view.pdf}
+        \includegraphics[clip, trim=0cm 7cm 0cm 1cm, width=1.00\textwidth]{top_level_view.pdf}
+
 
     \end{framed}
 
@@ -342,7 +356,8 @@ Note that $d^{(a,b)}_j$ is identical to the {\it effective damage} distribution 
 
     \begin{framed}
 
-        \includegraphics[width=\textwidth]{plots/fig_intensity.pdf}
+        %\includegraphics[width=\textwidth]{plots/fig_intensity.pdf}
+        \includegraphics[width=\textwidth]{fig_intensity.pdf}
 
     \end{framed}
 
@@ -378,7 +393,7 @@ Physical risk models may make use of so-called `bulk assessment' approaches for 
 \paragraph{Handling epistemic uncertainty}
 In forms of bulk-assessment, a common case is that insufficient information exists with which to characterize an asset. This is an example of an epistemic, as opposed to aleatory, uncertainty. The epistemic uncertainty, and its impact, can be included in the model in a relatively straight-forward way.
 
-We extend Equation~{\ref{Eq:vulnerability}, by including a new discrete random variable, $A$, which is the type of the asset.
+We extend Equation \ref{Eq:vulnerability}, by including a new discrete random variable, $A$, which is the type of the asset.
 \begin{equation}
     \label{Eq:vulnerability}
     v^{(a, b)}_{ij} = P \left( d^{(a,b,\text{lower})}_j < D^{(b)} \le d^{(a,b,\text{upper})}_j | s^{(a, \text{lower})}_i < S^{(a)} \le s^{(a, \text{upper})}_i, A = a_1 \right)
@@ -404,7 +419,8 @@ Hazard data sets might also contain instances of `point-probabilities', for exam
 
     \begin{framed}
 
-        \includegraphics[width=\textwidth]{plots/vulnerability_lagace_2008.png}
+        %\includegraphics[width=\textwidth]{plots/vulnerability_lagace_2008.png}
+    \includegraphics[width=\textwidth]{vulnerability_lagace_2008.png}
 
     \end{framed}
 
@@ -506,9 +522,10 @@ whole globe, leading to a potentially large mismatch between historical and futu
 
 
 
-%\section{Hazard and vulnerability models}
+
 
 \section{Inundation}
+
 \subsection{Hazard models}
 Inundation is modelled as an acute risk using the approach of Section~\ref{SubSec:AcuteAssetImpactModel}. Hazard event models compatible with this method provide inundation depths for different annual probabilities of occurrence -- or equivalently return periods. The need for sufficient granularity in the set of return periods is discussed in \cite{WardEtAl:2011}. 
 
@@ -519,9 +536,6 @@ Inundation hazards are incorporated into physical risk calculations using the Wo
 \subsection{Vulnerability models}
 Notable damage models for real estate assets include the FEMA FAST `HAZUS' model \cite{ScawthornEtAl:2006} and an European Commission Joint Research Centre (JRC) model \cite{HuizingaEtAl:2017}. The latter is implemented in the \emph{physrisk} library. 
  
-
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% HEAT MODEL
 
 \section{Heat}
 
@@ -534,7 +548,7 @@ In order to support a wide range of hazard and vulnerability models,  \emph{phys
 \subsection{Hazard Models}
 
 \subsubsection{Chronic hazard models}
-As mentioned above, hazard models and vulnerability models are closely coupled. \cite{ZhangAndShindell:2021} describes the `GZN' and `WBGT' methods. The statistics required for these methods are derived using bias-corrected and down-scaled data sets. There are multiple sources of data suitable for the estimation of the required statistics, notably the NEX-GDDP-NASA set \cite{ThrasherEtAl:2022}.
+As mentioned above, hazard models and vulnerability models are closely coupled. \cite{ZhangAndShindell:2021} describes the `GZN' (Graff-Zivin and Neidell) and `WBGT' (WetBulb Globe Temperature methodology) methods. The statistics required for these methods are derived using bias-corrected and down-scaled data sets. There are multiple sources of data suitable for the estimation of the required statistics, notably the NEX-GDDP-NASA set \cite{ThrasherEtAl:2022}.
 
 
 
@@ -556,7 +570,29 @@ Acute hazard modelling approaches are based on calculating return periods of eve
 
 The Heat vulnerability model presented in this section is based on the approach introduced in 'Temperature And Work: Time allocated to work under varying climate and labor market conditions' (2021)\cite{TemperatureAndWork:2021}. The paper uses survey data to estimate labour allocation decisions in the United States (US) based on temperature. It does not extend the analysis beyond the US. It replicates previous research done (original GZN method \cite{TemperatureAndTheAllocationofTime:2014}.) whilst extending the period of data used and adding an assessment based on the economic cycle: the main innovation is that it includes the economic cycle by splitting out the 2008 financial crisis first through segmented regressions and following them by using an indicator variable: the non-recession period is 2003-2007 and 2015-2018. The Great Recessions period is 2008-2014. The methodology in only applied to climate exposed sectors: agriculture, forestry, fishing and hunting, construction, mining, and transportation and utilities.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% to add in the references: https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodologyBibliography.bib
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%%%% Original GLZ model
+%@article{TemperatureAndTheAllocationofTime:2014,
+%  title={Temperature and the Allocation of Time: Implications for Climate Change},
+%  author={Matthew Neidell, Joshua Graff Zivin},
+%  journal={Journal of Labor Economics},
+%  volume={32},
+%  number={1},
+%  pages={1--26},
+%  year={2006},
+%  publisher={The University of Chicago Press on behalf of the Society of Labor Economists and the NORC at the University of Chicago}
+%}
+
+%%%%% Temperature And Work artcle - which starts from original GZL model
+%@article{TemperatureAndWork:2021,
+%  title={Temperature and work: Time allocated to work under varying climate and labor market conditions},
+%  author={Matthew Neidell, Joshua Graff Zivin, Megan Sheahan, Jacqueline Willwerth, Charles Fant, Marcus Sarofim, Jeremy Martinich},
+%  journal={PLOS ONE},
+%  year={2021},
+%}
 The paper main conclusions are:
 \begin{itemize}
     \item A statistically significant impact of 2.6 minutes lost per degree of temperature above $90^\circ F$ during normal economic periods and no relationship during a recession. This result is converted into the Celsius scale as \emph{physrisk} decided to take that scale as a reference. The 2.6 minutes is multiplied by a scaling factor of 1.8, which returns \textbf{an impact of 4.7 minutes lost per degree of temperature above $32.2^\circ C$}. 
@@ -574,12 +610,23 @@ While the results are relevant and significant, is it important to highlight the
 The paper attempts to estimate economic cost (assuming the impact of 4.7 minutes lost per degree of temperature above $32.2^\circ C$ during normal economic periods) however it only focuses on the direct costs and does not account for feedback effects (reducing the labour productivity will result in a decrease of the products available, wages, demand, etc.). Figure \ref{fig:economiccost} provides the results, as extracted from the paper:
 \begin{figure}[h]
     \centering
-    \includegraphics[scale = 0.6]{plots/economic cost.png}
+    \includegraphics[scale = 0.6]{economic cost.png}
     \caption{Economic cost}
     \label{fig:economiccost}
 \end{figure}
 
-Last but not least, it is worth to note that the results of this paper are interpreted as the impact of \textbf{chronic increase in temperature}. The hazard data is the projected average number of daily degrees above $32.2^\circ C$ per year, over a 20 year horizon.
+Last but not least, it is worth to note that the results of this paper are interpreted as the impact of \textbf{chronic increase in temperature}.
+%NEW
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The GZN hazard  model is based on the projections of the climate variable 'daily maximum temperature'. The projected data spans for 20 years. Then, the following statistical processing is used to compute the daily cooling degree days: if the daily number of degrees is higher than $32.2^\circ C$ then the cooling degree days is equal to the number of degrees, and 0 if not. Once the 20-year projected time series of daily cooling degree days is computed, the indicator of the GZN hazard data is calculated as an annual average of the cooling degree days (over all the days within the 20-year period). That indicator will be used afterwards as an input in the impact function to compute the number of minutes of labour productivity loss. Figure \ref{fig:GZL-Hazard} provides a summary of the methodology:
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[scale = 0.8]{GZL-Hazard.PNG}
+    \caption{Cooling degree days and labour availability}
+    \label{fig:GZL-Hazard}
+\end{figure}
+
 
 \subsubsection{Uncertainty around the vulnerability Heat model}
 
@@ -587,15 +634,23 @@ Last but not least, it is worth to note that the results of this paper are inter
 The assessment is based on the research performed by Zhang and Shindel, which reviews the uncertainty in the heat risk literature \cite{ZhangAndShindell:2021}. This paper provides context around the uncertainty that exists in the result discussed in previous section, which is mainly explained by the methodology used for the estimation of the impact of temperature on labour productivity. 
 \begin{itemize}
     \item \cite{ZhangAndShindell:2021} provides an analysis of the \textbf{differential forecasts} between using the \textbf{GZN method} (as reference to Graff-Zivin and Neidell) documented in \cite{TemperatureAndWork:2021}, versus the WetBulb Globe Temperature methodology (\textbf{WBGT method}) which includes other climate factors in addition to temperature: humidity, wind speed and heat radiation -- figure \ref{fig:WBGT} \footnote{Extracted from \cite{ZhangAndShindell:2021} -- p.4} provides the WBGT detailed approach. 
-    \item Another major source of differentiation is that the GZN method focuses on changes in labour allocation decisions while the WBGT method focuses on the physiological impacts of rising temperatures. 
+    \item Another major source of differentiation is that the GZN method focuses on changes in labour allocation decisions while the WBGT method focuses on the physiological impacts of rising temperatures.
 \end{itemize}
 
-\begin{figure}[h]
+\begin{figure}[H]
     \centering
-    \includegraphics{plots/WBGT.png}
+    \includegraphics{WBGT.png}
     \caption{WBGT method}
     \label{fig:WBGT}
 \end{figure}
+
+The $\alpha1$ and $\alpha2$ are the parameters derived for the three different work intensities: light (24.64, 22.72), medium (32.98, 17.81), and heavy (30.94, 16.64) work.
+\begin{itemize}
+    \item Light work includes all service sectors, such as trade, all retail sales, wholesale trade and commission trade, hotels and restaurants, repairs of motor vehicles and personal and household goods, retail sale of automotive fuel, post and telecom, financial services, insurance, recreational and service activities, public administration, dwellings real estate, and other businesses.
+    \item Medium work includes food, textile and wood, machinery and electronic equipment, and other industries and transport sectors.
+    \item Heavy work includes agriculture, forestry and fishery, extraction sectors, and construction sectors. These are the sectors considered in the GZN model methodology, which are the climate exposed sectors. Hence in this study, $\alpha1$ and $\alpha2$ of the heavy work intensity are applied $(30.94, 16.64)$.
+\end{itemize}
+
 
 
 Note that there are differences in the functional forms applied in the original GZN method \cite{TemperatureAndTheAllocationofTime:2014} and the approach presented in \cite{TemperatureAndWork:2021}, with original GZN method using one linear regression with dummy variables for temperature buckets, while \cite{TemperatureAndWork:2021} uses multiple linear regressions with one variable reflecting the breach of the maximum temperature around anchor points (less than $70^\circ F$, $90^\circ F$, $90^\circ F$ and above). The WBGT methodology uses a non-linear function to relate labour loss to the WBGT consolidated measure.   
@@ -604,7 +659,7 @@ Figure \ref{fig:CostsByRCP} \footnote{Extracted from \cite{ZhangAndShindell:2021
 
 \begin{figure}[h]
     \centering
-    \includegraphics{plots/CostsByRCP.png}
+    \includegraphics{CostsByRCP.png}
     \caption{Costs By RCP under GLZ method versus WBGT method}
     \label{fig:CostsByRCP}
 \end{figure}
@@ -625,6 +680,15 @@ Where $X$ is the variable that refers to Minutes Lost during normal economic cyc
 The second approach is attractive in its simplicity and ensuring the model does not lose its focus. 
 One concern is that the probability of recession, in reality, may be related to the realisation of climate related risks. Hence, there might be a over/under estimation of the probability unless the impact of the climate risk is also considered. Historical model estimated recession probabilities can be sourced from \cite{SmoothedU.S.RecessionProbabilities:2022}. However, we did not go further in the measurement of the uncertainty explained by the economic cycle because it requires us to focus on the modelling of another parameter ($p$, the probability of the recession to occur), which is not the purpose of this work. 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% to add in the references: https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodologyBibliography.bib
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%@article{SmoothedU.S.RecessionProbabilities:2022,
+%  title={Smoothed U.S. Recession Probabilities},
+%  author={Jeremy Piger},
+%  publisher={University of Oregon}
+%  year={2022},
+%}
 Instead, we focus on the \textbf{model parameter uncertainty approach}. In \cite{ZhangAndShindell:2021}, there is a linear relationship between temperature and work minutes lost ($\beta$),and a constraint is applied to ensure that total time allocation sums to 24 hours, which returns a non-linear regression model at the end. Given that the main coefficient of interest is denoted $\beta$, an inference is applied assuming that $\beta$ follows a $Student-T$ distribution: 
 \begin{equation}
  \label{Eq:uncertaintyStudentT}   
@@ -637,11 +701,14 @@ Where $SE$ is the Standard Error of the coefficient and $(N-K)$ is the number of
 \end{equation}
 Where $T(p)$ donates the probability density function (pdf) of the student $T$ distribution with probability $p$ which corresponds to the $CI\%$, the standard error $SE = 2.23 \ min$ and $\beta =  - 4.68$.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%START HERE
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 Figure \ref{fig:GZL-Vulnerability} shows the uncertainly around the GZN vulnerability model, based on the assumptions above, at $95\%$ confidence level\footnote{In order to compute the figure, N is taken from the paper \cite{TemperatureAndWork:2021}: N 11,732, and K is assumed to be 0 as it is very small relatively to N. One could do further researches to check the exact number of K, but that will not impact the results. K includes the number of control variables which provide information on demographic data -- age, gender, education, employment status, income, etc. -- and climate variables such as level of precipitation and snow.}.
 \begin{figure}[h]
     \centering
-    \includegraphics[scale = 0.8]{plots/GZL-Vulnerability.png}
+    \includegraphics[scale = 0.8]{GZL-Vulnerability.png}
     \caption{Estimate of daily minutes of labour loss}
     \label{fig:GZL-Vulnerability}
 \end{figure}
@@ -656,6 +723,7 @@ As the degrees of freedom increases, the t distributions converge to the standar
 
 As an example, consider an $1.5^\circ C$ degree day increase in the temperature. We can then multiply through the normal distribution as shown below: 
 
+%The buckets of the daily maximum temperature above $32.2^\circ C$  are defined as an incremental increase of $1.5^\circ %C$, starting from $0^\circ C$ to $18^\circ C$: $\begin{pmatrix} 0 & 1.5 & 3 & ... & 18 \end{pmatrix}$. For a $1.5^\circ %C$ daily temperature increase, the uncertainty around the daily labour productivity impact is given by the following %normal distribution:
 \begin{equation}
     \label{Eq:uncertainty2}
     1.5 \times \beta \sim \mathcal{N}(1.5 \times \beta,\, (1.5 \times SE)^{2})\, 
@@ -670,6 +738,7 @@ This can be generalised for a degree day increase of x using the following distr
 \end{equation}
 For example, there is 1\% chance that the lost labour productivity exceeds $29.6$ minutes per day if the maximum daily temperature exceeds at $32.2^\circ C$ by $3^\circ C$. This number is computed as $\mathcal{N}^{-1} (m',SE'^2)(1\%)$ where $m'= 3 \times m = -14.013 \ min$ and $SE'= 3 \times SE = 6.69 \ min$. The $99\%CI$ of the lost labour productivity per day if the maximum daily temperature exceeds at $32.2^\circ C$ by $3^\circ C$ is $[+1.6 \ min, -29.6 \ min]$.
 
+%Adding point regarding impact as a percentage of total labour 
 
 
 The estimated loss of labour time is then transformed into a percentage estimate:
@@ -685,12 +754,81 @@ The main weakness of the Temperature and Work article (which is more likely to b
 
 \paragraph{Detailed approach: vulnerability around WBGT model}
 
+%NEW
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+The WBGT hazard model, as show in figure \ref{fig:WBGT-Hazard}, is based on the projections of the climate variables 'daily temperature' and 'daily humidity'. The projected data spans for 20 years. Then, the computations provided in figure \ref{fig:WBGT} are used to compute the daily WBGT, which is considered as the indicator of the WBGT hazard data that will be afterwards considered as an input in the impact function to get the daily Work Ability (WA) projections over the 20-year period. Finally, the impact deriving from the WBGT model is computed as the annual average of the daily projected WA.
+\begin{figure}[h]
+    \centering
+    \includegraphics[scale = 0.8]{WBGT-Hazard.PNG}
+    \caption{WBGT and labour availability}
+    \label{fig:WBGT-Hazard}
+\end{figure}
+Note that another indicator deriving from the WBGT hazard model is the Work Loss (WL), which is computed as $WL = 1 - WA$. It is another way to do the assessment but leads to same results. 
+\newline
+The aggregation of the outputs of the GZN vulnerability model (minutes of productivity labour loss) and the WBGT vulnerability model (WA), returns the effective number of working hours, which represents a way to measure the uncertainty around the GZN vulnerability model. Figure \ref{fig:Aggregation} provides the aggregation process and results:
+\begin{figure}[h]
+    \centering
+    \includegraphics[scale = 0.8]{Aggregated Hazard WBGT GZN.PNG}
+    \caption{Aggregation of GZN model and WBGT model}
+    \label{fig:Aggregation}
+\end{figure}
+If the WL was used instead of the WA, then it will be multiplied by the hours worked derived from the GZN model to get the annual total labor loss due to heat.
 
+Given the modelling assumptions around the parameters used to compute the WA in the WBGT model, it is important to measure the uncertainty around these parameters, $\alpha1$ and $\alpha2$, which depend on the work intensities. 
 
+The source paper provides the parameters $\alpha1$ and $\alpha2$ for three different work intensities low, medium and high with industries mapped to each intensity. These categories are broad and do not account for variance within and industry and between industries in the same category. To account for this uncertainty the WBGT approach was adjusted to include uncertainty around the industry.
 
+Consider an asset which is market as in a high risk sector. We assume that the work ability is uniformly distributed with a mean equal to the $WA_H$ and a floor (a) and ceiling (b) equidistant from the mean. We assume that the floor a is halfway between $WA_H$ and $WA_M$. So a and b can be estimated based on the below formulae: 
 
+\begin{equation}
+    \label{Eq:WBGT_Floor}
+     a = WA_H - \frac{WA_H - WA_M}{2}\,
+\end{equation}
 
+\begin{equation}
+    \label{Eq:WBGT_Ceil}
+     b = WA_H + \frac{WA_H - WA_M}{2}\,
+\end{equation}
 
+And the WBGT work ability can be represented based on the below formula: 
+
+\begin{equation}
+    \label{Eq:WBGT_Uniform}
+     WA \sim \mathcal{U}(a ,b)\, 
+\end{equation}
+ 
+With this we can estimate the variance of the WBGT work ability using the standard formula for the variance of a Uniform distribution:
+
+\begin{equation}
+    \label{Eq:WBGT_Variance}
+     Var(WBGT) = \frac{(a-b)^2}{ 12}
+\end{equation}
+
+In order to get to a final work ability we multiple the output of the GZN model by the ouput of the WBGT model.
+
+\begin{equation}
+    \label{Eq:Final_Mean_WA}
+     Effective Work = (1- Estimated \ loss \ of \ labour \ time ) \times WA_H
+\end{equation}
+
+As we have uncertainty both for the GZN component as well as the WBGT component we need to estimate a joint variance. We assume that the epistemic uncertainty in the GZN model is uncorrelated with the variance in the sector uncertainty of the work ability measure. To estimate the variance of the product of both the GZN and WBGT components we using the following formula:
+
+\begin{equation}
+\begin{aligned}
+    \label{Eq:Var_Joint}
+     Var(EffectiveWork) = (1- Estimated \ loss \ of \ labour \ time )^2 \times Var(WBGT) + \\
+      WA_H^2 \times Var(GZN) +  var(WBGT) \times Var(GZN) 
+      \end{aligned}
+\end{equation}
+
+To get the final impact we assume that the product of the two variables are normally distributed. The final work ability distribution can be represented as below:
+
+\begin{equation}
+\begin{aligned}
+    \label{Eq:Final_Result_Heat}
+     N(EffectiveWork, Var(Effective Work))
+      \end{aligned}
+\end{equation}
 
 \clearpage
 \printglossaries

@@ -122,7 +122,7 @@ $$
 $I^\\text{WBGT}_i$ is the WBGT indicator, $T^\\text{avg}_i$ is the daily average surface temperature (in degress Celsius) on day index, $i$, and $P^\\text{vapour}$
 is the water vapour partial pressure (in kPa). $P^\\text{vapour}$ is calculated from relative humidity $H_R$ via:
 $$
-P^\\text{vapour}_i = \\frac{H_R}{100} \\times 6.105 \\times \\exp \\left( \\frac{17.27 + T^\\text{avg}_i}{237.7 + T^\\text{avg}_i} \\right)
+P^\\text{vapour}_i = \\frac{H_R}{100} \\times 6.105 \\times \\exp \\left( \\frac{17.27 \times T^\\text{avg}_i}{237.7 + T^\\text{avg}_i} \\right)
 $$
 The work ability indicator, $I^{\\text{WA}}$ is finally calculated via:
 $$

@@ -1,3 +1,4 @@
+from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, Iterable, Tuple
@@ -5,8 +6,9 @@ from typing import Dict, Iterable, Tuple
 import numpy as np
 
 from physrisk.kernel.assets import Asset
-from physrisk.kernel.hazard_model import HazardDataRequest, HazardParameterDataResponse
+from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse, HazardParameterDataResponse
 from physrisk.kernel.hazards import ChronicHeat, CombinedInundation, Drought, Fire, Hail, Wind
+from physrisk.kernel.vulnerability_model import DataRequester
 
 
 class Category(Enum):
@@ -26,7 +28,13 @@ class Bounds:
     upper: float
 
 
-class JupterExposureMeasure:
+class ExposureMeasure(DataRequester):
+    @abstractmethod
+    def get_exposures(self, asset: Asset, data_responses: Iterable[HazardDataResponse]) -> Dict[type, Category]:
+        ...
+
+
+class JupterExposureMeasure(ExposureMeasure):
     def __init__(self):
         self.exposure_bins: Dict[Tuple[type, str], Tuple[np.ndarray, np.ndarray]] = self.get_exposure_bins()
 
@@ -43,9 +51,10 @@ class JupterExposureMeasure:
             for (hazard_type, model) in self.exposure_bins.keys()
         ]
 
-    def get_exposures(self, asset: Asset, data_responses: Iterable[HazardParameterDataResponse]):
+    def get_exposures(self, asset: Asset, data_responses: Iterable[HazardDataResponse]):
         result: Dict[type, Category] = {}
         for (k, v), resp in zip(self.exposure_bins.items(), data_responses):
+            assert isinstance(resp, HazardParameterDataResponse)  # should all be parameters
             (hazard_type, _) = k
             (lower_bounds, categories) = v
             index = np.searchsorted(lower_bounds, resp.parameter, side="right") - 1
@@ -61,7 +70,7 @@ class JupterExposureMeasure:
                 Bounds(category=Category.LOW, lower=0.01, upper=0.04),
                 Bounds(category=Category.MEDIUM, lower=0.04, upper=0.1),
                 Bounds(category=Category.HIGH, lower=0.1, upper=0.2),
-                Bounds(category=Category.HIGH, lower=0.2, upper=float("inf")),
+                Bounds(category=Category.HIGHEST, lower=0.2, upper=float("inf")),
             ]
         )
         categories[(ChronicHeat, "days/above/35c")] = self.bounds_to_lookup(
@@ -70,7 +79,7 @@ class JupterExposureMeasure:
                 Bounds(category=Category.LOW, lower=5, upper=10),
                 Bounds(category=Category.MEDIUM, lower=10, upper=20),
                 Bounds(category=Category.HIGH, lower=20, upper=30),
-                Bounds(category=Category.HIGH, lower=30, upper=float("inf")),
+                Bounds(category=Category.HIGHEST, lower=30, upper=float("inf")),
             ]
         )
         categories[(Wind, "max/1min")] = self.bounds_to_lookup(
@@ -79,7 +88,7 @@ class JupterExposureMeasure:
                 Bounds(category=Category.LOW, lower=63, upper=90),
                 Bounds(category=Category.MEDIUM, lower=90, upper=119),
                 Bounds(category=Category.HIGH, lower=119, upper=178),
-                Bounds(category=Category.HIGH, lower=178, upper=float("inf")),
+                Bounds(category=Category.HIGHEST, lower=178, upper=float("inf")),
             ]
         )
         categories[(Drought, "months/spei3m/below/-2")] = self.bounds_to_lookup(
@@ -88,7 +97,7 @@ class JupterExposureMeasure:
                 Bounds(category=Category.LOW, lower=0.1, upper=0.25),
                 Bounds(category=Category.MEDIUM, lower=0.25, upper=0.5),
                 Bounds(category=Category.HIGH, lower=0.5, upper=1.0),
-                Bounds(category=Category.HIGH, lower=1.0, upper=float("inf")),
+                Bounds(category=Category.HIGHEST, lower=1.0, upper=float("inf")),
             ]
         )
         categories[(Hail, "days/above/5cm")] = self.bounds_to_lookup(
@@ -97,7 +106,7 @@ class JupterExposureMeasure:
                 Bounds(category=Category.LOW, lower=0.2, upper=1.0),
                 Bounds(category=Category.MEDIUM, lower=1.0, upper=2.0),
                 Bounds(category=Category.HIGH, lower=2.0, upper=3.0),
-                Bounds(category=Category.HIGH, lower=3.0, upper=float("inf")),
+                Bounds(category=Category.HIGHEST, lower=3.0, upper=float("inf")),
             ]
         )
         categories[(Fire, "fire_probability")] = self.bounds_to_lookup(
@@ -106,7 +115,7 @@ class JupterExposureMeasure:
                 Bounds(category=Category.LOW, lower=0.1, upper=0.2),
                 Bounds(category=Category.MEDIUM, lower=0.2, upper=0.35),
                 Bounds(category=Category.HIGH, lower=0.35, upper=0.5),
-                Bounds(category=Category.HIGH, lower=0.5, upper=float("inf")),
+                Bounds(category=Category.HIGHEST, lower=0.5, upper=float("inf")),
             ]
         )
         return categories

@@ -8,12 +8,7 @@ import numpy as np
 
 import physrisk.data.static.example_portfolios
 from physrisk.api.v1.common import Distribution, ExceedanceCurve, VulnerabilityDistrib
-from physrisk.api.v1.exposure_req_resp import (
-    AssetExposure,
-    AssetExposureRequest,
-    AssetExposureResponse,
-    AssetHazardExposure,
-)
+from physrisk.api.v1.exposure_req_resp import AssetExposure, AssetExposureRequest, AssetExposureResponse, Exposure
 from physrisk.api.v1.hazard_image import HazardImageRequest
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.zarr_reader import ZarrReader
@@ -78,7 +73,7 @@ class Requester:
             return json.dumps(_get_hazard_data_description(request).dict())
         elif request_id == "get_asset_exposure":
             request = AssetExposureRequest(**request_dict)
-            return json.dumps(_get_asset_exposures(request, self.hazard_model).dict())
+            return json.dumps(_get_asset_exposures(request, self.hazard_model).dict(exclude_none=True))
         elif request_id == "get_asset_impact":
             request = AssetImpactRequest(**request_dict)
             return dumps(_get_asset_impacts(request, self.hazard_model).dict())
@@ -238,10 +233,9 @@ def _get_asset_exposures(request: AssetExposureRequest, hazard_model: HazardMode
         items=[
             AssetExposure(
                 asset_id="",
-                exposures=[
-                    AssetHazardExposure(hazard_type=t.__name__, category=c.name)
-                    for (t, c) in r.hazard_categories.items()
-                ],
+                exposures=dict(
+                    (t.__name__, Exposure(category=c.name, value=v)) for (t, (c, v)) in r.hazard_categories.items()
+                ),
             )
             for (a, r) in results.items()
         ]

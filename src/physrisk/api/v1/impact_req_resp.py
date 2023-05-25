@@ -8,7 +8,7 @@ from physrisk.api.v1.common import Assets, Distribution, ExceedanceCurve, Vulner
 
 
 class CalcSettings(BaseModel):
-    hazard_interp: str = Field("floor", description="Method used for interpolation of hazards: 'lloor' or 'bilinear'.")
+    hazard_interp: str = Field("floor", description="Method used for interpolation of hazards: 'floor' or 'bilinear'.")
 
 
 class AssetImpactRequest(BaseModel):

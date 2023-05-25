@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -18,11 +18,9 @@ class AssetExposureRequest(BaseModel):
     )
 
 
-class AssetHazardExposure(BaseModel):
-    """Impact at level of single asset and single type of hazard."""
-
-    hazard_type: str = Field("", description="Type of the hazard.")
-    category: str = Field("", description="Exposure level.")
+class Exposure(BaseModel):
+    category: str
+    value: Optional[float]
 
 
 class AssetExposure(BaseModel):
@@ -33,7 +31,7 @@ class AssetExposure(BaseModel):
         description="""Asset identifier; will appear if provided in the request
         otherwise order of assets in response is identical to order of assets in request.""",
     )
-    exposures: List[AssetHazardExposure] = Field([], description="Impacts for each hazard type.")
+    exposures: Dict[str, Exposure] = Field({}, description="Category (value) for each hazard type (key).")
 
 
 class AssetExposureResponse(BaseModel):

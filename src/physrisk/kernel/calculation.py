@@ -30,7 +30,7 @@ from .vulnerability_model import VulnerabilityModelAcuteBase, VulnerabilityModel
 
 @dataclass
 class AssetExposureResult:
-    hazard_categories: Dict[type, Category]
+    hazard_categories: Dict[type, Tuple[Category, float]]
 
 
 class AssetImpactResult:

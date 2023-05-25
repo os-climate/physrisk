@@ -1,3 +1,4 @@
+import math
 from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
@@ -17,6 +18,7 @@ class Category(Enum):
     MEDIUM = 3
     HIGH = 4
     HIGHEST = 5
+    NODATA = 6
 
 
 @dataclass
@@ -30,7 +32,9 @@ class Bounds:
 
 class ExposureMeasure(DataRequester):
     @abstractmethod
-    def get_exposures(self, asset: Asset, data_responses: Iterable[HazardDataResponse]) -> Dict[type, Category]:
+    def get_exposures(
+        self, asset: Asset, data_responses: Iterable[HazardDataResponse]
+    ) -> Dict[type, Tuple[Category, float]]:
         ...
 
 
@@ -52,13 +56,16 @@ class JupterExposureMeasure(ExposureMeasure):
         ]
 
     def get_exposures(self, asset: Asset, data_responses: Iterable[HazardDataResponse]):
-        result: Dict[type, Category] = {}
+        result: Dict[type, Tuple[Category, float]] = {}
         for (k, v), resp in zip(self.exposure_bins.items(), data_responses):
             assert isinstance(resp, HazardParameterDataResponse)  # should all be parameters
             (hazard_type, _) = k
             (lower_bounds, categories) = v
-            index = np.searchsorted(lower_bounds, resp.parameter, side="right") - 1
-            result[hazard_type] = categories[index]
+            if math.isnan(resp.parameter):
+                result[hazard_type] = (Category.NODATA, float(resp.parameter))
+            else:
+                index = np.searchsorted(lower_bounds, resp.parameter, side="right") - 1
+                result[hazard_type] = (categories[index], float(resp.parameter))
         return result
 
     def get_exposure_bins(self):

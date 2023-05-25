@@ -39,8 +39,8 @@ class TestExposureMeasures(TestWithCredentials):
         response = requester.get(request_id="get_asset_exposure", request_dict=request.dict())
         result = AssetExposureResponse(**json.loads(response)).items[0]
         expected = dict((k.__name__, v) for (k, v) in expected.items())
-        for item in result.exposures:
-            assert expected[item.hazard_type].name == item.category
+        for key in result.exposures.keys():
+            assert result.exposures[key].category == expected[key].name
 
     def test_jupiter_exposure(self):
         assets, _, hazard_model, expected = self._get_components()
@@ -50,7 +50,7 @@ class TestExposureMeasures(TestWithCredentials):
         results = calculate_exposures([asset], hazard_model, measure, scenario="ssp585", year=2030)
         categories = results[asset].hazard_categories
         for k, v in expected.items():
-            assert categories[k] == v
+            assert categories[k][0] == v
 
     def _get_components(self):
         resources = [

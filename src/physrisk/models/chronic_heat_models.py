@@ -1,10 +1,10 @@
-from typing import Iterable, List, Union
+from typing import Iterable, List, Union, cast
 
 import numpy as np
 from scipy.stats import norm
 
 from physrisk.kernel.assets import Asset, IndustrialActivity
-from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse
+from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse, HazardParameterDataResponse
 from physrisk.kernel.hazards import ChronicHeat
 from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
 from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
@@ -72,6 +72,9 @@ class ChronicHeatGznModel(VulnerabilityModelBase):
         """
         assert isinstance(asset, IndustrialActivity)
         baseline_dd_above_mean, scenario_dd_above_mean = data_responses
+
+        assert isinstance(baseline_dd_above_mean, HazardParameterDataResponse)
+        assert isinstance(scenario_dd_above_mean, HazardParameterDataResponse)
 
         delta_dd_above_mean: float = scenario_dd_above_mean.parameter - baseline_dd_above_mean.parameter * self.delta
 
@@ -165,10 +168,10 @@ class ChronicHeat_Wbgt_Gzn_Model(ChronicHeatGznModel):
         """
 
         assert isinstance(asset, IndustrialActivity)
-        wbgt_reponses = data_responses[2:]
+        wbgt_responses = [cast(HazardParameterDataResponse, r) for r in data_responses[2:]]
 
-        baseline_dd_above_mean = data_responses[0]
-        scenario_dd_above_mean = data_responses[1]
+        baseline_dd_above_mean = cast(HazardParameterDataResponse, data_responses[0])
+        scenario_dd_above_mean = cast(HazardParameterDataResponse, data_responses[1])
 
         hours_worked = self.total_labour_hours
         fraction_loss_mean_base_gzn = (baseline_dd_above_mean.parameter * self.time_lost_per_degree_day) / hours_worked
@@ -183,24 +186,32 @@ class ChronicHeat_Wbgt_Gzn_Model(ChronicHeatGznModel):
             scenario_dd_above_mean.parameter * self.time_lost_per_degree_day_se
         ) / hours_worked
 
-        baseline_work_ability = (1 - fraction_loss_mean_base_gzn) * (1 - wbgt_reponses[0].parameter)
-        scenario_work_ability = (1 - fraction_loss_mean_scenario_gzn) * (1 - wbgt_reponses[1].parameter)
+        baseline_work_ability = (1 - fraction_loss_mean_base_gzn) * (1 - wbgt_responses[0].parameter)
+        scenario_work_ability = (1 - fraction_loss_mean_scenario_gzn) * (1 - wbgt_responses[1].parameter)
 
         # Getting the parameters required for the uniform distribution.
         if asset.type in ["low", "high"]:
             a_historical = (
-                wbgt_reponses[0].parameter - abs((wbgt_reponses[2].parameter - wbgt_reponses[0].parameter)) / 2
+                wbgt_responses[0].parameter - abs((wbgt_responses[2].parameter - wbgt_responses[0].parameter)) / 2
             )
             b_historical = (
-                wbgt_reponses[0].parameter + abs((wbgt_reponses[2].parameter - wbgt_reponses[0].parameter)) / 2
+                wbgt_responses[0].parameter + abs((wbgt_responses[2].parameter - wbgt_responses[0].parameter)) / 2
             )
-            a_scenario = wbgt_reponses[1].parameter - abs((wbgt_reponses[3].parameter - wbgt_reponses[1].parameter)) / 2
-            b_scenario = wbgt_reponses[1].parameter + abs((wbgt_reponses[3].parameter - wbgt_reponses[1].parameter)) / 2
+            a_scenario = (
+                wbgt_responses[1].parameter - abs((wbgt_responses[3].parameter - wbgt_responses[1].parameter)) / 2
+            )
+            b_scenario = (
+                wbgt_responses[1].parameter + abs((wbgt_responses[3].parameter - wbgt_responses[1].parameter)) / 2
+            )
         elif asset.type == "medium":
-            a_historical = wbgt_reponses[0].parameter - (wbgt_reponses[2].parameter - wbgt_reponses[0].parameter) / 2
-            b_historical = wbgt_reponses[0].parameter + (wbgt_reponses[4].parameter - wbgt_reponses[0].parameter) / 2
-            a_scenario = wbgt_reponses[1].parameter - abs((wbgt_reponses[3].parameter - wbgt_reponses[1].parameter)) / 2
-            b_scenario = wbgt_reponses[1].parameter + abs((wbgt_reponses[5].parameter - wbgt_reponses[1].parameter)) / 2
+            a_historical = wbgt_responses[0].parameter - (wbgt_responses[2].parameter - wbgt_responses[0].parameter) / 2
+            b_historical = wbgt_responses[0].parameter + (wbgt_responses[4].parameter - wbgt_responses[0].parameter) / 2
+            a_scenario = (
+                wbgt_responses[1].parameter - abs((wbgt_responses[3].parameter - wbgt_responses[1].parameter)) / 2
+            )
+            b_scenario = (
+                wbgt_responses[1].parameter + abs((wbgt_responses[5].parameter - wbgt_responses[1].parameter)) / 2
+            )
 
         # Estimation of the variance
         variance_historical_uni = ((b_historical - a_historical) ** 2) / 12
@@ -209,13 +220,13 @@ class ChronicHeat_Wbgt_Gzn_Model(ChronicHeatGznModel):
         variance_historical = two_variable_joint_variance(
             (1 - fraction_loss_mean_base_gzn),
             fraction_loss_std_base**2,
-            (1 - wbgt_reponses[0].parameter),
+            (1 - wbgt_responses[0].parameter),
             variance_historical_uni,
         )
         variance_scenario = two_variable_joint_variance(
             (1 - fraction_loss_mean_scenario_gzn),
             fraction_loss_std_scenario**2,
-            (1 - wbgt_reponses[1].parameter),
+            (1 - wbgt_responses[1].parameter),
             variance_scenario_uni,
         )
 

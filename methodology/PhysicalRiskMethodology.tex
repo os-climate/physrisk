@@ -1,11 +1,3 @@
-\documentclass{article}
-\usepackage[utf8]{inputenc}
-\usepackage{graphicx}
-\usepackage{amsmath}
-
-\title{OS-Climate documentation - Heat}
-\author{mariem.bouchaala}
-\date{September 2022}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
 % Generic Methodology for Physical Climate Risk Modelling
@@ -112,9 +104,9 @@
         \smallskip
         \newline% \indent
     The views expressed in this paper are those of the authors and do not necessarily reflect the views and policies of their respective employers.}
-    }
+    }    
 
-\date{October 2022 [Draft]}
+\date{May 2023 [Draft]}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -148,12 +140,15 @@
 
 The changing climate introduces new risks. These can be grouped into:
 \begin{enumerate}
-	\item Physical risks -- risks arising from the physical effects of climate change
-	\item Transition risks -- risks arising from the transition to a low-carbon economy\footnote{Liability risks are considered a third by some\cite{WoetzelEtAl:2020}. These are risks arising from those affected by anthropogenic climate change seeking compensation.}   
+	\item Physical risks -- risks arising from the physical effects of climate change,
+	\item Transition risks -- risks arising from the transition to a low-carbon economy,
+	\item Liability risks -- considered a third by some \cite{WoetzelEtAl:2020}, these are the risks arising when those affected by anthropogenic climate change seek compensation. 
 \end{enumerate}
 
 
-The methodology presented in this document concerns the assessment of physical risk. Physical risk comes from changes in climate \emph{\gls{hazard}s}, climate-related physical phenomena that have the potential to impact natural and socioeconomic systems \cite{WoetzelEtAl:2020}\cite{MitchellEtAl:2017}. Hazards can be divided into \emph{\gls{acute_hazard}s} and \emph{\gls{chronic_hazard}s}. Acute hazards are those associated with \emph{events}, for example heat waves, inundations (floods) and hurricanes. Chronic hazards are long-term shifts in climate parameters such as average temperature, sea-level or water stress indices.  
+The methodology presented in this document concerns the assessment of physical risk. Physical risk comes from changes in climate \emph{\gls{hazard}s}. A hazard is the potential occurrence of a climate-related physical phenomenon that can impact human and ecological systems \cite{ReisingerEtAl:2020}\cite{WoetzelEtAl:2020}\cite{MitchellEtAl:2017}. More precisely, the impact may be loss of life, injury, or other
+health impact, as well as damage and loss to property, infrastructure,
+livelihoods, service provision, ecosystems, and environmental resources (see Annex II of \cite{PortnerEtAl:2022}). Hazards can be divided into \emph{\gls{acute_hazard}s} and \emph{\gls{chronic_hazard}s}. An acute hazard is the potential occurrence of an \emph{event}, for example a heat wave, inundation (flood) or hurricane. A chronic hazard is the potential occurrence of a trend in climate parameters such as an increase in average temperature, sea-level or water stress indices.  
 
 
 \newglossaryentry{hazard}
@@ -194,79 +189,80 @@ We assign explicit names to these three components, a), b) and c) for the financ
 
 A precise model of the physical risk from a single (localized) asset or business activity must consider a hazard's likelihood of occurrence \emph{at the asset's locale} (i.e. if the asset is exposed to the hazard) and vulnerability to the hazard particular to that asset. This requires specific knowledge of the asset. For example a power station that relies on air-cooling might be disrupted by a period of extremely high air temperature. In addition, an asset may be impacted through its reliance on other assets; a manufacturing facility may rely on continuity of electricity supply for example.
 
-Such precise models of physical risk can be complex and may rely on information that is not readily available. For these reasons, approximations are commonly used, although approximate models still typically include hazard, vulnerability and financial components \cite{BertramEtAl:2020}\cite{WoetzelEtAl:2020} -- even highly-approximate global-scale impact analyses used in macroeconomic models.
+Such precise models of physical risk can be complex and may rely on information that is not readily available. For these reasons, approximations are commonly used, although approximate models still typically include hazard, vulnerability and financial components \cite{BertramEtAl:2020}\cite{WoetzelEtAl:2020} -- even global-scale impact analyses intended to be used in macroeconomic models.
 
 The purpose of this paper is to present the methodology of a framework that is sufficiently generic to be used for a wide range of physical climate risk models, both precise and approximate as required. The ability to perform precise, fine-grained calculations is an important requirement therefore. This paper serves as a specification for use in the \emph{`physrisk'} OS-Climate (OS-C) \cite{OSC} physical climate risk calculation module.
 
-OS-C aims to provide an platform unconstrained by any one particular methodology choice, but takes inspiration from natural catastrophe modelling \cite{MitchellEtAl:2017} and in particular the \emph{Oasis Loss Modelling Framework} \cite{OasisLMF} (henceforth \emph{Oasis}), which was designed to accommodate a wide range of catastrophe models and analyse physical risk in the context of the insurance market. Similarly to \emph{Oasis}, we adopt a modular approach. This approach allows the user to change easily a particular modelling method, whilst maintaining the integration of the components. 
+OS-C aims to provide an platform unconstrained by any one particular methodology choice, but takes inspiration from natural catastrophe modelling \cite{MitchellEtAl:2017} and in particular the \emph{Oasis Loss Modelling Framework} \cite{OasisLMF} (henceforth \emph{Oasis LMF}), which was designed to accommodate a wide range of catastrophe models and analyse physical risk in the context of the insurance market. Similarly to \emph{Oasis LMF}, we adopt a modular approach. This approach allows the user to change easily a particular modelling method, whilst maintaining the integration of the components. 
 
 In the following, models of hazards, vulnerability and financial impact are discussed in more detail. In a later section these are presented more formally.
 
-\subsection{Hazard model}
-Hazard models come in two varieties: models of acute hazards and models of chronic hazards.
+\paragraph{Hazard.}
+As noted above, hazard models come in two varieties: models of acute hazards -- events -- and models of chronic hazards -- long-term shifts in climate parameters.
 \begin{enumerate}[label=\Alph*.]
 \item{\emph{Accute hazard models.}}
-Models of accute hazards provide probabilities that accute hazards of a certain intensity occur within a given future time period. For example a hazard model may provide the probability that an inundation occurs in a certain location in th year 2050 with a flood depth greater than 30~cm. 
 
-Accute hazard models may or may not be \emph{event-based}
-\paragraph{Event-based hazard models}
-What we term `event-based hazard models' are the models common in natural catastrophe modelling. These provide a spatial distribution of hazard probabilities -- the `hazard footprint' -- conditional on the occurrence of some catastrophic event. This event might be, for example, a Noth American hurricane, a European heat wave or a South Asian inundation. 
+Accute hazard models may be \emph{event-based} or \emph{return-period-based}.
+\emph{Event-based hazard models} are models of individual events and are common in natural catastrophe modelling. Typically, for a large number of events, a model provides spatial distributions (i.e. a map) of the probabilities of occurrence of different event intensities. These distributions are sometimes called `hazard footprints' \cite{OasisFinancialModule}. As an example, in the case of inundation, the hazard footprint would provide for different locations the probability of occurrence of different inundation depths -- associated with one particular inundation event. 
 
-Event-based hazard models are important when the \emph{correlation} of hazards to which assets are exposed is material to the analysis being performed. Non-event-based hazard models provide probabilities that accute hazards occur in a certain location but with no information about how likely it is that two assets may experience the hazards at the same time. For example, if one house on a street is exposed to an inundation it is quite possible that the house two doors down will also be exposed. This is captured by event-based hazard models when both houses appear in the same event footprint.
+Event-based hazard models are important when the \emph{correlation} of hazards to which assets are exposed is material to the analysis being performed. For example, if one house on a street is exposed to an inundation it is likely that the house two doors down will also be exposed. This is captured by event-based hazard models: both houses might well appear in the same hazard footprint. The models are therefore important in reinsurance risk calculations, say, where the ability to calculate accurately `worst-case' losses is highly desirable.
 
-Of the face of it, non-event-based hazard models may appear to be missing important information  
+\emph{Return-period-based hazard models}, in contrast, provide at each location a curve of return-periods and corresponding intensities of an accute hazard. For example an inundation model may specify that at a certain latitude and longitude an inundation event with a depth of 50~cm will occur with a return period of 100 years, 70~cm with a return period of 200 years and so on\footnote{For inundation models, 10 return periods for each location may be specified, say.}. Such a return-period map provides no correlation information.
 
+Return-period-based approaches offer a significant computational advantage at the expense of the missing correlation information. Appropriate use-cases are:
 
+\begin{itemize}
 
+\item when correlation of hazards is not relevant to the calculation, for example when modelling a single asset, or for certain calculations, such as annual average ground-up loss\footnote{For calculation of certain measures only marginal probability of occurrence of a hazard at a given location is relevant. This is discussed in more detail later, but may be true for certain average measures; for measures of tail-risk, in contrast, joint probability is needed for the calculation.}, or 
+\item when it is satisfactory to model correlation using a heuristic approach (e.g. when obtaining a rough estimate based on 0\% ot 100\% correlation or some estimated average spatial correlation). This may be used in cases where it is desirable to separate low-risk from high risk lending portfolios for example. 
+
+\end{itemize}
 \item{\emph{Chronic hazards.}}
-Risk factors are modelled using probability distributions calibrated to historically-observed returns; simplifying assumptions such as a multivariate normal distribution are made in order to obtain closed-form expressions for the VaR.
-
-Risk factors are again reflected by probability distributions calibrated to historically-observed returns. The joint distributions are typically fitted to historical data more closely than in the case of a Parametric~VaR and, as such, usually do not allow for closed-form expressions.
+As discussed above, acute hazard models provide probability distributions for future events. In contrast chronic hazard models provide climate parameters only. The models are therefore non-probabilistic for a given scenario. For example, a model of average surface temperature would provide values for different latitudes and longitudes under a particular climate scenario (e.g. particular social-economic and representative concentration pathway). \emph{Under this particular scenario}, the assumption is that the climate parameter is certain to take the value. 
 
 \end{enumerate}
 
-\begin{enumerate}[a)]
-	\item For \emph{acute hazards} distributions 
-	\item Vulnerability
-	\item Financial
-\end{enumerate}
-  such as the probability of an inundation above a certain depth, or a period of drought, in a specific area. 
+Hazard likelihood of occurrence is generally scenario-based \cite{BertramEtAl:2020}. That is, hazards are modelled in a historical baseline and then again assuming a particular climate scenario.
 
-Models of acute hazards produce probability distributions for future events whereas chronic hazard models produce climate parameters only. Hazard models are pure climate models, whose outputs can be used as an input for the next steps of the analysis. 
+\paragraph{Vulnerability.}
+The vulnerability component measures the potential impact of a catastrophic event on an asset. One very important feature of the methodological approach is that like acute hazard models \emph{vulnerability models are probabilistic}. This is because:
+\begin{itemize}
+\item{The damage or disruption to an asset caused by some precisely known event (e.g. flood of known intensity) may not itself be precisely known or knowable. That is, there is an \emph{aleatory uncertainty}\cite{MitchellEtAl:2017}.}
+\item{In many cases the properties of the asset sufficient to ascertain its vulnerability are, although in principle knowable, unknown. That is there is an \emph{epistemic uncertainty}\cite{MitchellEtAl:2017}.}
+\end{itemize}
 
-\paragraph{Vulnerability model}
-The vulnerability component measures the potential impact of a catastrophic event on an asset. Vulnerability models, like acute hazard models, are probabilistic.  loss of output suffered by my power station if an inundation of a certain intensity happens?". 
+Both these sources of uncertainty may be material to the calculation in hand and neglecting these is a potential source of model risk\footnote{We define model risk as the risk that a model leads to incorrect conclusions or management decisions. Note that model risk is \emph{not} the risk that a model is wrong; rather the concept is tied to its use.}. In many climate risk calculations, epistemic uncertainty is particularly important: the vulnerability of assets in some portfolios may be uncertain but this does not prevent, say, the estimation of a likely upper bound to damage or disruption. Such a bound may be wrong however, if one does not allow for the possibility that the asset's nature is such that it may be significantly more vulnerable than some average level. 
 
-Finally, the Financial module is concerned with translating the asset damage to a loss of profitability for the company, or a loss of value for a lender, insurer, equity stakeholder etc. Clearly, the models used in the Financial module answer questions specific to a certain user: is the ultimate objective that of measuring the physical risk for the company or for one of the asset's insurer? Depending on the answer to that question, a different Financial model might be needed. 
-At time of writing, physical risk calculations may make use of `bulk-assessment' approaches where accurate asset vulnerability information is unavailable and approximations are therefore required. The modelling framework accommodates bulk-assessment-type models as well as approaches capable of modelling vulnerability more precisely\footnote{There is potentially great value in the results obtained from very simple models, as long as the model error can be quantified. The aim is to be able to accommodate both simple and complex models in combination.}. The framework is designed to control the model risk that this creates by incorporating a model of the uncertainty of the approximations into the calculation.
+At time of writing, physical risk calculations may make use of `bulk-assessment' approaches where accurate asset vulnerability information is unavailable and approximations are therefore required. The modelling framework aims to accommodate bulk-assessment-type models as well as approaches capable of modelling vulnerability more precisely, the assumption being that there is potentially great value in the results obtained from very simple models, as long as the model uncertainty is properly-quantified. The aim is to be able to accommodate both simple and complex models in combination. 
 
- The different elements can be modelled in a variety of ways, under different approximations. However we consider that a `micro' or `fine-granularity' method is pre-requisite for all of these. For example, 
+\paragraph{Financial.} 
+Finally, the financial component is concerned with translating a probability distribution of asset damage/disruption to a loss of profitability for a company, or a loss of value for a lender, insurer, equity stakeholder etc. Clearly, the models used in the Financial module answer questions specific to a certain user: is the ultimate objective that of measuring the physical risk for the company or for one of the asset's insurer? Depending on the answer to that question, a different financial model might be needed.
 
-Hazard likelihood of occurrence is generally scenario-based \cite{BertramEtAl:2020}. 
-
-A number of papers have developed models and tools that tackle one specific aspect of the problem. However, it is not currently easy to seamlessly integrate models which operate in different areas to produce an end to end physical risk analysis, or to experiment with different approaches.
+One important feature of financial models is the role played by insurance. For example, for a lender, what is the impact of climate change on the level of risk of a commercial real estate portfolio? An increase in the frequency and severity of acute hazards may affect the value of the loan collateral but this can depend strongly on whether damage/disruption is covered by insurance and premiums remain low for example.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Literature}
-
 \section{Design goal}
-The design goal of the \emph{`physrisk'} library is to facilitate the analysis of physical risk from a variety of perspectives. There is no specific market (e.g. insurance market) in mind and we want to make sure that our framework is general enough to allow any stakeholder to reason about their physical risks. In addition, we want our framework to make as few assumptions as possible: The clear hypothesis is that we can treat the modules as dependent from one another only through their potential input-output relationships. Other than that, we want the user to have a flexible access to a wide choice of models within each module: the models are only required to have a predictable external behavior, while the details of the internal workings can be defined with flexibility.
+The design goal of the \emph{`physrisk'} library is to facilitate the analysis of physical risk from a variety of perspectives. There is no specific market (e.g. insurance market) in mind; the intent is to be sufficiently general to allow any stakeholder to analyse their physical risks. In addition, the framework should introduce as few constraints as possible: the clear hypothesis is that modules are dependent from one another only through their potential input-output relationships. Other than that, the intent is to allow users to have a flexible access to a wide choice of models within each module: the models are only required to have a predictable external behaviour, while the details of the internal workings can be defined with flexibility.
+
+A number of teams have developed models and tools that tackle one specific aspect of the problem. However, it is not currently easy to seamlessly integrate models which operate in different areas to produce an end to end physical risk analysis, or to experiment with different approaches.
 
 \section{Model description}
 
 \subsection{Overview}
 A high-level view of the physical risk modelling framework is shown in Figure~\ref{Fig:top_level_view}.
 
-Hazard models are used to create hazard data sets, providing probability distributions of events such as inundations, periods of drought or periods of high wind. These data sets might, for example, specify the annual probability of occurrence of an event (e.g. high wind) of a certainty intensity (e.g. maximum wind speed) for some specified year in the future.
+Data sets of \emph{hazard indicators}\footnote{a hazard indicator is measure used to quantify a hazard.} are obtained from a variety of sources. For modelling acute hazards, datasets typically comprise probability distributions of events such as inundations, periods of drought or periods of high wind. These data sets might, for example, specify the annual probability of occurrence of an event (e.g. high wind) of a certainty intensity (e.g. maximum wind speed) for some specified year in the future.
 
-Vulnerability models are used to construct, for a given set of assets, both:
+\emph{Vulnerability models} are applied to different types of asset and different types of hazard. A vulnerability model will use information about an asset, typically its geolocation, type and relevant characteristics, and will source hazard indicator data from one or more \emph{hazard models}. The vulnerability model will construct from these inputs an impact distribution.  
+
+In the case of acute hazards, in order to derive the impact distribution vulnerability models will typically construct both:
 \begin{itemize}
-    \item Asset event distributions: probability distributions of events that impact the assets at their locations, derived from hazard data sets
-    \item Vulnerability distributions: conditional probability distributions of the impacts on the assets of events of given intensity
+    \item Hazard event distributions: probability distributions of events that impact the assets \emph{at their locations}, derived from hazard data sets,
+    \item Vulnerability distributions: conditional probability distributions of the impacts on the assets of events of given intensity.
 \end{itemize}
 
-The asset impact model uses these quantities to derive distributions of impact for each asset. An impact might be, for example, damage to the asset, expressed as a fraction of the asst value. The financial risk model calculates financial measures from the impact distributions, for example Exceedance Probability.
+The vulnerability model uses these quantities to derive distributions of impact for each asset. An impact might be, for example, damage to the asset, expressed as a fraction of the asst value. The financial risk model calculates financial measures from the impact distributions, for example Exceedance Probability.
 
 Within the OS-C modelling framework, models are interchangeable and allow forms of composition. That is, different choices of vulnerability model may be used for a particular asset and a vulnerability model may use different hazard data sets for its calculation. The intention is to allow a risk calculation to be built from an ecosystem of hazard and vulnerability models according to the requirements of the model owner.
 
@@ -275,9 +271,7 @@ Within the OS-C modelling framework, models are interchangeable and allow forms 
 
     \begin{framed}
         % left, bottom, right, top
-        %\includegraphics[clip, trim=0cm 7cm 0cm 1cm, width=1.00\textwidth]{plots/top_level_view.pdf}
-        \includegraphics[clip, trim=0cm 7cm 0cm 1cm, width=1.00\textwidth]{top_level_view.pdf}
-
+        \includegraphics[clip, trim=0cm 0.5cm 0cm 1cm, width=1.00\textwidth]{plots/top_level_view.pdf}
 
     \end{framed}
 
@@ -295,13 +289,13 @@ Within the OS-C modelling framework, models are interchangeable and allow forms 
 \end{figure}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsection{Asset impact model}
-\label{SubSec:AcuteAssetImpactModel}
-The {\it asset impact} model is used to determine how an asset is impacted by an event. The impact is a quantity from which financial loss can be inferred, but is not itself a monetary value. For example, a response might be the damage sustained to a building as a fraction of its value or the annual loss of energy output of a power station as a fraction of its annual output\footnote{A systemic change in annual output changes asset value, since this is partly determined by the expected future cash flows generated by the asset.}. In each case, a further model is required to translate the impact to a change in asset value. In principle an impact might lead to an increase or decrease in value.
+\subsection{Vulnerability model}
+\label{SubSec:VulnerabilityModel}
+The \emph{vulnerability model} determines how an asset is impacted by a hazard. The impact is a quantity from which financial loss can be inferred, but is not itself a monetary value. For example, an impact might be the damage sustained to a building as a fraction of its value or the annual loss of energy output of a power station as a fraction of its annual output\footnote{A systemic change in annual output changes asset value, since this is partly determined by the expected future cash flows generated by the asset.}. In each case, a further model is required to translate the impact to a change in asset value. In principle an impact might lead to an increase or decrease in value.
 
 Catastrophe models sometimes define a quantity `damage', and talk about `damageability'. `Damage' and `impact' are analagous quantities here but `impact' is perhaps better-suited to situations where there is, say, a decrease in output efficiency of a plant as a result of a period of higher temperatures.
 
-Asset impact models as used in physical risk calculations may overlap with those of catastrophe models. OS-C aims to support a wide range of models, but it is desirable to identify approaches that generalize a large class of these. One such approach is adopted from Oasis \cite{OasisLMF}. The first assumption behind this is that a model should capture two important types of uncertainty, doing so by representing each by a probability distributions:
+Vulnerability models as used in physical risk calculations may overlap with those of catastrophe models. OS-C aims to support a wide range of models, but it is desirable to identify approaches that generalize a large class of these. One such approach is adopted from Oasis \cite{OasisLMF}. The first assumption behind this is that a model should capture two important types of uncertainty, doing so by representing each by a probability distributions:
 \begin{enumerate}
     \item Uncertainty as to the frequency and intensity (or severity) of events that potentially lead to a change in asset value. This is sometimes called the {\it primary uncertainty}
     \item Uncertainty as to the vulnerability of assets to events (i.e. response of assets to events of a given intensity), the {\it secondary uncertainty}
@@ -311,7 +305,63 @@ These quantities are defined more precisely in \ref{Sec:MathematicalDescriptionO
 
 A second assumption is that the probabilities of such events may not be readily represented by distributions such as beta, gamma, beta-Bernoulli or truncated Gaussian and may be complex and multi-modal. Discrete probability distributions are therefore used in order to represent the range of possible distributions: a non-parametric approach.
 
-\subsubsection{Mathematical description of asset impact model}
+\subsubsection{Mathematical description of vulnerability models}
+A typical physical risk calculation will generate an impact, $d$\footnote{$d$ for `damage/disruption' is used to denote impact as $i$ is reserved for indexing}. 
+
+Physical climate risk analyses are generally concerned with how impacts change as a result of changes to the climate. In contrast with catastrophe modelling where an impact is typically calculated according to a historical baseline, a climate risk calculation would typically compare the baseline to an impact calculated under a particular climate scenario and period in the future.
+
+The impact of hazards on a portfolio of $n$ assets is a (multivariate) probability distribution as a result of the primary and secondary uncertainties. The impact on a single asset is a random variable, $D$, with (marginal) probability density function $f_D(d)$. The probability of an impact exceeeding $d$, $F_D(d)$ is given by:
+
+ \begin{equation}
+ 	\label{Eq:ImpactExceed}
+ 	F_D(d) = \int_d^{\infty} f_D(u) du
+ \end{equation}
+
+
+The value of a hazard indicator, which quantifies the intensity of the phenomenon to which the hazard refers (we also use the term `hazard intensity') is given by random variable $S$. This has marginal  probability density function $f_S(s)$. This distribution captures the primary uncertainty.
+
+We define a conditional probability density function $f_{D|S}(d, s)$ to be the probability that given the occurrence of a hazard indicator $s$, an impact occurs of size $d$. This distribution captures the secondary uncertainty.
+
+The impact distribution is then given by: 
+ 
+  \begin{equation}
+ 	\label{Eq:ImpactEffective}
+ 	f_D(d) = \int_{-\infty}^{\infty} f_S(s) f_{D|S}(d, s) ds
+ \end{equation}
+
+Note that $f_d(d)$ is identical to the {\it effective damageability} distribution of Oasis LMF\cite{OasisFinancialModule} and can be described as the `effective impact'. It is a marginal distribution and as such does not capture any correlation between events nor impacts.
+
+In the case of $n$ assets, multivariate random variables are defined $\mathbf{D} = (D_1,\ldots,D_d)$ and $\mathbf{S} = (S_1,\ldots,S_n)$. 
+
+\paragraph{Return-period-based approach.}
+
+The \emph{return-period-based approach} makes use of marginal distributions $f_{S_i}$ for each (asset) location $i$, and not the joint distribution, $f_S(\mathbf{s})$. The marginals are related to the joint distribution by: 
+
+ \begin{equation}
+	\label{Eq:ImpactMarginal}
+	f_{S_i}(s_i) = \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} \dots \int_{-\infty}^{\infty} f_S(s_1,s_2, \dots,s_n) \,ds_1 \dots ds_{i-1} ds_{i + 1} \dots ds_n
+\end{equation}
+
+Equation~\ref{Eq:ImpactEffective} can be applied to obtain the impact distributions for each location $i$. In order to aggregate the impacts, the dependency structure must be provided; more precisely, a copula\cite{Nelsen:2007} must be specified. This may be derived via a heuristic; for example a `worst case' dependency structure could be provided to obtain an upper bound, perhaps assuming 100\% correlation between losses. In general such approaches are not intended for cases where accurate treatment of the dependence between the losses is needed, but rather for:
+
+\begin{itemize}
+\item analyses of single assets
+\item quick calculations intended to give an upper bound of an impact, perhaps to identify areas of particular risk
+\item certain calculations where intra-correlation is not required, e.g. expected total ground-up loss
+\end{itemize}
+
+In order to apply  $f_{D}(\mathbf{d})$, Monte Carlo approaches can be employed.
+
+principle, one can adopt first sample from the joint distribution $f_{D, S}(\mathbf{d}, \mathbf{s})$. 
+
+
+\paragraph{Event-based approach.}
+
+
+
+ 
+
+\subsubsection{Discrete form of acute vulnerability model}
 \label{Sec:MathematicalDescriptionOfAssetImpactModel}
 
 There are $n$ intensity bins with index $i$ such that $i \in \{1, \dots, n \}$. We define $e^{(a)}_i$ to be the probability that a hazard event of type $a$ occurs with an intensity that falls in bin $i$. If $S^{(a)}$, a random variable, is the intensity of event $a$ then:
@@ -323,7 +373,7 @@ There are $n$ intensity bins with index $i$ such that $i \in \{1, \dots, n \}$. 
 
 That is, $s^{(a, \text{lower})}_i$ and $s^{(a, \text{upper})}_i$ define the range of bin $i$.
 
-We define $v^{(a, b)}_{ij}$ to be the conditional probability that \emph{given} the occurrence of an event of type $a$ with intensity $S^{(a)}$ there is an impact (typically a damage or disruption\footnote{$d$ for `damage/disruption' is used to denote impact as $i$ is reserved for indexing}), $D^{(b)}$ in the range $d^{(a,b,\text{lower})}_j < D \le d^{(a,b,\text{upper})}_j$. The impact is of type $b$.
+We define $v^{(a, b)}_{ij}$ to be the conditional probability that \emph{given} the occurrence of an event of type $a$ with intensity $S^{(a)}$ there is an impact (typically a damage or disruption, $D^{(b)}$ in the range $d^{(a,b,\text{lower})}_j < D \le d^{(a,b,\text{upper})}_j$. The impact is of type $b$.
 
 
 \begin{equation}
@@ -349,15 +399,12 @@ From the definition of conditional probability:
 
 If only the mean impact curve is available, then it is possible to create the matrix such that $v_{ij} \in \{0, 1\}$. The matrix then provides a simple mapping from intensity to impact; if the number of intensity and response bins is equal then matrix $\mathbf{v}$ is simply the identity matrix. However, note that these simplifications exclude from the model any uncertainty in the parameters\footnote{A better approach would be to estimate the standard deviation of the distributions from which the mean impact curve was calculated and to incorporate this.}.
 
-Note that $d^{(a,b)}_j$ is identical to the {\it effective damage} distribution of Oasis and can be described as the `effective impact'. It is a marginal distribution and does not capture any correlation between events nor impacts.
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure}[ht]
 
     \begin{framed}
 
-        %\includegraphics[width=\textwidth]{plots/fig_intensity.pdf}
-        \includegraphics[width=\textwidth]{fig_intensity.pdf}
+        \includegraphics[width=\textwidth]{plots/fig_intensity.pdf}
 
     \end{framed}
 
@@ -393,7 +440,7 @@ Physical risk models may make use of so-called `bulk assessment' approaches for 
 \paragraph{Handling epistemic uncertainty}
 In forms of bulk-assessment, a common case is that insufficient information exists with which to characterize an asset. This is an example of an epistemic, as opposed to aleatory, uncertainty. The epistemic uncertainty, and its impact, can be included in the model in a relatively straight-forward way.
 
-We extend Equation \ref{Eq:vulnerability}, by including a new discrete random variable, $A$, which is the type of the asset.
+We extend Equation~\ref{Eq:vulnerability}, by including a new discrete random variable, $A$, which is the type of the asset.
 \begin{equation}
     \label{Eq:vulnerability}
     v^{(a, b)}_{ij} = P \left( d^{(a,b,\text{lower})}_j < D^{(b)} \le d^{(a,b,\text{upper})}_j | s^{(a, \text{lower})}_i < S^{(a)} \le s^{(a, \text{upper})}_i, A = a_1 \right)
@@ -419,8 +466,7 @@ Hazard data sets might also contain instances of `point-probabilities', for exam
 
     \begin{framed}
 
-        %\includegraphics[width=\textwidth]{plots/vulnerability_lagace_2008.png}
-    \includegraphics[width=\textwidth]{vulnerability_lagace_2008.png}
+		\includegraphics[width=\textwidth]{plots/vulnerability_lagace_2008.png}
 
     \end{framed}
 
@@ -522,10 +568,9 @@ whole globe, leading to a potentially large mismatch between historical and futu
 
 
 
-
+%\section{Hazard and vulnerability models}
 
 \section{Inundation}
-
 \subsection{Hazard models}
 Inundation is modelled as an acute risk using the approach of Section~\ref{SubSec:AcuteAssetImpactModel}. Hazard event models compatible with this method provide inundation depths for different annual probabilities of occurrence -- or equivalently return periods. The need for sufficient granularity in the set of return periods is discussed in \cite{WardEtAl:2011}. 
 
@@ -570,29 +615,7 @@ Acute hazard modelling approaches are based on calculating return periods of eve
 
 The Heat vulnerability model presented in this section is based on the approach introduced in 'Temperature And Work: Time allocated to work under varying climate and labor market conditions' (2021)\cite{TemperatureAndWork:2021}. The paper uses survey data to estimate labour allocation decisions in the United States (US) based on temperature. It does not extend the analysis beyond the US. It replicates previous research done (original GZN method \cite{TemperatureAndTheAllocationofTime:2014}.) whilst extending the period of data used and adding an assessment based on the economic cycle: the main innovation is that it includes the economic cycle by splitting out the 2008 financial crisis first through segmented regressions and following them by using an indicator variable: the non-recession period is 2003-2007 and 2015-2018. The Great Recessions period is 2008-2014. The methodology in only applied to climate exposed sectors: agriculture, forestry, fishing and hunting, construction, mining, and transportation and utilities.
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% to add in the references: https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodologyBibliography.bib
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%% Original GLZ model
-%@article{TemperatureAndTheAllocationofTime:2014,
-%  title={Temperature and the Allocation of Time: Implications for Climate Change},
-%  author={Matthew Neidell, Joshua Graff Zivin},
-%  journal={Journal of Labor Economics},
-%  volume={32},
-%  number={1},
-%  pages={1--26},
-%  year={2006},
-%  publisher={The University of Chicago Press on behalf of the Society of Labor Economists and the NORC at the University of Chicago}
-%}
-
-%%%%% Temperature And Work artcle - which starts from original GZL model
-%@article{TemperatureAndWork:2021,
-%  title={Temperature and work: Time allocated to work under varying climate and labor market conditions},
-%  author={Matthew Neidell, Joshua Graff Zivin, Megan Sheahan, Jacqueline Willwerth, Charles Fant, Marcus Sarofim, Jeremy Martinich},
-%  journal={PLOS ONE},
-%  year={2021},
-%}
 The paper main conclusions are:
 \begin{itemize}
     \item A statistically significant impact of 2.6 minutes lost per degree of temperature above $90^\circ F$ during normal economic periods and no relationship during a recession. This result is converted into the Celsius scale as \emph{physrisk} decided to take that scale as a reference. The 2.6 minutes is multiplied by a scaling factor of 1.8, which returns \textbf{an impact of 4.7 minutes lost per degree of temperature above $32.2^\circ C$}. 
@@ -610,7 +633,7 @@ While the results are relevant and significant, is it important to highlight the
 The paper attempts to estimate economic cost (assuming the impact of 4.7 minutes lost per degree of temperature above $32.2^\circ C$ during normal economic periods) however it only focuses on the direct costs and does not account for feedback effects (reducing the labour productivity will result in a decrease of the products available, wages, demand, etc.). Figure \ref{fig:economiccost} provides the results, as extracted from the paper:
 \begin{figure}[h]
     \centering
-    \includegraphics[scale = 0.6]{economic cost.png}
+    \includegraphics[scale = 0.6]{plots/economic cost.png}
     \caption{Economic cost}
     \label{fig:economiccost}
 \end{figure}
@@ -622,7 +645,7 @@ The GZN hazard  model is based on the projections of the climate variable 'daily
 
 \begin{figure}[h]
     \centering
-    \includegraphics[scale = 0.8]{GZL-Hazard.PNG}
+    %\includegraphics[scale = 0.8]{plots/GZL-Hazard.PNG}
     \caption{Cooling degree days and labour availability}
     \label{fig:GZL-Hazard}
 \end{figure}
@@ -639,7 +662,7 @@ The assessment is based on the research performed by Zhang and Shindel, which re
 
 \begin{figure}[H]
     \centering
-    \includegraphics{WBGT.png}
+    \includegraphics{plots/WBGT.png}
     \caption{WBGT method}
     \label{fig:WBGT}
 \end{figure}
@@ -659,7 +682,7 @@ Figure \ref{fig:CostsByRCP} \footnote{Extracted from \cite{ZhangAndShindell:2021
 
 \begin{figure}[h]
     \centering
-    \includegraphics{CostsByRCP.png}
+    \includegraphics{plots/CostsByRCP.png}
     \caption{Costs By RCP under GLZ method versus WBGT method}
     \label{fig:CostsByRCP}
 \end{figure}
@@ -708,7 +731,7 @@ Where $T(p)$ donates the probability density function (pdf) of the student $T$ d
 Figure \ref{fig:GZL-Vulnerability} shows the uncertainly around the GZN vulnerability model, based on the assumptions above, at $95\%$ confidence level\footnote{In order to compute the figure, N is taken from the paper \cite{TemperatureAndWork:2021}: N 11,732, and K is assumed to be 0 as it is very small relatively to N. One could do further researches to check the exact number of K, but that will not impact the results. K includes the number of control variables which provide information on demographic data -- age, gender, education, employment status, income, etc. -- and climate variables such as level of precipitation and snow.}.
 \begin{figure}[h]
     \centering
-    \includegraphics[scale = 0.8]{GZL-Vulnerability.png}
+    \includegraphics[scale = 0.8]{plots/GZL-Vulnerability.png}
     \caption{Estimate of daily minutes of labour loss}
     \label{fig:GZL-Vulnerability}
 \end{figure}
@@ -759,7 +782,7 @@ The main weakness of the Temperature and Work article (which is more likely to b
 The WBGT hazard model, as show in figure \ref{fig:WBGT-Hazard}, is based on the projections of the climate variables 'daily temperature' and 'daily humidity'. The projected data spans for 20 years. Then, the computations provided in figure \ref{fig:WBGT} are used to compute the daily WBGT, which is considered as the indicator of the WBGT hazard data that will be afterwards considered as an input in the impact function to get the daily Work Ability (WA) projections over the 20-year period. Finally, the impact deriving from the WBGT model is computed as the annual average of the daily projected WA.
 \begin{figure}[h]
     \centering
-    \includegraphics[scale = 0.8]{WBGT-Hazard.PNG}
+    %\includegraphics[scale = 0.8]{plots/WBGT-Hazard.PNG}
     \caption{WBGT and labour availability}
     \label{fig:WBGT-Hazard}
 \end{figure}
@@ -768,7 +791,7 @@ Note that another indicator deriving from the WBGT hazard model is the Work Loss
 The aggregation of the outputs of the GZN vulnerability model (minutes of productivity labour loss) and the WBGT vulnerability model (WA), returns the effective number of working hours, which represents a way to measure the uncertainty around the GZN vulnerability model. Figure \ref{fig:Aggregation} provides the aggregation process and results:
 \begin{figure}[h]
     \centering
-    \includegraphics[scale = 0.8]{Aggregated Hazard WBGT GZN.PNG}
+    %\includegraphics[scale = 0.8]{plots/Aggregated Hazard WBGT GZN.PNG}
     \caption{Aggregation of GZN model and WBGT model}
     \label{fig:Aggregation}
 \end{figure}

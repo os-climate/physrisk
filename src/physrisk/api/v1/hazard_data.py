@@ -1,5 +1,5 @@
 from enum import Flag, auto
-from pathlib import PosixPath
+from pathlib import PurePosixPath
 from typing import Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, Field
@@ -97,7 +97,7 @@ class HazardResource(BaseModel):
             )
 
     def key(self):
-        return str(PosixPath(self.path, self.id))
+        return str(PurePosixPath(self.path, self.id))
 
 
 # endregion

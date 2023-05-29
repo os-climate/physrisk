@@ -182,13 +182,13 @@ def WBGT_GZN_Joint_parameter_set():
     ]:
         paths.append(get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year))
     for model, scenario, year in [
-        ("mean_work_loss/high", "historical", 1980),  # 2005
-        ("mean_work_loss/medium", "historical", 1980),
+        ("mean_work_loss/high", "historical", 2010),  # 2005
+        ("mean_work_loss/medium", "historical", 2010),
         ("mean_work_loss/high", "ssp585", 2050),
         ("mean_work_loss/medium", "ssp585", 2050),
     ]:
         paths.append(get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year))
-    parameters = [300, 300, 600, -200, 0.00084, 0.00044, 0.0037, 0.0015]
+    parameters = [300, 300, 600, -200, 0.05, 0.003, 0.11, 0.013]
     return dict(zip(paths, parameters))
 
 

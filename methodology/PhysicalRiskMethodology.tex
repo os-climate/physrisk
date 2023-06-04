@@ -177,8 +177,9 @@ livelihoods, service provision, ecosystems, and environmental resources (see Ann
 	description=Definition of the shifting parameter of a chronic hazard. This is a time-varying quantity such as the average temperature or the average number of days per year over a certain temperature threshold. 
 }
 
+The authors of \cite{RangerEtAl:2022} argue that sudden accute events are the most likely to generate \emph{`material shocks to the financial sector in the near-term'} and note that techniques to generate probabilistic scenarios to inform financial decision making is well-developed in the insurance industry. This is taken as a guiding principle, that a methodology for the measurement of physical climate risk should be adapted from the techniques developed by catastrophe modellers. The authors also note that \emph{`the financial risks from physical climate shocks cannot be approximated by considering only average annual costs of weather extremes, even on long timescales. Larger, rarer events can cause significant damage and disruption and have long-lived impacts.'}. Another guiding principle is this handling of rare events.
 
-A model designed to quantify physical risk must take into account: a) hazards' likelihood of occurrence  b) the damage or disruption caused by a hazard c) the consequence of this damage/disruption. Damage/disruption caused by a hazard is determined by the \emph{vulnerability} of the asset that is exposed\footnote{\emph{Exposure} of an asset to a hazard is defined after \cite{MaskreyEtAl:2011}; for most purposes this is determined by asset location.}. With a focus on financial risk, damage/disruption refers to damage of financial assets and disruption to business activities. More generally, damage can refer to natural assets and disruption to populations and ecosystems. Hereafter we use the word `asset' to describe both physical assets and business activities. As an example, the physical infrastructure of a power generating asset may be damaged by inundation and its electricity production may be disrupted, leading to a loss in revenue. 
+A model designed to quantify physical risk must take into account: a) hazard likelihood of occurrence  b) the damage or disruption caused c) the consequence of this damage/disruption. Damage/disruption caused by a hazard is determined by the \emph{vulnerability} of the asset that is exposed\footnote{\emph{Exposure} of an asset to a hazard is defined after \cite{MaskreyEtAl:2011}; for most purposes this is determined by asset location.}. With a focus on financial risk, damage/disruption refers to damage of financial assets and disruption to business activities. More generally, damage can refer to natural assets and disruption to populations and ecosystems. Hereafter we use the word `asset' to describe both physical assets and business activities. As an example, the physical infrastructure of a power generating asset may be damaged by inundation and its electricity production may be disrupted, leading to a loss in revenue. 
 
 We assign explicit names to these three components, a), b) and c) for the financial risk case:
 \begin{enumerate}[a)]
@@ -186,6 +187,8 @@ We assign explicit names to these three components, a), b) and c) for the financ
 \item Vulnerability
 \item Financial
 \end{enumerate}
+
+The authors of \cite{BavandiEtAl:2022} note that, \emph{`historical damage data may be insufficient or even irrelevant for generating a risk assessment that reflects the current or future risk reality'} and further that \emph{`physical climate risk assessments now increasingly use data sets that can individually characterize hazard, exposure, and vulnerability'}. The methodology presented in this document is indeed intended to perform such assessments.
 
 A precise model of the physical risk from a single (localized) asset or business activity must consider a hazard's likelihood of occurrence \emph{at the asset's locale} (i.e. if the asset is exposed to the hazard) and vulnerability to the hazard particular to that asset. This requires specific knowledge of the asset. For example a power station that relies on air-cooling might be disrupted by a period of extremely high air temperature. In addition, an asset may be impacted through its reliance on other assets; a manufacturing facility may rely on continuity of electricity supply for example.
 
@@ -198,7 +201,7 @@ OS-C aims to provide an platform unconstrained by any one particular methodology
 In the following, models of hazards, vulnerability and financial impact are discussed in more detail. In a later section these are presented more formally.
 
 \paragraph{Hazard.}
-As noted above, hazard models come in two varieties: models of acute hazards -- events -- and models of chronic hazards -- long-term shifts in climate parameters.
+As noted above, hazard models come in two varieties: models of acute hazards -- events -- and models of chronic hazards -- long-term shifts in climate parameters. In climate risk events are \emph{climate-conditioned}: based not just on historical events but also future projections under different assumptions.  
 \begin{enumerate}[label=\Alph*.]
 \item{\emph{Accute hazard models.}}
 
@@ -254,7 +257,7 @@ A high-level view of the physical risk modelling framework is shown in Figure~\r
 
 Data sets of \emph{hazard indicators}\footnote{a hazard indicator is measure used to quantify a hazard.} are obtained from a variety of sources. For modelling acute hazards, datasets typically comprise probability distributions of events such as inundations, periods of drought or periods of high wind. These data sets might, for example, specify the annual probability of occurrence of an event (e.g. high wind) of a certainty intensity (e.g. maximum wind speed) for some specified year in the future. An important class of such data sets are the \emph{hazard maps}, described later in this section.
 
-\emph{Vulnerability models} are applied to different types of asset and different types of hazard. A vulnerability model will use information about an asset, typically its geolocation, type and relevant characteristics, and will source hazard indicator data from one or more \emph{hazard models}. The vulnerability model will construct from these inputs an impact distribution.  
+\emph{Vulnerability models} are applied to different types of asset and different types of hazard. A vulnerability model will use information about an asset, typically its geolocation, type and relevant characteristics, and will source hazard indicator data using one or more \emph{hazard models}. The vulnerability model will construct from these inputs an impact distribution.  
 
 In the case of acute hazards, in order to derive the impact distribution vulnerability models will typically construct both:
 \begin{itemize}
@@ -262,7 +265,7 @@ In the case of acute hazards, in order to derive the impact distribution vulnera
     \item Vulnerability distributions: conditional probability distributions of the impacts on the assets of events of given intensity.
 \end{itemize}
 
-The vulnerability model uses these quantities to derive distributions of impact for each asset. An impact might be, for example, damage to the asset, expressed as a fraction of the asst value. The financial risk model calculates financial measures from the impact distributions.
+The vulnerability model uses these quantities to derive distributions of impact for each asset. An impact might be, for example, damage to the asset, expressed as a fraction of the asst value. The financial risk model calculates financial measures from impact distributions.
 
 Within the OS-C modelling framework, models are interchangeable and allow forms of composition. That is, different choices of vulnerability model may be used for a particular asset and a vulnerability model may use different hazard data sets for its calculation. The intention is to allow a risk calculation to be built from an ecosystem of hazard and vulnerability models according to the requirements of the model owner.
 
@@ -289,13 +292,20 @@ Within the OS-C modelling framework, models are interchangeable and allow forms 
 \end{figure}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\subsection{Hazard model}
+As described above, one or more hazard models are used to provide the hazard indicators required by vulnerability models. Vulnerability models request information from hazard models based on location and spatial extent of the assets.
+
+Hazard indicator data sets are available from a number of sources both publicly-available and proprietary. A recent paper \cite{BavandiEtAl:2022} provides a review of sources of the \emph{`forward-looking climate-conditioned hazard data sets'}, as the authors describe the data, that are required by the methodology presented in this document. \cite{RichtersEtAl:2022} provides technical information on the data sets provided by the Network for Greening the Financial System (NGFS) scenarios and provides a useful introduction to scenarios and in particular Representative Concentration Pathways (RCPs) and Shared Socioeconomic Pathways (SSPs) as well as the Coupled Model Intercomparison Project (CMIP) of global climate models data sets. CMIP data sets are very often key inputs into the derivation of forward-looking climate-conditioned hazard indicators.
+
+Subsequent sections include details of both vulnerability models and sources of hazard indicator data sets for each type of hazard. 
+
 \subsection{Vulnerability model}
 \label{SubSec:VulnerabilityModel}
-The \emph{vulnerability model} determines how an asset is impacted by a hazard. The impact is a quantity from which financial loss can be inferred, but is not itself a monetary value. For example, an impact might be the damage sustained to a building as a fraction of its value or the annual loss of energy output of a power station as a fraction of its annual output\footnote{A systemic change in annual output changes asset value, since this is partly determined by the expected future cash flows generated by the asset.}. In each case, a further (financial) model is required to translate the impact to a change in asset value. In principle an impact might lead to an increase or decrease in value.
+The \emph{vulnerability model} determines how an asset is impacted by a hazard. The impact is a quantity from which financial loss can be inferred, but is not itself a monetary value. For example, an impact might be the damage sustained to a building as a fraction of its value or the annual loss of energy output of a power station as a fraction of its annual output\footnote{A systemic change in annual output changes asset value, since this is partly determined by the expected future cash flows generated by the asset.}. In each case, a further (financial) model is required to translate the impact to a change in asset value and thereby a change in financial measure. In principle an impact might lead to an increase or decrease in value.
 
 Catastrophe models sometimes define a quantity `damage', and talk about `damageability'. `Damage' and `impact' are analagous quantities here but `impact' is perhaps better-suited to situations where there is, say, a decrease in output efficiency of a plant as a result of a period of higher temperatures.
 
-Vulnerability models as used in physical risk calculations may overlap with those of catastrophe models. OS-C aims to support a wide range of models, but it is desirable to identify approaches that generalize a large class of these. One such approach is adopted from Oasis \cite{OasisLMF}. The first assumption behind this is that a model should capture two important types of uncertainty, doing so by representing each by a probability distributions:
+Vulnerability models as used in physical risk calculations may overlap with those of catastrophe models. OS-C aims to support a wide range of models, but it is desirable to identify approaches that generalize a large class of these. One such approach is adopted from Oasis LMF \cite{OasisLMF}. The first assumption behind this is that a model should capture two important types of uncertainty, doing so by representing each by a probability distributions:
 \begin{enumerate}
     \item Uncertainty as to the frequency and intensity (or severity) of events that potentially lead to a change in asset value. This is sometimes called the {\it primary uncertainty}
     \item Uncertainty as to the vulnerability of assets to events (i.e. response of assets to events of a given intensity), the {\it secondary uncertainty}
@@ -303,12 +313,12 @@ Vulnerability models as used in physical risk calculations may overlap with thos
 
 These quantities are defined more precisely in \ref{Sec:MathematicalDescriptionOfAssetImpactModel}. Impact can be modelled using a {\it mean impact curve} (or {\it mean damage curve} in catastrophe modelling nomenclature). This is a curve relating an event intensity to an impact (e.g. a wind event with a given maximum gust speed will cause a given fractional damage to a property). In general, however, there is uncertainty as to the impact on an asset to an event of a given intensity -- in the example, the wind may cause mild or severe damage. For this reason, the vulnerability is represented rather as a two dimensional function.
 
-A second assumption is that the probabilities of such events may not be readily represented by distributions such as beta, gamma, beta-Bernoulli or truncated Gaussian and may be complex and multi-modal. Discrete probability distributions are therefore used in order to represent the range of possible distributions: a non-parametric approach.
+A second assumption is that the probabilities of such events may not be readily represented by distributions such as beta, gamma, beta-Bernoulli or truncated Gaussian and may be complex and multi-modal. Discrete probability distributions are therefore used in order to represent the range of possible distributions: a non-parametric approach. In the mathematical description below, the continuous form of the model is first given followed by a discretisation intended for the capture of non-parametric distributions.
 
 \subsubsection{Mathematical description of vulnerability models}
-A typical physical risk calculation will generate an impact, $d$\footnote{$d$ for `damage/disruption' is used to denote impact as $i$ is reserved for indexing}. Physical climate risk analyses are generally concerned with how impacts change as a result of changes to the climate. In contrast with catastrophe modelling where an impact is typically calculated according to a historical baseline, a climate risk calculation would typically compare the baseline to an impact calculated under a particular climate scenario and period in the future.
+The output of the vulnerability model is an impact, $d$ for an asset and for a given year\footnote{$d$ for `damage/disruption' is used to denote impact as $i$ is reserved for indexing.}. Physical climate risk analyses are generally concerned with how impacts change as a result of changes to the climate. In contrast with catastrophe modelling where an impact is typically calculated according to a historical baseline, a climate risk calculation would typically compare the baseline to an impact calculated under a particular climate scenario and period in the future.
 
-The impact of hazards on a portfolio of $n$ assets is a (multivariate) probability distribution as a result of the primary and secondary uncertainties. The impact on a single asset is a random variable, $D$, with (marginal) probability density function $f_D(d)$. The probability of an impact exceeeding $d$, $F_D(d)$ is given by:
+The impact of hazards on a portfolio of $n$ assets is a (multivariate) probability distribution as a result of the primary and secondary uncertainties. The impact in a given year on a single asset is a random variable, $D$, with (marginal) probability density function $f_D(d)$. The probability of an impact exceeeding $d$, $F_D(d)$ is given by:
 
  \begin{equation}
  	\label{Eq:ImpactExceed}
@@ -316,7 +326,7 @@ The impact of hazards on a portfolio of $n$ assets is a (multivariate) probabili
  \end{equation}
 
 
-The value of a hazard indicator, which quantifies the intensity of the phenomenon to which the hazard refers (we also use the term `hazard intensity') is given by random variable $S$. This has marginal  probability density $f_S(s)$. This distribution captures the primary uncertainty.
+The value of a hazard indicator, which quantifies the intensity of the phenomenon to which the hazard refers (we also use the term `hazard intensity') is given by random variable $S$. This has marginal  probability density $f_S(s)$. This is the probability density of an event occurring in a given year with intensity $s$. This distribution captures the primary uncertainty.
 
 We define a conditional probability density function $f_{D|S}(d, s)$ to be the probability that given the occurrence of a hazard indicator $s$, an impact occurs of size $d$. This distribution captures the secondary uncertainty.
 
@@ -327,7 +337,7 @@ The impact distribution is then given by:
  	f_D(d) = \int_{-\infty}^{\infty} f_S(s) f_{D|S}(d, s) ds
  \end{equation}
 
-Note that $f_d(d)$ is identical to the {\it effective damageability} distribution of Oasis LMF\cite{OasisFinancialModule} and can be described as the `effective impact'. It is a marginal distribution and as such does not capture any correlation between events nor impacts.
+Note that $f_d(d)$ is identical to the {\it effective damageability} distribution of Oasis LMF\cite{OasisFinancialModule} and can be described as the `effective impact'. It is a marginal distribution and as such does not capture any correlation between events nor impacts. In the catastrophe models of Oasis LMF, impacts are sampled from this distribution \cite{OasisFinancialModule}, for example samples of fractional damage, which form the basis of a Monte Carlo calculation. This is done in order to apply insurance policy terms and conditions which can be complex and non-linear.
 
 In the case of $n$ assets, multivariate random variables are defined $\mathbf{D} = (D_1,\ldots,D_d)$ and $\mathbf{S} = (S_1,\ldots,S_n)$. We henceforth use the single-asset index $i$ to denote marginal distributions: $f_{S_i}(s_i)$. 
 
@@ -344,11 +354,11 @@ $f_{S_i}(s_i)$ is usually inferred from a type of hazard indicator data set whic
 
 \paragraph{Hazard maps.} Hazard maps are three-dimensional data sets from which intensities of hazard indicators can be looked up for different locations and different return periods, i.e. $H(x, y, \tau)$ provides hazard indicator intensity at location $(x, y)$ for return period $\tau$. That is, $H$ is the hazard indicator intensity such that the average time between events with intensity higher than $H$ is $\tau$. 
 
-In order to use hazard maps to derive probabilities, we must, strictly, specify the model of probability of occurrence of events with intensity higher than $H$ assumed by the data set. Occurrence may be modelled by a Poisson distribution as in Equation~\ref{Eq:Poisson}. This gives the probability of $k$ occurrences in time internal $t$ where $\tau$ is the return period.
+In order to use hazard maps to derive probabilities, we must, strictly, specify the model of probability of occurrence of events with intensity higher than $H$ assumed by the data set. Occurrence may be modelled by a Poisson distribution as in Equation~\ref{Eq:Poisson}. This gives the probability of $k$ occurrences in time interval $t$ where $\tau$ is the return period.
 
  \begin{equation}
 	\label{Eq:Poisson}
-	P(X = k) = \frac{(t / \tau)^k}{k!}  e^{-\frac{t}{\tau}}
+	\mathbb{P}[X = k] = \frac{(t / \tau)^k}{k!}  e^{-\frac{t}{\tau}}
 \end{equation}
 
 Alternatively, the number of occurrences can be modelled as a Binomial distribution as in Equation~\ref{Eq:Binomial}, which provides the probability that $k$ occurrences occur in $n$ years, assuming that $\tau$ is specified in years.  
@@ -357,7 +367,7 @@ According to Equation~\ref{Eq:Binomial}, \emph{the probability that in a single 
 
  \begin{equation}
 	\label{Eq:Binomial}
-	P(X = k) = \binom{n}{k} (1/\tau)^k (1-1/\tau)^{n - k}
+	\mathbb{P}[X = k] = \binom{n}{k} (1/\tau)^k (1-1/\tau)^{n - k}
 \end{equation}
 
 $F_{S_i}$ can then be inferred from the hazard map for point-like assets. The curve $H(x_i, y_i, \tau)$ is looked up, providing $\tau$ and thereby annual exceedance probabilities for different intensities, $H$. In the case of a point-like asset, the look up is from spatial coordinates ($x_i$, $y_i$). A hazard map will have an associated co-ordinate reference system (CRS). For example the CRS of whole-globe maps is often the WGS84 World Geodetic System (EPSG:4326). In this case ($x_i$, $y_i$) represent longitude and latitude under that CRS. 
@@ -369,12 +379,12 @@ $F_{S_i}$ can then be inferred from the hazard map for point-like assets. The cu
 	f_{D_i}(d_i) = \int_{-\infty}^{\infty} f_{S_i}(s_i) f_{D_i|S_i}(d_i, s_i) ds_i
 \end{equation}
 
- In order to aggregate impacts over a portfolio, the dependency structure must be provided; in general, such a dependency structure is specified by a copula\cite{Nelsen:2007}. This may be derived via a heuristic; for example a `worst case' dependency structure could be provided to obtain an upper bound, perhaps assuming 100\% correlation between impacts. In general such approaches are not intended for cases where accurate treatment of the dependence between the impacts is needed, but rather for:
+ In order to aggregate impacts over a portfolio, the dependency structure must be provided; in general, such a dependency structure is specified by a copula\cite{Nelsen:2007}. This may be derived via a heuristic; for example a `worst case' dependency structure could be provided to obtain an upper bound, perhaps assuming 100\% correlation between impacts. In general the approach approach in this section is not intended for cases where accurate treatment of the dependence between the impacts is needed, but rather for:
 
 \begin{itemize}
 \item analyses of single assets,
 \item quick calculations intended to give an upper bound of an impact, perhaps to identify areas of particular risk, or
-\item certain calculations where intra-correlation is not required, e.g. expected total ground-up loss.
+\item certain calculations where intra-asset correlation is not required, e.g. expected total ground-up loss.
 \end{itemize}
 
 The Sklar theorem of copula theory states that for $n$ random variables~$(D_1, \dots, D_n)$ with joint cumulative density function~(CDF)~$F_D(d_1, \dots, d_n) = \mathbb{P}[D_1 \le d_1, \dots, D_n \le d_n]$, there exists a copula~\mbox{$C:[0,1]^n \rightarrow [0,1]$} such that
@@ -405,23 +415,23 @@ where $\Phi(z)$ is the CDF of a standard normal variable, and $\Phi_n(\mathbf{z}
 	\item Calculate samples for vector $\mathbf{u}$ using the relationship $u_i = \Phi_i(z_i)$.
 \end{enumerate}
 
-The two extremes of 0\% and 100\% correlation of impacts are special cases of this general approach.
+As an example, if impact distributions represent damage to buildings as a result of inundation then one may attempt to model damage to two buildings in close proximity as being highly correlated. However catastrophe model practitioners might point out that even such considerations as the presence or absence of kerb stones and availability of sand bags are highly significant so any such assumption is prone to error. If the buildings are far apart (say in different continents) then the correlation is likely to be close to zero however. The two extremes of 0\% and 100\% correlation of impacts are special cases of this general approach and it may be appropriate to run calculations with such cases to obtain an estimate of the impact of correlation -- rather than to attempt to model correlation more precisely. 
 
 
 \subsubsection{Event-based approach}
-As mentioned in the previous section, where an accurate treatment of the dependence between impacts is needed, a heuristic is unlikely to be appropriate. Rather, it is necessary to model the dependence of hazard intensity and vulnerability explicitly. In an event-based approach, this is achieved by calculating the impact of a large number of events. An event might, for example, be a flood or storm affecting a particular geographical region. Events can be:
+As mentioned in the previous section, where an accurate treatment of the dependence between impacts is needed, a heuristic is unlikely to be adequate. This can occur, for example, where it is required to model the occurrence of a 1 in 250 years `worst-case' event, the event being `worst-case' for a specific portfolio\footnote{In general, a `1 in 250 year' event for a portfolio is an ambiguous statement and requires the definition of a measure. For example the `1 in 250 year' \emph{ground-up loss} of a portfolio is unambiguous. For a single asset, `1 in 250 year' is unambiguous if impact is assumed to be a non-decreasing function of hazard intensity.}. In such cases, it is necessary to model the dependence of hazard intensity and vulnerability explicitly. In an event-based approach, this is achieved by calculating the impact of a large number of events. An event might, for example, be a flood or storm affecting a particular geographical region. Events can be:
 
 \begin{itemize}
 	\item historical events, or
 	\item synthetic, `plausible' events.
 \end{itemize}
 
-In the case of synthetic events, the event may itself be probabilistic; at a particular time, in a particular part of the region, the intensity of the hazard might be represented by a probability distribution. However historical events are typically deterministic and synthetic event sets are often deterministic also.
+In the case of synthetic events, the event may itself be probabilistic; at a particular time, in a particular part of the region, the intensity of the hazard might be represented by a probability distribution. However historical events are typically deterministic and synthetic event sets are often deterministic also; unless otherwise stated, this will be assumed to be the case.
 
 \paragraph{Relationship to hazard maps.}
 Events may be specified with respect to hazard maps; that is the hazard data comprises both hazard map and event set. Typically in such cases the severity of an event is specified using a return period which can then be related back to the hazard map.
 
-For each event, index $j$, a function $z_j$ is defined such that $\tau_{i, j} = z_j(x_i, y_i)$. Here $\tau_{i, j}$ is the severity of the event specified as a return period for asset index $i$ and event index $j$.  $(x_i, y_i)$ are the coordinates of the asset in the relevant CRS.
+More formally, for each event, index $j$, a function $z_j$ is defined such that $\tau_{i, j} = z_j(x_i, y_i)$. Here $\tau_{i, j}$ is the severity of the event specified as a return period for asset index $i$ and event index $j$.  $(x_i, y_i)$ are the coordinates of the asset in the relevant CRS.
 
 For the given event, $\tau_{i, j}$ is then used to look up a hazard intensity, from the hazard map:
  
@@ -430,7 +440,7 @@ For the given event, $\tau_{i, j}$ is then used to look up a hazard intensity, f
 	s_{i, j} = H(x_i, y_i, \tau_{i, j}) 
 \end{equation}
 
-Note that here $s_{i, j}$ is deterministic for a given event and we have simply for the impact distribution for event $j$:
+Note that here $s_{i, j}$ is deterministic \emph{for a given event} and we have simply for the impact distribution for event $j$:
 
  \begin{equation}
 	\label{Eq:Severity2}
@@ -454,86 +464,97 @@ Under a constant severity region approximation, $\tau_{i, j}$ is a constant acro
 \subsubsection{Discrete form of acute vulnerability model}
 \label{Sec:MathematicalDescriptionOfAssetImpactModel}
 
-There are $n$ intensity bins with index $i$ such that $i \in \{1, \dots, n \}$. We define $e^{(a)}_i$ to be the probability that a hazard event of type $a$ occurs with an intensity that falls in bin $i$. If $S^{(a)}$, a random variable, is the intensity of event $a$ then:
+The continuous forms of expressions for the impact distribution are given by Equation~\ref{Eq:ImpactMarginal2} and Equation~\ref{Eq:Severity2}, the latter being the special case of deterministic hazard -- generally encountered for one specific event. Here a discrete version of Equation~\ref{Eq:ImpactMarginal2} is defined.
+
+There are $n_h$ intensity bins with index $q$ such that $q \in \{1, \dots, n_h \}$.  $\sigma^{(h)}_q$ is defined to be the probability that a hazard event of type $h$ occurs in a given year with an intensity that falls in bin $q$. With random variable $S^{(h)}$, now with superscript, being the intensity of hazard type $h$:
 
 \begin{equation}
-    \label{Eq:event}
-    e^{(a)}_i = P \left( s^{(a, \text{lower})}_i < S^{(a)} \le s^{(a, \text{upper})}_i \right)
+    \label{Eq:Discrete1}
+    \sigma^{(h)}_q = \mathbb{P} \left[ s^{(h, \text{lower})}_q < S^{(h)} \le s^{(h, \text{upper})}_q \right]
 \end{equation}
 
-That is, $s^{(a, \text{lower})}_i$ and $s^{(a, \text{upper})}_i$ define the range of bin $i$.
+That is, $s^{(h, \text{lower})}_q$ and $s^{(h, \text{upper})}_q$ define the range of bin $q$. For the avoidance of doubt, $\sigma^{(h)}_q$ is related to the continuous probability density $f_S(s)$ by:
 
-We define $v^{(a, b)}_{ij}$ to be the conditional probability that \emph{given} the occurrence of an event of type $a$ with intensity $S^{(a)}$ there is an impact (typically a damage or disruption, $D^{(b)}$ in the range $d^{(a,b,\text{lower})}_j < D \le d^{(a,b,\text{upper})}_j$. The impact is of type $b$.
+\begin{equation}
+	\label{Eq:Discrete2}
+	\sigma^{(h)}_q = \int_ {s^{(h, \text{lower})}}^{s^{(h, \text{upper})}} f_S(s) ds 
+\end{equation}
+
+We define $v^{(h, b)}_{pq}$ to be the conditional probability that \emph{given} the occurrence of an event associated with a hazard of type $h$ and with intensity $s^{(h)} \in (s^{(h, \text{lower})}_q, s^{(h, \text{upper})}_q]$ there is an impact of type $b$, $d^{(b)} \in (d^{(b,\text{lower})}_p, d^{(b,\text{upper})}_p]$. $b$ may be, for example, damage incurred expressed as a fraction of the asset present value. 
 
 
 \begin{equation}
     \label{Eq:vulnerability}
-    v^{(a, b)}_{ij} = P \left( d^{(a,b,\text{lower})}_j < D^{(b)} \le d^{(a,b,\text{upper})}_j | s^{(a, \text{lower})}_i < S^{(a)} \le s^{(a, \text{upper})}_i \right)
+    v^{(h, b)}_{pq} = \mathbb{P} \left[ d^{(b,\text{lower})}_p < D^{(b)} \le d^{(b,\text{upper})}_p | s^{(h, \text{lower})}_q < S^{(h)} \le s^{(h, \text{upper})}_q \right]
 \end{equation}
 
-The definition of an event type $a$ includes a time interval e.g. $a$ is the occurrence of an inundation in the locale of the asset {\it within a one year period}. $b$ is, for example, the fractional damage to the asset.
+The definition of an event type $h$ includes a time interval e.g. $h$ is the occurrence of an inundation in the locale of the asset {\it within a one year period}. $b$ is, for example, the fractional damage to the asset.
 
-We define $d^{(a,b)}_j$ to be the marginal probability of impact $D^{(b)}$ in the range $d^{(a,b, \text{lower})}_j < D^{(b)} \le d^{(a,b,\text{upper})}_j$ occurring as a result of an event of type $a$.
+$\delta^{(h,b)}_p$ is defined to be the marginal probability of impact $D^{(h, b)}$ in the range $d^{(b, \text{lower})}_p < D^{(h, b)} \le d^{(b,\text{upper})}_p$ occurring as a result of an event of type $h$.
 
 \begin{equation}
     \label{Eq:impact}
-    d^{(a,b)}_j = P \left( d^{(a,b,\text{lower})}_j < D^{(b)} \le d^{(a,b,\text{upper})}_j \right)
+    \delta^{(h, b)}_p =  \mathbb{P} \left[ d^{(b,\text{lower})}_p < D^{(h, b)} \le d^{(b,\text{upper})}_p \right]
 \end{equation}
 
 From the definition of conditional probability:
 
 \begin{equation}
     \label{Eq:model}
-    d^{(a,b)}_j = \sum_{i} v^{(a,b)}_{ij} e^{(a)}_i
+    \delta^{(b)}_p = \sum_{q} v^{(h,b)}_{pq} \sigma^{(h)}_q
 \end{equation}
 
-If only the mean impact curve is available, then it is possible to create the matrix such that $v_{ij} \in \{0, 1\}$. The matrix then provides a simple mapping from intensity to impact; if the number of intensity and response bins is equal then matrix $\mathbf{v}$ is simply the identity matrix. However, note that these simplifications exclude from the model any uncertainty in the parameters\footnote{A better approach would be to estimate the standard deviation of the distributions from which the mean impact curve was calculated and to incorporate this.}.
+If only the mean impact curve is available, then it is possible to create the matrix such that $v_{pq} \in \{0, 1\}$. The matrix then provides a simple mapping from intensity to impact; if the number of intensity and response bins is equal then matrix $\mathbf{v}$ is simply the identity matrix. However, note that these simplifications exclude from the model any uncertainty in the parameters\footnote{A better approach would be to estimate the standard deviation of the distributions from which the mean impact curve was calculated and to incorporate this.}.
+
+\paragraph{Multiple occurrence of events.} Note that $\sigma^{(h)}_q$ is the probability of occurrence of \emph{at least one event} with intensity in bin $q$ in a year and the vulnerability, $v_{pq}$ gives the probability of impact given at least one event has occurred. Some care must therefore be taken when using probabilities $v_{pq}$ calibrated from single events as there is an implied approximation that either probability of multiple events is small and/or that impact is well-modelled as a single impact from the most intense event for a given year. 
+
+\subsubsection{Importance of secondary uncertainty}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure}[ht]
-
-    \begin{framed}
-
-        \includegraphics[width=\textwidth]{plots/fig_intensity.pdf}
-
-    \end{framed}
-
-    \footnotesize
-
-    \renewcommand{\arraystretch}{1.01}
-
-    \vspace{-3ex}
-
-    {\justify
-        The exceedance curve of event intensity at the asset location is shown on the right. The event intensity in this example is inundation depth in metres. Exceedance is a cumulative probability. As an example, the probability of an inundation event occurring within a single year of intensity 0.91m or greater is 0.002. An exceedance probability is the reciprocal of the return period; it could equivalently be said that the 0.91m intensity event occurs with a return period of 500 years.
-        The exceedance curve can be converted to a histogram of probabilities. Here the $n$ bins have ranges $[s^{(a, \text{lower})}_i, s^{(a, \text{upper})}_i]$. For example, the first bin has range [0.28m, 0.38m]. The second bin has range [0.38m,    0.51m]; that is $s^{(a, \text{lower})}_2 = 0.38$m and $s^{(a, \text{upper})}_2 = 0.51$m. $e^{(a)}_2 = 0.06$.
-        \par}
-
-    \vspace{-0.5ex}
-
-    \caption{\small Event intensity exceedance curve (right) and corresponding histogram (left).}
-    \label{Fig:intensity}
-
+	
+	\begin{framed}
+		
+		\includegraphics[width=\textwidth]{plots/fig_intensity.pdf}
+		
+	\end{framed}
+	
+	\footnotesize
+	
+	\renewcommand{\arraystretch}{1.01}
+	
+	\vspace{-3ex}
+	
+	{\justify
+		The exceedance curve of event intensity at the asset location is shown on the right. The event intensity in this example is inundation depth in metres. Exceedance is a cumulative probability. As an example, the probability of an inundation event occurring within a single year of intensity 0.91m or greater is 0.2\%. An exceedance probability is the reciprocal of the return period; it could equivalently be said that the 0.91m intensity event occurs with a return period of 500 years.
+		The exceedance curve can be converted to a histogram of probabilities. Here the $n_h$ bins have ranges $(s^{(h, \text{lower})}_q, s^{(h, \text{upper})}_q]$. For example, the first bin has range (0.28m, 0.38m]. The second bin has range (0.38m,    0.43m]; that is $s^{(h, \text{lower})}_2 = 0.38$m and $s^{(h, \text{upper})}_2 = 0.43$m. $\sigma^{(h)}_2 = 0.02$.
+		\par}
+	
+	\vspace{-0.5ex}
+	
+	\caption{\small Event intensity exceedance curve (right) and corresponding histogram (left).}
+	\label{Fig:intensity}
+	
 \end{figure}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\subsubsection{Importance of secondary uncertainty}
-The importance of the vulnerability matrix as opposed to mean damage curve (or vector) is emphasized above; see also \cite{Taylor:2015} for a discussion of this point. This is true not only in cases where the underlying distribution of an impact, for example a fractional damage, can be inferred from empirical data; see for example Figure~\ref{Fig:vulnerability_matrix}). This is arguably \emph{more} important where data is limited in order that approximate data can be incorporated into the model in a way that the impact of the approximations can be well-understood.
+
+The importance of the vulnerability matrix as opposed to mean damage curve (or vector) is emphasized above; see also \cite{Taylor:2015} for a discussion of this point. This is true not only in cases where the underlying distribution of an impact, for example a fractional damage, can be inferred from empirical data; see for example Figure~\ref{Fig:vulnerability_matrix}. This is arguably \emph{more} important where data is limited in order that approximate data can be incorporated into the model in a way that the impact of the approximations can be well-understood.
 
 Vulnerability data may be provided by
 \begin{itemize}
-    \item Modelling of asset vulnerability based on asset characteristics and/or historical data
-    \item 'Calibrated' vulnerabilities, for example based on realized insurance claims
+    \item modelling of asset vulnerability based on asset characteristics and/or historical data, or
+    \item 'calibrated' vulnerabilities, for example based on realized insurance claims
 \end{itemize}
 Physical risk models may make use of so-called `bulk assessment' approaches for certain assets, where precise vulnerability information is not available and less precise estimates of the damage/disruption of the asset are used. The presence of such estimates in an overall model may, or may not, materially impact the accuracy of the results, but it is important that this impact can be assessed. By quantifying the uncertainty in the response estimates, a distribution of financial losses is ultimately obtained from which the model user can derive the impact of the approximation.
 
 \paragraph{Handling epistemic uncertainty}
 In forms of bulk-assessment, a common case is that insufficient information exists with which to characterize an asset. This is an example of an epistemic, as opposed to aleatory, uncertainty. The epistemic uncertainty, and its impact, can be included in the model in a relatively straight-forward way.
 
-We extend Equation~\ref{Eq:vulnerability}, by including a new discrete random variable, $A$, which is the type of the asset.
+We extend Equation~\ref{Eq:vulnerability}, by including a new discrete random variable, $A$, which is an integer index indicating the type of the asset. We define $v^{(h, b)}_{pqa}$ to be the probability that $D^{(h, b)} \in (d^{(b,\text{lower})}_p, d^{(b,\text{upper})}_p]$ given that $S^{(h)} \in (s^{(h, \text{lower})}_q, s^{(h, \text{upper})}_q]$ \emph{and} the asset in question is of type $a$:
 \begin{equation}
     \label{Eq:vulnerability}
-    v^{(a, b)}_{ij} = P \left( d^{(a,b,\text{lower})}_j < D^{(b)} \le d^{(a,b,\text{upper})}_j | s^{(a, \text{lower})}_i < S^{(a)} \le s^{(a, \text{upper})}_i, A = a_1 \right)
+    v^{(h, b)}_{pqa} = \mathbb{P} \left[ D^{(h, b)} \in (d^{(b,\text{lower})}_p, d^{(b,\text{upper})}_p] | S^{(h)} \in (s^{(h, \text{lower})}_q, s^{(h, \text{upper})}_q], A = a \right]
 \end{equation}
 
 
@@ -577,24 +598,6 @@ Hazard data sets might also contain instances of `point-probabilities', for exam
 
 \end{figure}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
-
-
-\subsection{Effective impact distribution}
-$d^{(a,b)}_j$ from Equation~\ref{Eq:vulnerability} is the probability distribution of impacts of type $b$ for an asset as a result of events of type $a$. In the catastrophe models of Oasis, impacts are sampled from this distribution \cite{OasisFinancialModule}, for example samples of fractional damage, which form the basis of a Monte Carlo calculation. This is done in order to apply insurance policy terms and conditions which can be complex and non-linear.
-
-The Monte Carlo sampling is done by constructing a cumulative probability density function, $Y_D(d)$, of impact $D$ from the effective impact distribution ($Y_D(d) = P(D \le d$)). Random numbers, $u_i$ are then sampled from a standard uniform distribution ($u_i \in [0, 1]$), from which impacts are calculated by:
-
-\begin{equation}
-    \label{Eq:sampling}
-    d_i = Y^{-1}_D(u_i)
-\end{equation}
-
-In this Monte Carlo approach, samples of fractional damage can be drawn from distributions so as to be correlated or uncorrelated. For example, if the impact distributions represent damage to buildings as a result of inundation then it may be appropriate to model damage to two buildings in close proximity as being highly correlated\footnote{Catastrophe model practitioners might point out that presence or absence of kerb stones and availability of sand bags are highly significant so any such assumption is prone to error}. If the buildings are far apart (say in different countries) then the correlation is likely to be close to zero.
-
-\subsubsection{Full Monte Carlo calculation}
-A more sophisticated correlation model might try to capture correlation of events and of vulnerabilities. Such models would typically need to first sample from the distribution of event intensity and then from the vulnerability distribution. This is more computationally expensive than the approach of deriving an effective impact distribution. Such a `full Monte Carlo' approach might prove to be relevant for some models as it is a highly flexible approach.
 
 
 \subsection{Aggregation of impacts}

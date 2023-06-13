@@ -318,13 +318,14 @@ A second assumption is that the probabilities of such events may not be readily 
 \subsubsection{Mathematical description of vulnerability models}
 The output of the vulnerability model is an impact, $d$ for an asset and for a given year\footnote{$d$ for `damage/disruption' is used to denote impact as $i$ is reserved for indexing.}. Physical climate risk analyses are generally concerned with how impacts change as a result of changes to the climate. In contrast with catastrophe modelling where an impact is typically calculated according to a historical baseline, a climate risk calculation would typically compare the baseline to an impact calculated under a particular climate scenario and period in the future.
 
-The impact of hazards on a portfolio of $n$ assets is a (multivariate) probability distribution as a result of the primary and secondary uncertainties. The impact in a given year on a single asset is a random variable, $D$, with (marginal) probability density function $f_D(d)$. The probability of an impact exceeeding $d$, $F_D(d)$ is given by:
+The impact of hazards on a portfolio of $n$ assets is a (multivariate) probability distribution as a result of the primary and secondary uncertainties. The impact in a given year on a single asset is a random variable, $D$, with (marginal) probability density function $f_D(d)$. The probability of an impact exceeeding $d$ (the \emph{exceedance probability}), $F'_D(d) = \mathbb{P}[D > d]$ is given by:
 
  \begin{equation}
  	\label{Eq:ImpactExceed}
- 	F_D(d) = \int_d^{\infty} f_D(u) du
+ 	F'_D(d) = \int_d^{\infty} f_D(u) du
  \end{equation}
 
+This is related to the cumulative probability $F_{D}(d) = \mathbb{P}[D \le d]$ by $F'_D(d) = 1 - F_D(d)$. Exceedance probabilities are a popular measure in catastrophe model and the use of $F$ for cumulative probability and $F'$ for exceedance probability will be used hereafter to avoid confusion.
 
 The value of a hazard indicator, which quantifies the intensity of the phenomenon to which the hazard refers (we also use the term `hazard intensity') is given by random variable $S$. This has marginal  probability density $f_S(s)$. This is the probability density of an event occurring in a given year with intensity $s$. This distribution captures the primary uncertainty.
 
@@ -548,15 +549,26 @@ Vulnerability data may be provided by
 \end{itemize}
 Physical risk models may make use of so-called `bulk assessment' approaches for certain assets, where precise vulnerability information is not available and less precise estimates of the damage/disruption of the asset are used. The presence of such estimates in an overall model may, or may not, materially impact the accuracy of the results, but it is important that this impact can be assessed. By quantifying the uncertainty in the response estimates, a distribution of financial losses is ultimately obtained from which the model user can derive the impact of the approximation.
 
-\paragraph{Handling epistemic uncertainty}
-In forms of bulk-assessment, a common case is that insufficient information exists with which to characterize an asset. This is an example of an epistemic, as opposed to aleatory, uncertainty. The epistemic uncertainty, and its impact, can be included in the model in a relatively straight-forward way.
+\paragraph{Including epistemic uncertainty in vulnerability.}
+In forms of bulk-assessment, and indeed in other cases, a common occurrence is that insufficient information exists with which to characterize an asset. This is an example of an epistemic, as opposed to aleatory, uncertainty. The epistemic uncertainty, and its impact, can be included in the model in the following way.
 
-We extend Equation~\ref{Eq:vulnerability}, by including a new discrete random variable, $A$, which is an integer index indicating the type of the asset. We define $v^{(h, b)}_{pqa}$ to be the probability that $D^{(h, b)} \in (d^{(b,\text{lower})}_p, d^{(b,\text{upper})}_p]$ given that $S^{(h)} \in (s^{(h, \text{lower})}_q, s^{(h, \text{upper})}_q]$ \emph{and} the asset in question is of type $a$:
+We extend Equation~\ref{Eq:vulnerability}, by including a new discrete random variable, $A$, which is an integer index, $A \in \{0, ..., n_a\}$, indicating the type of the asset. We define $v^{(h, b)}_{pqa}$ to be the probability that $D^{(h, b)} \in (d^{(b,\text{lower})}_p, d^{(b,\text{upper})}_p]$ given that $S^{(h)} \in (s^{(h, \text{lower})}_q, s^{(h, \text{upper})}_q]$ \emph{and} the asset in question is of type $a$:
 \begin{equation}
-    \label{Eq:vulnerability}
+    \label{Eq:spistemic1}
     v^{(h, b)}_{pqa} = \mathbb{P} \left[ D^{(h, b)} \in (d^{(b,\text{lower})}_p, d^{(b,\text{upper})}_p] | S^{(h)} \in (s^{(h, \text{lower})}_q, s^{(h, \text{upper})}_q], A = a \right]
 \end{equation}
 
+The conditional probabilities can then be combined:
+\begin{equation}
+	\label{Eq:epistemic2}
+	v^{(h, b)}_{pq} = \sum_a v^{(h, b)}_{pqa}  \mathbb{P}[A = a]
+\end{equation}
+
+$\mathbb{P}[A = a]$ is the \emph{prior} probability that the asset is of type $a$. This may be obtained from knowledge of the make-up of a portfolio.
+
+Note that through the application of Equation~\ref{Eq:model} the impact distribution now depends on the prior probabilities. To illustrate why it is reasonable that this should be the case, say we have two types of assets in our portfolio. Type A is vulnerable to a hazard with an intensity that has a relatively short return period of 50 years, whereas type B is invulnerable to all hazards but those with a vanishing small probability of occurrence. To derive the probability that an asset is damaged by a certain amount in a given year using Equation~\ref{Eq:epistemic2}, we must allow for the possibility that the asset may be of type A and may therefore be damaged as a result of 50 year events.
+
+\paragraph{Epistemic uncertainty as source of error.} An alternate approach is to treat epistemic uncertainty as a source of error rather than, or in addition to, including it in the vulnerability as we have done here. This might be driven by the observation that as information as to the identity of assets is improved then the exceedance probability of a certain impact will change. This can be achieved by running an ensemble of calculations, changing the prior probabilities in each case. 
 
 \subsubsection{Interpolation of probability distributions}
 Cases arise where the event distributions and vulnerability distributions are not defined for a common set of intensity bins and interpolation is therefore required. The question then arises of how probability density is distributed within bins. The choice is model-specific and customizable, but here two common cases are described.
@@ -612,17 +624,35 @@ If the random variables are uncorrelated, then the aggregated effective impact d
 
 {\textcolor{red}{\emph{[Add version with discrete binned data.]}}}
 
-\subsection{Financial loss model}
-Several financial measures are of interest.
+\subsection{Financial model}
+
+\subsubsection{Types of calculation.}
+Vulnerability models were described in \ref{SubSec:VulnerabilityModel} as a means to calculate the damage and disruption to a portfolio of assets for different hazard models. How the resulting probability distributions of impact are then used in a financial model depends on the intent of the analysis. We distinguish between \emph{stress test} and \emph{portfolio analysis} use cases. 
+
+\emph{Stress tests} make use of climate-related shocks -- severe acute events -- in order to assess an impact. This might for example be the impact on a financial institution. Stress tests may make use of narrative scenarios or may take the approach of simulating large number of extreme but plausible events in order to identify a worst-case which is \emph{a priori} unknown. Indeed the two approaches may be combined, assessing the impact of a severe acute event coupled with other aggravating factors.
+
+In a \emph{portfolio analysis}, the aim is to assess which parts of a portfolio of assets are most subject to physical climate risk. 
+
+\subsubsection{Climate risk measures and importance of change.}
+Climate risk models generally differ from catastrophe models in more than their use of climate-conditioned and projected hazard models. In particular, physical climate risk arises from \emph{changes} in climate.
+
+We take as an example a real estate asset that is collateral for a loan. The hypothetical asset is exposed to both hurricane and flood hazards today, however it is covered by an insurance policy and its current valuation takes into account both historical occurrence of hazards and the policy details. Risk managers concerned with climate risk are likely to be interested in potential changes in value of the asset over the full term of the loan:
 
 \begin{enumerate}
-    \item Annual Exceedance Probability (AEP): the probability that in a given year the aggregated losses of a portfolio will exceed a certain value
-    \item Valuation Adjustment: an adjustment to the present value of an asset to reflect the expected loss
+	\item if acute events become more frequent and severe, assets may become more expensive to insure and less desirable {\textcolor{red}{\emph{[Citation]}}} \footnote{For example, to a resident of a house subject to regular flooding.}, which can decrease the asset value;
+	\item if an extremely severe and widespread event occurs, default may lead to a distressed sale and/or the full insurance payout may not be made. 
 \end{enumerate}
 
-The first of these typically requires less data in its calculation. This is a cumulative probability distribution of losses from which the average annual loss (AAL) can be inferred, but also the range of losses in a given confidence interval. This interval is driven by the primary and secondary uncertainties above.
+For a portfolio analysis, it is therefore likely to be the change in frequency of events and the change in probability of extremely severe events that is particularly of interest; these are the risk drivers.
 
-With additional modelling steps, credit risk measures can also be derived.
+\paragraph{Definition of measures.} For a portfolio, distributions of annual impacts, typically damage and disruption, can be aggregated and converted into distributions of change in portfolio value in a given reporting currency. Measures describing the loss of value are:
+
+\begin{enumerate}
+    \item Annual Exceedance Probability (AEP): the probability that in a given year the aggregated losses of a portfolio will exceed a certain value.
+    \item Average Annual Loss (AAL): the mean value of the aggregated losses of a portfolio in a given year.
+\end{enumerate}
+
+From the argument above, a change in AEP for moderate and severe loss cases can be a useful indicator of risk. The change is from historical baseline to a climate-conditioned projection.
 
 \subsubsection{Structural models of credit risk}
 Changes in asset value can be used to model changes in the credit quality of market participants. Financial risk modules for physical risk may then use distributions of asset value changes in order to model changes of credit quality over time as a result of climate change, for example estimates of default probability and loss given default.
@@ -636,10 +666,6 @@ A number of different structural models exist which make various assumptions abo
 The earliest structural model was described by Merton in 1974 \cite{Merton:1974} based on an extremely simple debt structure. Black and Cox \cite{BlackCox:1976} introduced an important refinement to the Merton model in 1976. Practical implementations were subsequently created as a result of this foundational work. A notable one of these is the `KMV' model, named after Kealhofer, McQuown and Vasiek, now owned by Moody's Investors Service, Inc.
 
 Use of such credit models, may provide a mechanism for incorporation of physical risk into financial institutions existing risk models\cite{KenyonEtAl:2021}.
-
-
-Loss given default (LGD). Do we need 
-
 
 \subsection{Uncertainties in the calculation}
 

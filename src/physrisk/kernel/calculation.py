@@ -3,26 +3,20 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
-from physrisk.data.inventory import Inventory
-from physrisk.kernel import hazards
+from physrisk.hazard_models.embedded import get_default_source_paths
 from physrisk.kernel.exposure import Category, DataRequester, ExposureMeasure
 
-from ..data.hazard_data_provider import (
-    SourcePath,
-    get_source_path_generic,
-    get_source_path_osc_chronic_heat,
-    get_source_path_wri_coastal_inundation,
-    get_source_path_wri_riverine_inundation,
-)
 from ..data.pregenerated_hazard_model import ZarrHazardModel
-from ..models import power_generating_asset_models as pgam
-from ..models.chronic_heat_models import ChronicHeatGznModel
-from ..models.real_estate_models import RealEstateCoastalInundationModel, RealEstateRiverineInundationModel
 from ..utils.helpers import get_iterable
+from ..vulnerability_models import power_generating_asset_models as pgam
+from ..vulnerability_models.chronic_heat_models import ChronicHeatGZNModel
+from ..vulnerability_models.real_estate_models import (
+    RealEstateCoastalInundationModel,
+    RealEstateRiverineInundationModel,
+)
 from .assets import Asset, IndustrialActivity, PowerGeneratingAsset, RealEstateAsset, TestAsset
 from .hazard_event_distrib import HazardEventDistrib
 from .hazard_model import HazardDataRequest, HazardDataResponse, HazardModel
-from .hazards import ChronicHeat, CoastalInundation, RiverineInundation
 from .impact_distrib import ImpactDistrib
 from .vulnerability_distrib import VulnerabilityDistrib
 from .vulnerability_model import VulnerabilityModelAcuteBase, VulnerabilityModelBase
@@ -48,24 +42,9 @@ class AssetImpactResult:
         self.event = event
 
 
-def get_default_zarr_source_paths():
-    return {
-        RiverineInundation: get_source_path_wri_riverine_inundation,
-        CoastalInundation: get_source_path_wri_coastal_inundation,
-        ChronicHeat: get_source_path_osc_chronic_heat,
-    }
-
-
-def get_source_paths_from_inventory(inventory: Inventory, embedded: Optional[Dict[type, SourcePath]] = None):
-    source_paths: Dict[type, SourcePath] = {}
-    for key, resource in inventory.resources.items():
-        source_paths[hazards.hazard_class(resource.type)] = get_source_path_generic(inventory, resource.type, embedded)
-    return source_paths
-
-
 def get_default_hazard_model():
     # Model that gets hazard event data from Zarr storage
-    return ZarrHazardModel(get_default_zarr_source_paths())
+    return ZarrHazardModel(source_paths=get_default_source_paths())
 
 
 def get_default_vulnerability_models():
@@ -73,7 +52,7 @@ def get_default_vulnerability_models():
     return {
         PowerGeneratingAsset: [pgam.InundationModel()],
         RealEstateAsset: [RealEstateCoastalInundationModel(), RealEstateRiverineInundationModel()],
-        IndustrialActivity: [ChronicHeatGznModel()],
+        IndustrialActivity: [ChronicHeatGZNModel()],
         TestAsset: [pgam.TemperatureModel()],
     }
 

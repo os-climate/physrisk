@@ -1,0 +1,1569 @@
+{
+    "resources": [
+        {
+            "hazard_type": "RiverineInundation",
+            "group_id": "public",
+            "path": "inundation/wri/v2/inunriver_{scenario}_000000000WATCH_{year}",
+            "indicator_id": "flood_depth",
+            "indicator_model_gcm": "historical",
+            "params": {},
+            "display_name": "WRI/Baseline",
+            "display_groups": [],
+            "description": "\nWorld Resources Institute Aqueduct Floods baseline riverine model using historical data.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 2.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "m"
+                },
+                "array_name": "inunriver_{scenario}_000000000WATCH_{year}_rp{return_period:05d}",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "mapbox"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1980
+                    ]
+                }
+            ],
+            "units": "metres"
+        },
+        {
+            "hazard_type": "RiverineInundation",
+            "group_id": "public",
+            "path": "inundation/wri/v2/inunriver_{scenario}_00000NorESM1-M_{year}",
+            "indicator_id": "flood_depth",
+            "indicator_model_gcm": "NorESM1-M",
+            "params": {},
+            "display_name": "WRI/NorESM1-M",
+            "display_groups": [],
+            "description": "\nWorld Resources Institute Aqueduct Floods riverine model using GCM model from\nBjerknes Centre for Climate Research, Norwegian Meteorological Institute.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 2.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "m"
+                },
+                "array_name": "inunriver_{scenario}_00000NorESM1-M_{year}_rp{return_period:05d}",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "mapbox"
+            },
+            "scenarios": [
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                }
+            ],
+            "units": "metres"
+        },
+        {
+            "hazard_type": "RiverineInundation",
+            "group_id": "public",
+            "path": "inundation/wri/v2/inunriver_{scenario}_0000GFDL-ESM2M_{year}",
+            "indicator_id": "flood_depth",
+            "indicator_model_gcm": "GFDL-ESM2M",
+            "params": {},
+            "display_name": "WRI/GFDL-ESM2M",
+            "display_groups": [],
+            "description": "\nWorld Resource Institute Aqueduct Floods riverine model using GCM model from\nGeophysical Fluid Dynamics Laboratory (NOAA).\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 2.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "m"
+                },
+                "array_name": "inunriver_{scenario}_0000GFDL-ESM2M_{year}_rp{return_period:05d}",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "mapbox"
+            },
+            "scenarios": [
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                }
+            ],
+            "units": "metres"
+        },
+        {
+            "hazard_type": "RiverineInundation",
+            "group_id": "public",
+            "path": "inundation/wri/v2/inunriver_{scenario}_0000HadGEM2-ES_{year}",
+            "indicator_id": "flood_depth",
+            "indicator_model_gcm": "HadGEM2-ES",
+            "params": {},
+            "display_name": "WRI/HadGEM2-ES",
+            "display_groups": [],
+            "description": "\nWorld Resource Institute Aqueduct Floods riverine model using GCM model:\nMet Office Hadley Centre.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 2.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "m"
+                },
+                "array_name": "inunriver_{scenario}_0000HadGEM2-ES_{year}_rp{return_period:05d}",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "mapbox"
+            },
+            "scenarios": [
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                }
+            ],
+            "units": "metres"
+        },
+        {
+            "hazard_type": "RiverineInundation",
+            "group_id": "public",
+            "path": "inundation/wri/v2/inunriver_{scenario}_00IPSL-CM5A-LR_{year}",
+            "indicator_id": "flood_depth",
+            "indicator_model_gcm": "IPSL-CM5A-LR",
+            "params": {},
+            "display_name": "WRI/IPSL-CM5A-LR",
+            "display_groups": [],
+            "description": "\nWorld Resource Institute Aqueduct Floods riverine model using GCM model from\nInstitut Pierre Simon Laplace\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 2.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "m"
+                },
+                "array_name": "inunriver_{scenario}_00IPSL-CM5A-LR_{year}_rp{return_period:05d}",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "mapbox"
+            },
+            "scenarios": [
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                }
+            ],
+            "units": "metres"
+        },
+        {
+            "hazard_type": "RiverineInundation",
+            "group_id": "public",
+            "path": "inundation/wri/v2/inunriver_{scenario}_MIROC-ESM-CHEM_{year}",
+            "indicator_id": "flood_depth",
+            "indicator_model_gcm": "MIROC-ESM-CHEM",
+            "params": {},
+            "display_name": "WRI/MIROC-ESM-CHEM",
+            "display_groups": [],
+            "description": "World Resource Institute Aqueduct Floods riverine model using\n GCM model from Atmosphere and Ocean Research Institute\n (The University of Tokyo), National Institute for Environmental Studies, and Japan Agency\n for Marine-Earth Science and Technology.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 2.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "m"
+                },
+                "array_name": "inunriver_{scenario}_MIROC-ESM-CHEM_{year}_rp{return_period:05d}",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "mapbox"
+            },
+            "scenarios": [
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                }
+            ],
+            "units": "metres"
+        },
+        {
+            "hazard_type": "CoastalInundation",
+            "group_id": "public",
+            "path": "inundation/wri/v2/inuncoast_historical_nosub_hist_0",
+            "indicator_id": "flood_depth/nosub",
+            "indicator_model_gcm": "unknown",
+            "params": {},
+            "display_name": "WRI/Baseline no subsidence",
+            "display_groups": [],
+            "description": "\nWorld Resources Institute Aqueduct Floods baseline coastal model using historical data. Model excludes subsidence.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 2.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "m"
+                },
+                "array_name": "inuncoast_historical_nosub_hist_rp{return_period:04d}_0",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "mapbox"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1980
+                    ]
+                }
+            ],
+            "units": "metres"
+        },
+        {
+            "hazard_type": "CoastalInundation",
+            "group_id": "public",
+            "path": "inundation/wri/v2/inuncoast_{scenario}_nosub_{year}_0",
+            "indicator_id": "flood_depth/nosub/95",
+            "indicator_model_gcm": "unknown",
+            "params": {},
+            "display_name": "WRI/95% no subsidence",
+            "display_groups": [],
+            "description": "\nWorld Resource Institute Aqueduct Floods coastal model, exclusing subsidence; 95th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 2.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "m"
+                },
+                "array_name": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "mapbox"
+            },
+            "scenarios": [
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                }
+            ],
+            "units": "metres"
+        },
+        {
+            "hazard_type": "CoastalInundation",
+            "group_id": "public",
+            "path": "inundation/wri/v2/inuncoast_{scenario}_nosub_{year}_0_perc_05",
+            "indicator_id": "flood_depth/nosub/5",
+            "indicator_model_gcm": "unknown",
+            "params": {},
+            "display_name": "WRI/5% no subsidence",
+            "display_groups": [],
+            "description": "\nWorld Resource Institute Aqueduct Floods coastal model, excluding subsidence; 5th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 2.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "m"
+                },
+                "array_name": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0_perc_05",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "mapbox"
+            },
+            "scenarios": [
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                }
+            ],
+            "units": "metres"
+        },
+        {
+            "hazard_type": "CoastalInundation",
+            "group_id": "public",
+            "path": "inundation/wri/v2/inuncoast_{scenario}_nosub_{year}_0_perc_50",
+            "indicator_id": "flood_depth/nosub/50",
+            "indicator_model_gcm": "unknown",
+            "params": {},
+            "display_name": "WRI/50% no subsidence",
+            "display_groups": [],
+            "description": "\nWorld Resource Institute Aqueduct Floods model, excluding subsidence; 50th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 2.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "m"
+                },
+                "array_name": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0_perc_50",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "mapbox"
+            },
+            "scenarios": [
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                }
+            ],
+            "units": "metres"
+        },
+        {
+            "hazard_type": "CoastalInundation",
+            "group_id": "public",
+            "path": "inundation/wri/v2/inuncoast_historical_wtsub_hist_0",
+            "indicator_id": "flood_depth/wtsub",
+            "indicator_model_gcm": "unknown",
+            "params": {},
+            "display_name": "WRI/Baseline with subsidence",
+            "display_groups": [],
+            "description": "\nWorld Resource Institute Aqueduct Floods model, excluding subsidence; baseline (based on historical data).\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 2.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "m"
+                },
+                "array_name": "inuncoast_historical_wtsub_hist_rp{return_period:04d}_0",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "mapbox"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1980
+                    ]
+                }
+            ],
+            "units": "metres"
+        },
+        {
+            "hazard_type": "CoastalInundation",
+            "group_id": "public",
+            "path": "inundation/wri/v2/inuncoast_{scenario}_wtsub_{year}_0",
+            "indicator_id": "flood_depth/wtsub/95",
+            "indicator_model_gcm": "unknown",
+            "params": {},
+            "display_name": "WRI/95% with subsidence",
+            "display_groups": [],
+            "description": "\nWorld Resource Institute Aqueduct Floods model, including subsidence; 95th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 2.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "m"
+                },
+                "array_name": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "mapbox"
+            },
+            "scenarios": [
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                }
+            ],
+            "units": "metres"
+        },
+        {
+            "hazard_type": "CoastalInundation",
+            "group_id": "public",
+            "path": "inundation/wri/v2/inuncoast_{scenario}_wtsub_{year}_0_perc_05",
+            "indicator_id": "flood_depth/wtsub/5",
+            "indicator_model_gcm": "unknown",
+            "params": {},
+            "display_name": "WRI/5% with subsidence",
+            "display_groups": [],
+            "description": "\nWorld Resource Institute Aqueduct Floods model, including subsidence; 5th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 2.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "m"
+                },
+                "array_name": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0_perc_05",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "mapbox"
+            },
+            "scenarios": [
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                }
+            ],
+            "units": "metres"
+        },
+        {
+            "hazard_type": "CoastalInundation",
+            "group_id": "public",
+            "path": "inundation/wri/v2/inuncoast_{scenario}_wtsub_{year}_0_perc_50",
+            "indicator_id": "flood_depth/wtsub/50",
+            "indicator_model_gcm": "unknown",
+            "params": {},
+            "display_name": "WRI/50% with subsidence",
+            "display_groups": [],
+            "description": "\nWorld Resource Institute Aqueduct Floods model, including subsidence; 50th percentile sea level rise.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 2.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "m"
+                },
+                "array_name": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0_perc_50",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "mapbox"
+            },
+            "scenarios": [
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2030,
+                        2050,
+                        2080
+                    ]
+                }
+            ],
+            "units": "metres"
+        },
+        {
+            "hazard_type": "ChronicHeat",
+            "group_id": "",
+            "path": "chronic_heat/osc/v2/mean_degree_days_v2_above_32c_{gcm}_{scenario}_{year}",
+            "indicator_id": "mean_degree_days/above/32c",
+            "indicator_model_gcm": "{gcm}",
+            "params": {
+                "gcm": [
+                    "ACCESS-CM2",
+                    "CMCC-ESM2",
+                    "CNRM-CM6-1",
+                    "MIROC6",
+                    "MPI-ESM1-2-LR",
+                    "NorESM2-MM"
+                ]
+            },
+            "display_name": "Mean degree days above 32\u00b0C/{gcm}",
+            "display_groups": [
+                "Mean degree days"
+            ],
+            "description": "Degree days indicators are calculated by integrating over time the absolute difference in temperature\nof the medium over a reference temperature. The exact method of calculation may vary;\nhere the daily maximum near-surface temperature 'tasmax' is used to calculate an annual indicator:\n$$\nI^\\text{dd} = \\sum_{i = 1}^{n_y} |  T^\\text{max}_i - T^\\text{ref} | \\nonumber\n$$\n$I^\\text{dd}$ is the indicator, $T^\\text{max}$ is the daily maximum near-surface temperature, $n_y$ is the number of days in the year and $i$ is the day index.\nand $T^\\text{ref}$ is the reference temperature of 32\u00b0C. The OS-Climate-generated indicators are inferred\nfrom CMIP6 data, averaged over 6 models: ACCESS-CM2, CMCC-ESM2, CNRM-CM6-1, MPI-ESM1-2-LR, MIROC6 and NorESM2-MM.\nThe indicators are generated for periods: 'historical' (averaged over 1995-2014), 2030 (2021-2040), 2040 (2031-2050)\nand 2050 (2041-2060).",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 4000.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "degree days"
+                },
+                "array_name": "mean_degree_days_v2_above_32c_{gcm}_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -60.0
+                    ],
+                    [
+                        -180.0,
+                        -60.0
+                    ]
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        2005
+                    ]
+                },
+                {
+                    "id": "ssp126",
+                    "years": [
+                        2030,
+                        2040,
+                        2050
+                    ]
+                },
+                {
+                    "id": "ssp245",
+                    "years": [
+                        2030,
+                        2040,
+                        2050
+                    ]
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2030,
+                        2040,
+                        2050
+                    ]
+                }
+            ],
+            "units": "degree days"
+        },
+        {
+            "hazard_type": "Fire",
+            "group_id": "jupiter_osc",
+            "path": "fire/jupiter/v1/fire_probability_{scenario}_{year}",
+            "indicator_id": "fire_probability",
+            "indicator_model_gcm": "unknown",
+            "params": {},
+            "display_name": "Fire probability",
+            "display_groups": [],
+            "description": "\nThe maximum value, found across all months, of the probability of a wildfire occurring\nat some point in an individual month within 100km of the location. For example, if the probability\nof occurrence of a wildfire is 5% for July, 20% in August, 10% in September and 0% for\nother months, the hazard indicator value is 20%.\n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 0.7,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "none"
+                },
+                "array_name": "fire_probability_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "ssp126",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ]
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ]
+                }
+            ],
+            "units": "none"
+        },
+        {
+            "hazard_type": "Drought",
+            "group_id": "jupiter_osc",
+            "path": "drought/jupiter/v1/months_spei3m_below_-2_{scenario}_{year}",
+            "indicator_id": "months/spei3m/below/-2",
+            "indicator_model_gcm": "unknown",
+            "params": {},
+            "display_name": "Drought",
+            "display_groups": [],
+            "description": "\nMonths per year where the rolling 3-month averaged Standardized Precipitation Evapotranspiration Index \nis below -2.\n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 12.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "months/year"
+                },
+                "array_name": "months_spei3m_below_-2_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "ssp126",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ]
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ]
+                }
+            ],
+            "units": "months/year"
+        },
+        {
+            "hazard_type": "Precipitation",
+            "group_id": "jupiter_osc",
+            "path": "precipitation/jupiter/v1/max_daily_water_equivalent_{scenario}_{year}",
+            "indicator_id": "max/daily/water_equivalent",
+            "indicator_model_gcm": "unknown",
+            "params": {},
+            "display_name": "Precipitation",
+            "display_groups": [],
+            "description": "\nMaximum daily total water equivalent precipitation experienced at a return period of 100 years.\n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 1000.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "mm"
+                },
+                "array_name": "max_daily_water_equivalent_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "ssp126",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ]
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ]
+                }
+            ],
+            "units": "mm"
+        },
+        {
+            "hazard_type": "Hail",
+            "group_id": "jupiter_osc",
+            "path": "hail/jupiter/v1/days_above_5cm_{scenario}_{year}",
+            "indicator_id": "days/above/5cm",
+            "indicator_model_gcm": "unknown",
+            "params": {},
+            "display_name": "Large hail days per year",
+            "display_groups": [],
+            "description": "\nNumber of days per year where large hail (> 5cm diameter) is possible.\n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 10.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "days/year"
+                },
+                "array_name": "days_above_5cm_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "ssp126",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ]
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ]
+                }
+            ],
+            "units": "days/year"
+        },
+        {
+            "hazard_type": "ChronicHeat",
+            "group_id": "jupiter_osc",
+            "path": "chronic_heat/jupiter/v1/days_above_35c_{scenario}_{year}",
+            "indicator_id": "days/above/35c",
+            "indicator_model_gcm": "unknown",
+            "params": {},
+            "display_name": "Days per year above 35\u00b0C",
+            "display_groups": [],
+            "description": "\nMaximum daily total water equivalent precipitation experienced at a return period of 200 years.\n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 365.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "mm"
+                },
+                "array_name": "days_above_35c_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "ssp126",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ]
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ]
+                }
+            ],
+            "units": "days/year"
+        },
+        {
+            "hazard_type": "Wind",
+            "group_id": "jupiter_osc",
+            "path": "wind/jupiter/v1/max_1min_{scenario}_{year}",
+            "indicator_id": "max/1min",
+            "indicator_model_gcm": "unknown",
+            "params": {},
+            "display_name": "Max 1 minute sustained wind speed",
+            "display_groups": [],
+            "description": "\nMaximum 1-minute sustained wind speed in km/hour experienced at different return periods.\n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 120.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "km/hour"
+                },
+                "array_name": "max_1min_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "ssp126",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ]
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ]
+                }
+            ],
+            "units": "km/hour"
+        },
+        {
+            "hazard_type": "CombinedInundation",
+            "group_id": "jupiter_osc",
+            "path": "combined_flood/jupiter/v1/fraction_{scenario}_{year}",
+            "indicator_id": "flooded_fraction",
+            "indicator_model_gcm": "unknown",
+            "params": {},
+            "display_name": "Flooded fraction",
+            "display_groups": [],
+            "description": "\nThe fraction of land within a 30-km grid cell that experiences flooding at different return periods.\n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 1.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "none"
+                },
+                "array_name": "fraction_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "ssp126",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ]
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2075,
+                        2100
+                    ]
+                }
+            ],
+            "units": "none"
+        },
+        {
+            "hazard_type": "ChronicHeat",
+            "group_id": "",
+            "path": "chronic_heat/osc/v2/mean_work_loss_{intensity}_{gcm}_{scenario}_{year}",
+            "indicator_id": "mean_work_loss/{intensity}",
+            "indicator_model_gcm": "{gcm}",
+            "params": {
+                "intensity": [
+                    "low",
+                    "medium",
+                    "high"
+                ],
+                "gcm": [
+                    "ACCESS-CM2",
+                    "CMCC-ESM2",
+                    "CNRM-CM6-1",
+                    "MPI-ESM1-2-LR",
+                    "MIROC6",
+                    "NorESM2-MM"
+                ]
+            },
+            "display_name": "Mean work loss, {intensity} intensity/{gcm}",
+            "display_groups": [
+                "Mean work loss"
+            ],
+            "description": "The mean work loss indicator is calculated from the 'Wet Bulb Globe Temperature' (WBGT) indicator:\n$$\nI^\\text{WBGT}_i = 0.567 \\times T^\\text{avg}_i + 0.393 \\times p^\\text{vapour}_i + 3.94\n$$\n$I^\\text{WBGT}_i$ is the WBGT indicator, $T^\\text{avg}_i$ is the average daily near-surface surface temperature (in degress Celsius) on day index, $i$, and $p^\\text{vapour}$\nis the water vapour partial pressure (in kPa). $p^\\text{vapour}$ is calculated from relative humidity $h_r$ via:\n$$\np^\\text{vapour}_i = \\frac{h_r}{100} \\times 6.105 \\times \\exp \\left( \\frac{17.27 \\times T^\\text{avg}_i}{237.7 + T^\\text{avg}_i} \\right)\n$$\nThe work ability indicator, $I^{\\text{WA}}$ is finally calculated via:\n$$\nI^{\\text{WA}}_i = 0.1 + 0.9 / \\left( 1 + (I^\\text{WBGT}_i / \\alpha_1)^{\\alpha_2} \\right)\n$$\nAn annual average work loss indicator, $I^{\\text{WL}}$ is calculated via:\n$$\nI^{\\text{WL}} = 1 - \\frac{1}{n_y} \\sum_{i = 1}^{n_y} I^{\\text{WA}}_i,\n$$\n$n_y$ being the number of days in the year. The OS-Climate-generated indicators are inferred from CMIP6 data, averaged over 6 models: ACCESS-CM2, CMCC-ESM2, CNRM-CM6-1, MPI-ESM1-2-LR, MIROC6 and NorESM2-MM.\nThe indicators are generated for periods: 'historical' (averaged over 1995-2014), 2030 (2021-2040), 2040 (2031-2050) and 2050 (2041-2060).",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 0.8,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "fractional loss"
+                },
+                "array_name": "mean_work_loss_{intensity}_{gcm}_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -60.0
+                    ],
+                    [
+                        -180.0,
+                        -60.0
+                    ]
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        2005
+                    ]
+                },
+                {
+                    "id": "ssp126",
+                    "years": [
+                        2030,
+                        2040,
+                        2050
+                    ]
+                },
+                {
+                    "id": "ssp245",
+                    "years": [
+                        2030,
+                        2040,
+                        2050
+                    ]
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2030,
+                        2040,
+                        2050
+                    ]
+                }
+            ],
+            "units": "fractional loss"
+        },
+        {
+            "hazard_type": "ChronicHeat",
+            "group_id": "",
+            "path": "chronic_heat/osc/v2/days_tas_above_{temp_c}c_{gcm}_{scenario}_{year}",
+            "indicator_id": "days_tas/above/{temp_c}c",
+            "indicator_model_gcm": "{gcm}",
+            "params": {
+                "temp_c": [
+                    "25",
+                    "30",
+                    "35",
+                    "40",
+                    "45",
+                    "50",
+                    "55"
+                ],
+                "gcm": [
+                    "ACCESS-CM2",
+                    "CMCC-ESM2",
+                    "CNRM-CM6-1",
+                    "MPI-ESM1-2-LR",
+                    "MIROC6",
+                    "NorESM2-MM"
+                ]
+            },
+            "display_name": "Days with average temperature above {temp_c}C/{gcm}",
+            "display_groups": [
+                "Days with average temperature above"
+            ],
+            "description": "Add description here.",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 100.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "days"
+                },
+                "array_name": "days_tas_above_{temp_c}c_{gcm}_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -60.0
+                    ],
+                    [
+                        -180.0,
+                        -60.0
+                    ]
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        2005
+                    ]
+                },
+                {
+                    "id": "ssp126",
+                    "years": [
+                        2030,
+                        2040,
+                        2050
+                    ]
+                },
+                {
+                    "id": "ssp245",
+                    "years": [
+                        2030,
+                        2040,
+                        2050
+                    ]
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2030,
+                        2040,
+                        2050
+                    ]
+                }
+            ],
+            "units": "days"
+        }
+    ]
+}

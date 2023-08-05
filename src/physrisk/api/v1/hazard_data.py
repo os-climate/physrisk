@@ -1,12 +1,9 @@
 from enum import Flag, auto
-from pathlib import PurePosixPath
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Tuple
 
 from pydantic import BaseModel, Field
 
 from physrisk.api.v1.common import BaseHazardRequest, IntensityCurve
-
-# region HazardModel
 
 
 class Colormap(BaseModel):
@@ -64,46 +61,73 @@ def expanded(item: str, key: str, param: str):
 
 
 class HazardResource(BaseModel):
-    """Describes a set of data arrays that provide models of a hazard."""
+    """Provides information about a set of hazard indicators, including available scenarios and years."""
 
-    type: str = Field(description="Type of hazard.")
-    group_id: Optional[str] = Field("public")
-    path: str
-    id: str
-    params: Optional[Dict[str, List[str]]]
-    display_name: str
-    description: str
-    array_name: str
-    map: Optional[MapInfo]
-    scenarios: List[Scenario]
-    units: str
+    hazard_type: str = Field(description="Type of hazard.")
+    group_id: Optional[str] = Field("public", description="Identifier of the resource group (used for authentication).")
+    path: str = Field(description="Full path to the indicator array.")
+    indicator_id: str = Field(
+        description="Identifier of the hazard indicator (i.e. the modelled quantity), e.g. 'flood_depth'."
+    )
+    indicator_model_gcm: str = Field(
+        description="Identifier of general circulation model(s) used in the derivation of the indicator."
+    )
+    params: Dict[str, List[str]] = Field({}, description="Parameters used to expand wild-carded fields.")
+    display_name: str = Field(description="Text used to display indicator.")
+    display_groups: List[str] = Field([], description="Text used to group the (expanded) indicators for display.")
+    description: str = Field(
+        description="Brief description in mark down of the indicator and model that generated the indicator."
+    )
+    map: Optional[MapInfo] = Field(description="Optional information used for display of the indicator in a map.")
+    scenarios: List[Scenario] = Field(description="Climate change scenarios for which the indicator is available.")
+    units: str = Field(description="Units of the hazard indicator.")
 
     def expand(self):
-        # should be only one key
-        if not self.params:
-            yield self
-            return
-        key = list(self.params.keys())[0]
-        params = self.params[key]
-        for param in params:
-            yield self.copy(
-                deep=True,
-                update={
-                    "id": expanded(self.id, key, param),
-                    "display_name": expanded(self.display_name, key, param),
-                    "array_name": expanded(self.array_name, key, param),
-                    "map": self.map.copy(deep=True, update={"array_name": expanded(self.map.array_name, key, param)}),
-                },
-            )
+        keys = list(self.params.keys())
+        return expand_resource(self, keys, self.params)
 
     def key(self):
-        return str(PurePosixPath(self.path, self.id))
+        """Unique key for the resource. array_path should be unique, although indicator_id is typically not.
+        Vulnerability models request a hazard indicator by indicator_id from the Hazard Model. The Hazard Model
+        selects based on its own logic (e.g. selects a particular General Circulation Model)."""
+        return self.path
 
 
-# endregion
+def expand(item: str, key: str, param: str):
+    return item and item.replace("{" + key + "}", param)
 
 
-# region HazardAvailability
+def expand_resource(
+    resource: HazardResource, keys: List[str], params: Dict[str, List[str]]
+) -> Iterable[HazardResource]:
+    if len(keys) == 0:
+        yield resource.copy(deep=True, update={"params": {}})
+    else:
+        keys = keys.copy()
+        key = keys.pop()
+        for item in expand_resource(resource, keys, params):
+            for param in params[key]:
+                yield item.copy(
+                    deep=True,
+                    update={
+                        "indicator_id": expand(item.indicator_id, key, param),
+                        "indicator_model_gcm": expand(item.indicator_model_gcm, key, param),
+                        "display_name": expand(item.display_name, key, param),
+                        "path": expand(item.path, key, param),
+                        "map": None
+                        if item.map is None
+                        else (
+                            item.map.copy(
+                                deep=True,
+                                update={
+                                    "array_name": expand(
+                                        item.map.array_name if item.map.array_name is not None else "", key, param
+                                    )
+                                },
+                            )
+                        ),
+                    },
+                )
 
 
 class InventorySource(Flag):
@@ -128,12 +152,6 @@ class HazardAvailabilityResponse(BaseModel):
     colormaps: dict
 
 
-# endregion
-
-
-# region HazardDescription
-
-
 class HazardDescriptionRequest(BaseModel):
     paths: List[str] = Field(description="List of paths to markdown objects.")
 
@@ -142,28 +160,25 @@ class HazardDescriptionResponse(BaseModel):
     descriptions: Dict[str, str] = Field(description="For each path (key), the description markdown (value).")
 
 
-# endregion
-
-
-# region HazardEventData
-
-
-class HazardEventDataRequestItem(BaseModel):
+class HazardDataRequestItem(BaseModel):
     longitudes: List[float]
     latitudes: List[float]
     request_item_id: str
-    event_type: str  # e.g. RiverineInundation
-    model: str
+    hazard_type: Optional[str]  # e.g. RiverineInundation
+    event_type: Optional[str]  # e.g. RiverineInundation; deprecated: use hazard_type
+    indicator_id: str
+    indicator_model_gcm: Optional[str]
+    path: Optional[str]
     scenario: str  # e.g. rcp8p5
     year: int
 
 
-class HazardEventDataRequest(BaseHazardRequest):
+class HazardDataRequest(BaseHazardRequest):
     interpolation: str = "floor"
-    items: List[HazardEventDataRequestItem]
+    items: List[HazardDataRequestItem]
 
 
-class HazardEventDataResponseItem(BaseModel):
+class HazardDataResponseItem(BaseModel):
     intensity_curve_set: List[IntensityCurve]
     request_item_id: str
     event_type: str
@@ -172,8 +187,5 @@ class HazardEventDataResponseItem(BaseModel):
     year: int
 
 
-class HazardEventDataResponse(BaseModel):
-    items: List[HazardEventDataResponseItem]
-
-
-# endregion
+class HazardDataResponse(BaseModel):
+    items: List[HazardDataResponseItem]

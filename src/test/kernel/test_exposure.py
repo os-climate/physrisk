@@ -12,8 +12,9 @@ from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
+from physrisk.hazard_models.embedded import get_default_source_paths
 from physrisk.kernel.assets import Asset
-from physrisk.kernel.calculation import calculate_exposures, get_source_paths_from_inventory
+from physrisk.kernel.calculation import calculate_exposures
 from physrisk.kernel.exposure import Category, JupterExposureMeasure
 from physrisk.kernel.hazards import ChronicHeat, CombinedInundation, Drought, Fire, Hail, Wind
 from physrisk.requests import Requester
@@ -22,12 +23,13 @@ from physrisk.requests import Requester
 class TestExposureMeasures(TestWithCredentials):
     def test_jupiter_exposure_service(self):
         assets, store, hazard_model, expected = self._get_components()
+        inventory = EmbeddedInventory()
         requester = Requester(
             hazard_model=hazard_model,
-            inventory=Inventory(EmbeddedInventory().to_resources()),
+            inventory=inventory,
             inventory_reader=InventoryReader(fs=local.LocalFileSystem(), base_path=""),
             reader=ZarrReader(store=store),
-            colormaps=EmbeddedInventory().colormaps(),
+            colormaps=inventory.colormaps(),
         )
         assets_api = physrisk.api.v1.common.Assets(
             items=[
@@ -55,62 +57,62 @@ class TestExposureMeasures(TestWithCredentials):
     def _get_components(self):
         resources = [
             HazardResource(
-                type="CombinedInundation",
-                path="",
-                id="flooded_fraction",
+                hazard_type="CombinedInundation",
+                path="fraction_{scenario}_{year}",
+                indicator_id="flooded_fraction",
+                indicator_model_gcm="unknown",
                 display_name="",
                 description="",
-                array_name="fraction_{scenario}_{year}",
                 scenarios=[Scenario(id="ssp585", years=[2030])],
                 units="",
             ),
             HazardResource(
-                type="ChronicHeat",
-                path="",
-                id="days/above/35c",
+                hazard_type="ChronicHeat",
+                path="days_above_35c_{scenario}_{year}",
+                indicator_id="days/above/35c",
+                indicator_model_gcm="unknown",
                 display_name="",
                 description="",
-                array_name="days_above_35c_{scenario}_{year}",
                 scenarios=[Scenario(id="ssp585", years=[2030])],
                 units="",
             ),
             HazardResource(
-                type="Wind",
-                path="",
-                id="max/1min",
+                hazard_type="Wind",
+                path="max_1min_{scenario}_{year}",
+                indicator_id="max/1min",
+                indicator_model_gcm="unknown",
                 display_name="",
                 description="",
-                array_name="max_1min_{scenario}_{year}",
                 scenarios=[Scenario(id="ssp585", years=[2030])],
                 units="",
             ),
             HazardResource(
-                type="Drought",
-                path="",
-                id="months/spei3m/below/-2",
+                hazard_type="Drought",
+                path="months_spei3m_below_-2_{scenario}_{year}",
+                indicator_id="months/spei3m/below/-2",
+                indicator_model_gcm="unknown",
                 display_name="",
                 description="",
-                array_name="months_spei3m_below_-2_{scenario}_{year}",
                 scenarios=[Scenario(id="ssp585", years=[2030])],
                 units="",
             ),
             HazardResource(
-                type="Hail",
-                path="",
-                id="days/above/5cm",
+                hazard_type="Hail",
+                path="days_above_5cm_{scenario}_{year}",
+                indicator_id="days/above/5cm",
+                indicator_model_gcm="unknown",
                 display_name="",
                 description="",
-                array_name="days_above_5cm_{scenario}_{year}",
                 scenarios=[Scenario(id="ssp585", years=[2030])],
                 units="",
             ),
             HazardResource(
-                type="Fire",
-                path="",
-                id="fire_probability",
+                hazard_type="Fire",
+                path="fire_probability_{scenario}_{year}",
+                indicator_id="fire_probability",
+                indicator_model_gcm="unknown",
                 display_name="",
                 description="",
-                array_name="fire_probability_{scenario}_{year}",
                 scenarios=[Scenario(id="ssp585", years=[2030])],
                 units="",
             ),
@@ -128,11 +130,11 @@ class TestExposureMeasures(TestWithCredentials):
         }
 
         def path_curves():
-            return dict((r.array_name.format(scenario="ssp585", year=2030), v) for (r, v) in zip(resources, values))
+            return dict((r.path.format(scenario="ssp585", year=2030), v) for (r, v) in zip(resources, values))
 
         assets = [Asset(lat, lon) for (lat, lon) in zip(TestData.latitudes, TestData.longitudes)]
 
         store = mock_hazard_model_store_path_curves(TestData.longitudes, TestData.latitudes, path_curves())
-        hazard_model = ZarrHazardModel(source_paths=get_source_paths_from_inventory(Inventory(resources)), store=store)
+        hazard_model = ZarrHazardModel(source_paths=get_default_source_paths(Inventory(resources)), store=store)
 
         return assets, store, hazard_model, expected

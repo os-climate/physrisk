@@ -1,3 +1,4 @@
+import os
 from typing import Dict
 
 import numpy as np
@@ -5,11 +6,7 @@ import zarr
 import zarr.storage
 from affine import Affine
 
-from physrisk.data.hazard_data_provider import (
-    get_source_path_osc_chronic_heat,
-    get_source_path_wri_coastal_inundation,
-    get_source_path_wri_riverine_inundation,
-)
+from physrisk.hazard_models.embedded import cmip6_scenario_to_rcp
 
 
 class TestData:
@@ -161,10 +158,10 @@ def degree_day_heat_parameter_set():
     paths = []
 
     for model, scenario, year in [
-        ("mean_degree_days/above/32c", "historical", 1980),  # 2005
-        ("mean_degree_days/below/32c", "historical", 1980),
-        ("mean_degree_days/above/32c", "ssp585", 2050),
-        ("mean_degree_days/below/32c", "ssp585", 2050),
+        ("mean_degree_days/above/32c/ACCESS-CM2", "historical", 2005),  # 2005
+        ("mean_degree_days/below/32c/ACCESS-CM2", "historical", 2005),
+        ("mean_degree_days/above/32c/ACCESS-CM2", "ssp585", 2050),
+        ("mean_degree_days/below/32c/ACCESS-CM2", "ssp585", 2050),
     ]:
         paths.append(get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year))
     parameters = [300, 300, 600, -200]
@@ -175,17 +172,17 @@ def WBGT_GZN_Joint_parameter_set():
     paths = []
     # Getting paths for both hazards.
     for model, scenario, year in [
-        ("mean_degree_days/above/32c", "historical", 1980),  # 2005
-        ("mean_degree_days/below/32c", "historical", 1980),
-        ("mean_degree_days/above/32c", "ssp585", 2050),
-        ("mean_degree_days/below/32c", "ssp585", 2050),
+        ("mean_degree_days/above/32c/ACCESS-CM2", "historical", 2005),  # 2005
+        ("mean_degree_days/below/32c/ACCESS-CM2", "historical", 2005),
+        ("mean_degree_days/above/32c/ACCESS-CM2", "ssp585", 2050),
+        ("mean_degree_days/below/32c/ACCESS-CM2", "ssp585", 2050),
     ]:
         paths.append(get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year))
     for model, scenario, year in [
-        ("mean_work_loss/high", "historical", 2010),  # 2005
-        ("mean_work_loss/medium", "historical", 2010),
-        ("mean_work_loss/high", "ssp585", 2050),
-        ("mean_work_loss/medium", "ssp585", 2050),
+        ("mean_work_loss/high/ACCESS-CM2", "historical", 2005),  # 2005
+        ("mean_work_loss/medium/ACCESS-CM2", "historical", 2005),
+        ("mean_work_loss/high/ACCESS-CM2", "ssp585", 2050),
+        ("mean_work_loss/medium/ACCESS-CM2", "ssp585", 2050),
     ]:
         paths.append(get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year))
     parameters = [300, 300, 600, -200, 0.05, 0.003, 0.11, 0.013]
@@ -218,3 +215,52 @@ def _add_curves(root, longitudes, latitudes, array_path, shape, curve, return_pe
     image_coords = np.floor(frac_image_coords).astype(int)
     for j in range(len(longitudes)):
         z[:, image_coords[1, j], image_coords[0, j]] = curve
+
+
+def _wri_inundation_prefix():
+    return "inundation/wri/v2"
+
+
+_percentiles_map = {"95": "0", "5": "0_perc_05", "50": "0_perc_50"}
+_subsidence_set = {"wtsub", "nosub"}
+
+
+def get_source_path_wri_coastal_inundation(*, model: str, scenario: str, year: int):
+    type = "coast"
+    # model is expected to be of the form subsidence/percentile, e.g. wtsub/95
+    # if percentile is omitted then 95th percentile is used
+    model_components = model.split("/")
+    sub = model_components[0]
+    if sub not in _subsidence_set:
+        raise ValueError("expected model input of the form {subsidence/percentile}, e.g. wtsub/95, nosub/5, wtsub/50")
+    perc = "95" if len(model_components) == 1 else model_components[1]
+    return os.path.join(
+        _wri_inundation_prefix(), f"inun{type}_{cmip6_scenario_to_rcp(scenario)}_{sub}_{year}_{_percentiles_map[perc]}"
+    )
+
+
+def get_source_path_wri_riverine_inundation(*, model: str, scenario: str, year: int):
+    type = "river"
+    return os.path.join(_wri_inundation_prefix(), f"inun{type}_{cmip6_scenario_to_rcp(scenario)}_{model}_{year}")
+
+
+def _osc_chronic_heat_prefix():
+    return "chronic_heat/osc/v2"
+
+
+def get_source_path_osc_chronic_heat(*, model: str, scenario: str, year: int):
+    type, *levels = model.split("/")
+
+    if type == "mean_degree_days":
+        assert levels[0] in ["above", "below"]  # above or below
+        assert levels[1] in ["18c", "32c"]  # threshold temperature
+        assert levels[2] in ["ACCESS-CM2"]  # gcms
+        return _osc_chronic_heat_prefix() + "/" + f"{type}_v2_{levels[0]}_{levels[1]}_{levels[2]}_{scenario}_{year}"
+
+    elif type == "mean_work_loss":
+        assert levels[0] in ["low", "medium", "high"]  # work intensity
+        assert levels[1] in ["ACCESS-CM2"]  # gcms
+        return _osc_chronic_heat_prefix() + "/" + f"{type}_{levels[0]}_{levels[1]}_{scenario}_{year}"
+
+    else:
+        raise ValueError("valid types are {valid_types}")

@@ -12,7 +12,7 @@ from .zarr_reader import get_env
 
 
 class HazardModels(BaseModel):
-    hazard_models: List[HazardResource]
+    resources: List[HazardResource]
 
 
 class InventoryReader:
@@ -48,7 +48,7 @@ class InventoryReader:
         if not self._fs.exists(self._full_path(path)):
             return []
         json_str = self.read_json(path)
-        models = parse_obj_as(HazardModels, json.loads(json_str)).hazard_models
+        models = parse_obj_as(HazardModels, json.loads(json_str)).resources
         return models
 
     def read_description_markdown(self, paths: List[str]) -> Dict[str, str]:
@@ -72,7 +72,7 @@ class InventoryReader:
         combined = dict((i.key(), i) for i in self.read(path))
         for model in hazard_models:
             combined[model.key()] = model
-        models = HazardModels(hazard_models=list(combined.values()))
+        models = HazardModels(resources=list(combined.values()))
         json_str = json.dumps(models.dict())
         with self._fs.open(self._full_path(path), "w") as f:
             f.write(json_str)

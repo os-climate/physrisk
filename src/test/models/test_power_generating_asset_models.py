@@ -12,8 +12,8 @@ from physrisk import calculate_impacts
 from physrisk.kernel import Asset, PowerGeneratingAsset
 from physrisk.kernel.assets import IndustrialActivity, RealEstateAsset
 from physrisk.kernel.hazard_model import HazardEventDataResponse
-from physrisk.models.power_generating_asset_models import InundationModel
 from physrisk.utils.lazy import lazy_import
+from physrisk.vulnerability_models.power_generating_asset_models import InundationModel
 
 pd = lazy_import("pandas")
 

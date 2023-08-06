@@ -6,10 +6,10 @@ import numpy as np
 
 from physrisk import requests
 from physrisk.api.v1.common import Assets
-from physrisk.data.inventory import EmbeddedInventory, Inventory
+from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
-from physrisk.kernel.calculation import get_source_paths_from_inventory
+from physrisk.hazard_models.embedded import get_default_source_paths
 
 # from physrisk.api.v1.impact_req_resp import AssetImpactResponse
 # from physrisk.data.static.world import get_countries_and_continents
@@ -73,9 +73,10 @@ class TestImpactRequests(TestWithCredentials):
         curve = np.array([0.0596, 0.333, 0.505, 0.715, 0.864, 1.003, 1.149, 1.163, 1.163])
         store = mock_hazard_model_store_inundation(TestData.longitudes, TestData.latitudes, curve)
 
-        inventory = Inventory(EmbeddedInventory().to_resources())
-        source_paths = get_source_paths_from_inventory(inventory)
-        response = requests._get_asset_impacts(request, ZarrHazardModel(ZarrReader(store), source_paths=source_paths))
+        source_paths = get_default_source_paths(EmbeddedInventory())
+        response = requests._get_asset_impacts(
+            request, ZarrHazardModel(source_paths=source_paths, reader=ZarrReader(store))
+        )
 
         self.assertEqual(response.asset_impacts[0].impacts[0].hazard_type, "CoastalInundation")
 

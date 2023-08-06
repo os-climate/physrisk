@@ -5,13 +5,14 @@ import numpy as np
 from scipy import stats
 
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
+from physrisk.hazard_models.embedded import get_default_source_paths
 from physrisk.kernel import calculation
 from physrisk.kernel.assets import Asset, RealEstateAsset
 from physrisk.kernel.hazard_model import HazardEventDataResponse
 from physrisk.kernel.hazards import Inundation, RiverineInundation
 from physrisk.kernel.vulnerability_matrix_provider import VulnMatrixProvider
 from physrisk.kernel.vulnerability_model import VulnerabilityModel
-from physrisk.models.example_models import ExampleCdfBasedVulnerabilityModel
+from physrisk.vulnerability_models.example_models import ExampleCdfBasedVulnerabilityModel
 
 
 class ExampleRealEstateInundationModel(VulnerabilityModel):
@@ -20,7 +21,7 @@ class ExampleRealEstateInundationModel(VulnerabilityModel):
         self.impact_means = np.array([0, 0.2, 0.44, 0.58, 0.68, 0.78, 0.85, 0.92, 0.96, 1.0])
         self.impact_stddevs = np.array([0, 0.17, 0.14, 0.14, 0.17, 0.14, 0.13, 0.10, 0.06, 0])
         impact_bin_edges = np.array([0, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
-        super().__init__(model="MIROC-ESM-CHEM", hazard_type=RiverineInundation, impact_bin_edges=impact_bin_edges)
+        super().__init__(indicator_id="flood_depth", hazard_type=RiverineInundation, impact_bin_edges=impact_bin_edges)
 
     def get_impact_curve(self, intensities, asset):
         # we interpolate the mean and standard deviation and use this to construct distributions
@@ -53,7 +54,7 @@ def beta_distrib(mean, std):
 
 class TestExampleModels(unittest.TestCase):
     def test_pdf_based_vulnerability_model(self):
-        model = ExampleCdfBasedVulnerabilityModel(model="", event_type=Inundation)
+        model = ExampleCdfBasedVulnerabilityModel(indicator_id="", event_type=Inundation)
 
         latitude, longitude = 45.268405, 19.885738
         asset = Asset(latitude, longitude)
@@ -72,7 +73,7 @@ class TestExampleModels(unittest.TestCase):
             [0.059601218, 0.33267087, 0.50511575, 0.71471703, 0.8641244, 1.0032823, 1.1491022, 1.1634114, 1.1634114]
         )
         store = mock_hazard_model_store_inundation(TestData.longitudes, TestData.latitudes, curve)
-        hazard_model = ZarrHazardModel(source_paths=calculation.get_default_zarr_source_paths(), store=store)
+        hazard_model = ZarrHazardModel(source_paths=get_default_source_paths(), store=store)
 
         scenario = "rcp8p5"
         year = 2080

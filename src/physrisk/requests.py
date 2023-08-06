@@ -10,18 +10,21 @@ import physrisk.data.static.example_portfolios
 from physrisk.api.v1.common import Distribution, ExceedanceCurve, VulnerabilityDistrib
 from physrisk.api.v1.exposure_req_resp import AssetExposure, AssetExposureRequest, AssetExposureResponse, Exposure
 from physrisk.api.v1.hazard_image import HazardImageRequest
+from physrisk.data.hazard_data_provider import HazardDataHint
+from physrisk.data.inventory import expand
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.zarr_reader import ZarrReader
+from physrisk.hazard_models.embedded import get_default_source_paths
 from physrisk.kernel.exposure import JupterExposureMeasure
 
 from .api.v1.hazard_data import (
     HazardAvailabilityRequest,
     HazardAvailabilityResponse,
+    HazardDataRequest,
+    HazardDataResponse,
+    HazardDataResponseItem,
     HazardDescriptionRequest,
     HazardDescriptionResponse,
-    HazardEventDataRequest,
-    HazardEventDataResponse,
-    HazardEventDataResponseItem,
     HazardResource,
     IntensityCurve,
 )
@@ -37,7 +40,7 @@ from .data.image_creator import ImageCreator
 from .data.inventory import EmbeddedInventory, Inventory
 from .kernel import Asset, Hazard
 from .kernel import calculation as calc
-from .kernel.hazard_model import HazardDataRequest
+from .kernel.hazard_model import HazardDataRequest as hmHazardDataRequest
 from .kernel.hazard_model import HazardEventDataResponse as hmHazardEventDataResponse
 from .kernel.hazard_model import HazardModel, HazardParameterDataResponse
 
@@ -61,10 +64,8 @@ class Requester:
 
     def get(self, *, request_id, request_dict):
         if request_id == "get_hazard_data":
-            request = HazardEventDataRequest(**request_dict)
-            return json.dumps(
-                _get_hazard_data(request, inventory=self.inventory, hazard_model=self.hazard_model).dict()
-            )
+            request = HazardDataRequest(**request_dict)
+            return json.dumps(_get_hazard_data(request, hazard_model=self.hazard_model).dict())
         elif request_id == "get_hazard_data_availability":
             request = HazardAvailabilityRequest(**request_dict)
             return json.dumps(_get_hazard_data_availability(request, self.inventory, self.colormaps).dict())
@@ -89,7 +90,9 @@ class Requester:
         if not _read_permitted(request.group_ids, inventory.resources[request.resource]):
             raise PermissionError()
         model = inventory.resources[request.resource]
-        path = str(PosixPath(model.path, model.map.array_name)).format(scenario=request.scenarioId, year=request.year)
+        path = str(PosixPath(model.path).with_name(model.map.array_name)).format(
+            scenario=request.scenarioId, year=request.year
+        )
         creator = ImageCreator(zarr_reader)  # store=ImageCreator.test_store(path))
         return creator.convert(
             path, colormap=request.colormap, min_value=request.min_value, max_value=request.max_value
@@ -97,24 +100,24 @@ class Requester:
 
 
 def _create_inventory(reader: Optional[InventoryReader] = None, sources: Optional[List[str]] = None):
-    models: List[HazardResource] = []
+    resources: List[HazardResource] = []
     colormaps: Dict[str, Dict[str, Any]] = {}
     request_sources = ["embedded"] if sources is None else [s.lower() for s in sources]
     for source in request_sources:
         if source == "embedded":
             inventory = EmbeddedInventory()
-            for model in inventory.to_resources():
-                models.append(model)
+            for res in inventory.resources.values():
+                resources.append(res)
             colormaps.update(inventory.colormaps())
         elif source == "hazard" or source == "hazard_test":
             if reader is not None:
-                for model in reader.read(source):
-                    models.append(model)
-    return Inventory(models)
+                for resource in reader.read(source):
+                    resources.extend(expand([resource]))
+    return Inventory(resources)
 
 
 def create_source_paths(inventory: Inventory):
-    return calc.get_source_paths_from_inventory(inventory, embedded=calc.get_default_zarr_source_paths())
+    return get_default_source_paths(inventory)
 
 
 class NumpyArrayEncoder(json.JSONEncoder):
@@ -153,12 +156,12 @@ def _get_hazard_data_description(request: HazardDescriptionRequest, reader: Inve
     return HazardDescriptionResponse(descriptions=descriptions)
 
 
-def _get_hazard_data(request: HazardEventDataRequest, inventory: Inventory, hazard_model: HazardModel):
-    if any(
-        not _read_permitted(request.group_ids, inventory.resources_by_type_id[(i.event_type, i.model)][0])
-        for i in request.items
-    ):
-        raise PermissionError()
+def _get_hazard_data(request: HazardDataRequest, hazard_model: HazardModel):
+    # if any(
+    #     not _read_permitted(request.group_ids, inventory.resources_by_type_id[(i.event_type, i.model)][0])
+    #     for i in request.items
+    # ):
+    #     raise PermissionError()
 
     # get hazard event types:
     event_types = Hazard.__subclasses__()
@@ -169,10 +172,16 @@ def _get_hazard_data(request: HazardEventDataRequest, inventory: Inventory, haza
     item_requests = []
     all_requests = []
     for item in request.items:
-        event_type = event_dict[item.event_type]
+        hazard_type = (
+            item.hazard_type if item.hazard_type is not None else item.event_type if item.event_type is not None else ""
+        )
+        event_type = event_dict[hazard_type]
+        hint = None if item.path is None else HazardDataHint(path=item.path)
 
         data_requests = [
-            HazardDataRequest(event_type, lon, lat, model=item.model, scenario=item.scenario, year=item.year)
+            hmHazardDataRequest(
+                event_type, lon, lat, indicator_id=item.indicator_id, scenario=item.scenario, year=item.year, hint=hint
+            )
             for (lon, lat) in zip(item.longitudes, item.latitudes)
         ]
 
@@ -183,7 +192,7 @@ def _get_hazard_data(request: HazardEventDataRequest, inventory: Inventory, haza
     # responses comes back as a dictionary because requests may be executed in different order to list
     # to optimise performance.
 
-    response = HazardEventDataResponse(items=[])
+    response = HazardDataResponse(items=[])
 
     for i, item in enumerate(request.items):
         requests = item_requests[i]
@@ -197,11 +206,11 @@ def _get_hazard_data(request: HazardEventDataRequest, inventory: Inventory, haza
             for resp in resps
         ]
         response.items.append(
-            HazardEventDataResponseItem(
+            HazardDataResponseItem(
                 intensity_curve_set=intensity_curves,
                 request_item_id=item.request_item_id,
                 event_type=item.event_type,
-                model=item.model,
+                model=item.indicator_id,
                 scenario=item.scenario,
                 year=item.year,
             )

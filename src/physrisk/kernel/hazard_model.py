@@ -1,8 +1,10 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import Dict, List, Mapping, Protocol, Tuple
+from typing import Dict, List, Mapping, Optional, Protocol, Tuple
 
 import numpy as np
+
+from physrisk.data.hazard_data_provider import HazardDataHint
 
 
 class HazardDataRequest:
@@ -11,7 +13,17 @@ class HazardDataRequest:
     different event return periods. A chronic hazard on the other hand is a shift in a climate parameter
     and the parameter value is returned."""
 
-    def __init__(self, hazard_type: type, longitude: float, latitude: float, *, model: str, scenario: str, year: int):
+    def __init__(
+        self,
+        hazard_type: type,
+        longitude: float,
+        latitude: float,
+        *,
+        indicator_id: str,
+        scenario: str,
+        year: int,
+        hint: Optional[HazardDataHint] = None
+    ):
         """Create HazardDataRequest.
 
         Args:
@@ -25,13 +37,22 @@ class HazardDataRequest:
         self.hazard_type = hazard_type
         self.longitude = longitude
         self.latitude = latitude
-        self.model = model
+        self.indicator_id = indicator_id
         self.scenario = scenario
         self.year = year
+        self.hint = hint
 
     def group_key(self):
         """Key used to group EventDataRequests into batches."""
-        return tuple((self.hazard_type, self.model, self.scenario, self.year))
+        return tuple(
+            (
+                self.hazard_type,
+                self.indicator_id,
+                self.scenario,
+                self.year,
+                None if self.hint is None else self.hint.group_key(),
+            )
+        )
 
 
 class HazardDataResponse:

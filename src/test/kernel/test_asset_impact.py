@@ -9,7 +9,10 @@ from physrisk.kernel.assets import Asset, RealEstateAsset
 from physrisk.kernel.hazard_model import HazardDataRequest
 from physrisk.kernel.impact_distrib import ImpactDistrib
 from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
-from physrisk.models.real_estate_models import RealEstateCoastalInundationModel, RealEstateRiverineInundationModel
+from physrisk.vulnerability_models.real_estate_models import (
+    RealEstateCoastalInundationModel,
+    RealEstateRiverineInundationModel,
+)
 
 
 class TestAssetImpact(unittest.TestCase):
@@ -117,7 +120,9 @@ class TestAssetImpact(unittest.TestCase):
         # create requests:
         for v in vulnerability_models:
             for a in assets:
-                assetRequests[(v, a)] = [HazardDataRequest(RiverineInundation, 0, 0, model="", scenario="", year=2030)]
+                assetRequests[(v, a)] = [
+                    HazardDataRequest(RiverineInundation, 0, 0, indicator_id="", scenario="", year=2030)
+                ]
 
         time_requests = time.time() - start
         print(f"Time for requests dictionary creation {time_requests}s ")

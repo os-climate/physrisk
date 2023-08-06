@@ -50,9 +50,9 @@ class JupterExposureMeasure(ExposureMeasure):
                 asset.latitude,
                 scenario=scenario,
                 year=year,
-                model=model,
+                indicator_id=indicator_id,
             )
-            for (hazard_type, model) in self.exposure_bins.keys()
+            for (hazard_type, indicator_id) in self.exposure_bins.keys()
         ]
 
     def get_exposures(self, asset: Asset, data_responses: Iterable[HazardDataResponse]):

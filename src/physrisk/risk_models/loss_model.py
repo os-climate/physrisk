@@ -3,12 +3,14 @@ from typing import Dict, List, Optional, Sequence
 
 import numpy as np
 
-from .assets import Asset
-from .calculation import calculate_impacts, get_default_hazard_model, get_default_vulnerability_models
-from .financial_model import FinancialModelBase
-from .hazard_model import HazardModel
-from .impact_distrib import ImpactDistrib, ImpactType
-from .vulnerability_model import VulnerabilityModelAcuteBase
+from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
+
+from ..kernel.assets import Asset
+from ..kernel.calculation import get_default_hazard_model, get_default_vulnerability_models
+from ..kernel.financial_model import FinancialModelBase
+from ..kernel.hazard_model import HazardModel
+from ..kernel.impact import calculate_impacts
+from ..kernel.vulnerability_model import VulnerabilityModelBase
 
 
 class Aggregator(ABC):
@@ -26,7 +28,7 @@ class LossModel:
     def __init__(
         self,
         hazard_model: Optional[HazardModel] = None,
-        vulnerability_models: Optional[Dict[type, Sequence[VulnerabilityModelAcuteBase]]] = None,
+        vulnerability_models: Optional[Dict[type, Sequence[VulnerabilityModelBase]]] = None,
     ):
         self.hazard_model = get_default_hazard_model() if hazard_model is None else hazard_model
         self.vulnerability_models = (

@@ -12,10 +12,9 @@ from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
-from physrisk.hazard_models.embedded import get_default_source_paths
+from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import Asset
-from physrisk.kernel.calculation import calculate_exposures
-from physrisk.kernel.exposure import Category, JupterExposureMeasure
+from physrisk.kernel.exposure import Category, JupterExposureMeasure, calculate_exposures
 from physrisk.kernel.hazards import ChronicHeat, CombinedInundation, Drought, Fire, Hail, Wind
 from physrisk.requests import Requester
 

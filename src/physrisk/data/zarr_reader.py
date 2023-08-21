@@ -97,10 +97,7 @@ class ZarrReader:
         transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
 
         # in the case of acute risks, index_values will contain the return periods
-        index_values = z.attrs.get("index_values", [0])
-        if index_values is None:
-            index_values = [0]
-
+        index_values = self.get_index_values(path)
         image_coords = self._get_coordinates(longitudes, latitudes, transform)
 
         if interpolation == "floor":
@@ -118,6 +115,13 @@ class ZarrReader:
 
         else:
             raise ValueError("interpolation must have value 'floor', 'linear', 'max' or 'min")
+
+    def get_index_values(self, path):
+        z = self._root[path]
+        index_values = z.attrs.get("index_values", [0])
+        if index_values is None:
+            index_values = [0]
+        return index_values
 
     def get_max_curves(self, set_id, longitudes, latitudes, interpolation="floor", delta_km=1.0, n_grid=5):
         """Get maximal intensity curve for a grid around a given latitude and longitude coordinate pair.

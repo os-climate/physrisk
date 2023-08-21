@@ -5,11 +5,11 @@ from typing import Iterable, List, Union, cast
 import numpy as np
 
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
-from physrisk.hazard_models.embedded import get_default_source_paths
-from physrisk.kernel import calculation
+from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import Asset, IndustrialActivity
 from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse, HazardParameterDataResponse
 from physrisk.kernel.hazards import ChronicHeat
+from physrisk.kernel.impact import calculate_impacts
 from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
 from physrisk.vulnerability_models.chronic_heat_models import ChronicHeatGZNModel, get_impact_distrib
 
@@ -189,9 +189,7 @@ class TestChronicAssetImpact(unittest.TestCase):
             IndustrialActivity(lat, lon, type="high") for lon, lat in zip(TestData.longitudes, TestData.latitudes)
         ][:1]
 
-        results = calculation.calculate_impacts(
-            assets, hazard_model, vulnerability_models, scenario=scenario, year=year
-        )
+        results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
 
         value_test = list(results.values())[0].impact.prob
 

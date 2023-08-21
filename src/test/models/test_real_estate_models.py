@@ -5,10 +5,10 @@ from test.data.hazard_model_store import TestData, mock_hazard_model_store_inund
 import numpy as np
 
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
-from physrisk.hazard_models.embedded import get_default_source_paths
-from physrisk.kernel import calculation
+from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import RealEstateAsset
 from physrisk.kernel.hazards import CoastalInundation, RiverineInundation
+from physrisk.kernel.impact import calculate_impacts
 from physrisk.vulnerability_models.real_estate_models import (
     RealEstateCoastalInundationModel,
     RealEstateRiverineInundationModel,
@@ -34,9 +34,7 @@ class TestRealEstateModels(unittest.TestCase):
 
         vulnerability_models = {RealEstateAsset: [RealEstateRiverineInundationModel()]}
 
-        results = calculation.calculate_impacts(
-            assets, hazard_model, vulnerability_models, scenario=scenario, year=year
-        )
+        results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
 
         hazard_bin_edges = results[(assets[0], RiverineInundation)].event.intensity_bin_edges
         hazard_bin_probs = results[(assets[0], RiverineInundation)].event.prob
@@ -101,9 +99,7 @@ class TestRealEstateModels(unittest.TestCase):
 
         vulnerability_models = {RealEstateAsset: [RealEstateCoastalInundationModel()]}
 
-        results = calculation.calculate_impacts(
-            assets, hazard_model, vulnerability_models, scenario=scenario, year=year
-        )
+        results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
 
         np.testing.assert_allclose(
             results[(assets[0], CoastalInundation)].impact.prob,

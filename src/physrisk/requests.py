@@ -14,8 +14,9 @@ from physrisk.data.hazard_data_provider import HazardDataHint
 from physrisk.data.inventory import expand
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.zarr_reader import ZarrReader
-from physrisk.hazard_models.embedded import get_default_source_paths
-from physrisk.kernel.exposure import JupterExposureMeasure
+from physrisk.hazard_models.core_hazards import get_default_source_paths
+from physrisk.kernel.exposure import JupterExposureMeasure, calculate_exposures
+from physrisk.kernel.risk import AssetLevelRiskModel, BatchId, MeasureKey
 
 from .api.v1.hazard_data import (
     HazardAvailabilityRequest,
@@ -95,7 +96,7 @@ class Requester:
         )
         creator = ImageCreator(zarr_reader)  # store=ImageCreator.test_store(path))
         return creator.convert(
-            path, colormap=request.colormap, min_value=request.min_value, max_value=request.max_value
+            path, colormap=request.colormap, tile=request.tile, min_value=request.min_value, max_value=request.max_value
         )
 
 
@@ -237,7 +238,7 @@ def create_assets(assets: Assets):
 def _get_asset_exposures(request: AssetExposureRequest, hazard_model: HazardModel):
     assets = create_assets(request.assets)
     measure = JupterExposureMeasure()
-    results = calc.calculate_exposures(assets, hazard_model, measure, scenario="ssp585", year=2030)
+    results = calculate_exposures(assets, hazard_model, measure, scenario="ssp585", year=2030)
     return AssetExposureResponse(
         items=[
             AssetExposure(
@@ -258,9 +259,22 @@ def _get_asset_impacts(request: AssetImpactRequest, hazard_model: HazardModel):
     # based on asset_class:
     assets = create_assets(request.assets)
 
-    results = calc.calculate_impacts(
-        assets, hazard_model, vulnerability_models, scenario=request.scenario, year=request.year
-    )
+    vulnerability_models = calc.get_default_vulnerability_models()
+    measure_calcs = calc.get_default_risk_measure_calculators()
+    risk_model = AssetLevelRiskModel(hazard_model, vulnerability_models, measure_calcs)
+
+    scenarios = [request.scenario]
+    years = [request.year]
+    if request.include_measures:
+        batch_impacts, measures = risk_model.calculate_risk_measures(assets, scenarios, years)
+    else:
+        batch_impacts = risk_model.calculate_impacts(assets, scenarios, years)
+        measures = None
+
+    # results = calculate_impacts(
+    #    assets, hazard_model, vulnerability_models, scenario=request.scenario, year=request.year
+    # )
+    results = batch_impacts[BatchId(scenarios[0], years[0])]
 
     # note that this does rely on ordering of dictionary (post 3.6)
     impacts: Dict[Asset, List[AssetSingleHazardImpact]] = {}
@@ -284,9 +298,11 @@ def _get_asset_impacts(request: AssetImpactRequest, hazard_model: HazardModel):
             )
 
         impact_exceedance = v.impact.to_exceedance_curve()
+        measure_key = MeasureKey(asset, scenarios[0], years[0], v.impact.hazard_type)
         hazard_impacts = AssetSingleHazardImpact(
             hazard_type=v.impact.hazard_type.__name__,
             impact_type=v.impact.impact_type.name,
+            risk_measure=None if measures is None or measure_key not in measures else measures[measure_key],
             impact_exceedance=ExceedanceCurve(
                 values=impact_exceedance.values, exceed_probabilities=impact_exceedance.probs
             ),

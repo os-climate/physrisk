@@ -4,10 +4,13 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 
-from physrisk import ExceedanceCurve, HazardEventDistrib, RiverineInundation, VulnerabilityDistrib
 from physrisk.kernel.assets import Asset, RealEstateAsset
+from physrisk.kernel.curve import ExceedanceCurve
+from physrisk.kernel.hazard_event_distrib import HazardEventDistrib
 from physrisk.kernel.hazard_model import HazardDataRequest
-from physrisk.kernel.impact_distrib import ImpactDistrib
+from physrisk.kernel.hazards import RiverineInundation
+from physrisk.kernel.impact import ImpactDistrib
+from physrisk.kernel.vulnerability_distrib import VulnerabilityDistrib
 from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
 from physrisk.vulnerability_models.real_estate_models import (
     RealEstateCoastalInundationModel,

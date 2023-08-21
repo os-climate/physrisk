@@ -9,7 +9,7 @@ from physrisk.api.v1.common import Assets
 from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
-from physrisk.hazard_models.embedded import get_default_source_paths
+from physrisk.hazard_models.core_hazards import get_default_source_paths
 
 # from physrisk.api.v1.impact_req_resp import AssetImpactResponse
 # from physrisk.data.static.world import get_countries_and_continents
@@ -63,6 +63,7 @@ class TestImpactRequests(TestWithCredentials):
         request_dict = {
             "assets": assets,
             "include_asset_level": True,
+            "include_measures": False,
             "include_calc_details": True,
             "year": 2080,
             "scenario": "rcp8p5",

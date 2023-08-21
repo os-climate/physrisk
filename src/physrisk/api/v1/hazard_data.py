@@ -69,6 +69,11 @@ class HazardResource(BaseModel):
     indicator_id: str = Field(
         description="Identifier of the hazard indicator (i.e. the modelled quantity), e.g. 'flood_depth'."
     )
+    indicator_model_id: Optional[str] = Field(
+        None,
+        description="Identifier specifying the type of model used in the derivation of the indicator "
+        "(e.g. whether flood model includes impact of sea-level rise).",
+    )
     indicator_model_gcm: str = Field(
         description="Identifier of general circulation model(s) used in the derivation of the indicator."
     )

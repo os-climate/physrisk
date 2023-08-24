@@ -3,7 +3,7 @@ from typing import List, Union
 
 import numpy as np
 
-from .curve import to_exceedance_curve
+from physrisk.kernel.curve import to_exceedance_curve
 
 
 class ImpactType(Enum):

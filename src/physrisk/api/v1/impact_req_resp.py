@@ -1,10 +1,9 @@
+from enum import Enum
 from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
 from physrisk.api.v1.common import Assets, Distribution, ExceedanceCurve, VulnerabilityDistrib
-
-# region Request
 
 
 class CalcSettings(BaseModel):
@@ -16,7 +15,8 @@ class AssetImpactRequest(BaseModel):
 
     assets: Assets
     calc_settings: CalcSettings = Field(default_factory=CalcSettings, description="Interpolation method.")
-    include_asset_level: bool = Field(True, description="If true, include ")
+    include_asset_level: bool = Field(True, description="If true, include asset-level impacts.")
+    include_measures: bool = Field(True, description="If true, include measures.")
     include_calc_details: bool = Field(True, description="If true, include impact calculation details.")
     scenario: str = Field("rcp8p5", description="Name of scenario ('rcp8p5')")
     year: int = Field(
@@ -25,9 +25,32 @@ class AssetImpactRequest(BaseModel):
     )
 
 
-# endregion
-
 # region Response
+
+
+class Category(str, Enum):
+    NODATA = "NODATA"
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    REDFLAG = "REDFLAG"
+
+
+class Indicator(BaseModel):
+    value: float
+    label: str
+
+
+class RiskMeasureResult(BaseModel):
+    """Provides a risk category based on one or more risk indicators.
+    A risk indicator is a quantity derived from one or more vulnerability models,
+    e.g. the change in 1-in-100 year damage or disruption.
+    """
+
+    category: Category = Field(description="Result category.")
+    cat_defn: str = Field(description="Definition of the category for the particular indicator.")
+    indicators: List[Indicator]
+    summary: str = Field(description="Summary of the indicator.")
 
 
 class AcuteHazardCalculationDetails(BaseModel):
@@ -48,6 +71,7 @@ class AssetSingleHazardImpact(BaseModel):
         ('damage') or disruption to the annual economic benefit obtained from the asset ('disruption'), expressed as
         fractional decrease to an equivalent cash amount.""",
     )
+    risk_measure: Optional[RiskMeasureResult]
     impact_distribution: Distribution
     impact_exceedance: ExceedanceCurve
     impact_mean: float

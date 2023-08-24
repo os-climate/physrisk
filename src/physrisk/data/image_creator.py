@@ -1,5 +1,7 @@
 import io
-from typing import Callable, List, Optional
+from functools import lru_cache
+from pathlib import PurePosixPath
+from typing import Callable, List, NamedTuple, Optional
 
 import numpy as np
 import PIL.Image as Image
@@ -7,6 +9,12 @@ import zarr.storage
 
 from physrisk.data import colormap_provider
 from physrisk.data.zarr_reader import ZarrReader
+
+
+class Tile(NamedTuple):
+    x: int
+    y: int
+    z: int
 
 
 class ImageCreator:
@@ -22,6 +30,7 @@ class ImageCreator:
         path: str,
         format="PNG",
         colormap: str = "heating",
+        tile: Optional[Tile] = None,
         min_value: Optional[float] = None,
         max_value: Optional[float] = None,
     ) -> bytes:
@@ -37,7 +46,7 @@ class ImageCreator:
         Returns:
             bytes: Image data.
         """
-        image = self._to_image(path, colormap, min_value=min_value, max_value=max_value)
+        image = self._to_image(path, colormap, tile=tile, min_value=min_value, max_value=max_value)
         image_bytes = io.BytesIO()
         image.save(image_bytes, format=format)
         return image_bytes.getvalue()
@@ -65,12 +74,27 @@ class ImageCreator:
         image.save(filename, format=format)
 
     def _to_image(
-        self, path, colormap: str = "heating", min_value: Optional[float] = None, max_value: Optional[float] = None
+        self,
+        path,
+        colormap: str = "heating",
+        tile: Optional[Tile] = None,
+        index: Optional[int] = None,
+        min_value: Optional[float] = None,
+        max_value: Optional[float] = None,
     ) -> Image.Image:
         """Get image for path specified as array of bytes."""
-        data = self.reader.all_data(path)
+        tile_path = path if tile is None else str(PurePosixPath(path, f"{tile.z}"))
+        data = get_data(self.reader, tile_path)
+        # data = self.reader.all_data(tile_path)
         if len(data.shape) == 3:
-            data = data[:, :, :].squeeze(axis=0)
+            index = len(self.reader.get_index_values(data)) - 1 if index is None else index
+            if tile is None:
+                # return whole array
+                data = data[index, :, :]  # .squeeze(axis=0)
+            else:
+                # (from zarr 2.16.0 we can also use block indexing)
+                data = data[index, 256 * tile.y : 256 * (tile.y + 1), 256 * tile.x : 256 * (tile.x + 1)]
+
         if any(dim > 1500 for dim in data.shape):
             raise Exception("dimension too large (over 1500).")
         map_defn = colormap_provider.colormap(colormap)
@@ -169,3 +193,8 @@ class ImageCreator:
         )
         z[0, :, :] = im
         return store
+
+
+@lru_cache(maxsize=32)
+def get_data(reader, path):
+    return reader.all_data(path)

@@ -11,13 +11,13 @@ from test.data.hazard_model_store import (
 import numpy as np
 import numpy.testing
 
-from physrisk import RiverineInundation, requests
+from physrisk import requests
 from physrisk.container import Container
 from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
-from physrisk.hazard_models.embedded import get_default_source_paths
-from physrisk.kernel.hazards import ChronicHeat
+from physrisk.hazard_models.core_hazards import get_default_source_paths
+from physrisk.kernel.hazards import ChronicHeat, RiverineInundation
 
 
 class TestDataRequests(TestWithCredentials):
@@ -78,13 +78,11 @@ class TestDataRequests(TestWithCredentials):
             ZarrHazardModel(source_paths=get_default_source_paths(EmbeddedInventory()), reader=ZarrReader(store=store)),
         )
 
-        result.items[0].intensity_curve_set[0].intensities
-
-        numpy.testing.assert_array_almost_equal_nulp(result.items[0].intensity_curve_set[0].intensities, np.zeros((8)))
+        numpy.testing.assert_array_almost_equal_nulp(result.items[0].intensity_curve_set[0].intensities, np.zeros((9)))
         numpy.testing.assert_array_almost_equal_nulp(
-            result.items[0].intensity_curve_set[1].intensities, np.linspace(0.1, 1.0, 8, dtype="f4")
+            result.items[0].intensity_curve_set[1].intensities, np.linspace(0.1, 1.0, 9, dtype="f4")
         )
-        numpy.testing.assert_array_almost_equal_nulp(result.items[0].intensity_curve_set[2].intensities, np.zeros((8)))
+        numpy.testing.assert_array_almost_equal_nulp(result.items[0].intensity_curve_set[2].intensities, np.zeros((9)))
 
     def test_zarr_reading_chronic(self):
         request_dict = {

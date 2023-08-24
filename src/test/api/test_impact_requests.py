@@ -6,10 +6,11 @@ import numpy as np
 
 from physrisk import requests
 from physrisk.api.v1.common import Assets
+from physrisk.container import Container
 from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
-from physrisk.hazard_models.embedded import get_default_source_paths
+from physrisk.hazard_models.core_hazards import get_default_source_paths
 
 # from physrisk.api.v1.impact_req_resp import AssetImpactResponse
 # from physrisk.data.static.world import get_countries_and_continents
@@ -63,6 +64,7 @@ class TestImpactRequests(TestWithCredentials):
         request_dict = {
             "assets": assets,
             "include_asset_level": True,
+            "include_measures": False,
             "include_calc_details": True,
             "year": 2080,
             "scenario": "rcp8p5",
@@ -91,7 +93,7 @@ class TestImpactRequests(TestWithCredentials):
                 "year": 2050,
                 "scenario": "ssp585",
             }
-
-            request = requests.AssetImpactRequest(**request_dict)  # type: ignore
-            response = requests._get_asset_impacts(request)
+            container = Container()
+            requester = container.requester()
+            response = requester.get(request_id="get_asset_impact", request_dict=request_dict)
             assert response is not None

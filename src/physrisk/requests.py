@@ -91,12 +91,13 @@ class Requester:
         if not _read_permitted(request.group_ids, inventory.resources[request.resource]):
             raise PermissionError()
         model = inventory.resources[request.resource]
-        path = str(PosixPath(model.path).with_name(model.map.array_name)).format(
+        path = str(PosixPath(model.path).with_name(model.map.path)).format(
             scenario=request.scenarioId, year=request.year
         )
+        colormap = request.colormap if request.colormap is not None else model.map.colormap.name
         creator = ImageCreator(zarr_reader)  # store=ImageCreator.test_store(path))
         return creator.convert(
-            path, colormap=request.colormap, tile=request.tile, min_value=request.min_value, max_value=request.max_value
+            path, colormap=colormap, tile=request.tile, min_value=request.min_value, max_value=request.max_value
         )
 
 

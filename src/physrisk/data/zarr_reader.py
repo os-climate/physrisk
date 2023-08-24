@@ -97,7 +97,7 @@ class ZarrReader:
         transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
 
         # in the case of acute risks, index_values will contain the return periods
-        index_values = self.get_index_values(path)
+        index_values = self.get_index_values(z)
         image_coords = self._get_coordinates(longitudes, latitudes, transform)
 
         if interpolation == "floor":
@@ -116,8 +116,7 @@ class ZarrReader:
         else:
             raise ValueError("interpolation must have value 'floor', 'linear', 'max' or 'min")
 
-    def get_index_values(self, path):
-        z = self._root[path]
+    def get_index_values(self, z: zarr.Array):
         index_values = z.attrs.get("index_values", [0])
         if index_values is None:
             index_values = [0]

@@ -29,16 +29,15 @@ class AssetImpactRequest(BaseModel):
 # region Response
 
 
-class Category(Enum):
-    NODATA = 0
-    LOW = 1
-    MEDIUM = 2
-    HIGH = 2
-    REDFLAG = 4
+class Category(str, Enum):
+    NODATA = "NODATA"
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    REDFLAG = "REDFLAG"
 
 
-@dataclass
-class Indicator:
+class Indicator(BaseModel):
     value: float
     label: str
 

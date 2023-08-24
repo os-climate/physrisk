@@ -21,7 +21,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "array_name": "inunriver_{scenario}_000000000WATCH_{year}_rp{return_period:05d}",
+                "path": "inunriver_{scenario}_000000000WATCH_{year}_rp{return_period:05d}",
                 "bounds": [
                     [
                         -180.0,
@@ -73,7 +73,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "array_name": "inunriver_{scenario}_00000NorESM1-M_{year}_rp{return_period:05d}",
+                "path": "inunriver_{scenario}_00000NorESM1-M_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -92,7 +92,7 @@
                         -85.0
                     ]
                 ],
-                "source": "mapbox"
+                "source": "map_array_pyramid"
             },
             "scenarios": [
                 {
@@ -135,7 +135,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "array_name": "inunriver_{scenario}_0000GFDL-ESM2M_{year}_map",
+                "path": "inunriver_{scenario}_0000GFDL-ESM2M_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -154,7 +154,7 @@
                         -85.0
                     ]
                 ],
-                "source": "map_array"
+                "source": "map_array_pyramid"
             },
             "scenarios": [
                 {
@@ -197,7 +197,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "array_name": "inunriver_{scenario}_0000HadGEM2-ES_{year}_rp{return_period:05d}",
+                "path": "inunriver_{scenario}_0000HadGEM2-ES_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -216,7 +216,7 @@
                         -85.0
                     ]
                 ],
-                "source": "mapbox"
+                "source": "map_array_pyramid"
             },
             "scenarios": [
                 {
@@ -259,7 +259,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "array_name": "inunriver_{scenario}_00IPSL-CM5A-LR_{year}_rp{return_period:05d}",
+                "path": "inunriver_{scenario}_00IPSL-CM5A-LR_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -278,7 +278,7 @@
                         -85.0
                     ]
                 ],
-                "source": "mapbox"
+                "source": "map_array_pyramid"
             },
             "scenarios": [
                 {
@@ -321,7 +321,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "array_name": "inunriver_{scenario}_MIROC-ESM-CHEM_{year}_rp{return_period:05d}",
+                "path": "inunriver_{scenario}_MIROC-ESM-CHEM_{year}_rp{return_period:05d}",
                 "bounds": [
                     [
                         -180.0,
@@ -383,7 +383,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "array_name": "inuncoast_historical_nosub_hist_rp{return_period:04d}_0",
+                "path": "inuncoast_historical_nosub_hist_rp{return_period:04d}_0",
                 "bounds": [
                     [
                         -180.0,
@@ -435,7 +435,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "array_name": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0",
+                "path": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0",
                 "bounds": [
                     [
                         -180.0,
@@ -497,7 +497,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "array_name": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0_perc_05",
+                "path": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0_perc_05",
                 "bounds": [
                     [
                         -180.0,
@@ -559,7 +559,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "array_name": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0_perc_50",
+                "path": "inuncoast_{scenario}_nosub_{year}_rp{return_period:04d}_0_perc_50",
                 "bounds": [
                     [
                         -180.0,
@@ -621,7 +621,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "array_name": "inuncoast_historical_wtsub_hist_rp{return_period:04d}_0",
+                "path": "inuncoast_historical_wtsub_hist_rp{return_period:04d}_0",
                 "bounds": [
                     [
                         -180.0,
@@ -673,7 +673,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "array_name": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0",
+                "path": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0",
                 "bounds": [
                     [
                         -180.0,
@@ -735,7 +735,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "array_name": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0_perc_05",
+                "path": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0_perc_05",
                 "bounds": [
                     [
                         -180.0,
@@ -797,7 +797,7 @@
                     "nodata_index": 0,
                     "units": "m"
                 },
-                "array_name": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0_perc_50",
+                "path": "inuncoast_{scenario}_wtsub_{year}_rp{return_period:04d}_0_perc_50",
                 "bounds": [
                     [
                         -180.0,
@@ -870,7 +870,7 @@
                     "nodata_index": 0,
                     "units": "degree days"
                 },
-                "array_name": "mean_degree_days_v2_above_32c_{gcm}_{scenario}_{year}_map",
+                "path": "mean_degree_days_v2_above_32c_{gcm}_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -946,7 +946,7 @@
                     "nodata_index": 0,
                     "units": "none"
                 },
-                "array_name": "fire_probability_{scenario}_{year}_map",
+                "path": "fire_probability_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -1014,7 +1014,7 @@
                     "nodata_index": 0,
                     "units": "months/year"
                 },
-                "array_name": "months_spei3m_below_-2_{scenario}_{year}_map",
+                "path": "months_spei3m_below_-2_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -1082,7 +1082,7 @@
                     "nodata_index": 0,
                     "units": "mm"
                 },
-                "array_name": "max_daily_water_equivalent_{scenario}_{year}_map",
+                "path": "max_daily_water_equivalent_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -1150,7 +1150,7 @@
                     "nodata_index": 0,
                     "units": "days/year"
                 },
-                "array_name": "days_above_5cm_{scenario}_{year}_map",
+                "path": "days_above_5cm_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -1218,7 +1218,7 @@
                     "nodata_index": 0,
                     "units": "mm"
                 },
-                "array_name": "days_above_35c_{scenario}_{year}_map",
+                "path": "days_above_35c_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -1286,7 +1286,7 @@
                     "nodata_index": 0,
                     "units": "km/hour"
                 },
-                "array_name": "max_1min_{scenario}_{year}_map",
+                "path": "max_1min_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -1354,7 +1354,7 @@
                     "nodata_index": 0,
                     "units": "none"
                 },
-                "array_name": "fraction_{scenario}_{year}_map",
+                "path": "fraction_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -1438,7 +1438,7 @@
                     "nodata_index": 0,
                     "units": "fractional loss"
                 },
-                "array_name": "mean_work_loss_{intensity}_{gcm}_{scenario}_{year}_map",
+                "path": "mean_work_loss_{intensity}_{gcm}_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -1534,7 +1534,7 @@
                     "nodata_index": 0,
                     "units": "days"
                 },
-                "array_name": "days_tas_above_{temp_c}c_{gcm}_{scenario}_{year}_map",
+                "path": "days_tas_above_{temp_c}c_{gcm}_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,

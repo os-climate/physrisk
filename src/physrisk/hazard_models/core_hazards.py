@@ -98,7 +98,7 @@ class CoreInventorySourcePaths(InventorySourcePaths):
     @staticmethod
     def _select_coastal_inundation(candidates: ResourceSubset, scenario: str, year: int):
         return (
-            candidates.with_model_id("wtsub").first()
+            candidates.with_model_id("nosub").first()
             if scenario == "historical"
             else candidates.with_model_id("wtsub/95").first()
         )

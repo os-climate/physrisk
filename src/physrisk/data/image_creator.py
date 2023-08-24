@@ -1,5 +1,5 @@
-from functools import lru_cache
 import io
+from functools import lru_cache
 from pathlib import PurePosixPath
 from typing import Callable, List, NamedTuple, Optional
 
@@ -85,7 +85,7 @@ class ImageCreator:
         """Get image for path specified as array of bytes."""
         tile_path = path if tile is None else str(PurePosixPath(path, f"{tile.z}"))
         data = get_data(self.reader, tile_path)
-        #data = self.reader.all_data(tile_path) 
+        # data = self.reader.all_data(tile_path)
         if len(data.shape) == 3:
             index = len(self.reader.get_index_values(data)) - 1 if index is None else index
             if tile is None:
@@ -193,7 +193,8 @@ class ImageCreator:
         )
         z[0, :, :] = im
         return store
-    
+
+
 @lru_cache(maxsize=32)
 def get_data(reader, path):
-    return reader.all_data(path) 
+    return reader.all_data(path)

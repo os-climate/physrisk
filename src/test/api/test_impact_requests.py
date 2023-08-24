@@ -1,6 +1,4 @@
 import unittest
-from physrisk.container import Container
-
 from test.base_test import TestWithCredentials
 from test.data.hazard_model_store import TestData, mock_hazard_model_store_inundation
 
@@ -8,6 +6,7 @@ import numpy as np
 
 from physrisk import requests
 from physrisk.api.v1.common import Assets
+from physrisk.container import Container
 from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
@@ -83,7 +82,7 @@ class TestImpactRequests(TestWithCredentials):
 
         self.assertEqual(response.asset_impacts[0].impacts[0].hazard_type, "CoastalInundation")
 
-    #@unittest.skip("example, not test")
+    @unittest.skip("example, not test")
     def test_example_portfolios(self):
         example_portfolios = requests._get_example_portfolios()
         for assets in example_portfolios:
@@ -96,7 +95,5 @@ class TestImpactRequests(TestWithCredentials):
             }
             container = Container()
             requester = container.requester()
-            request = requests.AssetImpactRequest(**request_dict)  # type: ignore
-            response = requester.get(request_id="get_asset_impact", request_dict=request_dict)      
-            #response = requests._get_asset_impacts(request)
+            response = requester.get(request_id="get_asset_impact", request_dict=request_dict)
             assert response is not None

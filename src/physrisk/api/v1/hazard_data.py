@@ -38,11 +38,13 @@ class MapInfo(BaseModel):
         description="Bounds (top/left, top/right, bottom/right, bottom/left) as degrees. Note applied to map reprojected into Web Mercator CRS.",  # noqa
     )
     # note that the bounds should be consistent with the array attributes
-    source: Optional[str] = Field(description="""Source of map image. These are
+    source: Optional[str] = Field(
+        description="""Source of map image. These are
                             'map_array': single Mercator projection array at path above
                             'map_array_pyramid': pyramid of Mercator projection arrays
                             'mapbox'.
-                                  """)
+                                  """
+    )
 
 
 class Period(BaseModel):
@@ -128,11 +130,7 @@ def expand_resource(
                         else (
                             item.map.copy(
                                 deep=True,
-                                update={
-                                    "path": expand(
-                                        item.map.path if item.map.path is not None else "", key, param
-                                    )
-                                },
+                                update={"path": expand(item.map.path if item.map.path is not None else "", key, param)},
                             )
                         ),
                     },

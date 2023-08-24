@@ -202,7 +202,11 @@ def inundation_paths():
     paths = []
     for model, scenario, year in [("MIROC-ESM-CHEM", "rcp8p5", 2080), ("000000000WATCH", "historical", 1980)]:
         paths.append(get_source_path_wri_riverine_inundation(model=model, scenario=scenario, year=year))
-    for model, scenario, year in [("wtsub/95", "rcp8p5", "2080"), ("wtsub", "historical", "hist")]:
+    for model, scenario, year in [
+        ("wtsub/95", "rcp8p5", "2080"),
+        ("wtsub", "historical", "hist"),
+        ("nosub", "historical", "hist"),
+    ]:
         paths.append(get_source_path_wri_coastal_inundation(model=model, scenario=scenario, year=year))
     return paths
 

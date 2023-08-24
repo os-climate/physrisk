@@ -5,11 +5,11 @@ import numpy as np
 from scipy import stats
 
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
-from physrisk.hazard_models.embedded import get_default_source_paths
-from physrisk.kernel import calculation
+from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import Asset, RealEstateAsset
 from physrisk.kernel.hazard_model import HazardEventDataResponse
 from physrisk.kernel.hazards import Inundation, RiverineInundation
+from physrisk.kernel.impact import calculate_impacts
 from physrisk.kernel.vulnerability_matrix_provider import VulnMatrixProvider
 from physrisk.kernel.vulnerability_model import VulnerabilityModel
 from physrisk.vulnerability_models.example_models import ExampleCdfBasedVulnerabilityModel
@@ -85,8 +85,6 @@ class TestExampleModels(unittest.TestCase):
             for lon, lat in zip(TestData.longitudes, TestData.latitudes)
         ]
 
-        results = calculation.calculate_impacts(
-            assets, hazard_model, vulnerability_models, scenario=scenario, year=year
-        )
+        results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
 
         self.assertAlmostEqual(results[assets[0], RiverineInundation].impact.to_exceedance_curve().probs[0], 0.499)

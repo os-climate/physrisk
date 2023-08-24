@@ -1,15 +1,18 @@
+import logging
 import math
 from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Iterable, Tuple
+from typing import Dict, Iterable, List, Tuple
 
 import numpy as np
 
 from physrisk.kernel.assets import Asset
-from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse, HazardParameterDataResponse
+from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse, HazardModel, HazardParameterDataResponse
 from physrisk.kernel.hazards import ChronicHeat, CombinedInundation, Drought, Fire, Hail, Wind
+from physrisk.kernel.impact import _request_consolidated
 from physrisk.kernel.vulnerability_model import DataRequester
+from physrisk.utils.helpers import get_iterable
 
 
 class Category(Enum):
@@ -28,6 +31,11 @@ class Bounds:
     category: str
     lower: float
     upper: float
+
+
+@dataclass
+class AssetExposureResult:
+    hazard_categories: Dict[type, Tuple[Category, float]]
 
 
 class ExposureMeasure(DataRequester):
@@ -131,3 +139,24 @@ class JupterExposureMeasure(ExposureMeasure):
         lower_bounds = np.array([b.lower for b in bounds])
         categories = np.array([b.category for b in bounds])
         return (lower_bounds, categories)
+
+
+def calculate_exposures(
+    assets: List[Asset], hazard_model: HazardModel, exposure_measure: ExposureMeasure, scenario: str, year: int
+) -> Dict[Asset, AssetExposureResult]:
+    requester_assets: Dict[DataRequester, List[Asset]] = {exposure_measure: assets}
+    assetRequests, responses = _request_consolidated(hazard_model, requester_assets, scenario, year)
+
+    logging.info(
+        "Applying exposure measure {0} to {1} assets of type {2}".format(
+            type(exposure_measure).__name__, len(assets), type(assets[0]).__name__
+        )
+    )
+    result: Dict[Asset, AssetExposureResult] = {}
+
+    for asset in assets:
+        requests = assetRequests[(exposure_measure, asset)]  # (ordered) requests for a given asset
+        hazard_data = [responses[req] for req in get_iterable(requests)]
+        result[asset] = AssetExposureResult(hazard_categories=exposure_measure.get_exposures(asset, hazard_data))
+
+    return result

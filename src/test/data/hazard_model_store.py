@@ -1,12 +1,12 @@
 import os
-from typing import Dict
+from typing import Dict, List, Tuple
 
 import numpy as np
 import zarr
 import zarr.storage
 from affine import Affine
 
-from physrisk.hazard_models.embedded import cmip6_scenario_to_rcp
+from physrisk.hazard_models.core_hazards import cmip6_scenario_to_rcp
 
 
 class TestData:
@@ -53,7 +53,7 @@ def get_mock_hazard_model_store_single_curve():
     """Create a test MemoryStore for creation of Zarr hazard model for unit testing. A single curve
     is applied at all locations."""
 
-    return_periods = [5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0]
+    return_periods = inundation_return_periods()
     t = [0.008333333333333333, 0.0, -180.0, 0.0, -0.008333333333333333, 90.0, 0.0, 0.0, 1.0]
     shape = (len(return_periods), 21600, 43200)
     store = zarr.storage.MemoryStore(root="hazard.zarr")
@@ -104,7 +104,7 @@ def mock_hazard_model_store_for_parameter_sets(longitudes, latitudes, path_param
     root = zarr.open(store=store, mode="w")
 
     for path, parameter in path_parameters.items():
-        _add_curves(root, longitudes, latitudes, path, shape, parameter, return_periods, t)
+        add_curves(root, longitudes, latitudes, path, shape, parameter, return_periods, t)
 
     return store
 
@@ -112,23 +112,32 @@ def mock_hazard_model_store_for_parameter_sets(longitudes, latitudes, path_param
 def mock_hazard_model_store_single_curve_for_paths(longitudes, latitudes, curve, paths):
     """Create a MemoryStore for creation of Zarr hazard model to be used with unit tests,
     with the specified longitudes and latitudes set to the curve supplied."""
-    if len(curve) == 1:
-        return_periods = None
-        shape = (1, 21600, 43200)
-    else:
-        return_periods = [2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0]
-        if len(curve) != len(return_periods):
-            raise ValueError(f"curve must be single value or of length {len(return_periods)}")
-        shape = (len(return_periods), 21600, 43200)
 
-    t = [0.008333333333333333, 0.0, -180.0, 0.0, -0.008333333333333333, 90.0, 0.0, 0.0, 1.0]
-    store = zarr.storage.MemoryStore(root="hazard.zarr")
-    root = zarr.open(store=store, mode="w")
+    return_periods = [0.0] if len(curve) == 1 else [2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0]
+    if len(curve) != len(return_periods):
+        raise ValueError(f"curve must be single value or of length {len(return_periods)}")
+
+    shape, t = shape_transform_21600_43200(return_periods=return_periods)
+    store, root = zarr_memory_store()
 
     for path in paths():
-        _add_curves(root, longitudes, latitudes, path, shape, curve, return_periods, t)
+        add_curves(root, longitudes, latitudes, path, shape, curve, return_periods, t)
 
     return store
+
+
+def shape_transform_21600_43200(return_periods: List[float] = [0.0]):
+    t = [360.0 / 43200, 0.0, -180.0, 0.0, -180.0 / 21600, 90.0, 0.0, 0.0, 1.0]
+    return (len(return_periods), 21600, 43200), t
+
+
+def inundation_return_periods():
+    return [2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0]
+
+
+def zarr_memory_store(path="hazard.zarr"):
+    store = zarr.storage.MemoryStore(root=path)
+    return store, zarr.open(store=store, mode="w")
 
 
 def mock_hazard_model_store_path_curves(longitudes, latitudes, path_curves: Dict[str, np.ndarray]):
@@ -141,7 +150,7 @@ def mock_hazard_model_store_path_curves(longitudes, latitudes, path_curves: Dict
 
     for path, curve in path_curves.items():
         if len(curve) == 1:
-            return_periods = None
+            return_periods = [0.0]
             shape = (1, 21600, 43200)
         else:
             return_periods = [2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0]
@@ -149,7 +158,7 @@ def mock_hazard_model_store_path_curves(longitudes, latitudes, path_curves: Dict
                 raise ValueError(f"curve must be single value or of length {len(return_periods)}")
             shape = (len(return_periods), 21600, 43200)
 
-        _add_curves(root, longitudes, latitudes, path, shape, curve, return_periods, t)
+        add_curves(root, longitudes, latitudes, path, shape, curve, return_periods, t)
 
     return store
 
@@ -193,20 +202,33 @@ def inundation_paths():
     paths = []
     for model, scenario, year in [("MIROC-ESM-CHEM", "rcp8p5", 2080), ("000000000WATCH", "historical", 1980)]:
         paths.append(get_source_path_wri_riverine_inundation(model=model, scenario=scenario, year=year))
-    for model, scenario, year in [("wtsub/95", "rcp8p5", 2080), ("wtsub", "historical", 1980)]:
+    for model, scenario, year in [
+        ("wtsub/95", "rcp8p5", "2080"),
+        ("wtsub", "historical", "hist"),
+        ("nosub", "historical", "hist"),
+    ]:
         paths.append(get_source_path_wri_coastal_inundation(model=model, scenario=scenario, year=year))
     return paths
 
 
-def _add_curves(root, longitudes, latitudes, array_path, shape, curve, return_periods, t):
+def add_curves(
+    root: zarr.Group,
+    longitudes,
+    latitudes,
+    array_path: str,
+    shape: Tuple[int, int, int],
+    curve: np.ndarray,
+    return_periods: List[float],
+    trans: List[float],
+):
     z = root.create_dataset(  # type: ignore
         array_path, shape=(shape[0], shape[1], shape[2]), chunks=(shape[0], 1000, 1000), dtype="f4"
     )
-    z.attrs["transform_mat3x3"] = t
+    z.attrs["transform_mat3x3"] = trans
     z.attrs["index_values"] = return_periods
 
-    t = z.attrs["transform_mat3x3"]
-    transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
+    trans = z.attrs["transform_mat3x3"]
+    transform = Affine(trans[0], trans[1], trans[2], trans[3], trans[4], trans[5])
 
     coords = np.vstack((longitudes, latitudes, np.ones(len(longitudes))))
     inv_trans = ~transform
@@ -225,7 +247,7 @@ _percentiles_map = {"95": "0", "5": "0_perc_05", "50": "0_perc_50"}
 _subsidence_set = {"wtsub", "nosub"}
 
 
-def get_source_path_wri_coastal_inundation(*, model: str, scenario: str, year: int):
+def get_source_path_wri_coastal_inundation(*, model: str, scenario: str, year: str):
     type = "coast"
     # model is expected to be of the form subsidence/percentile, e.g. wtsub/95
     # if percentile is omitted then 95th percentile is used

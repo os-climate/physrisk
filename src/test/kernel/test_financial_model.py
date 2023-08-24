@@ -4,10 +4,10 @@ from datetime import datetime
 import numpy as np
 
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
-from physrisk.hazard_models.embedded import get_default_source_paths
+from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import Asset, PowerGeneratingAsset
 from physrisk.kernel.financial_model import FinancialDataProvider, FinancialModel
-from physrisk.kernel.loss_model import LossModel
+from physrisk.risk_models.loss_model import LossModel
 
 from ..data.hazard_model_store import TestData, mock_hazard_model_store_inundation
 

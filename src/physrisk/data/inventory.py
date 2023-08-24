@@ -89,14 +89,14 @@ def expand(resources: List[HazardResource]) -> List[HazardResource]:
     expanded_models = [e for model in resources for e in model.expand()]
     # we populate map_id hashes programmatically
     for model in expanded_models:
-        if model.map and model.map.source == "mapbox" and model.map.array_name:
+        if model.map and model.map.source == "mapbox" and model.map.path:
             for scenario in model.scenarios:
                 test_periods = scenario.periods
                 scenario.periods = []
                 for year in scenario.years:
-                    name_format = model.map.array_name
-                    array_name = name_format.format(scenario=scenario.id, year=year, return_period=1000)
-                    id = alphanumeric(array_name)[0:6]
+                    name_format = model.map.path
+                    path = name_format.format(scenario=scenario.id, year=year, return_period=1000)
+                    id = alphanumeric(path)[0:6]
                     scenario.periods.append(Period(year=year, map_id=id))
                 # if a period was specified explicitly, we check that hash is the same: a build-in check
                 if test_periods is not None:

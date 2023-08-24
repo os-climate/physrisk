@@ -3,7 +3,7 @@ import unittest
 
 import numpy as np
 
-from physrisk import ExceedanceCurve
+from physrisk.kernel.curve import ExceedanceCurve
 
 
 class TestAssetImpact(unittest.TestCase):

@@ -150,15 +150,15 @@ class ExceedanceCurve:
         return np.interp(prob, self.probs[::-1], self.values[::-1])
 
     def get_probability_bins(self):
-        r"""Convert from exceedance (cumulative) probability to bins of constant probability.
+        r"""Convert from exceedance (cumulative) probability to bins of constant probability density.
         This is equivalent to the assumption of linear interpolation of exceedance points.
 
         .. math::
             p^\text{b}_i = p^\text{e}_{i + 1} - p^\text{e}_i
 
         Returns:
-            value_bins (ndarray), probs: the contiguous bin lower and upper values, probabilities of each bin
-            If value_bins is of lenth n then ther are n-1 bins and n-1 probabilities
+            value_bins (ndarray), probs: The contiguous bin lower and upper values, probabilities of each bin.
+            If value_bins is of length n then there are n-1 bins and n-1 probabilities
 
         """
         # value bins are contiguous

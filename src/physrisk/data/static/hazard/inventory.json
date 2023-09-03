@@ -1269,8 +1269,8 @@
             "hazard_type": "Wind",
             "group_id": "jupiter_osc",
             "path": "wind/jupiter/v1/max_1min_{scenario}_{year}",
-            "indicator_id": "max/1min",
-            "indicator_model_id": null,
+            "indicator_id": "max_speed",
+            "indicator_model_id": "1min",
             "indicator_model_gcm": "unknown",
             "params": {},
             "display_name": "Max 1 minute sustained wind speed (Jupiter)",
@@ -1588,6 +1588,76 @@
                 }
             ],
             "units": "days/year"
+        },
+        {
+            "hazard_type": "Wind",
+            "group_id": "iris_osc",
+            "path": "wind/iris/v1/max_speed_{scenario}_{year}",
+            "indicator_id": "max_speed",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "combined",
+            "params": {},
+            "display_name": "Max wind speed (IRIS)",
+            "display_groups": [],
+            "description": "\nIRIS description here\n            ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 120.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "km/hour"
+                },
+                "path": "wind/iris/v1/max_speed_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        60.0
+                    ],
+                    [
+                        180.0,
+                        60.0
+                    ],
+                    [
+                        180.0,
+                        -60.0
+                    ],
+                    [
+                        -180.0,
+                        -60.0
+                    ]
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        2010
+                    ]
+                },
+                {
+                    "id": "ssp119",
+                    "years": [
+                        2050
+                    ]
+                },
+                {
+                    "id": "ssp245",
+                    "years": [
+                        2050
+                    ]
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2050
+                    ]
+                }
+            ],
+            "units": "km/hour"
         }
     ]
 }

@@ -196,7 +196,7 @@ Such precise models of physical risk can be complex and may rely on information 
 
 The purpose of this paper is to present the methodology of a framework that is sufficiently generic to be used for a wide range of physical climate risk models, both precise and approximate as required. The ability to perform precise, fine-grained calculations is an important requirement therefore. This paper serves as a specification for use in the \emph{`physrisk'} OS-Climate (OS-C) \cite{OSC} physical climate risk calculation module.
 
-OS-C aims to provide an platform unconstrained by any one particular methodology choice, but takes inspiration from natural catastrophe modelling \cite{MitchellEtAl:2017} and in particular the \emph{Oasis Loss Modelling Framework} \cite{OasisLMF} (henceforth \emph{Oasis LMF}), which was designed to accommodate a wide range of catastrophe models and analyse physical risk in the context of the insurance market. Similarly to \emph{Oasis LMF}, we adopt a modular approach. This approach allows the user to change easily a particular modelling method, whilst maintaining the integration of the components. 
+OS-C aims to provide a platform unconstrained by any one particular methodology choice, but takes inspiration from natural catastrophe modelling \cite{MitchellEtAl:2017} and in particular the \emph{Oasis Loss Modelling Framework} \cite{OasisLMF} (henceforth \emph{Oasis LMF}), which was designed to accommodate a wide range of catastrophe models and analyse physical risk in the context of the insurance market. Similarly to \emph{Oasis LMF}, we adopt a modular approach. This approach allows the user to change easily a particular modelling method, whilst maintaining the integration of the components. 
 
 In the following, models of hazards, vulnerability and financial impact are discussed in more detail. In a later section these are presented more formally.
 
@@ -364,7 +364,7 @@ In order to use hazard maps to derive probabilities, we must, strictly, specify 
 
 Alternatively, the number of occurrences can be modelled as a Binomial distribution as in Equation~\ref{Eq:Binomial}, which provides the probability that $k$ occurrences occur in $n$ years, assuming that $\tau$ is specified in years.  
 
-According to Equation~\ref{Eq:Binomial}, \emph{the probability that in a single year there is at least one event with intensity of $H$ or higher is $1/\tau$}. Unless otherwise specified, this is the interpretation used for $\tau$. Note that for Equation~\ref{Eq:Poisson} this relation ship only applies approximately.
+According to Equation~\ref{Eq:Binomial}, \emph{the probability that in a single year there is at least one event with intensity of $H$ or higher is $1/\tau$}. Unless otherwise specified, this is the interpretation used for $\tau$. Note that for Equation~\ref{Eq:Poisson} this relationship only applies approximately.
 
  \begin{equation}
 	\label{Eq:Binomial}
@@ -478,7 +478,7 @@ That is, $s^{(h, \text{lower})}_q$ and $s^{(h, \text{upper})}_q$ define the rang
 
 \begin{equation}
 	\label{Eq:Discrete2}
-	\sigma^{(h)}_q = \int_ {s^{(h, \text{lower})}}^{s^{(h, \text{upper})}} f_S(s) ds 
+	\sigma^{(h)}_q = \int_ {s^{(h, \text{lower})}_q}^{s^{(h, \text{upper})}_q} f_S(s) ds 
 \end{equation}
 
 We define $v^{(h, b)}_{pq}$ to be the conditional probability that \emph{given} the occurrence of an event associated with a hazard of type $h$ and with intensity $s^{(h)} \in (s^{(h, \text{lower})}_q, s^{(h, \text{upper})}_q]$ there is an impact of type $b$, $d^{(b)} \in (d^{(b,\text{lower})}_p, d^{(b,\text{upper})}_p]$. $b$ may be, for example, damage incurred expressed as a fraction of the asset present value. 
@@ -508,6 +508,7 @@ From the definition of conditional probability:
 If only the mean impact curve is available, then it is possible to create the matrix such that $v_{pq} \in \{0, 1\}$. The matrix then provides a simple mapping from intensity to impact; if the number of intensity and response bins is equal then matrix $\mathbf{v}$ is simply the identity matrix. However, note that these simplifications exclude from the model any uncertainty in the parameters\footnote{A better approach would be to estimate the standard deviation of the distributions from which the mean impact curve was calculated and to incorporate this.}.
 
 \paragraph{Multiple occurrence of events.} Note that $\sigma^{(h)}_q$ is the probability of occurrence of \emph{at least one event} with intensity in bin $q$ in a year and the vulnerability, $v_{pq}$ gives the probability of impact given at least one event has occurred. Some care must therefore be taken when using probabilities $v_{pq}$ calibrated from single events as there is an implied approximation that either probability of multiple events is small and/or that impact is well-modelled as a single impact from the most intense event for a given year. 
+
 
 \subsubsection{Importance of secondary uncertainty}
 
@@ -584,6 +585,106 @@ Hazard data sets might also contain instances of `point-probabilities', for exam
 
 {\textcolor{red}{\emph{[Add equations and plot of step-CDF with interpolation; exemplify by `damage threshold']}}}
 
+\subsubsection{Probability bins from hazard maps}
+
+From Equation~\ref{Eq:Discrete2} the probability of an event occurring with hazard intensity in bin $q$ is expressed in terms of the probability density $f_S$ (dropping superscript $h$ for clarity):
+
+\begin{equation}
+	\label{Eq:Discrete2Again}
+	\sigma_q = \int_ {s^{(\text{lower})}_q}^{s^{(\text{upper})}_q} f_S(u) du \
+	= \int_ {s^{(\text{lower})}_q}^{\infty} f_S(u) du - \int_ {s^{(\text{upper})}_q}^{\infty} f_S(u) du
+\end{equation}
+
+The exceedance probability $F_S'$ is defined as:
+
+\begin{equation}
+	\label{Eq:DiscreteExceed}
+	F'_S(s) = \int_s^{\infty} f_S(u) du
+\end{equation}
+
+from which we can write:
+
+\begin{equation}
+	\label{Eq:DiscreteExceed2}
+	\sigma_q = F'_S({s^{(\text{lower})}_q}) - F'_S({s^{(\text{upper})}_q})
+\end{equation}
+
+Using Equation~\ref{Eq:DiscreteExceed2}, a set of probability bins for the hazard event can be inferred from an exceedance probability curve. An exceedance probability curve can readily be inferred from a return-period curve using the result that the annual exceedance probability is the reciprocal of the return period expressed in years.
+
+As an example, suppose that we have a hazard map for flood which contains return periods of 2, 5, 10, 25, 50, 100, 250, 500 and 1000 years. For a certain latitude/longitude the flood depths corresponding to the 9 return periods are, in metres: 0.06, 0.33, 0.51, 0.72, 0.86, 1.00, 1.15, 1.16 and 1.16. The data is shown together with the exceedance probability in Table~\ref{Table:HazardData}. 
+
+\begin{table}[ht]
+	\caption{Example hazard event data.} 
+	\centering 
+	\begin{tabular}{c c c c} 
+		\hline
+		Return period (years) & Flood depth (m) & Exceedance probability  \\ [0.5ex] 
+		\hline 
+		2 & 0.06 & 0.5 \\
+		5 & 0.33 & 0.2 \\ 
+		10 & 0.51 & 0.1 \\ 
+		25 & 0.72 & 0.04 \\ 
+		50 & 0.86 & 0.02 \\ 
+		100 & 1.00 & 0.01 \\ 
+		250 & 1.15 & 0.004 \\ 
+		500 & 1.16 & 0.002 \\ 
+		1000 & 1.16 & 0.001 \\ 
+		\hline 
+	\end{tabular}
+	\label{Table:HazardData} 
+\end{table}
+
+The flood depths become the bin edges of the probability distribution and the probabilities are calculated from Equation~\ref{Eq:DiscreteExceed2}. For example, the probability of occurrence of a flood with depth in the range (0.86m,  1.00m] is $0.02 - 0.01 = 0.01$\footnote{Care is needed at either end of the curve. There is a 0.001 probability that flood depth exceeds 1.16m in this example; should this be included in the (point-like) 1.16m bin?}. Note that in defining a set of bins in this way, no assumption about the interpolation between the flood depths is required. However, if we assume this to be linear then this implies that the probability density is constant across each bin since $f_S = \frac{dF_S(s)}{ds}$.
+
+
+\subsubsection{Vulnerability distributions and heuristics}
+For some assets, a vulnerability matrix may be available, corresponding to the `ideal' case  of Figure~\ref{Fig:vulnerability_matrix}. That is, for each intensity value a probability distribution of the impact (damage/disruption) is given. In other cases, only the impact itself is available for a given hazard intensity -- a damage curve -- together with some measure of uncertainty. Here the probability distribution is unknown, but it is at least possible to fit some choice of distribution to the descriptive statistics (e.g. mean and standard deviation).
+
+Given that the distribution of fractional impact -- e.g. damage  as a fraction of asset value or disruption as a fraction of output capacity -- is in the range  (0, 1), heuristic choices of distributions include Beta and Truncated Gaussian \cite{MitchellEtAl:2017}. It should be emphasized that neither distribution is likely to be correct, especially in lacking multi-modality and fat-tails, but provide a method by which uncertainty in the impact can be taken into account.
+
+\paragraph{Modelling impact using a Beta distribution.}
+The cumulative probability function of a Beta distribution is given by:
+
+\begin{equation}
+	\label{Eq:Beta1}
+	F_{\text{Beta}}(x) = \frac{B(x; a, b)}{B(1; a, b)} ,
+\end{equation}
+
+where $0 < x < 1$ and $B(x; a, b)$ is the incomplete Beta function:
+
+\begin{equation}
+	\label{Eq:IncompleteBeta}
+	B(x; a, b) = \int_0^{x} t^{a-1} (1 - t)^{b-1} dt .
+\end{equation}
+
+If the mean, $\mu$ and standard deviation, $\sigma$ of the impact distribution are known then \cite{MitchellEtAl:2017}:
+
+\begin{equation}
+	\label{Eq:BetaA}
+	a = \frac{(1 - \mu)}{c^2} - \mu ,
+\end{equation}
+
+\begin{equation}
+	\label{Eq:BetaB}
+	b = \frac{a(1 - \mu)}{\mu}
+\end{equation}
+
+where
+
+\begin{equation}
+	\label{Eq:BetaC}
+	c = \frac{\sigma}{\mu}
+\end{equation}
+
+In order to calculate the impact, the set of bins $p$ that define the impact probabilities $\delta_p$ of interest are first defined. The vulnerability matrix $v_{pq}$ of Equation~\ref{Eq:vulnerability} is then calculated. In order to apply Equation~\ref{Eq:Beta1}, $a$ and $b$ are calculated using mean and standard deviations of impact calculated at the mid-point of each intensity bin. We then have:
+
+\begin{equation}
+	\label{Eq:BetaVuln}
+	v_{pq} = F_{\text{Beta}}(d_p^{(\text{upper})}; a_q, b_q) - F_{\text{Beta}}(d_p^{(\text{lower})}; a_q, b_q)
+\end{equation}
+
+$a_q$ and $b_q$ are the values of $a$ and $b$ calculated from means and standard deviations calculated at the intensity bin centre $s_q = \frac{s_q^{(lower)} + s_q^{(upper)}}{2}$.
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure}[ht]
 
@@ -605,7 +706,7 @@ Hazard data sets might also contain instances of `point-probabilities', for exam
 
     \vspace{-0.5ex}
 
-    \caption{\small Taken from Lagacé (2008) Catastrophe Modeling, Université Laval. Mean damage curve as an approximation to an underlying set of distributions, modelled using a vulnerability matrix. {\textcolor{red}{\emph{[To seek permission or replace e.g. with synthetic plot]}}}}
+    \caption{\small Taken from Lagacé (2008) Catastrophe Modeling, Université Laval. Mean damage curve as an approximation to an underlying set of distributions, modelled using a vulnerability matrix.}
     \label{Fig:vulnerability_matrix}
 
 \end{figure}

@@ -66,7 +66,7 @@ class Requester:
     def get(self, *, request_id, request_dict):
         if request_id == "get_hazard_data":
             request = HazardDataRequest(**request_dict)
-            return json.dumps(_get_hazard_data(request, hazard_model=self.hazard_model).dict())
+            return json.dumps(_get_hazard_data(request, hazard_model=self.hazard_model).dict())  # , allow_nan=False)
         elif request_id == "get_hazard_data_availability":
             request = HazardAvailabilityRequest(**request_dict)
             return json.dumps(_get_hazard_data_availability(request, self.inventory, self.colormaps).dict())

@@ -1608,7 +1608,7 @@
                     "max_value": 120.0,
                     "name": "heating",
                     "nodata_index": 0,
-                    "units": "km/hour"
+                    "units": "m/s"
                 },
                 "path": "wind/iris/v1/max_speed_{scenario}_{year}_map",
                 "bounds": [
@@ -1657,7 +1657,7 @@
                     ]
                 }
             ],
-            "units": "km/hour"
+            "units": "m/s"
         }
     ]
 }

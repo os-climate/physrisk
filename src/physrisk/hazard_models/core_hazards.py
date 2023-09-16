@@ -69,7 +69,11 @@ class InventorySourcePaths:
                 self._no_selector,
             )
             resources = self._inventory.resources_by_type_id[(hazard_type, indicator_id)]
-            resource = selector(candidates=ResourceSubset(resources), scenario=scenario, year=year, hint=hint)
+            candidates = ResourceSubset(resources)
+            if hint is not None:
+                resource = candidates.match(hint)
+            else:
+                resource = selector(candidates=candidates, scenario=scenario, year=year, hint=hint)
             proxy_scenario = cmip6_scenario_to_rcp(scenario) if resource.scenarios[0].id.startswith("rcp") else scenario
             if scenario == "historical":
                 year = next(y for y in next(s for s in resource.scenarios if s.id == "historical").years)
@@ -79,8 +83,6 @@ class InventorySourcePaths:
 
     @staticmethod
     def _no_selector(candidates: ResourceSubset, scenario: str, year: int, hint: Optional[HazardDataHint] = None):
-        if hint is not None:
-            return candidates.match(hint)
         return candidates.first()
 
 

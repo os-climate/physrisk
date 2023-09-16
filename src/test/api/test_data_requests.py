@@ -140,7 +140,7 @@ class TestDataRequests(TestWithCredentials):
                     "latitudes": TestData.latitudes,
                     "year": 2030,
                     "scenario": "ssp585",
-                    "model": "mean_work_loss/high",
+                    "indicator_id": "mean_work_loss/high",
                 }
             ],
         }

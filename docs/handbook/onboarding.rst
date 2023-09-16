@@ -55,7 +55,7 @@ Specific types of model also exist for common modelling approaches. In particula
 On-boarding a model based on a damage/disruption curve
 ------------------------------------------------------
 
-A vulnerability distribition can be inferred directly from a damage/disruption curve: 
+A vulnerability distribution can be inferred directly from a damage/disruption curve: 
 
 .. image:: onboarding/disruption_curve.png
   :width: 500

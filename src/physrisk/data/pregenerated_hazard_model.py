@@ -1,6 +1,8 @@
 from collections import defaultdict
 from typing import Dict, List, Mapping, MutableMapping, Optional, cast
 
+import numpy as np
+
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.kernel.hazards import Hazard, HazardKind
 
@@ -55,7 +57,8 @@ class PregeneratedHazardModel(HazardModel):
                 )
 
                 for i, req in enumerate(batch):
-                    responses[req] = HazardEventDataResponse(return_periods, intensities[i, :])
+                    valid = ~np.isnan(intensities[i, :])
+                    responses[req] = HazardEventDataResponse(return_periods[valid], intensities[i, :][valid])
             elif hazard_type.kind == HazardKind.chronic:  # type: ignore
                 parameters = self.chronic_hazard_data_providers[hazard_type].get_parameters(
                     longitudes, latitudes, indicator_id=indicator_id, scenario=scenario, year=year, hint=hint

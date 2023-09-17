@@ -1599,7 +1599,7 @@
             "params": {},
             "display_name": "Max wind speed (IRIS)",
             "display_groups": [],
-            "description": "\nIRIS description here\n            ",
+            "description": "Assessing tropical cyclone risk on a global scale given the infrequency of landfalling tropical cyclones and the short period of reliable observations remains a challenge. Synthetic tropical cyclone datasets can help overcome these problems. Here we present a new global dataset created by IRIS, the ImpeRIal college Storm Model. IRIS is novel because, unlike other synthetic TC models, it only simulates the decay from the point of lifetime maximum intensity. This minimises the bias in the dataset. It takes input from 42 years of observed tropical cyclones and creates a 10,000 year synthetic dataset which is then validated against the observations. IRIS captures important statistical characteristics of the observed data. The return periods of the landfall maximum wind speed (1 minute sustained in m/s) are realistic globally. Climate model projections are used to adjust the life-time maximum intensity.  \nhttps://www.imperial.ac.uk/grantham/research/climate-science/modelling-tropical-cyclones/\n",
             "map": {
                 "colormap": {
                     "min_index": 1,

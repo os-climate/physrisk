@@ -8,7 +8,13 @@ from typing import Dict, Iterable, List, Tuple
 import numpy as np
 
 from physrisk.kernel.assets import Asset
-from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse, HazardModel, HazardParameterDataResponse
+from physrisk.kernel.hazard_model import (
+    HazardDataRequest,
+    HazardDataResponse,
+    HazardEventDataResponse,
+    HazardModel,
+    HazardParameterDataResponse,
+)
 from physrisk.kernel.hazards import ChronicHeat, CombinedInundation, Drought, Fire, Hail, Wind
 from physrisk.kernel.impact import _request_consolidated
 from physrisk.kernel.vulnerability_model import DataRequester
@@ -66,14 +72,19 @@ class JupterExposureMeasure(ExposureMeasure):
     def get_exposures(self, asset: Asset, data_responses: Iterable[HazardDataResponse]):
         result: Dict[type, Tuple[Category, float]] = {}
         for (k, v), resp in zip(self.exposure_bins.items(), data_responses):
-            assert isinstance(resp, HazardParameterDataResponse)  # should all be parameters
+            if isinstance(resp, HazardParameterDataResponse):
+                param = resp.parameter
+            elif isinstance(resp, HazardEventDataResponse):
+                if len(resp.intensities) > 1:
+                    raise ValueError("single-value curve expected")
+                param = resp.intensities[0]
             (hazard_type, _) = k
             (lower_bounds, categories) = v
-            if math.isnan(resp.parameter):
-                result[hazard_type] = (Category.NODATA, float(resp.parameter))
+            if math.isnan(param):
+                result[hazard_type] = (Category.NODATA, float(param))
             else:
-                index = np.searchsorted(lower_bounds, resp.parameter, side="right") - 1
-                result[hazard_type] = (categories[index], float(resp.parameter))
+                index = np.searchsorted(lower_bounds, param, side="right") - 1
+                result[hazard_type] = (categories[index], float(param))
         return result
 
     def get_exposure_bins(self):

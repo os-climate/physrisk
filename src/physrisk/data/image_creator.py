@@ -95,7 +95,7 @@ class ImageCreator:
                 # (from zarr 2.16.0 we can also use block indexing)
                 data = data[index, 256 * tile.y : 256 * (tile.y + 1), 256 * tile.x : 256 * (tile.x + 1)]
 
-        if any(dim > 1500 for dim in data.shape):
+        if any(dim > 4000 for dim in data.shape):
             raise Exception("dimension too large (over 1500).")
         map_defn = colormap_provider.colormap(colormap)
 

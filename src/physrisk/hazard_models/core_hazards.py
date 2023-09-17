@@ -14,6 +14,9 @@ class ResourceSubset:
     def first(self):
         return next(r for r in self.resources)
 
+    def match(self, hint: HazardDataHint):
+        return next(r for r in self.resources if r.path == hint.path)
+
     def with_model_gcm(self, gcm):
         return ResourceSubset(r for r in self.resources if r.indicator_model_gcm == gcm)
 
@@ -26,7 +29,9 @@ class ResourceSelector(Protocol):
     defines the rule for selecting a resource from
     all matches. The selection rule depends on scenario and year."""
 
-    def __call__(self, *, candidates: ResourceSubset, scenario: str, year: int) -> HazardResource:
+    def __call__(
+        self, *, candidates: ResourceSubset, scenario: str, year: int, hint: Optional[HazardDataHint] = None
+    ) -> HazardResource:
         ...
 
 
@@ -64,9 +69,11 @@ class InventorySourcePaths:
                 self._no_selector,
             )
             resources = self._inventory.resources_by_type_id[(hazard_type, indicator_id)]
-            resource = selector(candidates=ResourceSubset(resources), scenario=scenario, year=year)
+            candidates = ResourceSubset(resources)
             if hint is not None:
-                return hint.path
+                resource = candidates.match(hint)
+            else:
+                resource = selector(candidates=candidates, scenario=scenario, year=year, hint=hint)
             proxy_scenario = cmip6_scenario_to_rcp(scenario) if resource.scenarios[0].id.startswith("rcp") else scenario
             if scenario == "historical":
                 year = next(y for y in next(s for s in resource.scenarios if s.id == "historical").years)
@@ -75,7 +82,7 @@ class InventorySourcePaths:
         return _get_source_path
 
     @staticmethod
-    def _no_selector(candidates: ResourceSubset, scenario: str, year: int):
+    def _no_selector(candidates: ResourceSubset, scenario: str, year: int, hint: Optional[HazardDataHint] = None):
         return candidates.first()
 
 
@@ -92,11 +99,15 @@ class CoreInventorySourcePaths(InventorySourcePaths):
         return ResourceSubset(self._inventory.resources_by_type_id[(hazard_type.__name__, indicator_id)])
 
     @staticmethod
-    def _select_chronic_heat(candidates: ResourceSubset, scenario: str, year: int):
+    def _select_chronic_heat(
+        candidates: ResourceSubset, scenario: str, year: int, hint: Optional[HazardDataHint] = None
+    ):
         return candidates.with_model_gcm("ACCESS-CM2").first()
 
     @staticmethod
-    def _select_coastal_inundation(candidates: ResourceSubset, scenario: str, year: int):
+    def _select_coastal_inundation(
+        candidates: ResourceSubset, scenario: str, year: int, hint: Optional[HazardDataHint] = None
+    ):
         return (
             candidates.with_model_id("nosub").first()
             if scenario == "historical"
@@ -104,7 +115,9 @@ class CoreInventorySourcePaths(InventorySourcePaths):
         )
 
     @staticmethod
-    def _select_riverine_inundation(candidates: ResourceSubset, scenario: str, year: int):
+    def _select_riverine_inundation(
+        candidates: ResourceSubset, scenario: str, year: int, hint: Optional[HazardDataHint] = None
+    ):
         return (
             candidates.with_model_gcm("historical").first()
             if scenario == "historical"

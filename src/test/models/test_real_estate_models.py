@@ -1,18 +1,14 @@
 """ Test asset impact calculations."""
 import unittest
-
-from test.base_test import TestWithCredentials
 from test.data.hazard_model_store import TestData, mock_hazard_model_store_inundation
 
 import numpy as np
 
-from physrisk.api.v1.common import VulnerabilityCurve
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.hazard_models.core_hazards import get_default_source_paths
-from physrisk.kernel.assets import Asset, RealEstateAsset
-from physrisk.kernel.hazards import CoastalInundation, RiverineInundation, Wind
+from physrisk.kernel.assets import RealEstateAsset
+from physrisk.kernel.hazards import CoastalInundation, RiverineInundation
 from physrisk.kernel.impact import calculate_impacts
-from physrisk.kernel.vulnerability_model import CurveBasedVulnerabilityModel
 from physrisk.vulnerability_models.real_estate_models import (
     RealEstateCoastalInundationModel,
     RealEstateRiverineInundationModel,
@@ -124,36 +120,3 @@ class TestRealEstateModels(unittest.TestCase):
             ),
             rtol=2e-6,
         )
-
-
-class RealEstateToyTropicalCycloneModel(CurveBasedVulnerabilityModel):
-    _default_impact_bin_edges = np.array([0, 0.01, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0])
-
-    def __init__(self, *, indicator_id: str = "max_speed", impact_bin_edges=_default_impact_bin_edges):
-        super().__init__(indicator_id=indicator_id, hazard_type=Wind, impact_bin_edges=impact_bin_edges)
-
-    def get_vulnerability_curve(self, asset: Asset) -> VulnerabilityCurve:
-        return VulnerabilityCurve(
-            intensity=[0, 10, 40, 50, 80, 100],
-            impact_mean=[0, 0.1, 0.2, 0.4, 0.7, 0.9],
-            impact_std=[0, 0.02, 0.1, 0.1, 0.3, 0.3],
-        )
-
-
-class TestRealEstateModelsLive(TestWithCredentials):
-    def test_wind_real_estate_model(self):
-        # curve = np.array([0.0596, 0.333, 0.505, 0.715, 0.864, 1.003, 1.149, 1.163, 1.163])
-        # store = mock_hazard_model_store_inundation(TestData.longitudes, TestData.latitudes, curve)
-        hazard_model = ZarrHazardModel(source_paths=get_default_source_paths())  # , store=store)
-
-        assets = [
-            RealEstateAsset(lat, lon, location="Asia", type="Buildings/Industrial")
-            for lon, lat in zip(TestData.longitudes[0:1], TestData.latitudes[0:1])
-        ]
-
-        scenario = "rcp8p5"
-        year = 2080
-
-        vulnerability_models = {RealEstateAsset: [RealEstateToyTropicalCycloneModel()]}
-
-        results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)

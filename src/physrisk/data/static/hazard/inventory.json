@@ -1269,8 +1269,8 @@
             "hazard_type": "Wind",
             "group_id": "jupiter_osc",
             "path": "wind/jupiter/v1/max_1min_{scenario}_{year}",
-            "indicator_id": "max/1min",
-            "indicator_model_id": null,
+            "indicator_id": "max_speed",
+            "indicator_model_id": "1min",
             "indicator_model_gcm": "unknown",
             "params": {},
             "display_name": "Max 1 minute sustained wind speed (Jupiter)",
@@ -1588,6 +1588,76 @@
                 }
             ],
             "units": "days/year"
+        },
+        {
+            "hazard_type": "Wind",
+            "group_id": "iris_osc",
+            "path": "wind/iris/v1/max_speed_{scenario}_{year}",
+            "indicator_id": "max_speed",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "combined",
+            "params": {},
+            "display_name": "Max wind speed (IRIS)",
+            "display_groups": [],
+            "description": "Assessing tropical cyclone risk on a global scale given the infrequency of landfalling tropical cyclones and the short period of reliable observations remains a challenge. Synthetic tropical cyclone datasets can help overcome these problems. Here we present a new global dataset created by IRIS, the ImpeRIal college Storm Model. IRIS is novel because, unlike other synthetic TC models, it only simulates the decay from the point of lifetime maximum intensity. This minimises the bias in the dataset. It takes input from 42 years of observed tropical cyclones and creates a 10,000 year synthetic dataset which is then validated against the observations. IRIS captures important statistical characteristics of the observed data. The return periods of the landfall maximum wind speed (1 minute sustained in m/s) are realistic globally. Climate model projections are used to adjust the life-time maximum intensity.  \nhttps://www.imperial.ac.uk/grantham/research/climate-science/modelling-tropical-cyclones/\n",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 120.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "m/s"
+                },
+                "path": "wind/iris/v1/max_speed_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        60.0
+                    ],
+                    [
+                        180.0,
+                        60.0
+                    ],
+                    [
+                        180.0,
+                        -60.0
+                    ],
+                    [
+                        -180.0,
+                        -60.0
+                    ]
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        2010
+                    ]
+                },
+                {
+                    "id": "ssp119",
+                    "years": [
+                        2050
+                    ]
+                },
+                {
+                    "id": "ssp245",
+                    "years": [
+                        2050
+                    ]
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2050
+                    ]
+                }
+            ],
+            "units": "m/s"
         }
     ]
 }

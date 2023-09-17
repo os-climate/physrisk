@@ -67,7 +67,14 @@ class AcuteHazardDataProvider(HazardDataProvider):
         super().__init__(get_source_path, store=store, zarr_reader=zarr_reader, interpolation=interpolation)
 
     def get_intensity_curves(
-        self, longitudes: List[float], latitudes: List[float], *, indicator_id: str, scenario: str, year: int
+        self,
+        longitudes: List[float],
+        latitudes: List[float],
+        *,
+        indicator_id: str,
+        scenario: str,
+        year: int,
+        hint: Optional[HazardDataHint] = None,
     ):
         """Get intensity curve for each latitude and longitude coordinate pair.
 
@@ -83,7 +90,7 @@ class AcuteHazardDataProvider(HazardDataProvider):
             return_periods: return periods in years.
         """
 
-        path = self._get_source_path(indicator_id=indicator_id, scenario=scenario, year=year)
+        path = self._get_source_path(indicator_id=indicator_id, scenario=scenario, year=year, hint=hint)
         curves, return_periods = self._reader.get_curves(
             path, longitudes, latitudes, self._interpolation
         )  # type: ignore
@@ -104,7 +111,14 @@ class ChronicHazardDataProvider(HazardDataProvider):
         super().__init__(get_source_path, store=store, zarr_reader=zarr_reader, interpolation=interpolation)
 
     def get_parameters(
-        self, longitudes: List[float], latitudes: List[float], *, indicator_id: str, scenario: str, year: int
+        self,
+        longitudes: List[float],
+        latitudes: List[float],
+        *,
+        indicator_id: str,
+        scenario: str,
+        year: int,
+        hint: Optional[HazardDataHint] = None,
     ):
         """Get hazard parameters for each latitude and longitude coordinate pair.
 
@@ -119,6 +133,6 @@ class ChronicHazardDataProvider(HazardDataProvider):
             parameters: numpy array of parameters
         """
 
-        path = self._get_source_path(indicator_id=indicator_id, scenario=scenario, year=year)
+        path = self._get_source_path(indicator_id=indicator_id, scenario=scenario, year=year, hint=hint)
         parameters, _ = self._reader.get_curves(path, longitudes, latitudes, self._interpolation)
         return parameters[:, 0]

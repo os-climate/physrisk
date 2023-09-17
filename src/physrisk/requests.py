@@ -66,7 +66,7 @@ class Requester:
     def get(self, *, request_id, request_dict):
         if request_id == "get_hazard_data":
             request = HazardDataRequest(**request_dict)
-            return json.dumps(_get_hazard_data(request, hazard_model=self.hazard_model).dict())
+            return json.dumps(_get_hazard_data(request, hazard_model=self.hazard_model).dict())  # , allow_nan=False)
         elif request_id == "get_hazard_data_availability":
             request = HazardAvailabilityRequest(**request_dict)
             return json.dumps(_get_hazard_data_availability(request, self.inventory, self.colormaps).dict())
@@ -91,9 +91,12 @@ class Requester:
         if not _read_permitted(request.group_ids, inventory.resources[request.resource]):
             raise PermissionError()
         model = inventory.resources[request.resource]
-        path = str(PosixPath(model.path).with_name(model.map.path)).format(
-            scenario=request.scenarioId, year=request.year
-        )
+        len(PosixPath(model.map.path).parts)
+        path = (
+            str(PosixPath(model.path).with_name(model.map.path))
+            if len(PosixPath(model.map.path).parts) == 1
+            else model.map.path
+        ).format(scenario=request.scenarioId, year=request.year)
         colormap = request.colormap if request.colormap is not None else model.map.colormap.name
         creator = ImageCreator(zarr_reader)  # store=ImageCreator.test_store(path))
         return creator.convert(

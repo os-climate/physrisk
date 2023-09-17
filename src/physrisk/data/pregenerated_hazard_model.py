@@ -1,6 +1,8 @@
 from collections import defaultdict
 from typing import Dict, List, Mapping, MutableMapping, Optional, cast
 
+import numpy as np
+
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.kernel.hazards import Hazard, HazardKind
 
@@ -40,24 +42,26 @@ class PregeneratedHazardModel(HazardModel):
         responses: MutableMapping[HazardDataRequest, HazardDataResponse] = {}
         for key in batches.keys():
             batch: List[HazardDataRequest] = batches[key]
-            event_type, indicator_id, scenario, year = (
+            hazard_type, indicator_id, scenario, year, hint = (
                 batch[0].hazard_type,
                 batch[0].indicator_id,
                 batch[0].scenario,
                 batch[0].year,
+                batch[0].hint,
             )
             longitudes = [req.longitude for req in batch]
             latitudes = [req.latitude for req in batch]
-            if event_type.kind == HazardKind.acute:  # type: ignore
-                intensities, return_periods = self.acute_hazard_data_providers[event_type].get_intensity_curves(
-                    longitudes, latitudes, indicator_id=indicator_id, scenario=scenario, year=year
+            if hazard_type.kind == HazardKind.acute:  # type: ignore
+                intensities, return_periods = self.acute_hazard_data_providers[hazard_type].get_intensity_curves(
+                    longitudes, latitudes, indicator_id=indicator_id, scenario=scenario, year=year, hint=hint
                 )
 
                 for i, req in enumerate(batch):
-                    responses[req] = HazardEventDataResponse(return_periods, intensities[i, :])
-            elif event_type.kind == HazardKind.chronic:  # type: ignore
-                parameters = self.chronic_hazard_data_providers[event_type].get_parameters(
-                    longitudes, latitudes, indicator_id=indicator_id, scenario=scenario, year=year
+                    valid = ~np.isnan(intensities[i, :])
+                    responses[req] = HazardEventDataResponse(return_periods[valid], intensities[i, :][valid])
+            elif hazard_type.kind == HazardKind.chronic:  # type: ignore
+                parameters = self.chronic_hazard_data_providers[hazard_type].get_parameters(
+                    longitudes, latitudes, indicator_id=indicator_id, scenario=scenario, year=year, hint=hint
                 )
 
                 for i, req in enumerate(batch):

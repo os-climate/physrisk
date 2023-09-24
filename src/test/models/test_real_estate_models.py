@@ -8,8 +8,7 @@ from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import RealEstateAsset
 from physrisk.kernel.hazards import CoastalInundation, RiverineInundation
-from physrisk.kernel.impact import calculate_impacts, ImpactKey
-
+from physrisk.kernel.impact import ImpactKey, calculate_impacts
 from physrisk.vulnerability_models.real_estate_models import (
     RealEstateCoastalInundationModel,
     RealEstateRiverineInundationModel,

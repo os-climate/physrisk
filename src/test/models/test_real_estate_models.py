@@ -141,7 +141,8 @@ class TestRealEstateModels(unittest.TestCase):
         scenario = "rcp8p5"
         year = 2080
 
-        # impact bin edges are calibrated so that hazard_bin_probs == impact_bin_probs when the impact standard deviation is negligible:
+        # impact bin edges are calibrated so that hazard_bin_probs == impact_bin_probs
+        # when the impact standard deviation is negligible:
         vulnerability_models = {
             RealEstateAsset: [
                 RealEstateRiverineInundationModel(

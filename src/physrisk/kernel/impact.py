@@ -61,7 +61,9 @@ def calculate_impacts(  # noqa: C901
             hazard_data = [responses[req] for req in get_iterable(requests)]
             if isinstance(model, VulnerabilityModelAcuteBase):
                 impact, vul, event = model.get_impact_details(asset, hazard_data)
-                results[ImpactKey(asset, model.hazard_type)] = AssetImpactResult(impact, vulnerability=vul, event=event, hazard_data=hazard_data)
+                results[ImpactKey(asset, model.hazard_type)] = AssetImpactResult(
+                    impact, vulnerability=vul, event=event, hazard_data=hazard_data
+                )
             elif isinstance(model, VulnerabilityModelBase):
                 impact = model.get_impact(asset, hazard_data)
                 results[ImpactKey(asset, model.hazard_type)] = AssetImpactResult(impact, hazard_data=hazard_data)

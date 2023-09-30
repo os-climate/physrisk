@@ -54,68 +54,18 @@ class TestExposureMeasures(TestWithCredentials):
             assert categories[k][0] == v
 
     def _get_components(self):
-        resources = [
-            HazardResource(
-                hazard_type="CombinedInundation",
-                path="fraction_{scenario}_{year}",
-                indicator_id="flooded_fraction",
-                indicator_model_gcm="unknown",
-                display_name="",
-                description="",
-                scenarios=[Scenario(id="ssp585", years=[2030])],
-                units="",
-            ),
-            HazardResource(
-                hazard_type="ChronicHeat",
-                path="days_above_35c_{scenario}_{year}",
-                indicator_id="days/above/35c",
-                indicator_model_gcm="unknown",
-                display_name="",
-                description="",
-                scenarios=[Scenario(id="ssp585", years=[2030])],
-                units="",
-            ),
-            HazardResource(
-                hazard_type="Wind",
-                path="max_1min_{scenario}_{year}",
-                indicator_id="max/1min",
-                indicator_model_gcm="unknown",
-                display_name="",
-                description="",
-                scenarios=[Scenario(id="ssp585", years=[2030])],
-                units="",
-            ),
-            HazardResource(
-                hazard_type="Drought",
-                path="months_spei3m_below_-2_{scenario}_{year}",
-                indicator_id="months/spei3m/below/-2",
-                indicator_model_gcm="unknown",
-                display_name="",
-                description="",
-                scenarios=[Scenario(id="ssp585", years=[2030])],
-                units="",
-            ),
-            HazardResource(
-                hazard_type="Hail",
-                path="days_above_5cm_{scenario}_{year}",
-                indicator_id="days/above/5cm",
-                indicator_model_gcm="unknown",
-                display_name="",
-                description="",
-                scenarios=[Scenario(id="ssp585", years=[2030])],
-                units="",
-            ),
-            HazardResource(
-                hazard_type="Fire",
-                path="fire_probability_{scenario}_{year}",
-                indicator_id="fire_probability",
-                indicator_model_gcm="unknown",
-                display_name="",
-                description="",
-                scenarios=[Scenario(id="ssp585", years=[2030])],
-                units="",
-            ),
+        # "precipitation/jupiter/v1/max_daily_water_equivalent_{scenario}_{year}"
+        paths = [
+            "combined_flood/jupiter/v1/fraction_{scenario}_{year}",
+            "chronic_heat/jupiter/v1/days_above_35c_{scenario}_{year}",
+            "wind/jupiter/v1/max_1min_{scenario}_{year}",
+            "drought/jupiter/v1/months_spei3m_below_-2_{scenario}_{year}",
+            "hail/jupiter/v1/days_above_5cm_{scenario}_{year}",
+            "fire/jupiter/v1/fire_probability_{scenario}_{year}"
         ]
+
+        all_resources = EmbeddedInventory().resources
+        resources = [all_resources[p] for p in paths]
 
         values = [np.array([v]) for v in [0.02, 15, 100, 0.7, 0.1, 0.9]]
 
@@ -134,6 +84,7 @@ class TestExposureMeasures(TestWithCredentials):
         assets = [Asset(lat, lon) for (lat, lon) in zip(TestData.latitudes, TestData.longitudes)]
 
         store = mock_hazard_model_store_path_curves(TestData.longitudes, TestData.latitudes, path_curves())
-        hazard_model = ZarrHazardModel(source_paths=get_default_source_paths(Inventory(resources)), store=store)
+        
+        hazard_model = ZarrHazardModel(source_paths=get_default_source_paths(EmbeddedInventory()), store=store)
 
         return assets, store, hazard_model, expected

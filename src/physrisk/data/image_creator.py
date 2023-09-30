@@ -83,8 +83,9 @@ class ImageCreator:
         max_value: Optional[float] = None,
     ) -> Image.Image:
         """Get image for path specified as array of bytes."""
-        tile_path = path if tile is None else str(PurePosixPath(path, f"{tile.z}"))
+        tile_path = path if tile is None else str(PurePosixPath(path, f"{tile.z + 1}"))
         data = get_data(self.reader, tile_path)
+        tile_size = 512
         # data = self.reader.all_data(tile_path)
         if len(data.shape) == 3:
             index = len(self.reader.get_index_values(data)) - 1 if index is None else index
@@ -93,7 +94,7 @@ class ImageCreator:
                 data = data[index, :, :]  # .squeeze(axis=0)
             else:
                 # (from zarr 2.16.0 we can also use block indexing)
-                data = data[index, 256 * tile.y : 256 * (tile.y + 1), 256 * tile.x : 256 * (tile.x + 1)]
+                data = data[index, tile_size * tile.y : tile_size * (tile.y + 1), tile_size * tile.x : tile_size * (tile.x + 1)]
 
         if any(dim > 4000 for dim in data.shape):
             raise Exception("dimension too large (over 1500).")

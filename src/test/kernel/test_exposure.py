@@ -7,8 +7,7 @@ import numpy as np
 
 import physrisk.api.v1.common
 from physrisk.api.v1.exposure_req_resp import AssetExposureRequest, AssetExposureResponse
-from physrisk.api.v1.hazard_data import HazardResource, Scenario
-from physrisk.data.inventory import EmbeddedInventory, Inventory
+from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
@@ -61,7 +60,7 @@ class TestExposureMeasures(TestWithCredentials):
             "wind/jupiter/v1/max_1min_{scenario}_{year}",
             "drought/jupiter/v1/months_spei3m_below_-2_{scenario}_{year}",
             "hail/jupiter/v1/days_above_5cm_{scenario}_{year}",
-            "fire/jupiter/v1/fire_probability_{scenario}_{year}"
+            "fire/jupiter/v1/fire_probability_{scenario}_{year}",
         ]
 
         all_resources = EmbeddedInventory().resources
@@ -84,7 +83,7 @@ class TestExposureMeasures(TestWithCredentials):
         assets = [Asset(lat, lon) for (lat, lon) in zip(TestData.latitudes, TestData.longitudes)]
 
         store = mock_hazard_model_store_path_curves(TestData.longitudes, TestData.latitudes, path_curves())
-        
+
         hazard_model = ZarrHazardModel(source_paths=get_default_source_paths(EmbeddedInventory()), store=store)
 
         return assets, store, hazard_model, expected

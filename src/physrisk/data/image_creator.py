@@ -94,7 +94,9 @@ class ImageCreator:
                 data = data[index, :, :]  # .squeeze(axis=0)
             else:
                 # (from zarr 2.16.0 we can also use block indexing)
-                data = data[index, tile_size * tile.y : tile_size * (tile.y + 1), tile_size * tile.x : tile_size * (tile.x + 1)]
+                data = data[
+                    index, tile_size * tile.y : tile_size * (tile.y + 1), tile_size * tile.x : tile_size * (tile.x + 1)
+                ]
 
         if any(dim > 4000 for dim in data.shape):
             raise Exception("dimension too large (over 1500).")

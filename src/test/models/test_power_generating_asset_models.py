@@ -21,7 +21,7 @@ pd = lazy_import("pandas")
 class TestPowerGeneratingAssetModels(TestWithCredentials):
     """Tests World Resource Institute (WRI) models for power generating assets."""
 
-    def test_innundation(self):
+    def test_inundation(self):
         # exceedance curve
         return_periods = np.array([2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0])
         base_depth = np.array(

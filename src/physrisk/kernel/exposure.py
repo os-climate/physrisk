@@ -108,7 +108,7 @@ class JupterExposureMeasure(ExposureMeasure):
                 Bounds(category=Category.HIGHEST, lower=30, upper=float("inf")),
             ]
         )
-        categories[(Wind, "max/1min")] = self.bounds_to_lookup(
+        categories[(Wind, "max_speed")] = self.bounds_to_lookup(
             [
                 Bounds(category=Category.LOWEST, lower=float("-inf"), upper=63),
                 Bounds(category=Category.LOW, lower=63, upper=90),

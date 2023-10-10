@@ -1,20 +1,16 @@
-.. project-template documentation master file, created by
-   sphinx-quickstart.
+.. PhysicalRisk documentation master file, created by
+   sphinx-quickstart on Tue Oct 10 13:31:09 2023.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-project-template documentation!
-==============================================
-
-Contents:
+Welcome to PhysicalRisk's documentation!
+========================================
 
 .. toctree::
    :maxdepth: 2
+   :caption: Contents:
 
-   getting-started
-   commands
-
-
+   modules
 
 Indices and tables
 ==================

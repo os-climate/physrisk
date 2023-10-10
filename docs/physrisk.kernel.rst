@@ -1,10 +1,10 @@
-physrisk.kernel package
+physrisk.kernel
 =======================
 
 Submodules
 ----------
 
-physrisk.kernel.assets module
+physrisk.kernel.assets
 -----------------------------
 
 .. automodule:: physrisk.kernel.assets
@@ -12,7 +12,7 @@ physrisk.kernel.assets module
    :undoc-members:
    :show-inheritance:
 
-physrisk.kernel.calculation module
+physrisk.kernel.calculation
 ----------------------------------
 
 .. automodule:: physrisk.kernel.calculation
@@ -20,7 +20,7 @@ physrisk.kernel.calculation module
    :undoc-members:
    :show-inheritance:
 
-physrisk.kernel.curve module
+physrisk.kernel.curve
 ----------------------------
 
 .. automodule:: physrisk.kernel.curve
@@ -28,7 +28,7 @@ physrisk.kernel.curve module
    :undoc-members:
    :show-inheritance:
 
-physrisk.kernel.events module
+physrisk.kernel.events
 -----------------------------
 
 .. automodule:: physrisk.kernel.events
@@ -36,7 +36,7 @@ physrisk.kernel.events module
    :undoc-members:
    :show-inheritance:
 
-physrisk.kernel.exposure module
+physrisk.kernel.exposure
 -------------------------------
 
 .. automodule:: physrisk.kernel.exposure
@@ -44,7 +44,7 @@ physrisk.kernel.exposure module
    :undoc-members:
    :show-inheritance:
 
-physrisk.kernel.financial\_model module
+physrisk.kernel.financial\_model
 ---------------------------------------
 
 .. automodule:: physrisk.kernel.financial_model
@@ -52,7 +52,7 @@ physrisk.kernel.financial\_model module
    :undoc-members:
    :show-inheritance:
 
-physrisk.kernel.hazard\_event\_distrib module
+physrisk.kernel.hazard\_event\_distrib
 ---------------------------------------------
 
 .. automodule:: physrisk.kernel.hazard_event_distrib
@@ -60,7 +60,7 @@ physrisk.kernel.hazard\_event\_distrib module
    :undoc-members:
    :show-inheritance:
 
-physrisk.kernel.hazard\_model module
+physrisk.kernel.hazard\_model
 ------------------------------------
 
 .. automodule:: physrisk.kernel.hazard_model
@@ -68,7 +68,7 @@ physrisk.kernel.hazard\_model module
    :undoc-members:
    :show-inheritance:
 
-physrisk.kernel.hazards module
+physrisk.kernel.hazards
 ------------------------------
 
 .. automodule:: physrisk.kernel.hazards
@@ -76,7 +76,7 @@ physrisk.kernel.hazards module
    :undoc-members:
    :show-inheritance:
 
-physrisk.kernel.impact module
+physrisk.kernel.impact
 -----------------------------
 
 .. automodule:: physrisk.kernel.impact
@@ -84,7 +84,7 @@ physrisk.kernel.impact module
    :undoc-members:
    :show-inheritance:
 
-physrisk.kernel.impact\_distrib module
+physrisk.kernel.impact\_distrib
 --------------------------------------
 
 .. automodule:: physrisk.kernel.impact_distrib
@@ -92,7 +92,7 @@ physrisk.kernel.impact\_distrib module
    :undoc-members:
    :show-inheritance:
 
-physrisk.kernel.risk module
+physrisk.kernel.risk
 ---------------------------
 
 .. automodule:: physrisk.kernel.risk
@@ -100,7 +100,7 @@ physrisk.kernel.risk module
    :undoc-members:
    :show-inheritance:
 
-physrisk.kernel.vulnerability\_distrib module
+physrisk.kernel.vulnerability\_distrib
 ---------------------------------------------
 
 .. automodule:: physrisk.kernel.vulnerability_distrib
@@ -108,7 +108,7 @@ physrisk.kernel.vulnerability\_distrib module
    :undoc-members:
    :show-inheritance:
 
-physrisk.kernel.vulnerability\_matrix\_provider module
+physrisk.kernel.vulnerability\_matrix\_provider
 ------------------------------------------------------
 
 .. automodule:: physrisk.kernel.vulnerability_matrix_provider
@@ -116,7 +116,7 @@ physrisk.kernel.vulnerability\_matrix\_provider module
    :undoc-members:
    :show-inheritance:
 
-physrisk.kernel.vulnerability\_model module
+physrisk.kernel.vulnerability\_model
 -------------------------------------------
 
 .. automodule:: physrisk.kernel.vulnerability_model

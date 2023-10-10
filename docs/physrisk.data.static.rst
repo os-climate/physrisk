@@ -1,4 +1,4 @@
-physrisk.data.static package
+physrisk.data.static
 ============================
 
 Subpackages
@@ -14,7 +14,7 @@ Subpackages
 Submodules
 ----------
 
-physrisk.data.static.world module
+physrisk.data.static.world
 ---------------------------------
 
 .. automodule:: physrisk.data.static.world

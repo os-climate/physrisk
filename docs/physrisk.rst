@@ -1,5 +1,5 @@
-physrisk package
-================
+Code documentation
+====================
 
 Subpackages
 -----------
@@ -15,10 +15,7 @@ Subpackages
    physrisk.utils
    physrisk.vulnerability_models
 
-Submodules
-----------
-
-physrisk.container module
+physrisk.container
 -------------------------
 
 .. automodule:: physrisk.container
@@ -26,7 +23,7 @@ physrisk.container module
    :undoc-members:
    :show-inheritance:
 
-physrisk.requests module
+physrisk.requests
 ------------------------
 
 .. automodule:: physrisk.requests

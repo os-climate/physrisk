@@ -1,4 +1,4 @@
-physrisk.api.v2 package
+physrisk.api.v2
 =======================
 
 Module contents

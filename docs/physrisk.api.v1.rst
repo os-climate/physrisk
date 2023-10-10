@@ -1,10 +1,10 @@
-physrisk.api.v1 package
+physrisk.api.v1
 =======================
 
 Submodules
 ----------
 
-physrisk.api.v1.common module
+physrisk.api.v1.common
 -----------------------------
 
 .. automodule:: physrisk.api.v1.common
@@ -12,7 +12,7 @@ physrisk.api.v1.common module
    :undoc-members:
    :show-inheritance:
 
-physrisk.api.v1.example\_portfolios module
+physrisk.api.v1.example\_portfolios
 ------------------------------------------
 
 .. automodule:: physrisk.api.v1.example_portfolios
@@ -20,7 +20,7 @@ physrisk.api.v1.example\_portfolios module
    :undoc-members:
    :show-inheritance:
 
-physrisk.api.v1.exposure\_req\_resp module
+physrisk.api.v1.exposure\_req\_resp
 ------------------------------------------
 
 .. automodule:: physrisk.api.v1.exposure_req_resp
@@ -28,7 +28,7 @@ physrisk.api.v1.exposure\_req\_resp module
    :undoc-members:
    :show-inheritance:
 
-physrisk.api.v1.hazard\_data module
+physrisk.api.v1.hazard\_data
 -----------------------------------
 
 .. automodule:: physrisk.api.v1.hazard_data
@@ -36,7 +36,7 @@ physrisk.api.v1.hazard\_data module
    :undoc-members:
    :show-inheritance:
 
-physrisk.api.v1.hazard\_image module
+physrisk.api.v1.hazard\_image
 ------------------------------------
 
 .. automodule:: physrisk.api.v1.hazard_image
@@ -44,7 +44,7 @@ physrisk.api.v1.hazard\_image module
    :undoc-members:
    :show-inheritance:
 
-physrisk.api.v1.impact\_req\_resp module
+physrisk.api.v1.impact\_req\_resp
 ----------------------------------------
 
 .. automodule:: physrisk.api.v1.impact_req_resp

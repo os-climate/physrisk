@@ -1,10 +1,10 @@
-physrisk.hazard\_models package
+physrisk.hazard\_models
 ===============================
 
 Submodules
 ----------
 
-physrisk.hazard\_models.core\_hazards module
+physrisk.hazard\_models.core\_hazards
 --------------------------------------------
 
 .. automodule:: physrisk.hazard_models.core_hazards

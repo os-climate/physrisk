@@ -1,4 +1,4 @@
-physrisk.data.static.hazard package
+physrisk.data.static.hazard
 ===================================
 
 Module contents

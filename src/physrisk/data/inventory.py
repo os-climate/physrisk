@@ -6,7 +6,9 @@ import logging
 from collections import defaultdict
 from typing import DefaultDict, Dict, Iterable, List, Tuple
 
-from pydantic import parse_obj_as
+#from pydantic import parse_obj_as
+from pydantic import TypeAdapter
+
 
 import physrisk.data.colormap_provider as colormap_provider
 import physrisk.data.static.hazard
@@ -50,7 +52,9 @@ class EmbeddedInventory(Inventory):
 
     def __init__(self):
         with importlib.resources.open_text(physrisk.data.static.hazard, "inventory.json") as f:
-            models = parse_obj_as(HazardModels, json.load(f)).resources
+            # models = parse_obj_as(HazardModels, json.load(f)).resources
+            adapter = TypeAdapter(HazardModels)
+            models = adapter.validate_python(json.load(f)).resources
             expanded_models = expand(models)
             super().__init__(expanded_models)
 

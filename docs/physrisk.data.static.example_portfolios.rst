@@ -1,4 +1,4 @@
-physrisk.data.static.example\_portfolios package
+physrisk.data.static.example\_portfolios
 ================================================
 
 Module contents

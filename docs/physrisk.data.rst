@@ -1,4 +1,4 @@
-physrisk.data package
+physrisk.data
 =====================
 
 Subpackages
@@ -12,7 +12,7 @@ Subpackages
 Submodules
 ----------
 
-physrisk.data.colormap\_provider module
+physrisk.data.colormap\_provider
 ---------------------------------------
 
 .. automodule:: physrisk.data.colormap_provider
@@ -20,7 +20,7 @@ physrisk.data.colormap\_provider module
    :undoc-members:
    :show-inheritance:
 
-physrisk.data.geotiff\_reader module
+physrisk.data.geotiff\_reader
 ------------------------------------
 
 .. automodule:: physrisk.data.geotiff_reader
@@ -28,7 +28,7 @@ physrisk.data.geotiff\_reader module
    :undoc-members:
    :show-inheritance:
 
-physrisk.data.hazard\_data\_provider module
+physrisk.data.hazard\_data\_provider
 -------------------------------------------
 
 .. automodule:: physrisk.data.hazard_data_provider
@@ -36,7 +36,7 @@ physrisk.data.hazard\_data\_provider module
    :undoc-members:
    :show-inheritance:
 
-physrisk.data.image\_creator module
+physrisk.data.image\_creator
 -----------------------------------
 
 .. automodule:: physrisk.data.image_creator
@@ -44,7 +44,7 @@ physrisk.data.image\_creator module
    :undoc-members:
    :show-inheritance:
 
-physrisk.data.inventory module
+physrisk.data.inventory
 ------------------------------
 
 .. automodule:: physrisk.data.inventory
@@ -52,7 +52,7 @@ physrisk.data.inventory module
    :undoc-members:
    :show-inheritance:
 
-physrisk.data.inventory\_reader module
+physrisk.data.inventory\_reader
 --------------------------------------
 
 .. automodule:: physrisk.data.inventory_reader
@@ -60,7 +60,7 @@ physrisk.data.inventory\_reader module
    :undoc-members:
    :show-inheritance:
 
-physrisk.data.pregenerated\_hazard\_model module
+physrisk.data.pregenerated\_hazard\_model
 ------------------------------------------------
 
 .. automodule:: physrisk.data.pregenerated_hazard_model
@@ -68,7 +68,7 @@ physrisk.data.pregenerated\_hazard\_model module
    :undoc-members:
    :show-inheritance:
 
-physrisk.data.zarr\_reader module
+physrisk.data.zarr\_reader
 ---------------------------------
 
 .. automodule:: physrisk.data.zarr_reader

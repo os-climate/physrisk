@@ -1,4 +1,4 @@
-physrisk.api package
+physrisk.api
 ====================
 
 Subpackages

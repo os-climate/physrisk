@@ -1,10 +1,10 @@
-physrisk.utils package
+physrisk.utils
 ======================
 
 Submodules
 ----------
 
-physrisk.utils.helpers module
+physrisk.utils.helpers
 -----------------------------
 
 .. automodule:: physrisk.utils.helpers
@@ -12,7 +12,7 @@ physrisk.utils.helpers module
    :undoc-members:
    :show-inheritance:
 
-physrisk.utils.lazy module
+physrisk.utils.lazy
 --------------------------
 
 .. automodule:: physrisk.utils.lazy

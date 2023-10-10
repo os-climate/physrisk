@@ -1,10 +1,10 @@
-physrisk.risk\_models package
+physrisk.risk\_models
 =============================
 
 Submodules
 ----------
 
-physrisk.risk\_models.loss\_model module
+physrisk.risk\_models.loss\_model
 ----------------------------------------
 
 .. automodule:: physrisk.risk_models.loss_model
@@ -12,7 +12,7 @@ physrisk.risk\_models.loss\_model module
    :undoc-members:
    :show-inheritance:
 
-physrisk.risk\_models.risk\_models module
+physrisk.risk\_models.risk\_models
 -----------------------------------------
 
 .. automodule:: physrisk.risk_models.risk_models

@@ -1,16 +1,16 @@
-.. PhysicalRisk documentation master file, created by
-   sphinx-quickstart on Tue Oct 10 13:31:09 2023.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Welcome to PhysicalRisk's documentation!
 ========================================
+
+This website contains the documentation related to the Physical Risk engine of OS-Climate
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   modules
+   getting-started
+   physrisk
+   commands
+   handbook/onboarding
 
 Indices and tables
 ==================

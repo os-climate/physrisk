@@ -1,5 +1,74 @@
 from dataclasses import dataclass
-from typing import Optional
+from enum import Enum
+from typing import Optional, cast
+
+
+# 'primary_fuel' entries in Global Power Plant Database v1.3.0 (World Resources Institute)
+# https://wri-dataportal-prod.s3.amazonaws.com/manual/global_power_plant_database_v_1_3
+class FuelKind(Enum):
+    biomass = (1,)
+    coal = 2
+    cogeneration = 3
+    gas = 4
+    geothermal = 5
+    hydro = 6
+    nuclear = 7
+    oil = 8
+    other = 9
+    petcoke = 10
+    solar = 11
+    storage = 12
+    waste = 13
+    wave_and_tidal = 14
+    wind = 15
+
+
+class CoolingKind(Enum):
+    dry = (1,)
+    once_through = 2
+    recirculating = 3
+
+
+class Cooling:
+    @staticmethod
+    def kind(cooling_type):
+        return cast(CoolingKind, cooling_type.kind)
+
+
+# Air Temperature, Inundation
+class DryCooling(Cooling):
+    kind = CoolingKind.dry
+
+
+# Drought, Inundation, Water Temperature, Water Stress
+class OnceThroughCooling(Cooling):
+    kind = CoolingKind.once_through
+
+
+# Drought, Inundation, Water Temperature, Water Stress (TO CLARIFY), Wet-Bulb Temperature,
+class RecirculatingCooling(Cooling):
+    kind = CoolingKind.recirculating
+
+
+class TurbineKind(Enum):
+    gas = (1,)
+    steam = 2
+
+
+class Turbine:
+    @staticmethod
+    def kind(turbine_type):
+        return cast(TurbineKind, turbine_type.kind)
+
+
+# Inundation, Air Temperature
+class GasTurbine(Turbine):
+    kind: TurbineKind = TurbineKind.gas
+
+
+class SteamTurbine(Turbine):
+    kind: TurbineKind = TurbineKind.steam
+    cooling: Optional[Cooling] = None
 
 
 class Asset:
@@ -10,8 +79,6 @@ class Asset:
 
 
 # WindFarm as separate
-
-
 @dataclass
 class WindTurbine(Asset):
     capacity: Optional[float] = None
@@ -23,7 +90,37 @@ class WindTurbine(Asset):
 
 
 class PowerGeneratingAsset(Asset):
-    pass
+    def __init__(self, latitude: float, longitude: float, location: str, capacity: Optional[float] = None):
+        super().__init__(latitude, longitude)
+        self.location: str = location
+        self.capacity: Optional[float] = capacity
+
+
+# Designed to be protected against 250-year inundation events in the baseline
+class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
+    def __init__(
+        self,
+        latitude: float,
+        longitude: float,
+        location: str,
+        capacity: Optional[float] = None,
+        turbine: Optional[Turbine] = None,
+    ):
+        super().__init__(latitude, longitude, location, capacity)
+        self.turbine: Optional[Turbine] = turbine
+
+
+# Designed to be protected against 10,000-year inundation events in the baseline
+class NuclearThermalPowerGeneratingAsset(ThermalPowerGeneratingAsset):
+    def __init__(
+        self,
+        latitude: float,
+        longitude: float,
+        location: str,
+        capacity: Optional[float] = None,
+        turbine: Optional[SteamTurbine] = None,
+    ):
+        super().__init__(latitude, longitude, location, capacity, turbine)
 
 
 class RealEstateAsset(Asset):

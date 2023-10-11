@@ -112,14 +112,14 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
     def test_thermal_power_generating_asset_portfolio(self):
         # cache_folder = r"<cache folder>"
 
-        cache_folder = os.environ.get("CREDENTIAL_DOTENV_DIR", os.getcwd())
+        cache_folder = os.environ.get('CREDENTIAL_DOTENV_DIR', os.getcwd())
 
         asset_list = pd.read_csv(os.path.join(cache_folder, 'wri-all.csv'))
         filtered = asset_list.loc[asset_list['primary_fuel'].isin(['Nuclear'])]
 
-        longitudes = np.array(filtered["longitude"])
-        latitudes = np.array(filtered["latitude"])
-        primary_fuels = np.array([fuel.lower().replace(' ', '_') for fuel in filtered["primary_fuel"]])
+        longitudes = np.array(filtered['longitude'])
+        latitudes = np.array(filtered['latitude'])
+        primary_fuels = np.array([fuel.lower().replace(' ', '_') for fuel in filtered['primary_fuel']])
 
         # Capacity describes a maximum electric power rate.generation
         # Generation describes the actual electricity output of the plant over a period of time.
@@ -129,11 +129,11 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
 
         # Power generating assets that are of interest
         assets = [
-            ThermalPowerGeneratingAsset(lat, lon, location=continent, turbine=SteamTurbine(), capacity=capacity, primary_fuel=FuelKind[primary_fuel])
-            for lon, lat, capacity, primary_fuel, continent in zip(longitudes, latitudes, capacities, primary_fuels, continents)
+            ThermalPowerGeneratingAsset(latitude, longitude, location=continent, turbine=SteamTurbine(), capacity=capacity, primary_fuel=FuelKind[primary_fuel])
+            for latitude, longitude, capacity, primary_fuel, continent in zip(latitudes, longitudes, capacities, primary_fuels, continents)
         ]
 
-        scenario = "rcp8p5"
+        scenario = 'rcp8p5'
         year = 2050
 
         hazard_model = calculation.get_default_hazard_model()
@@ -145,7 +145,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         means = np.array([detailed_results[key].impact.mean_impact() for key in keys])
         interesting = [k for (k, m) in zip(keys, means) if m > 0]
         assets_out = self.api_assets(item[0] for item in interesting)
-        with open(os.path.join(cache_folder, "assets_example_power_generating_small.json"), "w") as f:
+        with open(os.path.join(cache_folder, 'assets_example_power_generating_small.json'), 'w') as f:
             f.write(assets_out.json(indent=4))
 
         self.assertAlmostEqual(1, 1)

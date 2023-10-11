@@ -8,6 +8,12 @@ from .zarr_reader import ZarrReader
 
 
 @dataclass
+class HazardDataBufferZone:
+    delta_deg: float
+    n_grid: int
+
+
+@dataclass
 class HazardDataHint:
     """Requestors of hazard data may provide a hint which may be taken into account by the Hazard Model.
     A hazard resource path can be specified which uniquely defines the hazard resource; otherwise the resource
@@ -75,6 +81,7 @@ class AcuteHazardDataProvider(HazardDataProvider):
         scenario: str,
         year: int,
         hint: Optional[HazardDataHint] = None,
+        buffer_zone: Optional[HazardDataBufferZone] = None
     ):
         """Get intensity curve for each latitude and longitude coordinate pair.
 
@@ -91,9 +98,16 @@ class AcuteHazardDataProvider(HazardDataProvider):
         """
 
         path = self._get_source_path(indicator_id=indicator_id, scenario=scenario, year=year, hint=hint)
-        curves, return_periods = self._reader.get_curves(
-            path, longitudes, latitudes, self._interpolation
-        )  # type: ignore
+        if buffer_zone is None:
+            curves, return_periods = self._reader.get_curves(
+                path, longitudes, latitudes, self._interpolation
+            )  # type: ignore
+        else:
+            curves, return_periods = self._reader.get_max_curves(
+                path, longitudes, latitudes, self._interpolation,
+                buffer_zone.delta_deg * ZarrReader.KILOMETRES_PER_DEGREE,
+                buffer_zone.n_grid
+            )  # type: ignore
         return curves, return_periods
 
 

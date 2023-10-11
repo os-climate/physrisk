@@ -21,6 +21,8 @@ def get_env(key: str, default: Optional[str] = None) -> str:
 class ZarrReader:
     """Reads hazard event data from Zarr files, including OSC-format-specific attributes."""
 
+    KILOMETRES_PER_DEGREE: float = 110.574
+
     # environment variable names:
     __access_key = "OSC_S3_ACCESS_KEY"
     __secret_key = "OSC_S3_SECRET_KEY"
@@ -139,12 +141,11 @@ class ZarrReader:
             (no. coordinate pairs, no. return periods).
             return_periods: return periods in years.
         """
-        KILOMETRES_PER_DEGREE = 110.574
         n_data = len(latitudes)
-        delta_deg = delta_km / KILOMETRES_PER_DEGREE
+        delta_deg = delta_km / ZarrReader.KILOMETRES_PER_DEGREE
         grid = np.linspace(-0.5, 0.5, n_grid)
-        lats_grid_baseline = np.broadcast_to(latitudes.reshape((n_data, 1, 1)), (len(latitudes), n_grid, n_grid))
-        lons_grid_baseline = np.broadcast_to(longitudes.reshape((n_data, 1, 1)), (len(longitudes), n_grid, n_grid))
+        lats_grid_baseline = np.broadcast_to(latitudes.reshape(n_data, 1, 1), (len(latitudes), n_grid, n_grid))
+        lons_grid_baseline = np.broadcast_to(longitudes.reshape(n_data, 1, 1), (len(longitudes), n_grid, n_grid))
         lats_grid_offsets = delta_deg * grid.reshape((1, n_grid, 1))
         lons_grid_offsets = (
             delta_deg * grid.reshape((1, 1, n_grid)) / (np.cos((np.pi / 180) * latitudes).reshape(n_data, 1, 1))

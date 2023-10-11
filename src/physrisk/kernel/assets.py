@@ -90,37 +90,28 @@ class WindTurbine(Asset):
 
 
 class PowerGeneratingAsset(Asset):
-    def __init__(self, latitude: float, longitude: float, location: str, capacity: Optional[float] = None):
-        super().__init__(latitude, longitude)
+    def __init__(self, latitude: float, longitude: float, location: str, capacity: Optional[float] = None, primary_fuel: Optional[FuelKind] = None):
+        super().__init__(latitude=latitude, longitude=longitude)
         self.location: str = location
         self.capacity: Optional[float] = capacity
+        self.primary_fuel: Optional[FuelKind] = primary_fuel
 
 
 # Designed to be protected against 250-year inundation events in the baseline
+# except for "nuclear" which is designed to be protected against 10,000-year
+# inundation events in the baseline
 class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
     def __init__(
         self,
         latitude: float,
         longitude: float,
         location: str,
+        turbine: Turbine,
         capacity: Optional[float] = None,
-        turbine: Optional[Turbine] = None,
+        primary_fuel: Optional[FuelKind] = None,
     ):
-        super().__init__(latitude, longitude, location, capacity)
-        self.turbine: Optional[Turbine] = turbine
-
-
-# Designed to be protected against 10,000-year inundation events in the baseline
-class NuclearThermalPowerGeneratingAsset(ThermalPowerGeneratingAsset):
-    def __init__(
-        self,
-        latitude: float,
-        longitude: float,
-        location: str,
-        capacity: Optional[float] = None,
-        turbine: Optional[SteamTurbine] = None,
-    ):
-        super().__init__(latitude, longitude, location, capacity, turbine)
+        super().__init__(latitude=latitude, longitude=longitude, location=location, capacity=capacity, primary_fuel=primary_fuel)
+        self.turbine: Turbine = turbine
 
 
 class RealEstateAsset(Asset):

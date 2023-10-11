@@ -8,8 +8,9 @@ import numpy as np
 
 import physrisk.api.v1.common
 import physrisk.data.static.world as wd
-from physrisk.kernel import Asset, PowerGeneratingAsset
-from physrisk.kernel.assets import IndustrialActivity, RealEstateAsset
+
+from physrisk.kernel import calculation, Asset, PowerGeneratingAsset
+from physrisk.kernel.assets import FuelKind, IndustrialActivity, RealEstateAsset, SteamTurbine, ThermalPowerGeneratingAsset
 from physrisk.kernel.hazard_model import HazardEventDataResponse
 from physrisk.kernel.impact import calculate_impacts
 from physrisk.utils.lazy import lazy_import
@@ -108,6 +109,47 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
             f.write(assets_out.json(indent=4))
         self.assertAlmostEqual(1, 1)
 
+    def test_thermal_power_generating_asset_portfolio(self):
+        # cache_folder = r"<cache folder>"
+
+        cache_folder = os.environ.get("CREDENTIAL_DOTENV_DIR", os.getcwd())
+
+        asset_list = pd.read_csv(os.path.join(cache_folder, 'wri-all.csv'))
+        filtered = asset_list.loc[asset_list['primary_fuel'].isin(['Nuclear'])]
+
+        longitudes = np.array(filtered["longitude"])
+        latitudes = np.array(filtered["latitude"])
+        primary_fuels = np.array([fuel.lower().replace(' ', '_') for fuel in filtered["primary_fuel"]])
+
+        # Capacity describes a maximum electric power rate.generation
+        # Generation describes the actual electricity output of the plant over a period of time.
+        capacities = np.array(filtered["capacity_mw"])
+
+        _, continents = wd.get_countries_and_continents(latitudes=latitudes, longitudes=longitudes)
+
+        # Power generating assets that are of interest
+        assets = [
+            ThermalPowerGeneratingAsset(lat, lon, location=continent, turbine=SteamTurbine(), capacity=capacity, primary_fuel=FuelKind[primary_fuel])
+            for lon, lat, capacity, primary_fuel, continent in zip(longitudes, latitudes, capacities, primary_fuels, continents)
+        ]
+
+        scenario = "rcp8p5"
+        year = 2050
+
+        hazard_model = calculation.get_default_hazard_model()
+        vulnerability_models = calculation.get_default_vulnerability_models()
+
+        detailed_results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
+        keys = list(detailed_results.keys())
+        # detailed_results[keys[0]].impact.to_exceedance_curve()
+        means = np.array([detailed_results[key].impact.mean_impact() for key in keys])
+        interesting = [k for (k, m) in zip(keys, means) if m > 0]
+        assets_out = self.api_assets(item[0] for item in interesting)
+        with open(os.path.join(cache_folder, "assets_example_power_generating_small.json"), "w") as f:
+            f.write(assets_out.json(indent=4))
+
+        self.assertAlmostEqual(1, 1)
+
     def api_assets(self, assets: List[Asset]):
         items = [
             physrisk.api.v1.common.Asset(
@@ -120,3 +162,4 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
             for a in assets
         ]
         return physrisk.api.v1.common.Assets(items=items)
+

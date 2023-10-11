@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
+from dataclasses import dataclass
 from typing import Dict, List, Mapping, Optional, Protocol, Tuple
 
 import numpy as np
 
-from physrisk.data.hazard_data_provider import HazardDataHint
+from physrisk.data.hazard_data_provider import HazardDataBufferZone, HazardDataHint
 
 
 class HazardDataRequest:
@@ -22,7 +23,8 @@ class HazardDataRequest:
         indicator_id: str,
         scenario: str,
         year: int,
-        hint: Optional[HazardDataHint] = None
+        hint: Optional[HazardDataHint] = None,
+        buffer_zone: Optional[HazardDataBufferZone] = None
     ):
         """Create HazardDataRequest.
 
@@ -41,6 +43,7 @@ class HazardDataRequest:
         self.scenario = scenario
         self.year = year
         self.hint = hint
+        self.buffer_zone = buffer_zone
 
     def group_key(self):
         """Key used to group EventDataRequests into batches."""

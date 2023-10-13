@@ -6,7 +6,7 @@ from typing import Optional, cast
 # 'primary_fuel' entries in Global Power Plant Database v1.3.0 (World Resources Institute)
 # https://wri-dataportal-prod.s3.amazonaws.com/manual/global_power_plant_database_v_1_3
 class FuelKind(Enum):
-    biomass = (1,)
+    biomass = 1
     coal = 2
     cogeneration = 3
     gas = 4
@@ -24,7 +24,7 @@ class FuelKind(Enum):
 
 
 class CoolingKind(Enum):
-    dry = (1,)
+    dry = 1
     once_through = 2
     recirculating = 3
 
@@ -51,7 +51,7 @@ class RecirculatingCooling(Cooling):
 
 
 class TurbineKind(Enum):
-    gas = (1,)
+    gas = 1
     steam = 2
 
 

@@ -113,14 +113,14 @@ class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
         latitude: float,
         longitude: float,
         location: str,
-        turbine: Turbine,
         capacity: Optional[float] = None,
         primary_fuel: Optional[FuelKind] = None,
+        turbine: Optional[Turbine] = None,
     ):
         super().__init__(
             latitude=latitude, longitude=longitude, location=location, capacity=capacity, primary_fuel=primary_fuel
         )
-        self.turbine: Turbine = turbine
+        self.turbine: Optional[Turbine] = turbine
 
     def get_inundation_protection_return_period(self):
         if self.primary_fuel is not None and self.primary_fuel == FuelKind.nuclear:

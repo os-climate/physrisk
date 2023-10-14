@@ -152,10 +152,10 @@ class ZarrReader:
         )
         lats_grid = lats_grid_baseline + lats_grid_offsets
         lons_grid = lons_grid_baseline + lons_grid_offsets
-        curves_, return_periods = self.get_curves(
+        curves, return_periods = self.get_curves(
             set_id, lons_grid.reshape(-1), lats_grid.reshape(-1), interpolation=interpolation
         )
-        curves_max = np.max(curves_.reshape((n_data, n_grid * n_grid, len(return_periods))), axis=1)
+        curves_max = np.nanmax(curves.reshape((n_data, n_grid * n_grid, len(return_periods))), axis=1)
         return curves_max, return_periods
 
     @staticmethod

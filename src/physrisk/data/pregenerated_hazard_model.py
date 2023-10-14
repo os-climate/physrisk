@@ -48,13 +48,19 @@ class PregeneratedHazardModel(HazardModel):
                 batch[0].scenario,
                 batch[0].year,
                 batch[0].hint,
-                batch[0].buffer_zone
+                batch[0].buffer_zone,
             )
             longitudes = np.array([req.longitude for req in batch])
             latitudes = np.array([req.latitude for req in batch])
             if hazard_type.kind == HazardKind.acute:  # type: ignore
                 intensities, return_periods = self.acute_hazard_data_providers[hazard_type].get_intensity_curves(
-                    longitudes, latitudes, indicator_id=indicator_id, scenario=scenario, year=year, hint=hint, buffer_zone=buffer_zone
+                    longitudes,
+                    latitudes,
+                    indicator_id=indicator_id,
+                    scenario=scenario,
+                    year=year,
+                    hint=hint,
+                    buffer_zone=buffer_zone,
                 )
 
                 for i, req in enumerate(batch):

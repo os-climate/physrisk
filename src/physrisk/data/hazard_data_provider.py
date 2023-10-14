@@ -81,7 +81,7 @@ class AcuteHazardDataProvider(HazardDataProvider):
         scenario: str,
         year: int,
         hint: Optional[HazardDataHint] = None,
-        buffer_zone: Optional[HazardDataBufferZone] = None
+        buffer_zone: Optional[HazardDataBufferZone] = None,
     ):
         """Get intensity curve for each latitude and longitude coordinate pair.
 
@@ -104,9 +104,12 @@ class AcuteHazardDataProvider(HazardDataProvider):
             )  # type: ignore
         else:
             curves, return_periods = self._reader.get_max_curves(
-                path, longitudes, latitudes, self._interpolation,
+                path,
+                longitudes,
+                latitudes,
+                self._interpolation,
                 buffer_zone.delta_deg * ZarrReader.KILOMETRES_PER_DEGREE,
-                buffer_zone.n_grid
+                buffer_zone.n_grid,
             )  # type: ignore
         return curves, return_periods
 

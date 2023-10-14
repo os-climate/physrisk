@@ -90,7 +90,14 @@ class WindTurbine(Asset):
 
 
 class PowerGeneratingAsset(Asset):
-    def __init__(self, latitude: float, longitude: float, location: str, capacity: Optional[float] = None, primary_fuel: Optional[FuelKind] = None):
+    def __init__(
+        self,
+        latitude: float,
+        longitude: float,
+        location: str,
+        capacity: Optional[float] = None,
+        primary_fuel: Optional[FuelKind] = None,
+    ):
         super().__init__(latitude=latitude, longitude=longitude)
         self.location: str = location
         self.capacity: Optional[float] = capacity
@@ -110,8 +117,15 @@ class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
         capacity: Optional[float] = None,
         primary_fuel: Optional[FuelKind] = None,
     ):
-        super().__init__(latitude=latitude, longitude=longitude, location=location, capacity=capacity, primary_fuel=primary_fuel)
+        super().__init__(
+            latitude=latitude, longitude=longitude, location=location, capacity=capacity, primary_fuel=primary_fuel
+        )
         self.turbine: Turbine = turbine
+
+    def get_inundation_protection_return_period(self):
+        if self.primary_fuel is not None and self.primary_fuel == FuelKind.nuclear:
+            return 10000.0
+        return 250.0
 
 
 class RealEstateAsset(Asset):

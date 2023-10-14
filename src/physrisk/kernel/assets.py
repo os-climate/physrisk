@@ -94,12 +94,15 @@ class PowerGeneratingAsset(Asset):
         self,
         latitude: float,
         longitude: float,
-        location: str,
+        *,
+        type: Optional[str] = None,
+        location: Optional[str] = None,
         capacity: Optional[float] = None,
         primary_fuel: Optional[FuelKind] = None,
     ):
-        super().__init__(latitude=latitude, longitude=longitude)
-        self.location: str = location
+        super().__init__(latitude, longitude)
+        self.type: Optional[str] = type
+        self.location: Optional[str] = location
         self.capacity: Optional[float] = capacity
         self.primary_fuel: Optional[FuelKind] = primary_fuel
 
@@ -112,13 +115,15 @@ class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
         self,
         latitude: float,
         longitude: float,
-        location: str,
+        *,
+        type: Optional[str] = None,
+        location: Optional[str] = None,
         capacity: Optional[float] = None,
         primary_fuel: Optional[FuelKind] = None,
         turbine: Optional[Turbine] = None,
     ):
         super().__init__(
-            latitude=latitude, longitude=longitude, location=location, capacity=capacity, primary_fuel=primary_fuel
+            latitude, longitude, type=type, location=location, capacity=capacity, primary_fuel=primary_fuel
         )
         self.turbine: Optional[Turbine] = turbine
 

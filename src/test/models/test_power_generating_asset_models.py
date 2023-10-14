@@ -73,7 +73,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
 
         # Power generating assets that are of interest
         assets = [
-            PowerGeneratingAsset(lat, lon, generation=gen, primary_fuel=prim_fuel, location=continent, type=prim_fuel)
+            PowerGeneratingAsset(lat, lon, generation=gen, location=continent, type=prim_fuel)
             for lon, lat, gen, prim_fuel, continent in zip(longitudes, latitudes, generation, primary_fuel, continents)
         ]
         detailed_results = calculate_impacts(assets, scenario="ssp585", year=2030)
@@ -127,7 +127,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         latitudes = np.array(filtered["latitude"])
         primary_fuels = np.array([fuel.lower().replace(" ", "_") for fuel in filtered["primary_fuel"]])
 
-        # Capacity describes a maximum electric power rate.generation
+        # Capacity describes a maximum electric power rate.
         # Generation describes the actual electricity output of the plant over a period of time.
         capacities = np.array(filtered["capacity_mw"])
 
@@ -139,7 +139,6 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
                 latitude,
                 longitude,
                 location=continent,
-                turbine=SteamTurbine(),
                 capacity=capacity,
                 primary_fuel=FuelKind[primary_fuel],
             )

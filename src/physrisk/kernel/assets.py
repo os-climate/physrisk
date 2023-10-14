@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, cast
+from typing import Optional
 
 
 # 'primary_fuel' entries in Global Power Plant Database v1.3.0 (World Resources Institute)
@@ -24,51 +24,19 @@ class FuelKind(Enum):
 
 
 class CoolingKind(Enum):
+    # Air Temperature, Inundation
     dry = 1
+
+    # Drought, Inundation, Water Temperature, Water Stress
     once_through = 2
+
+    # Drought, Inundation, Water Temperature, Water Stress (TO CLARIFY), Wet-Bulb Temperature
     recirculating = 3
-
-
-class Cooling:
-    @staticmethod
-    def kind(cooling_type):
-        return cast(CoolingKind, cooling_type.kind)
-
-
-# Air Temperature, Inundation
-class DryCooling(Cooling):
-    kind = CoolingKind.dry
-
-
-# Drought, Inundation, Water Temperature, Water Stress
-class OnceThroughCooling(Cooling):
-    kind = CoolingKind.once_through
-
-
-# Drought, Inundation, Water Temperature, Water Stress (TO CLARIFY), Wet-Bulb Temperature,
-class RecirculatingCooling(Cooling):
-    kind = CoolingKind.recirculating
 
 
 class TurbineKind(Enum):
     gas = 1
     steam = 2
-
-
-class Turbine:
-    @staticmethod
-    def kind(turbine_type):
-        return cast(TurbineKind, turbine_type.kind)
-
-
-# Inundation, Air Temperature
-class GasTurbine(Turbine):
-    kind: TurbineKind = TurbineKind.gas
-
-
-class SteamTurbine(Turbine):
-    kind: TurbineKind = TurbineKind.steam
-    cooling: Optional[Cooling] = None
 
 
 class Asset:
@@ -97,14 +65,19 @@ class PowerGeneratingAsset(Asset):
         *,
         type: Optional[str] = None,
         location: Optional[str] = None,
-        capacity: Optional[float] = None,
-        primary_fuel: Optional[FuelKind] = None,
+        capacity: Optional[float] = None
     ):
         super().__init__(latitude, longitude)
+
         self.type: Optional[str] = type
         self.location: Optional[str] = location
         self.capacity: Optional[float] = capacity
-        self.primary_fuel: Optional[FuelKind] = primary_fuel
+
+        if type is not None:
+            self.primary_fuel: Optional[FuelKind] = None
+            archetypes = type.split("/")
+            if 0 < len(archetypes):
+                self.primary_fuel = FuelKind[archetypes[0].lower()]
 
 
 # Designed to be protected against 250-year inundation events in the baseline
@@ -118,18 +91,25 @@ class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
         *,
         type: Optional[str] = None,
         location: Optional[str] = None,
-        capacity: Optional[float] = None,
-        primary_fuel: Optional[FuelKind] = None,
-        turbine: Optional[Turbine] = None,
+        capacity: Optional[float] = None
     ):
-        super().__init__(
-            latitude, longitude, type=type, location=location, capacity=capacity, primary_fuel=primary_fuel
-        )
-        self.turbine: Optional[Turbine] = turbine
+        super().__init__(latitude, longitude, type=type, location=location, capacity=capacity)
+
+        self.turbine: Optional[TurbineKind] = None
+        self.cooling: Optional[CoolingKind] = None
+
+        if type is not None:
+            archetypes = type.split("/")
+            if 1 < len(archetypes):
+                self.turbine = TurbineKind[archetypes[1].lower()]
+                if 2 < len(archetypes):
+                    assert self.turbine == TurbineKind.steam
+                    self.cooling = CoolingKind[archetypes[2].lower()]
 
     def get_inundation_protection_return_period(self):
-        if self.primary_fuel is not None and self.primary_fuel == FuelKind.nuclear:
-            return 10000.0
+        if self.primary_fuel is not None:
+            if self.primary_fuel == FuelKind.nuclear:
+                return 10000.0
         return 250.0
 
 

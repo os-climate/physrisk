@@ -9,13 +9,7 @@ import numpy as np
 import physrisk.api.v1.common
 import physrisk.data.static.world as wd
 from physrisk.kernel import Asset, PowerGeneratingAsset, calculation
-from physrisk.kernel.assets import (
-    FuelKind,
-    IndustrialActivity,
-    RealEstateAsset,
-    SteamTurbine,
-    ThermalPowerGeneratingAsset,
-)
+from physrisk.kernel.assets import IndustrialActivity, RealEstateAsset, ThermalPowerGeneratingAsset
 from physrisk.kernel.hazard_model import HazardEventDataResponse
 from physrisk.kernel.impact import calculate_impacts
 from physrisk.utils.lazy import lazy_import
@@ -125,7 +119,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
 
         longitudes = np.array(filtered["longitude"])
         latitudes = np.array(filtered["latitude"])
-        primary_fuels = np.array([fuel.lower().replace(" ", "_") for fuel in filtered["primary_fuel"]])
+        primary_fuels = np.array([primary_fuel.lower().replace(" ", "_") for primary_fuel in filtered["primary_fuel"]])
 
         # Capacity describes a maximum electric power rate.
         # Generation describes the actual electricity output of the plant over a period of time.
@@ -135,13 +129,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
 
         # Power generating assets that are of interest
         assets = [
-            ThermalPowerGeneratingAsset(
-                latitude,
-                longitude,
-                location=continent,
-                capacity=capacity,
-                primary_fuel=FuelKind[primary_fuel],
-            )
+            ThermalPowerGeneratingAsset(latitude, longitude, type=primary_fuel, location=continent, capacity=capacity)
             for latitude, longitude, capacity, primary_fuel, continent in zip(
                 latitudes, longitudes, capacities, primary_fuels, continents
             )

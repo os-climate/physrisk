@@ -34,7 +34,7 @@ class Inventory:
 
     def json_ordered(self):
         sorted_resources = sorted(self.resources_by_type_id.items())
-        resource_list: List[HazardResource] = []
+        resource_list = []
         for _, resources in sorted_resources:
             resource_list.extend(resources)
         models = HazardModels(resources=resource_list)

@@ -54,7 +54,7 @@ class ExposureMeasure(DataRequester):
 
 class JupterExposureMeasure(ExposureMeasure):
     def __init__(self):
-        self.exposure_bins: Dict[Tuple[type, str], Tuple[np.ndarray, np.ndarray]] = self.get_exposure_bins()
+        self.exposure_bins = self.get_exposure_bins()
 
     def get_data_requests(self, asset: Asset, *, scenario: str, year: int) -> Iterable[HazardDataRequest]:
         return [
@@ -88,7 +88,7 @@ class JupterExposureMeasure(ExposureMeasure):
         return result
 
     def get_exposure_bins(self):
-        categories: Dict[Tuple[type, str], Tuple[np.ndarray, np.ndarray]] = {}
+        categories = {}
         # specify exposure bins as dataclass in case desirable to use JSON in future
         categories[(CombinedInundation, "flooded_fraction")] = self.bounds_to_lookup(
             [

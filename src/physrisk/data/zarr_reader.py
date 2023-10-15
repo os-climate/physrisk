@@ -144,11 +144,17 @@ class ZarrReader:
         n_data = len(latitudes)
         delta_deg = delta_km / ZarrReader.KILOMETRES_PER_DEGREE
         grid = np.linspace(-0.5, 0.5, n_grid)
-        lats_grid_baseline = np.broadcast_to(np.array(latitudes).reshape(n_data, 1, 1), (len(latitudes), n_grid, n_grid))
-        lons_grid_baseline = np.broadcast_to(np.array(longitudes).reshape(n_data, 1, 1), (len(longitudes), n_grid, n_grid))
+        lats_grid_baseline = np.broadcast_to(
+            np.array(latitudes).reshape(n_data, 1, 1), (len(latitudes), n_grid, n_grid)
+        )
+        lons_grid_baseline = np.broadcast_to(
+            np.array(longitudes).reshape(n_data, 1, 1), (len(longitudes), n_grid, n_grid)
+        )
         lats_grid_offsets = delta_deg * grid.reshape((1, n_grid, 1))
         lons_grid_offsets = (
-            delta_deg * grid.reshape((1, 1, n_grid)) / (np.cos((np.pi / 180) * np.array(latitudes)).reshape(n_data, 1, 1))
+            delta_deg
+            * grid.reshape((1, 1, n_grid))
+            / (np.cos((np.pi / 180) * np.array(latitudes)).reshape(n_data, 1, 1))
         )
         lats_grid = lats_grid_baseline + lats_grid_offsets
         lons_grid = lons_grid_baseline + lons_grid_offsets

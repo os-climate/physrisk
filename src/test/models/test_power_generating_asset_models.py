@@ -1,10 +1,12 @@
 """ Test asset impact calculations."""
+import json
 import os
 import unittest
 from test.base_test import TestWithCredentials
 from typing import List
 
 import numpy as np
+import pandas
 
 import physrisk.api.v1.common
 import physrisk.data.static.world as wd
@@ -115,7 +117,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         cache_folder = os.environ.get("CREDENTIAL_DOTENV_DIR", os.getcwd())
 
         asset_list = pd.read_csv(os.path.join(cache_folder, "wri-all.csv"))
-        filtered = asset_list.loc[asset_list["primary_fuel"].isin(["Nuclear"])]
+        filtered = asset_list.loc[asset_list["primary_fuel"].isin(["Coal", "Gas", "Nuclear", "Oil"])]
 
         longitudes = np.array(filtered["longitude"])
         latitudes = np.array(filtered["latitude"])
@@ -141,15 +143,20 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         hazard_model = calculation.get_default_hazard_model()
         vulnerability_models = calculation.get_default_vulnerability_models()
 
-        detailed_results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
-        keys = list(detailed_results.keys())
-        # detailed_results[keys[0]].impact.to_exceedance_curve()
-        means = np.array([detailed_results[key].impact.mean_impact() for key in keys])
-        interesting = [k for (k, m) in zip(keys, means) if m > 0]
-        assets_out = self.api_assets(item[0] for item in interesting)
-        with open(os.path.join(cache_folder, "thermal_ power_generation_example.json"), "w") as f:
-            f.write(assets_out.json(indent=4))
-
+        results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
+        out = [
+            {
+                "asset": type(result.asset).__name__,
+                "type": getattr(result.asset, "type") if hasattr(result.asset, "type") else None,
+                "location": getattr(result.asset, "location") if hasattr(result.asset, "location") else None,
+                "latitude": result.asset.latitude,
+                "longitude": result.asset.longitude,
+                "impact_mean": results[key].impact.mean_impact(),
+                "hazard_type": results[key].impact.hazard_type.__name__,
+            }
+            for result, key in zip(results, results.keys())
+        ]
+        pandas.DataFrame.from_dict(out).to_csv(os.path.join(cache_folder, "thermal_ power_generation_example.csv"))
         self.assertAlmostEqual(1, 1)
 
     def api_assets(self, assets: List[Asset]):

@@ -1,3 +1,4 @@
+import inspect
 import sys
 from enum import Enum
 from typing import cast
@@ -30,6 +31,11 @@ class CoastalInundation(Inundation):
 
 
 class ChronicHeat(Hazard):
+    kind = HazardKind.chronic
+    pass
+
+
+class ChronicWind(Hazard):
     kind = HazardKind.chronic
     pass
 
@@ -67,6 +73,12 @@ class RiverineInundation(Inundation):
 class Wind(Hazard):
     kind = HazardKind.acute
     pass
+
+
+def all_hazards():
+    return [
+        obj for _, obj in inspect.getmembers(sys.modules[__name__]) if inspect.isclass(obj) and issubclass(obj, Hazard)
+    ]
 
 
 def hazard_class(name: str):

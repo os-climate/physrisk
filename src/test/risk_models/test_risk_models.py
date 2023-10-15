@@ -10,13 +10,12 @@ from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import RealEstateAsset
 from physrisk.kernel.calculation import get_default_vulnerability_models
 from physrisk.kernel.hazards import CoastalInundation, RiverineInundation
-from physrisk.kernel.risk import AssetLevelRiskModel, MeasureKey
+from physrisk.kernel.risk import AssetLevelRiskModel
+from physrisk.requests import _create_risk_measures
 from physrisk.risk_models.risk_models import RealEstateToyRiskMeasures
 
 
 class TestRiskModels(unittest.TestCase):
-    """Tests RealEstateInundationModel."""
-
     def test_risk_indicator_model(self):
         source_paths = get_default_source_paths()
         scenarios = ["rcp8p5"]
@@ -50,8 +49,20 @@ class TestRiskModels(unittest.TestCase):
             for lon, lat in zip(TestData.longitudes[0:1], TestData.latitudes[0:1])
         ]
 
+        assets = [
+            RealEstateAsset(TestData.latitudes[0], TestData.longitudes[0], location="Asia", type="Buildings/Industrial")
+            for i in range(100)
+        ]
+
         model = AssetLevelRiskModel(
             hazard_model, get_default_vulnerability_models(), {RealEstateAsset: RealEstateToyRiskMeasures()}
         )
-        impacts, measures = model.calculate_risk_measures(assets, prosp_scens=scenarios, years=years)
-        print(measures[MeasureKey(assets[0], scenarios[0], years[0], RiverineInundation)])
+        measure_ids_for_asset, definitions = model.populate_measure_definitions(assets)
+        _, measures = model.calculate_risk_measures(assets, prosp_scens=scenarios, years=years)
+
+        risk_measures = _create_risk_measures(measures, measure_ids_for_asset, definitions, assets, scenarios, years)
+
+        #with open("test.json", "w") as f:
+        #    f.write(risk_measures.model_dump_json())
+
+        # print(measures[MeasureKey(assets[0], scenarios[0], years[0], RiverineInundation)])

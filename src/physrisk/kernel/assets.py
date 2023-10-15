@@ -80,9 +80,6 @@ class PowerGeneratingAsset(Asset):
                 self.primary_fuel = FuelKind[archetypes[0].lower()]
 
 
-# Designed to be protected against 250-year inundation events in the baseline
-# except for "nuclear" which is designed to be protected against 10,000-year
-# inundation events in the baseline
 class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
     def __init__(
         self,
@@ -106,6 +103,9 @@ class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
                     assert self.turbine == TurbineKind.steam
                     self.cooling = CoolingKind[archetypes[2].lower()]
 
+    # Designed to be protected against 250-year inundation events in the baseline
+    # except for "nuclear" which is designed to be protected against 10,000-year
+    # inundation events in the baseline
     def get_inundation_protection_return_period(self):
         if self.primary_fuel is not None:
             if self.primary_fuel == FuelKind.nuclear:

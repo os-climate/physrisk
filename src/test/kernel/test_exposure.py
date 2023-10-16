@@ -36,7 +36,7 @@ class TestExposureMeasures(TestWithCredentials):
             ]
         )
         request = AssetExposureRequest(assets=assets_api, scenario="ssp585", year=2050)
-        response = requester.get(request_id="get_asset_exposure", request_dict=request.dict())
+        response = requester.get(request_id="get_asset_exposure", request_dict=request.model_dump())
         result = AssetExposureResponse(**json.loads(response)).items[0]
         expected = dict((k.__name__, v) for (k, v) in expected.items())
         for key in result.exposures.keys():

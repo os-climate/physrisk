@@ -96,4 +96,6 @@ class TestImpactRequests(TestWithCredentials):
             container = Container()
             requester = container.requester()
             response = requester.get(request_id="get_asset_impact", request_dict=request_dict)
+            with open("out.json", "w") as f:
+                f.write(response)
             assert response is not None

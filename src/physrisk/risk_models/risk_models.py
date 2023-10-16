@@ -1,9 +1,9 @@
-from typing import List
+from typing import Set
 
-from physrisk.api.v1.impact_req_resp import Category, Indicator, RiskMeasureResult
-from physrisk.kernel.hazards import CoastalInundation, Hazard, HazardKind, RiverineInundation
+from physrisk.api.v1.impact_req_resp import Category, RiskScoreValue, ScoreBasedRiskMeasureDefinition
+from physrisk.kernel.hazards import CoastalInundation, RiverineInundation, Wind
 from physrisk.kernel.impact_distrib import ImpactDistrib
-from physrisk.kernel.risk import RiskMeasureCalculator
+from physrisk.kernel.risk import Measure, RiskMeasureCalculator
 
 
 class RealEstateToyRiskMeasures(RiskMeasureCalculator):
@@ -11,41 +11,75 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
 
     def __init__(self):
         self.model_summary = {"*Toy* model for real estate risk assessment."}
-        self._category_defns = {
-            Category.NODATA: "No information.",
-            Category.LOW: "Marginal impact on real estate valuation very unlikely under RCP 8.5.",
-            Category.MEDIUM: "Material marginal impact on real estate valuation unlikely under RCP 8.5.",
-            Category.HIGH: "Material marginal impact on real estate valuation possible under RCP 8.5.",
-            Category.REDFLAG: "Material marginal impact on real estate valuation likely under RCP 8.5 "
-            "with possible impact on availability of insurance.",
+        self.return_period = 100.0  # criteria based on 1 in 100-year flood or cyclone events
+        self.measure_thresholds = {
+            Category.REDFLAG: 0.3,
+            Category.HIGH: 0.1,
+            Category.MEDIUM: 0.05,
         }
+        definition = ScoreBasedRiskMeasureDefinition(
+            hazard_types=[RiverineInundation.__name__, CoastalInundation.__name__],
+            values=[
+                RiskScoreValue(
+                    value=Category.REDFLAG,
+                    label="Material marginal impact on valuation very likely.",
+                    description=self._description(Category.REDFLAG),
+                ),
+                RiskScoreValue(
+                    value=Category.HIGH,
+                    label="Material marginal impact on valuation likely.",
+                    description=self._description(Category.HIGH),
+                ),
+                RiskScoreValue(
+                    value=Category.MEDIUM,
+                    label="Marginal impact on valuation possible.",
+                    description=self._description(Category.MEDIUM),
+                ),
+                RiskScoreValue(
+                    value=Category.LOW,
+                    label="Marginal impact on valuation very unlikely.",
+                    description=self._description(Category.LOW),
+                ),
+                RiskScoreValue(value=Category.NODATA, label="No data.", description="No data."),
+            ],
+            child_measure_ids=["annual_loss_{return_period:0.0f}year"],
+        )
+        self.measure_definitions = [definition]
+        self._definition_lookup = {RiverineInundation: definition, CoastalInundation: definition}
 
-    def calc_measure(self, hazard_type: type, base_impact: ImpactDistrib, impact: ImpactDistrib) -> RiskMeasureResult:
-        if Hazard.kind(base_impact.hazard_type) == HazardKind.acute:
-            return_period = 100.0  # criterion based on 1 in 100-year flood events
-            histo_loss = base_impact.to_exceedance_curve().get_value(1.0 / return_period)
-            future_loss = impact.to_exceedance_curve().get_value(1.0 / return_period)
-            loss_increase = future_loss - histo_loss
-
-            if loss_increase > 0.3:
-                category = Category.REDFLAG
-            elif loss_increase > 0.1:
-                category = Category.HIGH
-            elif loss_increase > 0.05:
-                category = Category.MEDIUM
-            else:
-                category = Category.LOW
-
-            summary = (
-                f"Projected 1-in-{return_period:0.0f} year annual loss "
-                f"increases by {loss_increase*100:0.0f}% of asset value over historical baseline. "
+    def _description(self, category: Category):
+        return (
+            (
+                f"Projected 1-in-{self.return_period:0.0f} year annual loss "
+                f"increases by less than {self.measure_thresholds[Category.MEDIUM]*100:0.0f}% of asset value "
+                f"over historical baseline."
             )
-            cat_defn = self._category_defns[category]
-            indicator = Indicator(value=loss_increase, label=f"{loss_increase * 100:0.0f}%")
+            if category == Category.LOW
+            else (
+                f"Projected 1-in-{self.return_period:0.0f} year annual loss "
+                f"increases by at least {self.measure_thresholds[category]*100:0.0f}% of asset value over "
+                f"historical baseline."
+            )
+        )
 
-            return RiskMeasureResult(category=category, cat_defn=cat_defn, indicators=[indicator], summary=summary)
+    def calc_measure(self, hazard_type: type, base_impact: ImpactDistrib, impact: ImpactDistrib) -> Measure:
+        return_period = 100.0  # criterion based on 1 in 100-year flood events
+        histo_loss = base_impact.to_exceedance_curve().get_value(1.0 / return_period)
+        future_loss = impact.to_exceedance_curve().get_value(1.0 / return_period)
+        loss_increase = future_loss - histo_loss
+
+        if loss_increase > self.measure_thresholds[Category.REDFLAG]:
+            score = Category.REDFLAG
+        elif loss_increase > self.measure_thresholds[Category.HIGH]:
+            score = Category.HIGH
+        elif loss_increase > self.measure_thresholds[Category.MEDIUM]:
+            score = Category.MEDIUM
         else:
-            raise NotImplementedError()
+            score = Category.LOW
+        return Measure(score=score, measure_0=loss_increase, definition=self.get_definition(hazard_type))
 
-    def supported_hazards(self) -> List[type]:
-        return [RiverineInundation, CoastalInundation]
+    def get_definition(self, hazard_type: type):
+        return self._definition_lookup.get(hazard_type, None)
+
+    def supported_hazards(self) -> Set[type]:
+        return set([RiverineInundation, CoastalInundation, Wind])

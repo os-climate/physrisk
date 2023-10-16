@@ -35,43 +35,8 @@ class Category(int, Enum):
     REDFLAG = 4
 
 
-class RiskKey(BaseModel):
-    scenario_id: str
-    year: str
-
-
-class RiskMeasureKey(RiskKey):
-    risk_measure_id: str = Field("", description="Identifier of the risk measure.")
-
-
-class AssetsRiskScores(BaseModel):
-    """Risk scores for a set of assets, with risk measures used to calculate the measures.
-    A single score may be derived from multiple risk measures in principle, the measures are identified
-    by the ScoreBasedMeasureDefinition corresponding to the asset.
-    In principle multiple measures may be used to compute the score, hence 'measures_0', 'measures_1' etc,
-    although no example yet.
-    """
-
-    key: RiskKey
-    scores: List[int] = Field(None, description="Identifier for the risk measure.")
-    measures_0: List[float]
-    measures_1: Optional[List[float]]
-
-
-class AssetRiskMeasures(BaseModel):
-    """Risk measures for a set of assets."""
-
-    key: RiskMeasureKey
-    measures: List[float]
-
-
-class AssetScoreModel(BaseModel):
-    asset_model_id: List[str]
-
-
 class RiskMeasureDefinition(BaseModel):
     measure_id: str = Field(None, description="Identifier for the risk measure.")
-    measure_index: int = Field(None, description="Identifier for the risk measure.")
     label: str = Field(
         "<short description of the measure, e.g. fractional loss for 1-in-100 year event.",
         description="Value of the score.",
@@ -103,26 +68,31 @@ class ScoreBasedRiskMeasureDefinition(BaseModel, frozen=True):
         return id(self)
 
 
-class HazardRiskMeasures(BaseModel):
-    """Risk measures for one particular type of hazard"""
-
+class RiskMeasureKey(BaseModel):
     hazard_type: str
-    scores_for_assets: Optional[List[AssetsRiskScores]] = Field(
-        [], description="Risk scores for the set of assets for different scenarios and years."
-    )
-    measures_for_assets: Optional[List[AssetRiskMeasures]] = Field(
-        [], description="Risk measures for the set of assets for different scenarios and years."
-    )
-    score_measure_ids_for_assets: Optional[List[str]] = Field(
-        None, description="Identifiers of the score-based risk measures used for each asset."
-    )
+    scenario_id: str
+    year: str
+    measure_id: str
+
+
+class RiskMeasuresForAssets(BaseModel):
+    key: RiskMeasureKey
+    scores: List[int] = Field(None, description="Identifier for the risk measure.")
+    measures_0: List[float]
+    measures_1: Optional[List[float]]
+
+
+class ScoreBasedRiskMeasureSetDefinition(BaseModel):
+    measure_set_id: str
+    asset_measure_ids_for_hazard: Dict[str, List[str]]
+    score_definitions: Optional[Dict[str, ScoreBasedRiskMeasureDefinition]]
 
 
 class RiskMeasures(BaseModel):
     """Risk measures"""
 
-    hazard_risk_measures: List[HazardRiskMeasures]
-    score_definitions: Optional[Dict[str, ScoreBasedRiskMeasureDefinition]]
+    measures_for_assets: List[RiskMeasuresForAssets]
+    score_based_measure_set_defn: ScoreBasedRiskMeasureSetDefinition
     measures_definitions: Optional[List[RiskMeasureDefinition]]
 
 

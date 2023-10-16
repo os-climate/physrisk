@@ -37,11 +37,11 @@ from .api.v1.impact_req_resp import (
     AssetLevelImpact,
     Assets,
     AssetSingleImpact,
-    AssetsRiskScores,
-    HazardRiskMeasures,
-    RiskKey,
+    RiskMeasureKey,
     RiskMeasures,
+    RiskMeasuresForAssets,
     ScoreBasedRiskMeasureDefinition,
+    ScoreBasedRiskMeasureSetDefinition,
 )
 from .data.image_creator import ImageCreator
 from .data.inventory import EmbeddedInventory, Inventory
@@ -352,15 +352,15 @@ def _create_risk_measures(
         RiskMeasures: Output for writing to JSON.
     """
     hazard_types = all_hazards()
-    hazard_risk_measures = []
+    measure_set_id = "measure_set_1"
+    measures_for_assets: List[RiskMeasuresForAssets] = []
     for hazard_type in hazard_types:
-        # assets_risk_scores contains the hazard scores for each scenario and year
-        assets_risk_scores: List[AssetsRiskScores] = []
-        # if all asset measure IDs are empty
         for scenario_id in scenarios:
             for year in years:
                 # we calculate and tag results for each scenario, year and hazard
-                score_key = RiskKey(scenario_id=scenario_id, year=str(year))
+                score_key = RiskMeasureKey(
+                    hazard_type=hazard_type.__name__, scenario_id=scenario_id, year=str(year), measure_id=measure_set_id
+                )
                 scores = [-1] * len(assets)
                 measures_0 = [float("nan")] * len(assets)
                 for i, asset in enumerate(assets):
@@ -370,20 +370,17 @@ def _create_risk_measures(
                     if measure is not None:
                         scores[i] = measure.score
                         measures_0[i] = measure.measure_0
-                assets_risk_scores.append(
-                    AssetsRiskScores(key=score_key, scores=scores, measures_0=measures_0, measures_1=None)
+                measures_for_assets.append(
+                    RiskMeasuresForAssets(key=score_key, scores=scores, measures_0=measures_0, measures_1=None)
                 )
-        hazard_risk_measures.append(
-            HazardRiskMeasures(
-                hazard_type=hazard_type.__name__,
-                scores_for_assets=assets_risk_scores,
-                measures_for_assets=None,
-                score_measure_ids_for_assets=measure_ids_for_asset[hazard_type],
-            )
-        )
-    return RiskMeasures(
-        hazard_risk_measures=hazard_risk_measures,
+    score_based_measure_set_defn = ScoreBasedRiskMeasureSetDefinition(
+        measure_set_id=measure_set_id,
+        asset_measure_ids_for_hazard={k.__name__: v for k, v in measure_ids_for_asset.items()},
         score_definitions={v: k for (k, v) in definitions.items()},
+    )
+    return RiskMeasures(
+        measures_for_assets=measures_for_assets,
+        score_based_measure_set_defn=score_based_measure_set_defn,
         measures_definitions=None,
     )
 

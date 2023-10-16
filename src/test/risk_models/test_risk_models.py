@@ -5,12 +5,13 @@ from test.data.hazard_model_store import TestData
 
 import numpy as np
 
+from physrisk.api.v1.impact_req_resp import RiskMeasureKey
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import RealEstateAsset
 from physrisk.kernel.calculation import get_default_vulnerability_models
 from physrisk.kernel.hazards import CoastalInundation, RiverineInundation
-from physrisk.kernel.risk import AssetLevelRiskModel
+from physrisk.kernel.risk import AssetLevelRiskModel, MeasureKey
 from physrisk.requests import _create_risk_measures
 from physrisk.risk_models.risk_models import RealEstateToyRiskMeasures
 
@@ -51,7 +52,7 @@ class TestRiskModels(unittest.TestCase):
 
         assets = [
             RealEstateAsset(TestData.latitudes[0], TestData.longitudes[0], location="Asia", type="Buildings/Industrial")
-            for i in range(100)
+            for i in range(2)
         ]
 
         model = AssetLevelRiskModel(
@@ -60,9 +61,22 @@ class TestRiskModels(unittest.TestCase):
         measure_ids_for_asset, definitions = model.populate_measure_definitions(assets)
         _, measures = model.calculate_risk_measures(assets, prosp_scens=scenarios, years=years)
 
+        # how to get a score using the MeasureKey
+        measure = measures[MeasureKey(assets[0], scenarios[0], years[0], RiverineInundation)]
+        score = measure.score
+        measure_0 = measure.measure_0
+
+        # packing up the risk measures, e.g. for JSON transmission:
         risk_measures = _create_risk_measures(measures, measure_ids_for_asset, definitions, assets, scenarios, years)
-
-        #with open("test.json", "w") as f:
-        #    f.write(risk_measures.model_dump_json())
-
-        # print(measures[MeasureKey(assets[0], scenarios[0], years[0], RiverineInundation)])
+        # we still have a key, but no asset:
+        key = RiskMeasureKey(
+            hazard_type="RiverineInundation",
+            scenario_id=scenarios[0],
+            year=str(years[0]),
+            measure_id=risk_measures.score_based_measure_set_defn.measure_set_id,
+        )
+        item = next(m for m in risk_measures.measures_for_assets if m.key == key)
+        score2 = item.scores[0]
+        measure_0_2 = item.measures_0[0]
+        assert score == score2
+        assert measure_0 == measure_0_2

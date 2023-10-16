@@ -4,7 +4,7 @@ from typing import Callable, Dict, Iterable, List, Optional
 
 import s3fs
 from fsspec import AbstractFileSystem
-from pydantic import BaseModel, parse_obj_as
+from pydantic import BaseModel, TypeAdapter
 
 from physrisk.api.v1.hazard_data import HazardResource
 
@@ -48,7 +48,7 @@ class InventoryReader:
         if not self._fs.exists(self._full_path(path)):
             return []
         json_str = self.read_json(path)
-        models = parse_obj_as(HazardModels, json.loads(json_str)).resources
+        models = TypeAdapter(HazardModels).validate_python(json.loads(json_str)).resources
         return models
 
     def read_description_markdown(self, paths: List[str]) -> Dict[str, str]:
@@ -73,7 +73,7 @@ class InventoryReader:
         for model in hazard_models:
             combined[model.key()] = model
         models = HazardModels(resources=list(combined.values()))
-        json_str = json.dumps(models.dict())
+        json_str = json.dumps(models.model_dump())
         with self._fs.open(self._full_path(path), "w") as f:
             f.write(json_str)
 

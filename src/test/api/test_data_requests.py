@@ -1,4 +1,3 @@
-import json
 import unittest
 from test.api.container import TestContainer
 from test.base_test import TestWithCredentials
@@ -131,6 +130,13 @@ class TestDataRequests(TestWithCredentials):
         container = Container()
         requester = container.requester()
 
+        import json
+        from zipfile import ZipFile
+
+        with ZipFile("src/test/api/test_lat_lons.json.zip") as z:
+            with z.open("test_lat_lons.json") as f:
+                data = json.loads(f.read())
+
         request1 = {
             "items": [
                 {
@@ -138,6 +144,20 @@ class TestDataRequests(TestWithCredentials):
                     "event_type": "ChronicHeat",
                     "longitudes": TestData.longitudes,
                     "latitudes": TestData.latitudes,
+                    "year": 2030,
+                    "scenario": "ssp585",
+                    "indicator_id": "mean_work_loss/high",
+                }
+            ],
+        }
+
+        request1 = {
+            "items": [
+                {
+                    "request_item_id": "test_inundation",
+                    "event_type": "ChronicHeat",
+                    "longitudes": data["longitudes"],
+                    "latitudes": data["latitudes"],
                     "year": 2030,
                     "scenario": "ssp585",
                     "indicator_id": "mean_work_loss/high",

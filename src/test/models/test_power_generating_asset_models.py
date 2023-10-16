@@ -133,7 +133,11 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         assets = [
             ThermalPowerGeneratingAsset(latitude, longitude, type=primary_fuel, location=continent, capacity=capacity)
             for latitude, longitude, capacity, primary_fuel, continent in zip(
-                latitudes, longitudes, capacities, primary_fuels, continents
+                latitudes,
+                longitudes,
+                capacities,
+                primary_fuels,
+                continents,
             )
         ]
 
@@ -151,7 +155,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
                 "location": getattr(result.asset, "location") if hasattr(result.asset, "location") else None,
                 "latitude": result.asset.latitude,
                 "longitude": result.asset.longitude,
-                "impact_mean": results[key].impact.mean_impact(),
+                "impact_mean": results[key].impact.mean(),
                 "hazard_type": results[key].impact.hazard_type.__name__,
             }
             for result, key in zip(results, results.keys())

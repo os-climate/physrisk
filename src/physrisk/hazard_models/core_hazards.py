@@ -17,11 +17,14 @@ class ResourceSubset:
     def match(self, hint: HazardDataHint):
         return next(r for r in self.resources if r.path == hint.path)
 
-    def with_model_gcm(self, gcm):
+    def with_group_id(self, group_id: str):
+        return ResourceSubset(r for r in self.resources if r.group_id == group_id)
+
+    def with_model_gcm(self, gcm: str):
         return ResourceSubset(r for r in self.resources if r.indicator_model_gcm == gcm)
 
-    def with_model_id(self, gcm):
-        return ResourceSubset(r for r in self.resources if r.indicator_model_id == gcm)
+    def with_model_id(self, model_id: str):
+        return ResourceSubset(r for r in self.resources if r.indicator_model_id == model_id)
 
 
 class ResourceSelector(Protocol):
@@ -58,7 +61,7 @@ class InventorySourcePaths:
             )
         return source_paths
 
-    def _add_selector(self, hazard_type: type, indicator_id: str, selector: ResourceSelector):
+    def add_selector(self, hazard_type: type, indicator_id: str, selector: ResourceSelector):
         self._selectors[ResourceSelectorKey(hazard_type, indicator_id)] = selector
 
     def _get_resource_source_path(self, hazard_type: str):
@@ -90,10 +93,10 @@ class CoreInventorySourcePaths(InventorySourcePaths):
     def __init__(self, inventory: Inventory):
         super().__init__(inventory)
         for indicator_id in ["mean_work_loss/low", "mean_work_loss/medium", "mean_work_loss/high"]:
-            self._add_selector(ChronicHeat, indicator_id, self._select_chronic_heat)
-        self._add_selector(ChronicHeat, "mean/degree/days/above/32c", self._select_chronic_heat)
-        self._add_selector(RiverineInundation, "flood_depth", self._select_riverine_inundation)
-        self._add_selector(CoastalInundation, "flood_depth", self._select_coastal_inundation)
+            self.add_selector(ChronicHeat, indicator_id, self._select_chronic_heat)
+        self.add_selector(ChronicHeat, "mean/degree/days/above/32c", self._select_chronic_heat)
+        self.add_selector(RiverineInundation, "flood_depth", self._select_riverine_inundation)
+        self.add_selector(CoastalInundation, "flood_depth", self._select_coastal_inundation)
 
     def resources_with(self, *, hazard_type: type, indicator_id: str):
         return ResourceSubset(self._inventory.resources_by_type_id[(hazard_type.__name__, indicator_id)])
@@ -144,6 +147,10 @@ def cmip6_scenario_to_rcp(scenario: str):
         if scenario not in ["rcp2p6", "rcp4p5", "rcp8p5", "historical"]:
             raise ValueError(f"unexpected scenario {scenario}")
         return scenario
+
+
+def get_default_source_path_provider(inventory: Inventory = EmbeddedInventory()):
+    return CoreInventorySourcePaths(inventory)
 
 
 def get_default_source_paths(inventory: Inventory = EmbeddedInventory()):

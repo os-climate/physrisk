@@ -29,7 +29,10 @@ def get_default_vulnerability_models() -> Dict[type, Sequence[VulnerabilityModel
     """Get default exposure/vulnerability models for different asset types."""
     return {
         PowerGeneratingAsset: [pgam.InundationModel()],
-        RealEstateAsset: [RealEstateCoastalInundationModel(), RealEstateRiverineInundationModel()],
+        RealEstateAsset: [
+            RealEstateCoastalInundationModel(),
+            RealEstateRiverineInundationModel(),
+        ],
         IndustrialActivity: [ChronicHeatGZNModel()],
         ThermalPowerGeneratingAsset: [
             ThermalPowerGenerationCoastalInundationModel(),

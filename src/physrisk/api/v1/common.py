@@ -33,8 +33,8 @@ class Asset(BaseModel):
     asset_class: str = Field(
         description="name of asset class; corresponds to physrisk class names, e.g. PowerGeneratingAsset"
     )
-    type: Optional[str] = Field(description="Type of the asset <level_1>/<level_2>/<level_3>")
-    location: Optional[str]
+    type: Optional[str] = Field(None, description="Type of the asset <level_1>/<level_2>/<level_3>")
+    location: Optional[str] = None
     latitude: float = Field(description="Latitude in degrees")
     longitude: float = Field(description="Longitude in degrees")
 

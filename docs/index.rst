@@ -8,7 +8,7 @@ Please, visit the `official webpage! <https://os-climate.org/physical-risk-resil
 .. _cards-clickable:
 
 ..
-  list with all the possible icons for the grid 
+  list with all the possible icons for the grid
   https://sphinx-design.readthedocs.io/en/latest/badges_buttons.html
 
 .. raw:: html

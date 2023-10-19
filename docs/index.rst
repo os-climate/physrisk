@@ -1,19 +1,82 @@
-.. project-template documentation master file, created by
-   sphinx-quickstart.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+Welcome to PhysicalRisk's documentation!
+========================================
 
-project-template documentation!
-==============================================
+This website contains the documentation related to the Physical Risk engine of OS-Climate.
 
-Contents:
+Please, visit the `official webpage! <https://os-climate.org/physical-risk-resilience/>`_
+
+.. _cards-clickable:
+
+..
+  list with all the possible icons for the grid 
+  https://sphinx-design.readthedocs.io/en/latest/badges_buttons.html
+
+.. raw:: html
+
+   <style>
+       .grid {
+           display: grid;
+           grid-template-columns: repeat(2, 1fr);
+           grid-template-rows: repeat(4, 1fr);
+           grid-gap: 10px; /* Ajusta el valor según el espaciado deseado */
+           gap: 100px 100px;
+       }
+   </style>
+
+
+.. grid:: 2
+    :gutter: 1
+
+    .. grid-item-card::  Getting started
+      :link: getting-started.html
+      :text-align: center
+
+      :octicon:`location;5em;sd-text-info`
+      ^^^
+
+    .. grid-item-card::  Code documentation
+      :link: physrisk.html
+      :text-align: center
+
+      :octicon:`code;5em;sd-text-info`
+      ^^^
+
+.. grid:: 2
+    :gutter: 1
+
+    .. grid-item-card::  Commands
+      :link: commands.html
+      :text-align: center
+
+      :octicon:`terminal;5em;sd-text-info`
+      ^^^
+
+    .. grid-item-card::  Onboarding
+      :link: handbook/onboarding.html
+      :text-align: center
+
+      :octicon:`upload;5em;sd-text-info`
+      ^^^
+      See `Contributing <https://github.com/os-climate/physrisk/blob/main/CONTRIBUTING.md>`_
+
+
+
+Physical Risk and Resilience
+=============================
+
+This is the documentation of the Physical Risk and Resilience project of OS-Climate!
+
+
+Contents
+==========
 
 .. toctree::
    :maxdepth: 2
 
    getting-started
+   physrisk
    commands
-
+   handbook/onboarding
 
 
 Indices and tables

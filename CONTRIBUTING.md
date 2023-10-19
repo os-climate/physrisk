@@ -63,7 +63,7 @@ to allow running of tests within the IDE.
 ## Releasing
 Actions are configured to release to PyPI on pushing a tag. In order to do this:
 - Update VERSION
-- Create new annotated tag and push 
+- Create new annotated tag and push
 ```
 git tag -a v1.0.0 -m "v1.0.0"
 git push --follow-tags

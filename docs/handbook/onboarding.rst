@@ -80,6 +80,7 @@ In some cases, even if a full vulnerability matrix is unavailable, an estimate o
 .. image:: onboarding/damage_with_uncertainty.png
   :width: 500
 
+=======
 source: Huizinga et al. 'Global flood depth-damage functions: methodology and the database with guidelines'
 
 In such cases :code:`VulnerabilityModel` can be used to specify the close-formed conditional probability distribution to be used for a given intensity level. The cumulative probability density function is expected, and is provided via an :code:`ImpactCurve` by implementing method :code:`get_impact_curve`.

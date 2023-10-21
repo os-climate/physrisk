@@ -104,7 +104,7 @@ class Requester:
             str(PosixPath(model.path).with_name(model.map.path))
             if len(PosixPath(model.map.path).parts) == 1
             else model.map.path
-        ).format(scenario=request.scenarioId, year=request.year)
+        ).format(scenario=request.scenario_id, year=request.year)
         colormap = request.colormap if request.colormap is not None else model.map.colormap.name
         creator = ImageCreator(zarr_reader)  # store=ImageCreator.test_store(path))
         return creator.convert(

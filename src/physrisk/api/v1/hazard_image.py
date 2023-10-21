@@ -18,7 +18,7 @@ class Tile(NamedTuple):
 
 class HazardImageRequest(BaseHazardRequest):
     resource: str = Field(description="Full path to the array; formed by '{path}/{id}'.")
-    scenarioId: str
+    scenario_id: str
     year: int
     colormap: Optional[str] = Field("heating")
     format: Optional[str] = Field("PNG")

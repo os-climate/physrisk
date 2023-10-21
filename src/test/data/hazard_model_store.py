@@ -54,8 +54,8 @@ def mock_hazard_model_store_heat(longitudes, latitudes):
     return mock_hazard_model_store_for_parameter_sets(longitudes, latitudes, degree_day_heat_parameter_set())
 
 
-def mock_hazard_model_store_heat_WBGT(longitudes, latitudes):
-    return mock_hazard_model_store_for_parameter_sets(longitudes, latitudes, WBGT_GZN_Joint_parameter_set())
+def mock_hazard_model_store_heat_wbgt(longitudes, latitudes):
+    return mock_hazard_model_store_for_parameter_sets(longitudes, latitudes, wbgt_gzn_Joint_parameter_set())
 
 
 def mock_hazard_model_store_inundation(longitudes, latitudes, curve):
@@ -147,7 +147,7 @@ def degree_day_heat_parameter_set():
     return dict(zip(paths, parameters))
 
 
-def WBGT_GZN_Joint_parameter_set():
+def wbgt_gzn_Joint_parameter_set():
     paths = []
     # Getting paths for both hazards.
     for model, scenario, year in [

@@ -139,9 +139,9 @@ class ZarrReader:
             (no. coordinate pairs, no. return periods).
             return_periods: return periods in years.
         """
-        KILOMETRES_PER_DEGREE = 110.574
+        kilometres_per_degree = 110.574
         n_data = len(latitudes)
-        delta_deg = delta_km / KILOMETRES_PER_DEGREE
+        delta_deg = delta_km / kilometres_per_degree
         grid = np.linspace(-0.5, 0.5, n_grid)
         lats_grid_baseline = np.broadcast_to(latitudes.reshape((n_data, 1, 1)), (len(latitudes), n_grid, n_grid))
         lons_grid_baseline = np.broadcast_to(longitudes.reshape((n_data, 1, 1)), (len(longitudes), n_grid, n_grid))
@@ -177,7 +177,7 @@ class ZarrReader:
 
         data = z.get_coordinate_selection((iz, iy, ix))  # type: ignore # index, row, column
 
-        NAN_VALUE = -9999.0
+        nan_value = -9999.0
 
         if interpolation == "linear":
             xf = image_coords[0, :][..., None] - icx  # type: ignore
@@ -187,28 +187,28 @@ class ZarrReader:
             w2 = (1 - yf) * xf
             w3 = yf * xf
             w = np.transpose(np.array([w0, w1, w2, w3]), (1, 0, 2))
-            mask = 1 - np.isnan(np.where(data == NAN_VALUE, np.nan, data))
+            mask = 1 - np.isnan(np.where(data == nan_value, np.nan, data))
             w_good = w * mask
             w_good_sum = np.transpose(
                 np.sum(w_good, axis=1).reshape(tuple([1]) + np.sum(w_good, axis=1).shape), axes=(1, 0, 2)
             )
             w_used = np.divide(w_good, np.where(w_good_sum == 0.0, np.nan, w_good_sum))
-            return np.nan_to_num(np.sum(w_used * data, axis=1), nan=NAN_VALUE)
+            return np.nan_to_num(np.sum(w_used * data, axis=1), nan=nan_value)
 
         elif interpolation == "max":
-            data = np.where(data == NAN_VALUE, -np.inf, data)
+            data = np.where(data == nan_value, -np.inf, data)
             return np.nan_to_num(
                 np.maximum.reduce([data[:, 0, :], data[:, 1, :], data[:, 2, :], data[:, 3, :]]),
-                nan=NAN_VALUE,
-                neginf=NAN_VALUE,
+                nan=nan_value,
+                neginf=nan_value,
             )
 
         elif interpolation == "min":
-            data = np.where(data == NAN_VALUE, np.inf, data)
+            data = np.where(data == nan_value, np.inf, data)
             return np.nan_to_num(
                 np.minimum.reduce([data[:, 0, :], data[:, 1, :], data[:, 2, :], data[:, 3, :]]),
-                nan=NAN_VALUE,
-                posinf=NAN_VALUE,
+                nan=nan_value,
+                posinf=nan_value,
             )
 
         else:

@@ -156,7 +156,7 @@ def calculate_exposures(
     assets: List[Asset], hazard_model: HazardModel, exposure_measure: ExposureMeasure, scenario: str, year: int
 ) -> Dict[Asset, AssetExposureResult]:
     requester_assets: Dict[DataRequester, List[Asset]] = {exposure_measure: assets}
-    assetRequests, responses = _request_consolidated(hazard_model, requester_assets, scenario, year)
+    asset_requests, responses = _request_consolidated(hazard_model, requester_assets, scenario, year)
 
     logging.info(
         "Applying exposure measure {0} to {1} assets of type {2}".format(
@@ -166,7 +166,7 @@ def calculate_exposures(
     result: Dict[Asset, AssetExposureResult] = {}
 
     for asset in assets:
-        requests = assetRequests[(exposure_measure, asset)]  # (ordered) requests for a given asset
+        requests = asset_requests[(exposure_measure, asset)]  # (ordered) requests for a given asset
         hazard_data = [responses[req] for req in get_iterable(requests)]
         result[asset] = AssetExposureResult(hazard_categories=exposure_measure.get_exposures(asset, hazard_data))
 

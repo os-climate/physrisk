@@ -15,7 +15,7 @@ TAsset = typing.TypeVar("TAsset", contravariant=True)
 
 
 class SupportsEventImpact(typing.Protocol[TAsset]):
-    def get_impact(self, Asset: TAsset, event_data: HazardEventDataResponse) -> MultivariateDistribution:
+    def get_impact(self, asset: TAsset, event_data: HazardEventDataResponse) -> MultivariateDistribution:
         pass
 
 

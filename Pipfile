@@ -23,6 +23,10 @@ flake8 = "*"
 mypy = "*"
 pre-commit = "*"
 tox = "*"
+sphinx-toolbox = "*"
+sphinx-design = "*"
+nbsphinx = "*"
+pydata-sphinx-theme = "*"
 
 [requires]
 python_version = "3.8"

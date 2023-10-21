@@ -32,7 +32,7 @@ Hazard indicator data is freely available. Members of the project are able to ac
 Hazard indicator data can be downloaded or copied from the 'os-climate-public-data' bucket. A list of the keys to copy is available from
 https://os-climate-public-data.s3.amazonaws.com/hazard/keys.txt
 
-And inventory of the hazard data is maintained [here](https://github.com/os-climate/hazard/blob/main/src/inventories/hazard/inventory.json) (this is used by the physrisk library itself). The [UI hazard viewer]((https://physrisk-ui-sandbox.apps.odh-cl1.apps.os-climate.org)) is a convenient way to browse data sets. 
+And inventory of the hazard data is maintained [here](https://github.com/os-climate/hazard/blob/main/src/inventories/hazard/inventory.json) (this is used by the physrisk library itself). The [UI hazard viewer](https://physrisk-ui-sandbox.apps.odh-cl1.apps.os-climate.org) is a convenient way to browse data sets. 
 
 Access to hazard event data requires setting of environment variables specifying the S3 Bucket, for example:
 

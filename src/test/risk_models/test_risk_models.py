@@ -1,7 +1,7 @@
 """ Test asset impact calculations."""
 import test.data.hazard_model_store as hms
 import unittest
-from test.data.hazard_model_store import TestData
+from test.data.hazard_model_store import TestData, ZarrStoreMocker
 
 import numpy as np
 
@@ -10,7 +10,7 @@ from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import RealEstateAsset
 from physrisk.kernel.calculation import get_default_vulnerability_models
-from physrisk.kernel.hazards import CoastalInundation, RiverineInundation
+from physrisk.kernel.hazards import CoastalInundation, RiverineInundation, Wind
 from physrisk.kernel.risk import AssetLevelRiskModel, MeasureKey
 from physrisk.requests import _create_risk_measures
 from physrisk.risk_models.risk_models import RealEstateToyRiskMeasures
@@ -27,23 +27,25 @@ class TestRiskModels(unittest.TestCase):
 
         def sp_coastal(scenario, year):
             return source_paths[CoastalInundation](indicator_id="flood_depth", scenario=scenario, year=year)
+        
+        def sp_wind(scenario, year):
+            return source_paths[Wind](indicator_id="max_speed", scenario=scenario, year=year)
 
-        store, root = hms.zarr_memory_store()
+        mocker = ZarrStoreMocker() 
         return_periods = hms.inundation_return_periods()
-        shape, transform = hms.shape_transform_21600_43200(return_periods=return_periods)
+        flood_histo_curve = np.array([0.0596, 0.333, 0.505, 0.715, 0.864, 1.003, 1.149, 1.163, 1.163])
+        flood_projected_curve = np.array([0.0596, 0.333, 0.605, 0.915, 1.164, 1.503, 1.649, 1.763, 1.963])
 
-        histo_curve = np.array([0.0596, 0.333, 0.505, 0.715, 0.864, 1.003, 1.149, 1.163, 1.163])
-        projected_curve = np.array([0.0596, 0.333, 0.605, 0.915, 1.164, 1.503, 1.649, 1.763, 1.963])
         for path in [sp_riverine("historical", 1980), sp_coastal("historical", 1980)]:
-            hms.add_curves(
-                root, TestData.longitudes, TestData.latitudes, path, shape, histo_curve, return_periods, transform
-            )
+            mocker.add_curves_global(path, TestData.longitudes, TestData.latitudes, return_periods, flood_histo_curve)
+    
         for path in [sp_riverine("rcp8p5", 2050), sp_coastal("rcp8p5", 2050)]:
-            hms.add_curves(
-                root, TestData.longitudes, TestData.latitudes, path, shape, projected_curve, return_periods, transform
-            )
+            mocker.add_curves_global(path, TestData.longitudes, TestData.latitudes, return_periods, flood_projected_curve)
 
-        hazard_model = ZarrHazardModel(source_paths=get_default_source_paths(), store=store)
+        mocker.add_curves_global(sp_wind("historical", -1), TestData.longitudes, TestData.latitudes, return_periods, TestData.wind_intensities_1)
+        mocker.add_curves_global(sp_wind("rcp8p5", -1), TestData.longitudes, TestData.latitudes, return_periods, TestData.wind_intensities_2)
+
+        hazard_model = ZarrHazardModel(source_paths=get_default_source_paths(), store=mocker.store)
 
         assets = [
             RealEstateAsset(lat, lon, location="Asia", type="Buildings/Industrial")

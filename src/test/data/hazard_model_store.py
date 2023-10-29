@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -25,23 +25,41 @@ class TestData:
     wind_intensities_2 = [37.472500, 44.993752, 49.049999, 51.957500, 53.796249, 55.478748, 56.567501, 57.572498, 58.661251, 59.448750, 63.724998, 65.940002, 66.842499, 67.614998, 68.110001, 68.547501, 68.807503, 69.529999, 70.932503] # noqa
     # fmt: on
 
+
 class ZarrStoreMocker:
     def __init__(self):
         self.store, self._root = zarr_memory_store()
-    
-    def add_curves_global(self, array_path: str, longitudes: List[float], latitudes: List[float],
-                          return_periods: npt.ArrayLike, intensities: npt.ArrayLike, width: int = 43200, height: int = 21600):
+
+    def add_curves_global(
+        self,
+        array_path: str,
+        longitudes: List[float],
+        latitudes: List[float],
+        return_periods: Union[List[float], npt.NDArray],
+        intensities: Union[List[float], npt.NDArray],
+        width: int = 43200,
+        height: int = 21600,
+    ):
         crs = "epsg:4326"
         crs, shape, trans = self._crs_shape_transform_global(return_periods=return_periods, width=width, height=height)
         self._add_curves(array_path, longitudes, latitudes, crs, shape, trans, return_periods, intensities)
-    
-    def _crs_shape_transform_global(self, width: int = 43200, height: int = 21600, return_periods: List[float] = [0.0]):
+
+    def _crs_shape_transform_global(
+        self, width: int = 43200, height: int = 21600, return_periods: Union[List[float], npt.NDArray] = [0.0]
+    ):
         return self._crs_shape_transform(width, height, return_periods)
 
-    def _add_curves(self, array_path: str, longitudes: List[float], latitudes: List[float],
-                crs: str, shape: Tuple[int, int, int], trans: List[float],
-                return_periods: npt.ArrayLike, intensities: npt.ArrayLike):
-        
+    def _add_curves(
+        self,
+        array_path: str,
+        longitudes: List[float],
+        latitudes: List[float],
+        crs: str,
+        shape: Tuple[int, int, int],
+        trans: List[float],
+        return_periods: Union[List[float], npt.NDArray],
+        intensities: Union[List[float], npt.NDArray],
+    ):
         z = self._root.create_dataset(  # type: ignore
             array_path, shape=(shape[0], shape[1], shape[2]), chunks=(shape[0], 1000, 1000), dtype="f4"
         )
@@ -57,12 +75,14 @@ class ZarrStoreMocker:
         for j in range(len(longitudes)):
             z[:, image_coords[1, j], image_coords[0, j]] = intensities
 
-    def _crs_shape_transform(self, width: int, height: int, return_periods: List[float] = [0.0]):
+    def _crs_shape_transform(self, width: int, height: int, return_periods: Union[List[float], npt.NDArray] = [0.0]):
         t = [360.0 / width, 0.0, -180.0, 0.0, -180.0 / height, 90.0, 0.0, 0.0, 1.0]
-        return "epsg:4326", (len(return_periods), height, width), t 
+        return "epsg:4326", (len(return_periods), height, width), t
 
 
-def shape_transform_21600_43200(width: int = 43200, height: int = 21600, return_periods: List[float] = [0.0]):
+def shape_transform_21600_43200(
+    width: int = 43200, height: int = 21600, return_periods: Union[List[float], npt.NDArray] = [0.0]
+):
     t = [360.0 / width, 0.0, -180.0, 0.0, -180.0 / height, 90.0, 0.0, 0.0, 1.0]
     return (len(return_periods), height, width), t
 
@@ -97,8 +117,7 @@ def add_curves(
     frac_image_coords = mat @ coords
     image_coords = np.floor(frac_image_coords).astype(int)
     for j in range(len(longitudes)):
-        z[:, image_coords[1, j], image_coords[0, j]] = curve 
-
+        z[:, image_coords[1, j], image_coords[0, j]] = curve
 
 
 def get_mock_hazard_model_store_single_curve():

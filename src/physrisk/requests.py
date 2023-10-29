@@ -18,6 +18,7 @@ from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.exposure import JupterExposureMeasure, calculate_exposures
 from physrisk.kernel.hazards import all_hazards
 from physrisk.kernel.risk import AssetLevelRiskModel, BatchId, Measure, MeasureKey
+from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
 
 from .api.v1.hazard_data import (
     HazardAvailabilityRequest,
@@ -29,6 +30,7 @@ from .api.v1.hazard_data import (
     HazardDescriptionResponse,
     HazardResource,
     IntensityCurve,
+    Scenario,
 )
 from .api.v1.impact_req_resp import (
     AcuteHazardCalculationDetails,
@@ -264,14 +266,18 @@ def _get_asset_exposures(request: AssetExposureRequest, hazard_model: HazardMode
     )
 
 
-def _get_asset_impacts(request: AssetImpactRequest, hazard_model: HazardModel):
-    vulnerability_models = calc.get_default_vulnerability_models()
+def _get_asset_impacts(
+    request: AssetImpactRequest,
+    hazard_model: HazardModel,
+    vulnerability_models: Optional[Dict[Type[Asset], Sequence[VulnerabilityModelBase]]] = None,
+):
+    vulnerability_models = (
+        calc.get_default_vulnerability_models() if vulnerability_models is None else vulnerability_models
+    )
 
     # we keep API definition of asset separate from internal Asset class; convert by reflection
     # based on asset_class:
     assets = create_assets(request.assets)
-
-    vulnerability_models = calc.get_default_vulnerability_models()
     measure_calcs = calc.get_default_risk_measure_calculators()
     risk_model = AssetLevelRiskModel(hazard_model, vulnerability_models, measure_calcs)
 
@@ -351,8 +357,9 @@ def _create_risk_measures(
     Returns:
         RiskMeasures: Output for writing to JSON.
     """
+    nan_value = -9999.0  # Nan not part of JSON spec
     hazard_types = all_hazards()
-    measure_set_id = "measure_set_1"
+    measure_set_id = "measure_set_0"
     measures_for_assets: List[RiskMeasuresForAssets] = []
     for hazard_type in hazard_types:
         for scenario_id in scenarios:
@@ -362,7 +369,8 @@ def _create_risk_measures(
                     hazard_type=hazard_type.__name__, scenario_id=scenario_id, year=str(year), measure_id=measure_set_id
                 )
                 scores = [-1] * len(assets)
-                measures_0 = [float("nan")] * len(assets)
+                # measures_0 = [float("nan")] * len(assets)
+                measures_0 = [nan_value] * len(assets)
                 for i, asset in enumerate(assets):
                     # look up result using the MeasureKey:
                     measure_key = MeasureKey(asset=asset, prosp_scen=scenario_id, year=year, hazard_type=hazard_type)
@@ -382,6 +390,8 @@ def _create_risk_measures(
         measures_for_assets=measures_for_assets,
         score_based_measure_set_defn=score_based_measure_set_defn,
         measures_definitions=None,
+        scenarios=[Scenario(id=scenario, years=list(years)) for scenario in scenarios],
+        asset_ids=[f"asset_{i}" for i, _ in enumerate(assets)],
     )
 
 

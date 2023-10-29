@@ -7,6 +7,7 @@ from typing import Dict, Iterable, List, Tuple
 
 import numpy as np
 
+from physrisk.data.hazard_data_provider import HazardDataHint
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.hazard_model import (
     HazardDataRequest,
@@ -65,6 +66,8 @@ class JupterExposureMeasure(ExposureMeasure):
                 scenario=scenario,
                 year=year,
                 indicator_id=indicator_id,
+                # select specific model for wind for consistency with thresholds
+                hint=HazardDataHint(path="wind/jupiter/v1/max_1min_{scenario}_{year}") if hazard_type == Wind else None,
             )
             for (hazard_type, indicator_id) in self.exposure_bins.keys()
         ]

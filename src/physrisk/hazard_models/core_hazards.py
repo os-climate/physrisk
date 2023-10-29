@@ -4,18 +4,25 @@ from physrisk.api.v1.hazard_data import HazardResource
 from physrisk.data.hazard_data_provider import HazardDataHint, SourcePath
 from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.kernel import hazards
-from physrisk.kernel.hazards import ChronicHeat, CoastalInundation, RiverineInundation
+from physrisk.kernel.hazards import ChronicHeat, CoastalInundation, RiverineInundation, Wind
 
 
 class ResourceSubset:
     def __init__(self, resources: Iterable[HazardResource]):
-        self.resources = resources
+        self.resources = list(resources)
+
+    def any(self):
+        return any(self.resources)
 
     def first(self):
         return next(r for r in self.resources)
 
     def match(self, hint: HazardDataHint):
         return next(r for r in self.resources if r.path == hint.path)
+
+    def prefer_group_id(self, group_id: str):
+        with_condition = self.with_group_id(group_id)
+        return with_condition if with_condition.any() else self
 
     def with_group_id(self, group_id: str):
         return ResourceSubset(r for r in self.resources if r.group_id == group_id)
@@ -97,6 +104,7 @@ class CoreInventorySourcePaths(InventorySourcePaths):
         self.add_selector(ChronicHeat, "mean/degree/days/above/32c", self._select_chronic_heat)
         self.add_selector(RiverineInundation, "flood_depth", self._select_riverine_inundation)
         self.add_selector(CoastalInundation, "flood_depth", self._select_coastal_inundation)
+        self.add_selector(Wind, "max_speed", self._select_wind)
 
     def resources_with(self, *, hazard_type: type, indicator_id: str):
         return ResourceSubset(self._inventory.resources_by_type_id[(hazard_type.__name__, indicator_id)])
@@ -126,6 +134,10 @@ class CoreInventorySourcePaths(InventorySourcePaths):
             if scenario == "historical"
             else candidates.with_model_gcm("MIROC-ESM-CHEM").first()
         )
+
+    @staticmethod
+    def _select_wind(candidates: ResourceSubset, scenario: str, year: int, hint: Optional[HazardDataHint] = None):
+        return candidates.prefer_group_id("iris_osc").first()
 
 
 def cmip6_scenario_to_rcp(scenario: str):

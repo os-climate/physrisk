@@ -110,8 +110,6 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
 
     @unittest.skip("example, not test")
     def test_thermal_power_generation_portfolio(self):
-        # cache_folder = r"<cache folder>"
-
         cache_folder = os.environ.get("CREDENTIAL_DOTENV_DIR", os.getcwd())
 
         asset_list = pd.read_csv(os.path.join(cache_folder, "wri-all.csv"))
@@ -119,7 +117,10 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
 
         longitudes = np.array(filtered["longitude"])
         latitudes = np.array(filtered["latitude"])
-        primary_fuels = np.array([primary_fuel.lower().replace(" ", "_") for primary_fuel in filtered["primary_fuel"]])
+
+        primary_fuels = np.array(
+            [primary_fuel.replace(" and ", "And").replace(" ", "") for primary_fuel in filtered["primary_fuel"]]
+        )
 
         # Capacity describes a maximum electric power rate.
         # Generation describes the actual electricity output of the plant over a period of time.

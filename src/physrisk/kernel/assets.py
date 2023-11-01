@@ -6,37 +6,37 @@ from typing import Optional
 # 'primary_fuel' entries in Global Power Plant Database v1.3.0 (World Resources Institute)
 # https://wri-dataportal-prod.s3.amazonaws.com/manual/global_power_plant_database_v_1_3
 class FuelKind(Enum):
-    biomass = 1
-    coal = 2
-    cogeneration = 3
-    gas = 4
-    geothermal = 5
-    hydro = 6
-    nuclear = 7
-    oil = 8
-    other = 9
-    petcoke = 10
-    solar = 11
-    storage = 12
-    waste = 13
-    wave_and_tidal = 14
-    wind = 15
+    Biomass = 1
+    Coal = 2
+    Cogeneration = 3
+    Gas = 4
+    Geothermal = 5
+    Hydro = 6
+    Nuclear = 7
+    Oil = 8
+    Other = 9
+    Petcoke = 10
+    Solar = 11
+    Storage = 12
+    Waste = 13
+    WaveAndTidal = 14
+    Wind = 15
 
 
 class CoolingKind(Enum):
     # Air Temperature, Inundation
-    dry = 1
+    Dry = 1
 
     # Drought, Inundation, Water Temperature, Water Stress
-    once_through = 2
+    OnceThrough = 2
 
     # Drought, Inundation, Water Temperature, Water Stress (TO CLARIFY), Wet-Bulb Temperature
-    recirculating = 3
+    Recirculating = 3
 
 
 class TurbineKind(Enum):
-    gas = 1
-    steam = 2
+    Gas = 1
+    Steam = 2
 
 
 class Asset:
@@ -77,7 +77,7 @@ class PowerGeneratingAsset(Asset):
             self.primary_fuel: Optional[FuelKind] = None
             archetypes = type.split("/")
             if 0 < len(archetypes):
-                self.primary_fuel = FuelKind[archetypes[0].lower()]
+                self.primary_fuel = FuelKind[archetypes[0]]
 
 
 class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
@@ -98,17 +98,17 @@ class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
         if type is not None:
             archetypes = type.split("/")
             if 1 < len(archetypes):
-                self.turbine = TurbineKind[archetypes[1].lower()]
+                self.turbine = TurbineKind[archetypes[1]]
                 if 2 < len(archetypes):
-                    assert self.turbine == TurbineKind.steam
-                    self.cooling = CoolingKind[archetypes[2].lower()]
+                    assert self.turbine == TurbineKind.Steam
+                    self.cooling = CoolingKind[archetypes[2]]
 
     # Designed to be protected against 250-year inundation events in the baseline
     # except for "nuclear" which is designed to be protected against 10,000-year
     # inundation events in the baseline
     def get_inundation_protection_return_period(self):
         if self.primary_fuel is not None:
-            if self.primary_fuel == FuelKind.nuclear:
+            if self.primary_fuel == FuelKind.Nuclear:
                 return 10000.0
         return 250.0
 

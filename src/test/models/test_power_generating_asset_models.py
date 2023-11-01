@@ -158,7 +158,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
             }
             for result, key in zip(results, results.keys())
         ]
-        # pandas.DataFrame.from_dict(out).to_csv(os.path.join(cache_folder, "thermal_ power_generation_example.csv"))
+        pd.DataFrame.from_dict(out).to_csv(os.path.join(cache_folder, "thermal_ power_generation_example.csv"))
         self.assertAlmostEqual(1, 1)
 
     def api_assets(self, assets: List[Asset]):

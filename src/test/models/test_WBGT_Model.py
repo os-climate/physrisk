@@ -1,5 +1,5 @@
 import unittest
-from test.data.hazard_model_store import TestData, mock_hazard_model_store_heat_WBGT
+from test.data.hazard_model_store import TestData, mock_hazard_model_store_heat_wbgt
 from typing import Iterable, List, Union, cast
 
 import numpy as np
@@ -177,7 +177,7 @@ class TestChronicAssetImpact(unittest.TestCase):
     """Tests the impact on an asset of a chronic hazard model."""
 
     def test_wbgt_vulnerability(self):
-        store = mock_hazard_model_store_heat_WBGT(TestData.longitudes, TestData.latitudes)
+        store = mock_hazard_model_store_heat_wbgt(TestData.longitudes, TestData.latitudes)
         hazard_model = ZarrHazardModel(source_paths=get_default_source_paths(), store=store)
         # 'chronic_heat/osc/v2/mean_work_loss_high_ACCESS-CM2_historical_2005'
         scenario = "ssp585"

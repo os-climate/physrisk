@@ -1,6 +1,11 @@
 from typing import Set
 
-from physrisk.api.v1.impact_req_resp import Category, RiskScoreValue, ScoreBasedRiskMeasureDefinition
+from physrisk.api.v1.impact_req_resp import (
+    Category,
+    RiskMeasureDefinition,
+    RiskScoreValue,
+    ScoreBasedRiskMeasureDefinition,
+)
 from physrisk.kernel.hazards import CoastalInundation, RiverineInundation, Wind
 from physrisk.kernel.impact_distrib import ImpactDistrib
 from physrisk.kernel.risk import Measure, RiskMeasureCalculator
@@ -18,7 +23,7 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
             Category.MEDIUM: 0.05,
         }
         definition = ScoreBasedRiskMeasureDefinition(
-            hazard_types=[RiverineInundation.__name__, CoastalInundation.__name__],
+            hazard_types=[RiverineInundation.__name__, CoastalInundation.__name__, Wind.__name__],
             values=[
                 RiskScoreValue(
                     value=Category.REDFLAG,
@@ -42,10 +47,16 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
                 ),
                 RiskScoreValue(value=Category.NODATA, label="No data.", description="No data."),
             ],
-            child_measure_ids=["annual_loss_{return_period:0.0f}year"],
+            underlying_measures=[
+                RiskMeasureDefinition(
+                    measure_id="measures_0",
+                    label=f"1-in-{self.return_period:0.0f} year annual loss.",
+                    description=f"1-in-{self.return_period:0.0f} year loss as fraction of asset insured value.",
+                )
+            ],
         )
         self.measure_definitions = [definition]
-        self._definition_lookup = {RiverineInundation: definition, CoastalInundation: definition}
+        self._definition_lookup = {RiverineInundation: definition, CoastalInundation: definition, Wind: definition}
 
     def _description(self, category: Category):
         return (

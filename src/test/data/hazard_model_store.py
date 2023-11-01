@@ -1,7 +1,8 @@
 import os
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
+import numpy.typing as npt
 import zarr
 import zarr.storage
 from affine import Affine
@@ -10,43 +11,113 @@ from physrisk.hazard_models.core_hazards import cmip6_scenario_to_rcp
 
 
 class TestData:
-    longitudes = [
-        69.4787,
-        68.71,
-        20.1047,
-        19.8936,
-        19.6359,
-        0.5407,
-        6.9366,
-        6.935,
-        13.7319,
-        13.7319,
-        14.4809,
-        -68.3556,
-        -68.3556,
-        -68.9892,
-        -70.9157,
-    ]
-    latitudes = [
-        34.556,
-        35.9416,
-        39.9116,
-        41.6796,
-        42.0137,
-        35.7835,
-        36.8789,
-        36.88,
-        -12.4706,
-        -12.4706,
-        -9.7523,
-        -38.9368,
-        -38.9368,
-        -34.5792,
-        -39.2145,
-    ]
+    # fmt: off
+    longitudes = [69.4787, 68.71, 20.1047, 19.8936, 19.6359, 0.5407, 6.9366, 6.935, 13.7319, 13.7319, 14.4809, -68.3556, -68.3556, -68.9892, -70.9157] # noqa
+    latitudes = [34.556, 35.9416, 39.9116, 41.6796, 42.0137, 35.7835, 36.8789, 36.88, -12.4706, -12.4706, -9.7523, -38.9368, -38.9368, -34.5792, -39.2145] # noqa
 
     coastal_longitudes = [12.2, 50.5919, 90.3473, 90.4295, 90.4804, 90.3429, 90.5153, 90.6007]
     coastal_latitudes = [-5.55, 26.1981, 23.6473, 23.6783, 23.5699, 23.9904, 23.59, 23.6112]
+    # fmt: on
+
+    # fmt: off
+    wind_return_periods = [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000] # noqa
+    wind_intensities_1 = [34.314999, 40.843750, 44.605000, 46.973751, 48.548752, 49.803749, 51.188751, 52.213749, 52.902500, 53.576248, 57.552502, 59.863750, 60.916248, 61.801250, 62.508751, 63.082500, 63.251251, 63.884998, 64.577499] # noqa
+    wind_intensities_2 = [37.472500, 44.993752, 49.049999, 51.957500, 53.796249, 55.478748, 56.567501, 57.572498, 58.661251, 59.448750, 63.724998, 65.940002, 66.842499, 67.614998, 68.110001, 68.547501, 68.807503, 69.529999, 70.932503] # noqa
+    # fmt: on
+
+
+class ZarrStoreMocker:
+    def __init__(self):
+        self.store, self._root = zarr_memory_store()
+
+    def add_curves_global(
+        self,
+        array_path: str,
+        longitudes: List[float],
+        latitudes: List[float],
+        return_periods: Union[List[float], npt.NDArray],
+        intensities: Union[List[float], npt.NDArray],
+        width: int = 43200,
+        height: int = 21600,
+    ):
+        crs = "epsg:4326"
+        crs, shape, trans = self._crs_shape_transform_global(return_periods=return_periods, width=width, height=height)
+        self._add_curves(array_path, longitudes, latitudes, crs, shape, trans, return_periods, intensities)
+
+    def _crs_shape_transform_global(
+        self, width: int = 43200, height: int = 21600, return_periods: Union[List[float], npt.NDArray] = [0.0]
+    ):
+        return self._crs_shape_transform(width, height, return_periods)
+
+    def _add_curves(
+        self,
+        array_path: str,
+        longitudes: List[float],
+        latitudes: List[float],
+        crs: str,
+        shape: Tuple[int, int, int],
+        trans: List[float],
+        return_periods: Union[List[float], npt.NDArray],
+        intensities: Union[List[float], npt.NDArray],
+    ):
+        z = self._root.create_dataset(  # type: ignore
+            array_path, shape=(shape[0], shape[1], shape[2]), chunks=(shape[0], 1000, 1000), dtype="f4"
+        )
+        z.attrs["transform_mat3x3"] = trans
+        z.attrs["index_values"] = return_periods
+
+        transform = Affine(trans[0], trans[1], trans[2], trans[3], trans[4], trans[5])
+        coords = np.vstack((longitudes, latitudes, np.ones(len(longitudes))))
+        inv_trans = ~transform
+        mat = np.array(inv_trans).reshape(3, 3)
+        frac_image_coords = mat @ coords
+        image_coords = np.floor(frac_image_coords).astype(int)
+        for j in range(len(longitudes)):
+            z[:, image_coords[1, j], image_coords[0, j]] = intensities
+
+    def _crs_shape_transform(self, width: int, height: int, return_periods: Union[List[float], npt.NDArray] = [0.0]):
+        t = [360.0 / width, 0.0, -180.0, 0.0, -180.0 / height, 90.0, 0.0, 0.0, 1.0]
+        return "epsg:4326", (len(return_periods), height, width), t
+
+
+def shape_transform_21600_43200(
+    width: int = 43200, height: int = 21600, return_periods: Union[List[float], npt.NDArray] = [0.0]
+):
+    t = [360.0 / width, 0.0, -180.0, 0.0, -180.0 / height, 90.0, 0.0, 0.0, 1.0]
+    return (len(return_periods), height, width), t
+
+
+def zarr_memory_store(path="hazard.zarr"):
+    store = zarr.storage.MemoryStore(root=path)
+    return store, zarr.open(store=store, mode="w")
+
+
+def add_curves(
+    root: zarr.Group,
+    longitudes,
+    latitudes,
+    array_path: str,
+    shape: Tuple[int, int, int],
+    curve: np.ndarray,
+    return_periods: List[float],
+    trans: List[float],
+):
+    z = root.create_dataset(  # type: ignore
+        array_path, shape=(shape[0], shape[1], shape[2]), chunks=(shape[0], 1000, 1000), dtype="f4"
+    )
+    z.attrs["transform_mat3x3"] = trans
+    z.attrs["index_values"] = return_periods
+
+    trans = z.attrs["transform_mat3x3"]
+    transform = Affine(trans[0], trans[1], trans[2], trans[3], trans[4], trans[5])
+
+    coords = np.vstack((longitudes, latitudes, np.ones(len(longitudes))))
+    inv_trans = ~transform
+    mat = np.array(inv_trans).reshape(3, 3)
+    frac_image_coords = mat @ coords
+    image_coords = np.floor(frac_image_coords).astype(int)
+    for j in range(len(longitudes)):
+        z[:, image_coords[1, j], image_coords[0, j]] = curve
 
 
 def get_mock_hazard_model_store_single_curve():
@@ -84,8 +155,8 @@ def mock_hazard_model_store_heat(longitudes, latitudes):
     return mock_hazard_model_store_for_parameter_sets(longitudes, latitudes, degree_day_heat_parameter_set())
 
 
-def mock_hazard_model_store_heat_WBGT(longitudes, latitudes):
-    return mock_hazard_model_store_for_parameter_sets(longitudes, latitudes, WBGT_GZN_Joint_parameter_set())
+def mock_hazard_model_store_heat_wbgt(longitudes, latitudes):
+    return mock_hazard_model_store_for_parameter_sets(longitudes, latitudes, wbgt_gzn_joint_parameter_set())
 
 
 def mock_hazard_model_store_inundation(longitudes, latitudes, curve):
@@ -126,18 +197,8 @@ def mock_hazard_model_store_single_curve_for_paths(longitudes, latitudes, curve,
     return store
 
 
-def shape_transform_21600_43200(return_periods: List[float] = [0.0]):
-    t = [360.0 / 43200, 0.0, -180.0, 0.0, -180.0 / 21600, 90.0, 0.0, 0.0, 1.0]
-    return (len(return_periods), 21600, 43200), t
-
-
 def inundation_return_periods():
     return [2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0]
-
-
-def zarr_memory_store(path="hazard.zarr"):
-    store = zarr.storage.MemoryStore(root=path)
-    return store, zarr.open(store=store, mode="w")
 
 
 def mock_hazard_model_store_path_curves(longitudes, latitudes, path_curves: Dict[str, np.ndarray]):
@@ -177,7 +238,7 @@ def degree_day_heat_parameter_set():
     return dict(zip(paths, parameters))
 
 
-def WBGT_GZN_Joint_parameter_set():
+def wbgt_gzn_joint_parameter_set():
     paths = []
     # Getting paths for both hazards.
     for model, scenario, year in [
@@ -209,34 +270,6 @@ def inundation_paths():
     ]:
         paths.append(get_source_path_wri_coastal_inundation(model=model, scenario=scenario, year=year))
     return paths
-
-
-def add_curves(
-    root: zarr.Group,
-    longitudes,
-    latitudes,
-    array_path: str,
-    shape: Tuple[int, int, int],
-    curve: np.ndarray,
-    return_periods: List[float],
-    trans: List[float],
-):
-    z = root.create_dataset(  # type: ignore
-        array_path, shape=(shape[0], shape[1], shape[2]), chunks=(shape[0], 1000, 1000), dtype="f4"
-    )
-    z.attrs["transform_mat3x3"] = trans
-    z.attrs["index_values"] = return_periods
-
-    trans = z.attrs["transform_mat3x3"]
-    transform = Affine(trans[0], trans[1], trans[2], trans[3], trans[4], trans[5])
-
-    coords = np.vstack((longitudes, latitudes, np.ones(len(longitudes))))
-    inv_trans = ~transform
-    mat = np.array(inv_trans).reshape(3, 3)
-    frac_image_coords = mat @ coords
-    image_coords = np.floor(frac_image_coords).astype(int)
-    for j in range(len(longitudes)):
-        z[:, image_coords[1, j], image_coords[0, j]] = curve
 
 
 def _wri_inundation_prefix():

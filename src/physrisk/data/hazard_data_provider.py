@@ -19,7 +19,7 @@ class HazardDataHint:
     A hazard resource path can be specified which uniquely defines the hazard resource; otherwise the resource
     is inferred from the indicator_id."""
 
-    path: Optional[str]
+    path: Optional[str] = None
     # consider adding: indicator_model_gcm: str
 
     def group_key(self):

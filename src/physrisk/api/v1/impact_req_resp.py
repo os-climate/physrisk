@@ -4,6 +4,7 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel, Field
 
 from physrisk.api.v1.common import Assets, Distribution, ExceedanceCurve, VulnerabilityDistrib
+from physrisk.api.v1.hazard_data import Scenario
 
 
 class CalcSettings(BaseModel):
@@ -59,9 +60,13 @@ class RiskScoreValue(BaseModel):
 class ScoreBasedRiskMeasureDefinition(BaseModel, frozen=True):
     hazard_types: List[str] = Field([], description="Defines the hazards that the measure is used for.")
     values: List[RiskScoreValue] = Field([], description="Defines the set of values that the score can take.")
-    child_measure_ids: List[str] = Field(
-        [], description="The identifiers of the risk measures used to calculate the score."
+    underlying_measures: List[RiskMeasureDefinition] = Field(
+        [], description="Defines the underlying risk measures from which the scores are inferred."
     )
+    # for now underlying measures defined directly rather than by referencing an ID via:
+    # underlying_measure_ids: List[str] = Field(
+    #    [], description="The identifiers of the underlying risk measures from which the scores are inferred."
+    # )
 
     # should be sufficient to pass frozen=True, but does not seem to work (pydantic docs says feature in beta)
     def __hash__(self):
@@ -85,7 +90,7 @@ class RiskMeasuresForAssets(BaseModel):
 class ScoreBasedRiskMeasureSetDefinition(BaseModel):
     measure_set_id: str
     asset_measure_ids_for_hazard: Dict[str, List[str]]
-    score_definitions: Optional[Dict[str, ScoreBasedRiskMeasureDefinition]]
+    score_definitions: Dict[str, ScoreBasedRiskMeasureDefinition]
 
 
 class RiskMeasures(BaseModel):
@@ -94,6 +99,8 @@ class RiskMeasures(BaseModel):
     measures_for_assets: List[RiskMeasuresForAssets]
     score_based_measure_set_defn: ScoreBasedRiskMeasureSetDefinition
     measures_definitions: Optional[List[RiskMeasureDefinition]]
+    scenarios: List[Scenario]
+    asset_ids: List[str]
 
 
 class AcuteHazardCalculationDetails(BaseModel):

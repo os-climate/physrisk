@@ -103,7 +103,7 @@ class TestAssetImpact(unittest.TestCase):
 
     def test_performance_hazardlookup(self):
         """Just for reference: not true test"""
-        assetRequests = {}
+        asset_requests: Dict[Tuple[VulnerabilityModelBase, Asset], List[HazardDataRequest]] = {}
         import time
 
         start = time.time()
@@ -121,7 +121,7 @@ class TestAssetImpact(unittest.TestCase):
         # create requests:
         for v in vulnerability_models:
             for a in assets:
-                assetRequests[(v, a)] = [
+                asset_requests[(v, a)] = [
                     HazardDataRequest(RiverineInundation, 0, 0, indicator_id="", scenario="", year=2030)
                 ]
 
@@ -129,8 +129,8 @@ class TestAssetImpact(unittest.TestCase):
         print(f"Time for requests dictionary creation {time_requests}s ")
         start = time.time()
         # read requests:
-        for key in assetRequests:
-            if assetRequests[key][0].longitude != 0:
+        for key in asset_requests:
+            if asset_requests[key][0].longitude != 0:
                 raise Exception()
 
         time_responses = time.time() - start

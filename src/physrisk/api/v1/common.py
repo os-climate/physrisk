@@ -15,7 +15,7 @@ class TypedArray(np.ndarray):
 
 
 class ArrayMeta(type):
-    def __getitem__(self, t):
+    def __getitem__(cls, t):
         return type("Array", (TypedArray,), {"inner_type": t})
 
 

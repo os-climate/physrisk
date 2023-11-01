@@ -7,6 +7,8 @@ from physrisk.data.inventory_reader import InventoryReader
 
 
 class TestContainer(containers.DeclarativeContainer):
+    __test__ = False
+
     config = providers.Configuration(default={"zarr_sources": ["embedded"]})
 
     inventory_reader = providers.Singleton(lambda: InventoryReader(fs=local.LocalFileSystem(), base_path=""))

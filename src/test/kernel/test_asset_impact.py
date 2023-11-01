@@ -103,7 +103,7 @@ class TestAssetImpact(unittest.TestCase):
 
     def test_performance_hazardlookup(self):
         """Just for reference: not true test"""
-        asset_requests: Dict[Tuple[VulnerabilityModelBase, Asset], List[HazardDataRequest]] = {}
+        asset_requests = {}
         import time
 
         start = time.time()

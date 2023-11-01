@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from dataclasses import dataclass
 from typing import Dict, List, Mapping, Optional, Protocol, Tuple
 
 import numpy as np

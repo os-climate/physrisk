@@ -140,8 +140,8 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
             )
         ]
 
-        scenario = "rcp8p5"
-        year = 2050
+        scenario = "rcp4p5"
+        year = 2030
 
         hazard_model = calculation.get_default_hazard_model()
         vulnerability_models = calculation.get_default_vulnerability_models()
@@ -160,7 +160,9 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
             }
             for result, key in zip(results, results.keys())
         ]
-        pd.DataFrame.from_dict(out).to_csv(os.path.join(cache_folder, "thermal_ power_generation_example.csv"))
+        pd.DataFrame.from_dict(out).to_csv(
+            os.path.join(cache_folder, "thermal_ power_generation_example_" + scenario + "_" + str(year) + ".csv")
+        )
         self.assertAlmostEqual(1, 1)
 
     def api_assets(self, assets: List[Asset]):

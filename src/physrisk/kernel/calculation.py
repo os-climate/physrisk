@@ -12,6 +12,7 @@ from physrisk.vulnerability_models.real_estate_models import (
     RealEstateRiverineInundationModel,
 )
 from physrisk.vulnerability_models.thermal_power_generation_models import (
+    ThermalPowerGenerationAirTemperatureModel,
     ThermalPowerGenerationCoastalInundationModel,
     ThermalPowerGenerationDroughtModel,
     ThermalPowerGenerationRiverineInundationModel,
@@ -38,9 +39,10 @@ def get_default_vulnerability_models() -> Dict[type, Sequence[VulnerabilityModel
         ],
         IndustrialActivity: [ChronicHeatGZNModel()],
         ThermalPowerGeneratingAsset: [
+            ThermalPowerGenerationAirTemperatureModel(),
             ThermalPowerGenerationCoastalInundationModel(),
-            ThermalPowerGenerationRiverineInundationModel(),
             ThermalPowerGenerationDroughtModel(),
+            ThermalPowerGenerationRiverineInundationModel(),
         ],
         TestAsset: [pgam.TemperatureModel()],
     }

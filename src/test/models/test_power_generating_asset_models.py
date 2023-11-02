@@ -114,6 +114,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
 
         asset_list = pd.read_csv(os.path.join(cache_folder, "wri-all.csv"))
         filtered = asset_list.loc[asset_list["primary_fuel"].isin(["Coal", "Gas", "Nuclear", "Oil"])]
+        filtered = filtered[-60 < filtered["latitude"]]
 
         longitudes = np.array(filtered["longitude"])
         latitudes = np.array(filtered["latitude"])

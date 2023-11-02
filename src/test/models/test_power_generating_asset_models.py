@@ -151,6 +151,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
             {
                 "asset": type(result.asset).__name__,
                 "type": getattr(result.asset, "type") if hasattr(result.asset, "type") else None,
+                "capacity": getattr(result.asset, "capacity") if hasattr(result.asset, "capacity") else None,
                 "location": getattr(result.asset, "location") if hasattr(result.asset, "location") else None,
                 "latitude": result.asset.latitude,
                 "longitude": result.asset.longitude,

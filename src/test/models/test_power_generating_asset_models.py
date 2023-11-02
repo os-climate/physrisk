@@ -108,7 +108,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
             f.write(assets_out.json(indent=4))
         self.assertAlmostEqual(1, 1)
 
-    @unittest.skip("example, not test")
+    #@unittest.skip("example, not test")
     def test_thermal_power_generation_portfolio(self):
         cache_folder = os.environ.get("CREDENTIAL_DOTENV_DIR", os.getcwd())
 
@@ -140,7 +140,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
             )
         ]
 
-        scenario = "rcp4p5"
+        scenario = "ssp585"
         year = 2030
 
         hazard_model = calculation.get_default_hazard_model()

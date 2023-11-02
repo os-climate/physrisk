@@ -13,6 +13,7 @@ from physrisk.vulnerability_models.real_estate_models import (
 )
 from physrisk.vulnerability_models.thermal_power_generation_models import (
     ThermalPowerGenerationCoastalInundationModel,
+    ThermalPowerGenerationDroughtModel,
     ThermalPowerGenerationRiverineInundationModel,
 )
 
@@ -39,6 +40,7 @@ def get_default_vulnerability_models() -> Dict[type, Sequence[VulnerabilityModel
         ThermalPowerGeneratingAsset: [
             ThermalPowerGenerationCoastalInundationModel(),
             ThermalPowerGenerationRiverineInundationModel(),
+            ThermalPowerGenerationDroughtModel(),
         ],
         TestAsset: [pgam.TemperatureModel()],
     }

@@ -72,8 +72,58 @@ class TestImpactRequests(TestWithCredentials):
             "include_asset_level": True,
             "include_measures": False,
             "include_calc_details": True,
-            "year": 2080,
-            "scenario": "rcp8p5",
+            "years": [2080],
+            "scenarios": ["rcp8p5"],
+        }
+
+        request = requests.AssetImpactRequest(**request_dict)  # type: ignore
+
+        curve = np.array([0.0596, 0.333, 0.505, 0.715, 0.864, 1.003, 1.149, 1.163, 1.163])
+        store = mock_hazard_model_store_inundation(TestData.longitudes, TestData.latitudes, curve)
+
+        source_paths = get_default_source_paths(EmbeddedInventory())
+        vulnerability_models = {
+            PowerGeneratingAsset: [InundationModel()],
+            RealEstateAsset: [RealEstateCoastalInundationModel(), RealEstateRiverineInundationModel()],
+        }
+
+        response = requests._get_asset_impacts(
+            request,
+            ZarrHazardModel(source_paths=source_paths, reader=ZarrReader(store)),
+            vulnerability_models=vulnerability_models,
+        )
+
+        self.assertEqual(response.asset_impacts[0].impacts[0].hazard_type, "CoastalInundation")
+
+    def test_risk_model_impact_request(self):
+        """Tests the risk model functionality of the impact request."""
+
+        assets = {
+            "items": [
+                {
+                    "asset_class": "RealEstateAsset",
+                    "type": "Buildings/Industrial",
+                    "location": "Asia",
+                    "longitude": TestData.longitudes[0],
+                    "latitude": TestData.latitudes[0],
+                },
+                {
+                    "asset_class": "PowerGeneratingAsset",
+                    "type": "Nuclear",
+                    "location": "Asia",
+                    "longitude": TestData.longitudes[1],
+                    "latitude": TestData.latitudes[1],
+                },
+            ],
+        }
+
+        request_dict = {
+            "assets": assets,
+            "include_asset_level": True,
+            "include_measures": False,
+            "include_calc_details": True,
+            "years": [2080],
+            "scenarios": ["rcp8p5"],
         }
 
         request = requests.AssetImpactRequest(**request_dict)  # type: ignore

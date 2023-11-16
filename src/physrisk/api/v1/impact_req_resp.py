@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Sequence
 
 from pydantic import BaseModel, Field
 
@@ -19,12 +19,20 @@ class AssetImpactRequest(BaseModel):
         default_factory=CalcSettings, description="Interpolation method."  # type:ignore
     )
     include_asset_level: bool = Field(True, description="If true, include asset-level impacts.")
-    include_measures: bool = Field(True, description="If true, include measures.")
+    include_measures: bool = Field(False, description="If true, include calculation of risk measures.")
     include_calc_details: bool = Field(True, description="If true, include impact calculation details.")
+    scenarios: Optional[Sequence[str]] = Field([], description="Name of scenarios ('rcp8p5')")
+    years: Optional[Sequence[int]] = Field(
+        [],
+        description="""Projection year (2030, 2050, 2080). Any year before 2030,
+        e.g. 1980, is treated as historical.""",
+    )
+    # to be deprecated
     scenario: str = Field("rcp8p5", description="Name of scenario ('rcp8p5')")
     year: int = Field(
-        2050,
-        description="Projection year (2030, 2050, 2080). Any year before 2030, e.g. 1980, is treated as historical.",
+        [2050],
+        description="""Projection years (e.g. 2030, 2050, 2080). Any year before 2030,
+        e.g. 1980, is treated as historical.""",
     )
 
 

@@ -59,6 +59,11 @@ class HazardDataResponse:
     pass
 
 
+class HazardDataFailedResponse(HazardDataResponse):
+    def __init__(self, err: Exception):
+        self.error = err
+
+
 class HazardEventDataResponse(HazardDataResponse):
     """Response to HazardDataRequest for acute hazards."""
 
@@ -77,13 +82,29 @@ class HazardEventDataResponse(HazardDataResponse):
 class HazardParameterDataResponse(HazardDataResponse):
     """Response to HazardDataRequest."""
 
-    def __init__(self, parameter: np.ndarray):
-        """Create HazardParameterDataResponse.
+    def __init__(self, parameters: np.ndarray, param_defns: np.ndarray = np.empty([])):
+        """Create HazardParameterDataResponse. In general the chronic parameters are an array of values.
+        For example, a chronic hazard may be the number of days per year with average temperature
+        above :math:`x' degrees for :math:`x' in [25, 30, 35, 40]°C. In this case the param_defns would
+        contain np.array([25, 30, 35, 40]). In some cases the hazard may be a scalar value.
+        Parameters will typically be a (1D) array of values where vulnerability models
+        require a number of parameters (e.g. to model decrease of efficiency as temperature increases).
 
         Args:
-            parameter: the chronic hazard parameter value.
+            parameters (np.ndarray): Chronic hazard parameter values.
+            param_defns (np.ndarray): Chronic hazard parameter definitions.
         """
-        self.parameter = parameter
+        self.parameters = parameters
+        self.param_defns = param_defns
+
+    @property
+    def parameter(self) -> float:
+        """Convenience function to return single parameter.
+
+        Returns:
+            float: Single parameter.
+        """
+        return self.parameters[0]
 
 
 class HazardModel(ABC):

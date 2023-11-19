@@ -1,6 +1,6 @@
 """ Test asset impact calculations."""
 import test.data.hazard_model_store as hms
-import unittest
+from test.base_test import TestWithCredentials
 from test.data.hazard_model_store import TestData, ZarrStoreMocker
 from typing import NamedTuple, Sequence
 
@@ -18,7 +18,7 @@ from physrisk.requests import _create_risk_measures
 from physrisk.risk_models.risk_models import RealEstateToyRiskMeasures
 
 
-class TestRiskModels(unittest.TestCase):
+class TestRiskModels(TestWithCredentials):
     def test_risk_indicator_model(self):
         scenarios = ["rcp8p5"]
         years = [2050]
@@ -126,10 +126,11 @@ class TestRiskModels(unittest.TestCase):
         return ZarrHazardModel(source_paths=get_default_source_paths(), store=mocker.store)
 
     def test_via_requests(self):
-        scenarios = ["rcp8p5"]
+        scenarios = ["ssp585"]
         years = [2050]
 
         assets = self._create_assets()
+        # hazard_model = ZarrHazardModel(source_paths=get_default_source_paths())
         hazard_model = self._create_hazard_model(scenarios, years)
 
         request_dict = {

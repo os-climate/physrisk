@@ -54,3 +54,8 @@ class ImpactDistrib:
     @property
     def prob(self) -> np.ndarray:
         return self.__prob
+
+
+class EmptyImpactDistrib(ImpactDistrib):
+    def __init__(self):
+        pass

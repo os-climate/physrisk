@@ -40,6 +40,7 @@
                         -85.0
                     ]
                 ],
+                "index_values": null,
                 "source": "map_array_pyramid"
             },
             "scenarios": [
@@ -91,6 +92,9 @@
                         -180.0,
                         -85.0
                     ]
+                ],
+                "index_values": [
+                    8
                 ],
                 "source": "map_array_pyramid"
             },
@@ -154,6 +158,9 @@
                         -85.0
                     ]
                 ],
+                "index_values": [
+                    8
+                ],
                 "source": "map_array_pyramid"
             },
             "scenarios": [
@@ -215,6 +222,9 @@
                         -180.0,
                         -85.0
                     ]
+                ],
+                "index_values": [
+                    8
                 ],
                 "source": "map_array_pyramid"
             },
@@ -278,6 +288,9 @@
                         -85.0
                     ]
                 ],
+                "index_values": [
+                    8
+                ],
                 "source": "map_array_pyramid"
             },
             "scenarios": [
@@ -339,6 +352,9 @@
                         -180.0,
                         -85.0
                     ]
+                ],
+                "index_values": [
+                    8
                 ],
                 "source": "map_array_pyramid"
             },
@@ -402,6 +418,9 @@
                         -85.0
                     ]
                 ],
+                "index_values": [
+                    8
+                ],
                 "source": "map_array_pyramid"
             },
             "scenarios": [
@@ -453,6 +472,9 @@
                         -180.0,
                         -85.0
                     ]
+                ],
+                "index_values": [
+                    8
                 ],
                 "source": "map_array_pyramid"
             },
@@ -516,6 +538,9 @@
                         -85.0
                     ]
                 ],
+                "index_values": [
+                    8
+                ],
                 "source": "map_array_pyramid"
             },
             "scenarios": [
@@ -577,6 +602,9 @@
                         -180.0,
                         -85.0
                     ]
+                ],
+                "index_values": [
+                    8
                 ],
                 "source": "map_array_pyramid"
             },
@@ -640,6 +668,9 @@
                         -85.0
                     ]
                 ],
+                "index_values": [
+                    8
+                ],
                 "source": "map_array_pyramid"
             },
             "scenarios": [
@@ -691,6 +722,9 @@
                         -180.0,
                         -85.0
                     ]
+                ],
+                "index_values": [
+                    8
                 ],
                 "source": "map_array_pyramid"
             },
@@ -754,6 +788,9 @@
                         -85.0
                     ]
                 ],
+                "index_values": [
+                    8
+                ],
                 "source": "map_array_pyramid"
             },
             "scenarios": [
@@ -815,6 +852,9 @@
                         -180.0,
                         -85.0
                     ]
+                ],
+                "index_values": [
+                    8
                 ],
                 "source": "map_array_pyramid"
             },
@@ -889,6 +929,7 @@
                         -60.0
                     ]
                 ],
+                "index_values": null,
                 "source": "map_array"
             },
             "scenarios": [
@@ -965,6 +1006,7 @@
                         -85.0
                     ]
                 ],
+                "index_values": null,
                 "source": "map_array"
             },
             "scenarios": [
@@ -1033,6 +1075,7 @@
                         -85.0
                     ]
                 ],
+                "index_values": null,
                 "source": "map_array"
             },
             "scenarios": [
@@ -1101,6 +1144,7 @@
                         -85.0
                     ]
                 ],
+                "index_values": null,
                 "source": "map_array"
             },
             "scenarios": [
@@ -1169,6 +1213,7 @@
                         -85.0
                     ]
                 ],
+                "index_values": null,
                 "source": "map_array"
             },
             "scenarios": [
@@ -1237,6 +1282,7 @@
                         -85.0
                     ]
                 ],
+                "index_values": null,
                 "source": "map_array"
             },
             "scenarios": [
@@ -1305,6 +1351,7 @@
                         -85.0
                     ]
                 ],
+                "index_values": null,
                 "source": "map_array"
             },
             "scenarios": [
@@ -1373,6 +1420,7 @@
                         -85.0
                     ]
                 ],
+                "index_values": null,
                 "source": "map_array"
             },
             "scenarios": [
@@ -1457,6 +1505,7 @@
                         -60.0
                     ]
                 ],
+                "index_values": null,
                 "source": "map_array"
             },
             "scenarios": [
@@ -1553,6 +1602,7 @@
                         -60.0
                     ]
                 ],
+                "index_values": null,
                 "source": "map_array"
             },
             "scenarios": [
@@ -1629,6 +1679,7 @@
                         -60.0
                     ]
                 ],
+                "index_values": null,
                 "source": "map_array_pyramid"
             },
             "scenarios": [
@@ -1658,6 +1709,190 @@
                 }
             ],
             "units": "m/s"
+        },
+        {
+            "hazard_type": "ChronicHeat",
+            "group_id": "",
+            "path": "chronic_heat/osc/v2/mean_degree_days_above_index_{gcm}_{scenario}_{year}",
+            "indicator_id": "mean_degree_days/above/index",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "{gcm}",
+            "params": {
+                "gcm": [
+                    "ACCESS-CM2",
+                    "CMCC-ESM2",
+                    "CNRM-CM6-1",
+                    "MPI-ESM1-2-LR",
+                    "MIROC6",
+                    "NorESM2-MM"
+                ]
+            },
+            "display_name": "Mean degree days above index value/{gcm}",
+            "display_groups": [
+                "Mean degree days"
+            ],
+            "description": "",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 4000.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "degree days"
+                },
+                "path": "mean_degree_days_above_index_{gcm}_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -60.0
+                    ],
+                    [
+                        -180.0,
+                        -60.0
+                    ]
+                ],
+                "index_values": [
+                    16,
+                    20,
+                    24
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        2005
+                    ]
+                },
+                {
+                    "id": "ssp126",
+                    "years": [
+                        2030,
+                        2040,
+                        2050
+                    ]
+                },
+                {
+                    "id": "ssp245",
+                    "years": [
+                        2030,
+                        2040,
+                        2050
+                    ]
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2030,
+                        2040,
+                        2050
+                    ]
+                }
+            ],
+            "units": "degree days"
+        },
+        {
+            "hazard_type": "ChronicHeat",
+            "group_id": "",
+            "path": "chronic_heat/osc/v2/mean_degree_days_below_index_{gcm}_{scenario}_{year}",
+            "indicator_id": "mean_degree_days/below/index",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "{gcm}",
+            "params": {
+                "gcm": [
+                    "ACCESS-CM2",
+                    "CMCC-ESM2",
+                    "CNRM-CM6-1",
+                    "MPI-ESM1-2-LR",
+                    "MIROC6",
+                    "NorESM2-MM"
+                ]
+            },
+            "display_name": "Mean degree days below index value/{gcm}",
+            "display_groups": [
+                "Mean degree days"
+            ],
+            "description": "",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 4000.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "degree days"
+                },
+                "path": "mean_degree_days_below_index_{gcm}_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -60.0
+                    ],
+                    [
+                        -180.0,
+                        -60.0
+                    ]
+                ],
+                "index_values": [
+                    16,
+                    20,
+                    24
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        2005
+                    ]
+                },
+                {
+                    "id": "ssp126",
+                    "years": [
+                        2030,
+                        2040,
+                        2050
+                    ]
+                },
+                {
+                    "id": "ssp245",
+                    "years": [
+                        2030,
+                        2040,
+                        2050
+                    ]
+                },
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2030,
+                        2040,
+                        2050
+                    ]
+                }
+            ],
+            "units": "degree days"
         }
     ]
 }

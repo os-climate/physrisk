@@ -156,7 +156,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
                 "location": getattr(result.asset, "location") if hasattr(result.asset, "location") else None,
                 "latitude": result.asset.latitude,
                 "longitude": result.asset.longitude,
-                "impact_mean": results[key].impact.mean(),
+                "impact_mean": results[key].impact.mean_impact(),
                 "hazard_type": results[key].impact.hazard_type.__name__,
             }
             for result, key in zip(results, results.keys())

@@ -26,8 +26,8 @@ class ZarrReader:
     # environment variable names:
     __access_key = "OSC_S3_ACCESS_KEY"
     __secret_key = "OSC_S3_SECRET_KEY"
-    __S3_bucket = "OSC_S3_BUCKET"  # e.g. redhat-osc-physical-landing-647521352890 on staging
-    __zarr_path = "OSC_S3_HAZARD_PATH"  # e.g. hazard/hazard.zarr on staging
+    __S3_bucket = "OSC_S3_BUCKET"  # e.g. physrisk-hazard-indicators
+    __zarr_path = "OSC_S3_HAZARD_PATH"  # hazard/hazard.zarr
 
     def __init__(
         self,

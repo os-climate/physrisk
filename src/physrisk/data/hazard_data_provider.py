@@ -151,5 +151,5 @@ class ChronicHazardDataProvider(HazardDataProvider):
         """
 
         path = self._get_source_path(indicator_id=indicator_id, scenario=scenario, year=year, hint=hint)
-        parameters, _ = self._reader.get_curves(path, longitudes, latitudes, self._interpolation)
-        return parameters[:, 0]
+        parameters, defns = self._reader.get_curves(path, longitudes, latitudes, self._interpolation)
+        return parameters, defns

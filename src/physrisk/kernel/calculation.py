@@ -7,6 +7,7 @@ from physrisk.risk_models.risk_models import RealEstateToyRiskMeasures
 from physrisk.vulnerability_models import power_generating_asset_models as pgam
 from physrisk.vulnerability_models.chronic_heat_models import ChronicHeatGZNModel
 from physrisk.vulnerability_models.real_estate_models import (
+    CoolingModel,
     GenericTropicalCycloneModel,
     RealEstateCoastalInundationModel,
     RealEstateRiverineInundationModel,
@@ -36,6 +37,7 @@ def get_default_vulnerability_models() -> Dict[type, Sequence[VulnerabilityModel
             RealEstateCoastalInundationModel(),
             RealEstateRiverineInundationModel(),
             GenericTropicalCycloneModel(),
+            CoolingModel(),
         ],
         IndustrialActivity: [ChronicHeatGZNModel()],
         ThermalPowerGeneratingAsset: [

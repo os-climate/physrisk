@@ -79,11 +79,20 @@ class InventorySourcePaths:
                 self._no_selector,
             )
             resources = self._inventory.resources_by_type_id[(hazard_type, indicator_id)]
+            if len(resources) == 0:
+                raise RuntimeError(
+                    f"unable to find any resources for hazard {hazard_type} " f"and indicator ID {indicator_id}"
+                )
             candidates = ResourceSubset(resources)
-            if hint is not None:
-                resource = candidates.match(hint)
-            else:
-                resource = selector(candidates=candidates, scenario=scenario, year=year, hint=hint)
+            try:
+                if hint is not None:
+                    resource = candidates.match(hint)
+                else:
+                    resource = selector(candidates=candidates, scenario=scenario, year=year, hint=hint)
+            except Exception:
+                raise RuntimeError(
+                    f"unable to select unique resource for hazard {hazard_type} " f"and indicator ID {indicator_id}"
+                )
             proxy_scenario = cmip6_scenario_to_rcp(scenario) if resource.scenarios[0].id.startswith("rcp") else scenario
             if scenario == "historical":
                 scenarios = next(iter(s for s in resource.scenarios if s.id == "historical"), None)

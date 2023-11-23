@@ -4,19 +4,15 @@
 
 To get set up, clone and enter the repo.
 
-```
-git clone git@github.com:os-climate/physrisk.git
-cd physrisk
-```
+    git clone git@github.com:os-climate/physrisk.git
+    cd physrisk
 
 We recommend using [pipenv](https://pipenv.pypa.io/en/latest/) for a
 consistent working environment.
 
-```
-pip install pipenv
-pipenv install
-pipenv shell
-```
+    pip install pipenv
+    pipenv install
+    pipenv shell
 
 When adding a package for use in new or improved functionality,
 `pipenv install <package-name>`. Or, when adding something helpful for
@@ -35,33 +31,27 @@ checks.
 and enabling automatic formatting via [pre-commit](https://pre-commit.com/)
 is recommended:
 
-```
-pre-commit install
-```
+    pre-commit install
 
 To ensure compliance with static check tools, developers may wish to run black and isort against modified files.
 
 E.g.,
 
-```
-# auto-sort imports
-isort .
-# auto-format code
-black .
-```
+    # auto-sort imports
+    isort .
+    # auto-format code
+    black .
 
 Code can then be tested using tox.
 
-```
-# run static checks and unit tests
-tox
-# run only tests
-tox -e py3
-# run only static checks
-tox -e static
-# run unit tests and produce an HTML code coverage report (/htmlcov)
-tox -e cov
-```
+    # run static checks and unit tests
+    tox
+    # run only tests
+    tox -e py3
+    # run only static checks
+    tox -e static
+    # run unit tests and produce an HTML code coverage report (/htmlcov)
+    tox -e cov
 
 ## IDE set-up
 
@@ -75,10 +65,8 @@ Actions are configured to release to PyPI on pushing a tag. In order to do this:
 - Update VERSION
 - Create new annotated tag and push
 
-```
-git tag -a v1.0.0 -m "v1.0.0"
-git push --follow-tags
-```
+    git tag -a v1.0.0 -m "v1.0.0"
+    git push --follow-tags
 
 ## Forking workflow
 

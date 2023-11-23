@@ -24,9 +24,8 @@ Physrisk is also designed to be a hosted, e.g. to provide on-demand calculations
 
 The library can be run locally, although access to the hazard indicator data is needed. The library is installed via:
 
-```
-pip install physrisk-lib
-```
+	pip install physrisk-lib
+
 
 Hazard indicator data is freely available. Members of the project are able to access OS-Climate S3 buckets. Credentials are available [here](https://console-openshift-console.apps.odh-cl1.apps.os-climate.org/k8s/ns/sandbox/secrets/physrisk-s3-keys). Information about the project is available via the [community-hub](https://github.com/os-climate/OS-Climate-Community-Hub). Non-members are able to download or copy hazard indicator data.
 
@@ -37,15 +36,11 @@ An inventory of the hazard data is maintained [here](https://github.com/os-clima
 
 Access to hazard event data requires setting of environment variables specifying the S3 Bucket, for example:
 
-```
-OSC_S3_BUCKET=physrisk-hazard-indicators
-OSC_S3_ACCESS_KEY=**********
-OSC_S3_SECRET_KEY=**********
-```
+	OSC_S3_BUCKET=physrisk-hazard-indicators
+	OSC_S3_ACCESS_KEY=**********
+	OSC_S3_SECRET_KEY=**********
 
 For use in a Jupyter environment, it is recommended to put the environment variables in a credentials.env file and do, for example:
 
-```
-from dotenv import load_dotenv
-load_dotenv(dotenv_path=dotenv_path, override=True)
-```
+	from dotenv import load_dotenv
+	load_dotenv(dotenv_path=dotenv_path, override=True)

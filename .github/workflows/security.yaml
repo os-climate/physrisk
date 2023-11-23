@@ -41,7 +41,14 @@ jobs:
           pdm export -o requirements.txt
           python -m pip install -r requirements.txt
           python -m pip install .
-          pdm list --graph
+          pdm list --graph > module-graph.txt
+
+      - name: Store the dependency graph
+        uses: actions/upload-artifact@v3
+        with:
+          name: module-graph.txt
+          path: module-graph.txt
+          retention-days: 30
 
       - name: "Run: pip-audit"
         uses: pypa/gh-action-pip-audit@v1.0.8

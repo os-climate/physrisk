@@ -45,9 +45,10 @@ jobs:
 
       - name: "Run: pip-audit"
         uses: pypa/gh-action-pip-audit@v1.0.8
-        # with:
-          # ignore-vulns: |
-            # PYSEC-2023-163
-            # Name | Version | ID | Fix Versions | Description
-            # --- | --- | --- | --- | ---
-            # numexpr | 2.8.7 | PYSEC-2023-163 |  | An issue in LanChain-ai Langchain v.0.0.245 allows a remote attacker to execute # arbitrary code via the evaluate function in the numexpr library.
+
+# with:
+#   ignore-vulns: |
+#     PYSEC-2023-163
+#     Name | Version | ID | Fix Versions | Description
+#     --- | --- | --- | --- | ---
+#     numexpr | 2.8.7 | PYSEC-2023-163 |  | An issue in LanChain-ai Langchain v.0.0.245 allows a remote attacker to execute #     arbitrary code via the evaluate function in the numexpr library.

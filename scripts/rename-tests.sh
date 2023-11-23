@@ -2,7 +2,7 @@
 
 #set -x
 
-for FILE in $(find . -name "*test_*" -print | xargs echo); do
+for FILE in $(find . -name "*test_*" -print | xargs -0 echo); do
     if (echo "$FILE" | grep -v ".zip" > /dev/null)
     then
         NEW_NAME=$(echo "$FILE" | sed "s:test_::g" | sed "s:.py:_test.py:g")

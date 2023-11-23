@@ -22,9 +22,9 @@ jobs:
           pip install build
 
       - name: Output Run ID
-        # yamllint disable-line rule:truthy
         run: |
-          value=$(cat pyproject.toml | grep 'version = ' | awk '{print $3}' | sed 's:"::g')
+          value=$(grep 'version =' pyproject.toml | \
+            awk '{print $3}' | sed 's:"::g')
           echo "$value-dev${{ github.run_id }}" > VERSION
           echo ${{ github.run_id }}
 

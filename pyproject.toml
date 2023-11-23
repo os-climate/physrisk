@@ -6,7 +6,7 @@ authors = [
     { name = "Joe Moorhouse", email = "72577720+MichaelTiemannOSC@users.noreply.github.com" },
     {name = "Joseph Moorhouse", email = "72577720+MichaelTiemannOSC@users.noreply.github.com"},
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.9<3.11"
 readme = "README.md"
 license = { text = "Apache-2.0" }
 keywords = ["Climate", "Physical Risk"]

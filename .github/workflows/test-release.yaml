@@ -1,0 +1,150 @@
+---
+name: "🐍📦 Test build and release"
+
+# GitHub/PyPI trusted publisher documentation:
+# https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_dispatch:
+
+env:
+  python-version: "3.10"
+
+### BUILD ###
+
+jobs:
+  build:
+    name: "🐍 Build packages"
+    runs-on: ubuntu-latest
+    permissions:
+      # IMPORTANT: mandatory for Sigstore
+      id-token: write
+    steps:
+      ### BUILDING ###
+
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Setup PDM for build commands"
+        uses: pdm-project/setup-pdm@v3
+        with:
+          version: 2.10.0
+
+      - name: "Populate environment variables"
+        id: setenv
+        run: |
+          vernum="${{ env.python-version }}.$(date +'%Y%m%d%H%M')"
+          echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
+          echo "vernum=${vernum}" >> buildvars.txt
+
+      - name: "Setup Python 3.10"
+        uses: actions/setup-python@v4.7.0
+        with:
+          python-version: ${{ env.python-version }}
+
+      - name: "Tag for test release"
+        # Delete all local tags, then create a synthetic tag for testing
+        # Use the date/time to avoid conflicts uploading to Test PyPI
+        run: |
+          scripts/dev-versioning.sh "${{ steps.setenv.outputs.vernum }}"
+          git tag | xargs -L 1 | xargs git tag --delete
+          git tag "v${{ steps.setenv.outputs.vernum }}"
+          git checkout "tags/v${{ steps.setenv.outputs.vernum }}"
+          grep version pyproject.toml
+
+      - name: "Build with PDM backend"
+        run: |
+          pdm build
+          # Need to save the build environment for subsequent steps
+          mv buildvars.txt dist/buildvars.txt
+
+      ### SIGNING ###
+
+      - name: "Sign packages with Sigstore"
+        uses: sigstore/gh-action-sigstore-python@v1.2.3
+        with:
+          inputs: >-
+            ./dist/*.tar.gz
+            ./dist/*.whl
+
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: Development
+          path: dist/
+
+  ### PUBLISH GITHUB ###
+
+  github:
+    name: "📦 Test publish to GitHub"
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    permissions:
+      # IMPORTANT: mandatory to publish artefacts
+      contents: write
+    steps:
+      - name: "⬇ Download build artefacts"
+        uses: actions/download-artifact@v3
+        with:
+          name: Development
+          path: dist/
+
+      - name: "Source environment variables"
+        id: setenv
+        run: |
+          if [ -f dist/buildvars.txt ]; then
+            source dist/buildvars.txt
+            echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
+          else
+            echo "Build environment variables could not be sourced"
+          fi
+          echo "tarball=$(ls dist/*.tgz)" >> "$GITHUB_OUTPUT"
+          echo "wheel=$(ls dist/*.whl)" >> "$GITHUB_OUTPUT"
+
+      - name: "📦 Publish packages to GitHub"
+        uses: ModeSevenIndustrialSolutions/action-automatic-releases@latest
+        with:
+          # Valid inputs are:
+          # repo_token, automatic_release_tag, draft, prerelease, title, files
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: true
+          automatic_release_tag: ${{ steps.setenv.outputs.vernum }}
+          title: "Development Build \
+            ${{ steps.setenv.outputs.vernum }}"
+          files: |
+            dist/*.tar.gz
+            dist/*.whl
+
+  ### PUBLISH TEST PYPI ###
+
+  testpypi:
+    name: "📦 Test publish to PyPi"
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+    permissions:
+      # IMPORTANT: mandatory for trusted publishing
+      id-token: write
+    steps:
+      - name: "⬇ Download build artefacts"
+        uses: actions/download-artifact@v3
+        with:
+          name: Development
+          path: dist/
+
+      - name: "Remove files unsupported by PyPi"
+        run: |
+          if [ -f dist/buildvars.txt ]; then
+            rm dist/buildvars.txt
+          fi
+          rm dist/*.crt dist/*.sig*
+
+      - name: Publish distribution to Test PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          verbose: true
+          repository-url: https://test.pypi.org/legacy/

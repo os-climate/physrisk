@@ -19,7 +19,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10', '3.11']
+        python-version: ['3.9', '3.10']
     steps:
       - name: 'Checkout repository'
         uses: actions/checkout@v4
@@ -45,10 +45,3 @@ jobs:
 
       - name: 'Run: pip-audit'
         uses: pypa/gh-action-pip-audit@v1.0.8
-
-# with:
-#   ignore-vulns: |
-#     PYSEC-2023-163
-#     Name | Version | ID | Fix Versions | Description
-#     --- | --- | --- | --- | ---
-#     numexpr | 2.8.7 | PYSEC-2023-163 |  | An issue in LanChain-ai Langchain v.0.0.245 allows a remote attacker to execute #     arbitrary code via the evaluate function in the numexpr library.

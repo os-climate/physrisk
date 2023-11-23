@@ -1,5 +1,5 @@
 ---
-name: "🐍📦 Test build and release"
+name: '🐍📦 Test build and release'
 
 # GitHub/PyPI trusted publisher documentation:
 # https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
@@ -9,13 +9,13 @@ on:
   workflow_dispatch:
 
 env:
-  python-version: "3.10"
+  python-version: '3.10'
 
 ### BUILD ###
 
 jobs:
   build:
-    name: "🐍 Build packages"
+    name: '🐍 Build packages'
     runs-on: ubuntu-latest
     permissions:
       # IMPORTANT: mandatory for Sigstore
@@ -23,27 +23,27 @@ jobs:
     steps:
       ### BUILDING ###
 
-      - name: "Checkout repository"
+      - name: 'Checkout repository'
         uses: actions/checkout@v4
 
-      - name: "Setup PDM for build commands"
+      - name: 'Setup PDM for build commands'
         uses: pdm-project/setup-pdm@v3
         with:
           version: 2.10.0
 
-      - name: "Populate environment variables"
+      - name: 'Populate environment variables'
         id: setenv
         run: |
           vernum="${{ env.python-version }}.$(date +'%Y%m%d%H%M')"
           echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
           echo "vernum=${vernum}" >> buildvars.txt
 
-      - name: "Setup Python 3.10"
+      - name: 'Setup Python 3.10'
         uses: actions/setup-python@v4.7.0
         with:
           python-version: ${{ env.python-version }}
 
-      - name: "Tag for test release"
+      - name: 'Tag for test release'
         # Delete all local tags, then create a synthetic tag for testing
         # Use the date/time to avoid conflicts uploading to Test PyPI
         run: |
@@ -53,7 +53,7 @@ jobs:
           git checkout "tags/v${{ steps.setenv.outputs.vernum }}"
           grep version pyproject.toml
 
-      - name: "Build with PDM backend"
+      - name: 'Build with PDM backend'
         run: |
           pdm build
           # Need to save the build environment for subsequent steps
@@ -61,7 +61,7 @@ jobs:
 
       ### SIGNING ###
 
-      - name: "Sign packages with Sigstore"
+      - name: 'Sign packages with Sigstore'
         uses: sigstore/gh-action-sigstore-python@v1.2.3
         with:
           inputs: >-
@@ -77,7 +77,7 @@ jobs:
   ### PUBLISH GITHUB ###
 
   github:
-    name: "📦 Test publish to GitHub"
+    name: '📦 Test publish to GitHub'
     needs:
       - build
     runs-on: ubuntu-latest
@@ -85,13 +85,13 @@ jobs:
       # IMPORTANT: mandatory to publish artefacts
       contents: write
     steps:
-      - name: "⬇ Download build artefacts"
+      - name: '⬇ Download build artefacts'
         uses: actions/download-artifact@v3
         with:
           name: Development
           path: dist/
 
-      - name: "Source environment variables"
+      - name: 'Source environment variables'
         id: setenv
         run: |
           if [ -f dist/buildvars.txt ]; then
@@ -103,7 +103,7 @@ jobs:
           echo "tarball=$(ls dist/*.tgz)" >> "$GITHUB_OUTPUT"
           echo "wheel=$(ls dist/*.whl)" >> "$GITHUB_OUTPUT"
 
-      - name: "📦 Publish packages to GitHub"
+      - name: '📦 Publish packages to GitHub'
         uses: ModeSevenIndustrialSolutions/action-automatic-releases@latest
         with:
           # Valid inputs are:
@@ -120,7 +120,7 @@ jobs:
   ### PUBLISH TEST PYPI ###
 
   testpypi:
-    name: "📦 Test publish to PyPi"
+    name: '📦 Test publish to PyPi'
     needs:
       - build
     runs-on: ubuntu-latest
@@ -130,13 +130,13 @@ jobs:
       # IMPORTANT: mandatory for trusted publishing
       id-token: write
     steps:
-      - name: "⬇ Download build artefacts"
+      - name: '⬇ Download build artefacts'
         uses: actions/download-artifact@v3
         with:
           name: Development
           path: dist/
 
-      - name: "Remove files unsupported by PyPi"
+      - name: 'Remove files unsupported by PyPi'
         run: |
           if [ -f dist/buildvars.txt ]; then
             rm dist/buildvars.txt

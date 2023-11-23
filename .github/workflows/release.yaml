@@ -1,5 +1,5 @@
 ---
-name: "🐍📦 Production build and release"
+name: '🐍📦 Production build and release'
 
 # GitHub/PyPI trusted publisher documentation:
 # https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
@@ -13,13 +13,13 @@ on:
       - v*.*.*
 
 env:
-  python-version: "3.10"
+  python-version: '3.10'
 
 ### BUILD ###
 
 jobs:
   build:
-    name: "🐍 Build packages"
+    name: '🐍 Build packages'
     runs-on: ubuntu-latest
     permissions:
       # IMPORTANT: mandatory for Sigstore
@@ -27,31 +27,31 @@ jobs:
     steps:
       ### BUILDING ###
 
-      - name: "Checkout repository"
+      - name: 'Checkout repository'
         uses: actions/checkout@v4
 
-      - name: "Setup PDM for build commands"
+      - name: 'Setup PDM for build commands'
         uses: pdm-project/setup-pdm@v3
         with:
           version: 2.10.0
 
-      - name: "Setup Python 3.10"
+      - name: 'Setup Python 3.10'
         uses: actions/setup-python@v4.7.0
         with:
           python-version: ${{ env.python-version }}
 
-      - name: "Update version from tags for production release"
+      - name: 'Update version from tags for production release'
         run: |
           echo "Github versioning: ${{ github.ref_name }}"
           scripts/release-versioning.sh
 
-      - name: "Build with PDM backend"
+      - name: 'Build with PDM backend'
         run: |
           pdm build
 
       ### SIGNING ###
 
-      - name: "Sign packages with Sigstore"
+      - name: 'Sign packages with Sigstore'
         uses: sigstore/gh-action-sigstore-python@v1.2.3
         with:
           inputs: >-
@@ -67,7 +67,7 @@ jobs:
   ### PUBLISH GITHUB ###
 
   github:
-    name: "📦 Publish to GitHub"
+    name: '📦 Publish to GitHub'
     # Only publish on tag pushes
     if: startsWith(github.ref, 'refs/tags/')
     needs:
@@ -77,13 +77,13 @@ jobs:
       # IMPORTANT: mandatory to publish artefacts
       contents: write
     steps:
-      - name: "⬇ Download build artefacts"
+      - name: '⬇ Download build artefacts'
         uses: actions/download-artifact@v3
         with:
           name: ${{ github.ref_name }}
           path: dist/
 
-      - name: "📦 Publish release to GitHub"
+      - name: '📦 Publish release to GitHub'
         uses: ModeSevenIndustrialSolutions/action-automatic-releases@latest
         with:
           # Valid inputs are:
@@ -99,7 +99,7 @@ jobs:
   ### PUBLISH PYPI TEST ###
 
   testpypi:
-    name: "📦 Publish to PyPi Test"
+    name: '📦 Publish to PyPi Test'
     # Only publish on tag pushes
     if: startsWith(github.ref, 'refs/tags/')
     needs:
@@ -111,13 +111,13 @@ jobs:
       # IMPORTANT: mandatory for trusted publishing
       id-token: write
     steps:
-      - name: "⬇ Download build artefacts"
+      - name: '⬇ Download build artefacts'
         uses: actions/download-artifact@v3
         with:
           name: ${{ github.ref_name }}
           path: dist/
 
-      - name: "Remove files unsupported by PyPi"
+      - name: 'Remove files unsupported by PyPi'
         run: |
           if [ -f dist/buildvars.txt ]; then
             rm dist/buildvars.txt
@@ -133,7 +133,7 @@ jobs:
   ### PUBLISH PYPI ###
 
   pypi:
-    name: "📦 Publish to PyPi"
+    name: '📦 Publish to PyPi'
     # Only publish on tag pushes
     if: startsWith(github.ref, 'refs/tags/')
     needs:
@@ -145,23 +145,23 @@ jobs:
       # IMPORTANT: mandatory for trusted publishing
       id-token: write
     steps:
-      - name: "⬇ Download build artefacts"
+      - name: '⬇ Download build artefacts'
         uses: actions/download-artifact@v3
         with:
           name: ${{ github.ref_name }}
           path: dist/
 
-      - name: "Remove files unsupported by PyPi"
+      - name: 'Remove files unsupported by PyPi'
         run: |
           if [ -f dist/buildvars.txt ]; then
             rm dist/buildvars.txt
           fi
           rm dist/*.crt dist/*.sig*
 
-      - name: "Setup PDM for build commands"
+      - name: 'Setup PDM for build commands'
         uses: pdm-project/setup-pdm@v3
 
-      - name: "Publish release to PyPI"
+      - name: 'Publish release to PyPI'
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           verbose: true

@@ -2,7 +2,7 @@
 name: Minor release
 about: Create a new minor release
 title: New minor release
-assignees: "sesheta"
+assignees: 'sesheta'
 labels: bot
 ---
 

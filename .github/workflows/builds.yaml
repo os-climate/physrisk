@@ -1,5 +1,5 @@
 ---
-name: '🧪 Test builds (matrix)'
+name: "🧪 Test builds (matrix)"
 
 # yamllint disable-line rule:truthy
 on:
@@ -11,14 +11,14 @@ jobs:
   pre-release:
     # Don't run if pull request is NOT merged
     if: github.event.pull_request.merged == true
-    runs-on: 'ubuntu-latest'
+    runs-on: "ubuntu-latest"
     continue-on-error: true
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.9', '3.10', '3.11']
+        python-version: ["3.9", "3.10", "3.11"]
     steps:
-      - name: 'Populate environment variables'
+      - name: "Populate environment variables"
         id: setenv
         run: |
           echo "Action triggered by user: ${GITHUB_TRIGGERING_ACTOR}"
@@ -29,19 +29,19 @@ jobs:
           vernum="${{ matrix.python-version }}.${datetime}"
           echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
 
-      - name: 'Checkout repository'
+      - name: "Checkout repository"
         uses: actions/checkout@v4
 
-      - name: 'Set up Python ${{ matrix.python-version }}'
+      - name: "Set up Python ${{ matrix.python-version }}"
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - name: 'Install dependencies'
+      - name: "Install dependencies"
         run: |
           python -m pip install --upgrade pip
           pip install tox tox-gh-actions
 
-      - name: 'Tag for test release'
+      - name: "Tag for test release"
         # Delete all local tags, then create a synthetic tag for testing
         # Use the date/time to avoid conflicts uploading to Test PyPI
         run: |
@@ -51,6 +51,6 @@ jobs:
           git checkout "tags/v${{ steps.setenv.outputs.vernum }}"
           grep version pyproject.toml
 
-      - name: 'Build with TOX'
+      - name: "Build with TOX"
         run: |
           tox -e build

@@ -29,7 +29,7 @@ jobs:
       - name: "Setup PDM for build commands"
         uses: pdm-project/setup-pdm@v3
         with:
-          version: 2.10.0
+          version: 2.10.3
 
       - name: "Populate environment variables"
         id: setenv

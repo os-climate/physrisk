@@ -33,7 +33,7 @@ jobs:
       - name: "Setup PDM for build commands"
         uses: pdm-project/setup-pdm@v3
         with:
-          version: 2.10.0
+          version: 2.10.3
 
       - name: "Setup Python 3.10"
         uses: actions/setup-python@v4.7.0

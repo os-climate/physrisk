@@ -41,7 +41,7 @@ jobs:
           pdm export -o requirements.txt
           python -m pip install -r requirements.txt
           python -m pip install .
-          pdm list --graph > module-graph.txt
+          pdm list --graph > module-graph.txt 2>&1
 
       - name: Store the dependency graph
         uses: actions/upload-artifact@v3

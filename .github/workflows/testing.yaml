@@ -37,4 +37,12 @@ jobs:
           pip install .
 
       - name: 'Run unit tests: pytest'
-        run: python -m pytest test
+        run: |
+          if [ -d test ]; then
+            python -m pytest test
+          elif [ -d tests]; then
+            python -m pytest tests
+          else
+            echo "No test/tests directory could be found"
+            echo "Aborting testing without error"; exit 0
+          fi

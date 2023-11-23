@@ -10,7 +10,7 @@ on:
 jobs:
   pre-release:
     # Don't run if pull request is NOT merged
-    if: github.event.pull_request.merged == true
+    # if: github.event.pull_request.merged == true
     runs-on: "ubuntu-latest"
     continue-on-error: true
     strategy:

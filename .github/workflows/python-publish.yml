@@ -1,47 +1,40 @@
-# This workflow will upload a Python Package using Twine when a release is created
-# For more information see: https://help.github.com/en/actions/language-and-framework-guides/using-python-with-github-actions#publishing-to-package-registries
-
-# This workflow uses actions that are not certified by GitHub.
-# They are provided by a third-party and are governed by
-# separate terms of service, privacy policy, and support
-# documentation.
-
+---
 name: Publish Packages to PyPI and TestPyPI
 
+# yamllint disable-line rule:truthy
 on: push
 
 jobs:
   deploy:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+      - uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v2
-      with:
-        python-version: '3.x'
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.x'
 
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install build
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install build
 
-    - name: Output Run ID
-      run: |
-        value=`cat VERSION`
-        echo "$value-dev${{ github.run_id }}" > VERSION
-        echo ${{ github.run_id }}
+      - name: Output Run ID
+        run: |
+          value=$(cat VERSION)
+          echo "$value-dev${{ github.run_id }}" > VERSION
+          echo ${{ github.run_id }}
 
-    - name: Output Run Number
-      run: echo ${{ github.run_number }}
+      - name: Output Run Number
+        run: echo ${{ github.run_number }}
 
-    - name: Build package
-      run: python -m build
+      - name: Build package
+        run: python -m build
 
-    - name: Publish package to Test PyPI
-      uses: pypa/gh-action-pypi-publish@master
-      with:
-        password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-        repository_url: https://test.pypi.org/legacy/
+      - name: Publish package to Test PyPI
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/

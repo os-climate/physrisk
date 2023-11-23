@@ -4,7 +4,7 @@
 # For more information see:
 # https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
 
-name: "⛔️ Security auditing"
+name: '⛔️ Security auditing'
 
 # yamllint disable-line rule:truthy
 on:
@@ -14,17 +14,17 @@ on:
 
 jobs:
   build:
-    name: "Audit Python dependencies"
+    name: 'Audit Python dependencies'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.9", "3.10", "3.11"]
+        python-version: ['3.9', '3.10', '3.11']
     steps:
-      - name: "Checkout repository"
+      - name: 'Checkout repository'
         uses: actions/checkout@v4
 
-      - name: "Setup PDM for build commands"
+      - name: 'Setup PDM for build commands'
         uses: pdm-project/setup-pdm@v3
         with:
           version: 2.10.0
@@ -34,7 +34,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: "Install dependencies"
+      - name: 'Install dependencies'
         run: |
           pip install --upgrade pip
           pdm lock
@@ -43,7 +43,7 @@ jobs:
           python -m pip install .
           pdm list --graph
 
-      - name: "Run: pip-audit"
+      - name: 'Run: pip-audit'
         uses: pypa/gh-action-pip-audit@v1.0.8
 
 # with:

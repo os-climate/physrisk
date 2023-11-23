@@ -1,3 +1,4 @@
+---
 host: khemenu.thoth-station.ninja
 tls_verify: false
 requirements_format: pipenv
@@ -6,8 +7,8 @@ runtime_environments:
   - name: rhel:8
     operating_system:
       name: rhel
-      version: "8"
-    python_version: "3.8"
+      version: '8'
+    python_version: '3.8'
     recommendation_type: latest
 
 managers:

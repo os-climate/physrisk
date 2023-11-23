@@ -22,7 +22,7 @@ class HazardDataRequest:
         indicator_id: str,
         scenario: str,
         year: int,
-        hint: Optional[HazardDataHint] = None
+        hint: Optional[HazardDataHint] = None,
     ):
         """Create HazardDataRequest.
 

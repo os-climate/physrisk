@@ -45,6 +45,8 @@ repos:
       - id: mixed-line-ending
         args: ["--fix=lf"]
       - id: name-tests-test
+        # pass_filenames: false
+        files: \^*._test.py
       # Do not allow direct push to main/master branches
       - id: no-commit-to-branch
       # - id: pretty-format-json

@@ -58,15 +58,17 @@ jobs:
 
       - name: "Save dependency graph"
         uses: GuillaumeFalourd/command-output-file-action@v1.1
-        command_line: pdm list --graph
-        output_file_name: metadata/dependency-graph.txt
-        display_file_content: NO
+        with:
+          command_line: pdm list --graph
+          output_file_name: metadata/dependency-graph.txt
+          display_file_content: NO
 
       - name: "Save file listing of build directory"
         uses: GuillaumeFalourd/command-output-file-action@v1.1
-        command_line: ls -al dist/*
-        output_file_name: metadata/dist-ls.txt
-        display_file_content: NO
+        with:
+          command_line: ls -al dist/*
+          output_file_name: metadata/dist-ls.txt
+          display_file_content: NO
 
       - name: Store the build metadata
         uses: actions/upload-artifact@v3

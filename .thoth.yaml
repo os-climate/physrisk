@@ -8,7 +8,7 @@ runtime_environments:
     operating_system:
       name: rhel
       version: '8'
-    python_version: '3.8'
+    python_version: '3.9'
     recommendation_type: latest
 
 managers:

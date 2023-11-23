@@ -5,7 +5,7 @@
 groups = ["default", "dev", "docs", "lint", "test", "tox"]
 strategy = ["cross_platform"]
 lock_version = "4.4"
-content_hash = "sha256:803f5c70ea742362a77ec599e999bdda53e642f339ea11c7a4847c52ca8a40ac"
+content_hash = "sha256:4d838a3a13d02d12134d153f42ca9a6f0b26a5ac50ef4d5d7053e2abafd67b82"
 
 [[package]]
 name = "affine"
@@ -188,9 +188,6 @@ name = "babel"
 version = "2.13.1"
 requires_python = ">=3.7"
 summary = "Internationalization utilities"
-dependencies = [
-    "setuptools; python_version >= \"3.12\"",
-]
 files = [
     {file = "Babel-2.13.1-py3-none-any.whl", hash = "sha256:7077a4984b02b6727ac10f1f7294484f737443d7e2e66c5e4380e41a3ae0b4ed"},
     {file = "Babel-2.13.1.tar.gz", hash = "sha256:33e0952d7dd6374af8dbf6768cc4ddf3ccfefc244f9986d4074704f2fbd18900"},

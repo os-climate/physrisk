@@ -46,13 +46,13 @@ class PregeneratedHazardModel(HazardModel):
         for key in batches.keys():
             try:
                 batch: List[HazardDataRequest] = batches[key]
-                hazard_type, indicator_id, scenario, year, hint, buffer_zone = (
+                hazard_type, indicator_id, scenario, year, hint, buffer = (
                     batch[0].hazard_type,
                     batch[0].indicator_id,
                     batch[0].scenario,
                     batch[0].year,
                     batch[0].hint,
-                    batch[0].buffer_zone,
+                    batch[0].buffer,
                 )
                 longitudes = [req.longitude for req in batch]
                 latitudes = [req.latitude for req in batch]
@@ -64,7 +64,7 @@ class PregeneratedHazardModel(HazardModel):
                         scenario=scenario,
                         year=year,
                         hint=hint,
-                        buffer_zone=buffer_zone,
+                        buffer=buffer,
                     )
 
                     for i, req in enumerate(batch):

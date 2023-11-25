@@ -2,15 +2,10 @@ from abc import ABC
 from dataclasses import dataclass
 from typing import List, MutableMapping, Optional
 
+from shapely import Point
 from typing_extensions import Protocol
 
 from .zarr_reader import ZarrReader
-
-
-@dataclass
-class HazardDataBufferZone:
-    delta_deg: float
-    n_grid: int
 
 
 @dataclass
@@ -81,7 +76,7 @@ class AcuteHazardDataProvider(HazardDataProvider):
         scenario: str,
         year: int,
         hint: Optional[HazardDataHint] = None,
-        buffer_zone: Optional[HazardDataBufferZone] = None,
+        buffer: Optional[float] = None,
     ):
         """Get intensity curve for each latitude and longitude coordinate pair.
 
@@ -98,18 +93,15 @@ class AcuteHazardDataProvider(HazardDataProvider):
         """
 
         path = self._get_source_path(indicator_id=indicator_id, scenario=scenario, year=year, hint=hint)
-        if buffer_zone is None:
+        if buffer is None:
             curves, return_periods = self._reader.get_curves(
                 path, longitudes, latitudes, self._interpolation
             )  # type: ignore
         else:
             curves, return_periods = self._reader.get_max_curves(
                 path,
-                longitudes,
-                latitudes,
+                [Point(longitude, latitude).buffer(buffer) for longitude, latitude in zip(longitudes, latitudes)],
                 self._interpolation,
-                buffer_zone.delta_deg * ZarrReader.KILOMETRES_PER_DEGREE,
-                buffer_zone.n_grid,
             )  # type: ignore
         return curves, return_periods
 

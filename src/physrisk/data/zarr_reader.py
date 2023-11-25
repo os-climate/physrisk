@@ -6,6 +6,7 @@ import numpy as np
 import s3fs
 import zarr
 from affine import Affine
+from shapely import MultiPoint, Point, affinity
 
 
 def get_env(key: str, default: Optional[str] = None) -> str:
@@ -20,8 +21,6 @@ def get_env(key: str, default: Optional[str] = None) -> str:
 
 class ZarrReader:
     """Reads hazard event data from Zarr files, including OSC-format-specific attributes."""
-
-    KILOMETRES_PER_DEGREE: float = 110.574
 
     # environment variable names:
     __access_key = "OSC_S3_ACCESS_KEY"
@@ -87,7 +86,6 @@ class ZarrReader:
             curves: numpy array of intensity (no. coordinate pairs, no. return periods).
             return_periods: return periods in years.
         """
-
         # assume that calls to this are large, not chatty
         if len(longitudes) != len(latitudes):
             raise ValueError("length of longitudes and latitudes not equal")
@@ -124,9 +122,112 @@ class ZarrReader:
             index_values = [0]
         return index_values
 
-    def get_max_curves(self, set_id, longitudes, latitudes, interpolation="floor", delta_km=1.0, n_grid=5):
-        """Get maximal intensity curve for a grid around a given latitude and longitude coordinate pair.
+    def get_max_curves(self, set_id, shapes, interpolation="floor"):
+        """Get maximal intensity curve for a given shape.
 
+        Args:
+            set_id: string or tuple representing data set, converted into path by path_provider.
+            shapes: list of shapes.
+
+        Returns:
+            curves_max: numpy array of maximum intensity on the grid for a given shape
+            (no. coordinate pairs, no. return periods).
+            return_periods: return periods in years.
+        """
+        path = self._path_provider(set_id) if self._path_provider is not None else set_id
+        z = self._root[path]  # e.g. inundation/wri/v2/<filename>
+
+        # in the case of acute risks, index_values will contain the return periods
+        index_values = self.get_index_values(z)
+
+        t = z.attrs["transform_mat3x3"]  # type: ignore
+        transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
+
+        matrix = np.array(~transform).reshape(3, 3).transpose()[:, :-1].reshape(6)
+        transformed_shapes = [affinity.affine_transform(shape, matrix) for shape in shapes]
+
+        multipoints = [
+            MultiPoint(
+                [
+                    (x, y)
+                    for x in range(int(np.floor(shape.bounds[0])), int(np.ceil(shape.bounds[2])) + 1)
+                    for y in range(int(np.floor(shape.bounds[1])), int(np.ceil(shape.bounds[3])) + 1)
+                ]
+            ).intersection(shape)
+            for shape in transformed_shapes
+        ]
+        multipoints = [
+            Point(int(0.5 * (shape.bounds[0] + shape.bounds[2])), int(0.5 * (shape.bounds[1] + shape.bounds[3])))
+            if multipoint.is_empty
+            else multipoint
+            for shape, multipoint in zip(transformed_shapes, multipoints)
+        ]
+        multipoints = [MultiPoint([(point.x, point.y)]) if isinstance(point, Point) else point for point in multipoints]
+
+        if interpolation == "floor":
+            image_coords = np.array(
+                [[int(point.x), int(point.y)] for multipoint in multipoints for point in multipoint.geoms]
+            ).transpose()
+
+            iz = np.tile(np.arange(z.shape[0]), image_coords.shape[1])  # type: ignore
+            iy = np.repeat(image_coords[1, :], len(index_values))
+            ix = np.repeat(image_coords[0, :], len(index_values))
+
+            curves = z.get_coordinate_selection((iz, iy, ix))
+            curves = curves.reshape(image_coords.shape[1], len(index_values))
+
+        elif interpolation in ["linear", "max", "min"]:
+            multipoints = [
+                multipoint.union(
+                    transformed_shape
+                    if isinstance(transformed_shape, Point)
+                    else MultiPoint(transformed_shape.exterior.coords)
+                )
+                for transformed_shape, multipoint in zip(transformed_shapes, multipoints)
+            ]
+            image_coords = np.array(
+                [[point.x, point.y] for multipoint in multipoints for point in multipoint.geoms]
+            ).transpose()
+
+            curves = ZarrReader._linear_interp_frac_coordinates(
+                z, image_coords, index_values, interpolation=interpolation
+            )
+
+        else:
+            raise ValueError("interpolation must have value 'floor', 'linear', 'max' or 'min")
+
+        numbers_of_points_per_shape = [len(multipoint.geoms) for multipoint in multipoints]
+        numbers_of_points_per_shape_cumulated = np.cumsum(numbers_of_points_per_shape)
+        curves_max = np.array(
+            [
+                np.nanmax(curves[index - number_of_points_per_shape : index, :], axis=0)
+                for number_of_points_per_shape, index in zip(
+                    numbers_of_points_per_shape, numbers_of_points_per_shape_cumulated
+                )
+            ]
+        )
+
+        return curves_max, np.array(index_values)
+
+    def get_max_curves_on_grid(self, set_id, longitudes, latitudes, interpolation="floor", delta_km=1.0, n_grid=5):
+        """Get maximal intensity curve for a grid around a given latitude and longitude coordinate pair.
+            It is almost equivalent to:
+                self.get_max_curves
+                (
+                    set_id,
+                    [
+                        Polygon(
+                            (
+                                (x - 0.5 * delta_deg, y - 0.5 * delta_deg),
+                                (x - 0.5 * delta_deg, y + 0.5 * delta_deg),
+                                (x + 0.5 * delta_deg, y + 0.5 * delta_deg),
+                                (x + 0.5 * delta_deg, y - 0.5 * delta_deg)
+                            )
+                        )
+                        for x, y in zip(longitudes, latitudes)
+                    ]
+                    interpolation
+                )
         Args:
             set_id: string or tuple representing data set, converted into path by path_provider.
             longitudes: list of longitudes.
@@ -141,8 +242,11 @@ class ZarrReader:
             (no. coordinate pairs, no. return periods).
             return_periods: return periods in years.
         """
+        kilometres_per_degree: float = 110.574
+        delta_deg = delta_km / kilometres_per_degree
+
         n_data = len(latitudes)
-        delta_deg = delta_km / ZarrReader.KILOMETRES_PER_DEGREE
+
         grid = np.linspace(-0.5, 0.5, n_grid)
         lats_grid_baseline = np.broadcast_to(
             np.array(latitudes).reshape(n_data, 1, 1), (len(latitudes), n_grid, n_grid)

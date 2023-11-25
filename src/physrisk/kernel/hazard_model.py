@@ -4,7 +4,7 @@ from typing import Dict, List, Mapping, Optional, Protocol, Tuple
 
 import numpy as np
 
-from physrisk.data.hazard_data_provider import HazardDataBufferZone, HazardDataHint
+from physrisk.data.hazard_data_provider import HazardDataHint
 
 
 class HazardDataRequest:
@@ -23,7 +23,7 @@ class HazardDataRequest:
         scenario: str,
         year: int,
         hint: Optional[HazardDataHint] = None,
-        buffer_zone: Optional[HazardDataBufferZone] = None
+        buffer: Optional[float] = None
     ):
         """Create HazardDataRequest.
 
@@ -42,7 +42,7 @@ class HazardDataRequest:
         self.scenario = scenario
         self.year = year
         self.hint = hint
-        self.buffer_zone = buffer_zone
+        self.buffer = buffer
 
     def group_key(self):
         """Key used to group EventDataRequests into batches."""

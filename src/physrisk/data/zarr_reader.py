@@ -157,7 +157,7 @@ class ZarrReader:
             for shape in transformed_shapes
         ]
         multipoints = [
-            Point(int(0.5 * (shape.bounds[0] + shape.bounds[2])), int(0.5 * (shape.bounds[1] + shape.bounds[3])))
+            Point(0.5 * (shape.bounds[0] + shape.bounds[2]), 0.5 * (shape.bounds[1] + shape.bounds[3]))
             if multipoint.is_empty
             else multipoint
             for shape, multipoint in zip(transformed_shapes, multipoints)

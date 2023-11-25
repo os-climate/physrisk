@@ -123,14 +123,14 @@ class ZarrReader:
         return index_values
 
     def get_max_curves(self, set_id, shapes, interpolation="floor"):
-        """Get maximal intensity curve for a given shape.
+        """Get maximal intensity curve for a given geometry.
 
         Args:
             set_id: string or tuple representing data set, converted into path by path_provider.
-            shapes: list of shapes.
+            shapes: list of shapely.Polygon.
 
         Returns:
-            curves_max: numpy array of maximum intensity on the grid for a given shape
+            curves_max: numpy array of maximum intensity on the grid for a given geometry
             (no. coordinate pairs, no. return periods).
             return_periods: return periods in years.
         """

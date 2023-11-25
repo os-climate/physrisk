@@ -242,7 +242,7 @@ class ZarrReader:
             (no. coordinate pairs, no. return periods).
             return_periods: return periods in years.
         """
-        kilometres_per_degree: float = 110.574
+        kilometres_per_degree = 110.574
         delta_deg = delta_km / kilometres_per_degree
 
         n_data = len(latitudes)

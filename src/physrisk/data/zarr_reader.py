@@ -332,3 +332,20 @@ class ZarrReader:
         mat = np.array(inv_trans).reshape(3, 3)
         frac_image_coords = mat @ coords
         return frac_image_coords
+
+    @staticmethod
+    def _get_equivalent_buffer_in_arc_degrees(latitude, buffer_in_metres):
+        semi_major_axis = 6378137
+        semi_minor_axis = 6356752.314245
+        degrees_to_radians = np.pi / 180.0
+        latitude_in_radians = latitude * degrees_to_radians
+        cosinus = np.abs(np.cos(latitude_in_radians))
+        sinus = np.abs(np.sin(latitude_in_radians))
+        buffer_in_arc_degrees = (
+            buffer_in_metres
+            * np.sqrt((cosinus / semi_major_axis) ** 2 + (sinus / semi_minor_axis) ** 2)
+            / degrees_to_radians
+        )
+        if 0.0 < cosinus:
+            buffer_in_arc_degrees /= cosinus
+        return buffer_in_arc_degrees

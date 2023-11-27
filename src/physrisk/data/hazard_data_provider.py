@@ -101,14 +101,14 @@ class AcuteHazardDataProvider(HazardDataProvider):
         else:
             if buffer < 0 or 1000 < buffer:
                 raise Exception("The buffer must be an integer between 0 and 1000 metres.")
-            metres_per_arc_degree = 110574.0
-            buffer_in_arc_degrees = buffer / metres_per_arc_degree
             curves, return_periods = self._reader.get_max_curves(
                 path,
                 [
                     Point(longitude, latitude)
                     if buffer == 0
-                    else Point(longitude, latitude).buffer(buffer_in_arc_degrees)
+                    else Point(longitude, latitude).buffer(
+                        ZarrReader._get_equivalent_buffer_in_arc_degrees(latitude, buffer)
+                    )
                     for longitude, latitude in zip(longitudes, latitudes)
                 ],
                 self._interpolation,

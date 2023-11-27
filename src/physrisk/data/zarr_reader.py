@@ -335,6 +335,9 @@ class ZarrReader:
 
     @staticmethod
     def _get_equivalent_buffer_in_arc_degrees(latitude, buffer_in_metres):
+        """
+        area = radius * radius * cos(p) * dp * dq = buffer_in_metres * buffer_in_metres
+        """
         semi_major_axis = 6378137
         semi_minor_axis = 6356752.314245
         degrees_to_radians = np.pi / 180.0
@@ -347,5 +350,5 @@ class ZarrReader:
             / degrees_to_radians
         )
         if 0.0 < cosinus:
-            buffer_in_arc_degrees /= cosinus
+            buffer_in_arc_degrees /= np.sqrt(cosinus)
         return buffer_in_arc_degrees

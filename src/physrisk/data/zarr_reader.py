@@ -165,9 +165,9 @@ class ZarrReader:
         multipoints = [MultiPoint([(point.x, point.y)]) if isinstance(point, Point) else point for point in multipoints]
 
         if interpolation == "floor":
-            image_coords = np.array(
-                [[int(point.x), int(point.y)] for multipoint in multipoints for point in multipoint.geoms]
-            ).transpose()
+            image_coords = np.floor(
+                np.array([[point.x, point.y] for multipoint in multipoints for point in multipoint.geoms]).transpose()
+            ).astype(int)
 
             iz = np.tile(np.arange(z.shape[0]), image_coords.shape[1])  # type: ignore
             iy = np.repeat(image_coords[1, :], len(index_values))

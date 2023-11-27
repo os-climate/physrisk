@@ -76,7 +76,7 @@ class AcuteHazardDataProvider(HazardDataProvider):
         scenario: str,
         year: int,
         hint: Optional[HazardDataHint] = None,
-        buffer: Optional[float] = None,
+        buffer: Optional[int] = None,
     ):
         """Get intensity curve for each latitude and longitude coordinate pair.
 
@@ -86,6 +86,7 @@ class AcuteHazardDataProvider(HazardDataProvider):
             model: model identifier.
             scenario: identifier of scenario, e.g. rcp8p5 (RCP 8.5).
             year: projection year, e.g. 2080.
+            buffer: delimitation of the area for the hazard data expressed in metres (within [0,1000]).
 
         Returns:
             curves: numpy array of intensity (no. coordinate pairs, no. return periods).
@@ -98,9 +99,18 @@ class AcuteHazardDataProvider(HazardDataProvider):
                 path, longitudes, latitudes, self._interpolation
             )  # type: ignore
         else:
+            if buffer < 0 or 1000 < buffer:
+                raise Exception("The buffer must be an integer between 0 and 1000 metres.")
+            metres_per_arc_degree = 110574.0
+            buffer_in_arc_degrees = buffer / metres_per_arc_degree
             curves, return_periods = self._reader.get_max_curves(
                 path,
-                [Point(longitude, latitude).buffer(buffer) for longitude, latitude in zip(longitudes, latitudes)],
+                [
+                    Point(longitude, latitude)
+                    if buffer == 0
+                    else Point(longitude, latitude).buffer(buffer_in_arc_degrees)
+                    for longitude, latitude in zip(longitudes, latitudes)
+                ],
                 self._interpolation,
             )  # type: ignore
         return curves, return_periods

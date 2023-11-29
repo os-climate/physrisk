@@ -17,6 +17,7 @@ from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.exposure import JupterExposureMeasure, calculate_exposures
 from physrisk.kernel.hazards import all_hazards
+from physrisk.kernel.impact_distrib import EmptyImpactDistrib
 from physrisk.kernel.risk import AssetLevelRiskModel, BatchId, Measure, MeasureKey
 from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
 
@@ -282,13 +283,13 @@ def _get_asset_impacts(
 
     scenarios = [request.scenario] if request.scenarios is None or len(request.scenarios) == 0 else request.scenarios
     years = [request.year] if request.years is None or len(request.years) == 0 else request.years
+    risk_measures = None
     if request.include_measures:
         batch_impacts, measures = risk_model.calculate_risk_measures(assets, scenarios, years)
         measure_ids_for_asset, definitions = risk_model.populate_measure_definitions(assets)
         risk_measures = _create_risk_measures(measures, measure_ids_for_asset, definitions, assets, scenarios, years)
     elif request.include_asset_level:
         batch_impacts = risk_model.calculate_impacts(assets, scenarios, years)
-        risk_measures = None
 
     if request.include_asset_level:
         results = batch_impacts[BatchId(scenarios[0], years[0])]
@@ -316,6 +317,9 @@ def _get_asset_impacts(
                     )
             else:
                 calc_details = None
+
+            if isinstance(v.impact, EmptyImpactDistrib):
+                continue
 
             impact_exceedance = v.impact.to_exceedance_curve()
             hazard_impacts = AssetSingleImpact(

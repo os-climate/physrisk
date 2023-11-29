@@ -1,17 +1,15 @@
 """ Test asset impact calculations."""
 import unittest
-from typing import Dict, List, Tuple
 
 import numpy as np
 
-from physrisk.kernel.assets import Asset, RealEstateAsset
+from physrisk.kernel.assets import RealEstateAsset
 from physrisk.kernel.curve import ExceedanceCurve
 from physrisk.kernel.hazard_event_distrib import HazardEventDistrib
 from physrisk.kernel.hazard_model import HazardDataRequest
 from physrisk.kernel.hazards import RiverineInundation
 from physrisk.kernel.impact import ImpactDistrib
 from physrisk.kernel.vulnerability_distrib import VulnerabilityDistrib
-from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
 from physrisk.vulnerability_models.real_estate_models import (
     RealEstateCoastalInundationModel,
     RealEstateRiverineInundationModel,
@@ -105,7 +103,7 @@ class TestAssetImpact(unittest.TestCase):
 
     def test_performance_hazardlookup(self):
         """Just for reference: not true test"""
-        asset_requests: Dict[Tuple[VulnerabilityModelBase, Asset], List[HazardDataRequest]] = {}
+        asset_requests = {}
         import time
 
         start = time.time()

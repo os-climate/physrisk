@@ -46,18 +46,25 @@ class PregeneratedHazardModel(HazardModel):
         for key in batches.keys():
             try:
                 batch: List[HazardDataRequest] = batches[key]
-                hazard_type, indicator_id, scenario, year, hint = (
+                hazard_type, indicator_id, scenario, year, hint, buffer = (
                     batch[0].hazard_type,
                     batch[0].indicator_id,
                     batch[0].scenario,
                     batch[0].year,
                     batch[0].hint,
+                    batch[0].buffer,
                 )
                 longitudes = [req.longitude for req in batch]
                 latitudes = [req.latitude for req in batch]
                 if hazard_type.kind == HazardKind.acute:  # type: ignore
                     intensities, return_periods = self.acute_hazard_data_providers[hazard_type].get_intensity_curves(
-                        longitudes, latitudes, indicator_id=indicator_id, scenario=scenario, year=year, hint=hint
+                        longitudes,
+                        latitudes,
+                        indicator_id=indicator_id,
+                        scenario=scenario,
+                        year=year,
+                        hint=hint,
+                        buffer=buffer,
                     )
 
                     for i, req in enumerate(batch):

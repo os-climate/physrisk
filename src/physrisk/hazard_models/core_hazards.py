@@ -95,7 +95,11 @@ class InventorySourcePaths:
                 )
             proxy_scenario = cmip6_scenario_to_rcp(scenario) if resource.scenarios[0].id.startswith("rcp") else scenario
             if scenario == "historical":
-                year = next(y for y in next(s for s in resource.scenarios if s.id == "historical").years)
+                scenarios = next(iter(s for s in resource.scenarios if s.id == "historical"), None)
+                if scenarios is None:
+                    scenarios = next(s for s in sorted(resource.scenarios, key=lambda s: next(y for y in s.years)))
+                proxy_scenario = scenarios.id
+                year = next(s for s in scenarios.years)
             return resource.path.format(id=indicator_id, scenario=proxy_scenario, year=year)
 
         return _get_source_path

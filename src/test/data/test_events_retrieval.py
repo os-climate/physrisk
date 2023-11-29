@@ -11,6 +11,7 @@ import numpy.testing
 import scipy.interpolate
 import zarr
 from fsspec.implementations.memory import MemoryFileSystem
+from shapely import Polygon
 
 from physrisk.api.v1.hazard_data import HazardAvailabilityRequest, HazardResource, Scenario
 from physrisk.data.inventory import EmbeddedInventory, Inventory
@@ -152,7 +153,7 @@ class TestEventRetrieval(TestWithCredentials):
         numpy.testing.assert_allclose(candidate_max, expected_max, rtol=1e-6)
         numpy.testing.assert_allclose(candidate_min, expected_min, rtol=1e-6)
 
-    def test_zarr_geomax(self):
+    def test_zarr_geomax_on_grid(self):
         lons_ = np.array([3.92783])
         lats_ = np.array([50.882394])
         curve = np.array(
@@ -164,10 +165,36 @@ class TestEventRetrieval(TestWithCredentials):
         n_grid = 10
         store_ = mock_hazard_model_store_inundation(lons_, lats_, curve)
         zarrreader_ = ZarrReader(store_)
-        curves_max_candidate, _ = zarrreader_.get_max_curves(
+        curves_max_candidate, _ = zarrreader_.get_max_curves_on_grid(
             set_id, lons_, lats_, interpolation=interpolation, delta_km=delta_km, n_grid=n_grid
         )
         curves_max_expected = np.array(
             [[0.00, 0.04917953, 0.1883151, 0.3619907, 0.49083358, 0.61872474, 0.78648075, 0.91052965, 1.03448614]]
         )
         numpy.testing.assert_allclose(curves_max_candidate, curves_max_expected, rtol=1e-6)
+
+    def test_zarr_geomax(self):
+        longitudes = np.array([3.926])
+        latitudes = np.array([50.878])
+        curve = np.array(
+            [0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4],
+        )
+        set_id = r"inundation/wri/v2\\inunriver_rcp8p5_MIROC-ESM-CHEM_2080"
+        delta_deg = 0.1
+        shapes = [
+            Polygon(
+                (
+                    (x - 0.5 * delta_deg, y - 0.5 * delta_deg),
+                    (x - 0.5 * delta_deg, y + 0.5 * delta_deg),
+                    (x + 0.5 * delta_deg, y + 0.5 * delta_deg),
+                    (x + 0.5 * delta_deg, y - 0.5 * delta_deg),
+                )
+            )
+            for x, y in zip(longitudes, latitudes)
+        ]
+        store = mock_hazard_model_store_inundation(longitudes, latitudes, curve)
+        zarr_reader = ZarrReader(store)
+        for interpolation in ["floor", "linear"]:
+            curves_max_candidate, _ = zarr_reader.get_max_curves(set_id, shapes, interpolation=interpolation)
+            curves_max_expected = np.array([[0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4]])
+            numpy.testing.assert_allclose(curves_max_candidate, curves_max_expected, rtol=1e-6)

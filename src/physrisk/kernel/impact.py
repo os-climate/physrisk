@@ -43,8 +43,8 @@ def calculate_impacts(  # noqa: C901
     for asset in assets:
         asset_type = type(asset)
         mappings = vulnerability_models[asset_type]
-        for m in mappings:
-            model_assets[m].append(asset)
+        for mapping in mappings:
+            model_assets[mapping].append(asset)
     results = {}
 
     asset_requests, responses = _request_consolidated(hazard_model, model_assets, scenario, year)

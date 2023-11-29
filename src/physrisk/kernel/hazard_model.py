@@ -22,7 +22,8 @@ class HazardDataRequest:
         indicator_id: str,
         scenario: str,
         year: int,
-        hint: Optional[HazardDataHint] = None
+        hint: Optional[HazardDataHint] = None,
+        buffer: Optional[int] = None
     ):
         """Create HazardDataRequest.
 
@@ -33,6 +34,7 @@ class HazardDataRequest:
             model: model identifier.
             scenario: identifier of scenario, e.g. rcp8p5 (RCP 8.5).
             year: projection year, e.g. 2080.
+            buffer: delimitation of the area for the hazard data expressed in metres (within [0,1000]).
         """
         self.hazard_type = hazard_type
         self.longitude = longitude
@@ -41,6 +43,7 @@ class HazardDataRequest:
         self.scenario = scenario
         self.year = year
         self.hint = hint
+        self.buffer = buffer
 
     def group_key(self):
         """Key used to group EventDataRequests into batches."""

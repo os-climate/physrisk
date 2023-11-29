@@ -23,8 +23,10 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
     https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html
     """
 
-    def __init__(self, model: str = "mean_degree_days_above_32c", delta: bool = True):
-        super().__init__(model, ChronicHeat)  # opportunity to give a model hint, but blank here
+    def __init__(self, indicator_id: str = "mean_degree_days_above_32c", delta: bool = True):
+        super().__init__(
+            indicator_id=indicator_id, hazard_type=ChronicHeat, impact_type=ImpactType.disruption
+        )  # opportunity to give a model hint, but blank here
 
         self.time_lost_per_degree_day = 4.671  # This comes from the paper converted to celsius
         self.time_lost_per_degree_day_se = 2.2302  # This comes from the paper converted to celsius

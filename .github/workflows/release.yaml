@@ -1,0 +1,168 @@
+---
+name: "🐍📦 Production build and release"
+
+# GitHub/PyPI trusted publisher documentation:
+# https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
+
+# yamllint disable-line rule:truthy
+on:
+  # workflow_dispatch:
+  push:
+    # Only invoked on release tag pushes
+    tags:
+      - v*.*.*
+
+env:
+  python-version: "3.10"
+
+### BUILD ###
+
+jobs:
+  build:
+    name: "🐍 Build packages"
+    runs-on: ubuntu-latest
+    permissions:
+      # IMPORTANT: mandatory for Sigstore
+      id-token: write
+    steps:
+      ### BUILDING ###
+
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Setup PDM for build commands"
+        uses: pdm-project/setup-pdm@v3
+        with:
+          version: 2.10.0
+
+      - name: "Setup Python 3.10"
+        uses: actions/setup-python@v4.7.0
+        with:
+          python-version: ${{ env.python-version }}
+
+      - name: "Update version from tags for production release"
+        run: |
+          echo "Github versioning: ${{ github.ref_name }}"
+          scripts/release-versioning.sh
+
+      - name: "Build with PDM backend"
+        run: |
+          pdm build
+
+      ### SIGNING ###
+
+      - name: "Sign packages with Sigstore"
+        uses: sigstore/gh-action-sigstore-python@v1.2.3
+        with:
+          inputs: >-
+            ./dist/*.tar.gz
+            ./dist/*.whl
+
+      - name: Store the distribution packages
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ github.ref_name }}
+          path: dist/
+
+  ### PUBLISH GITHUB ###
+
+  github:
+    name: "📦 Publish to GitHub"
+    # Only publish on tag pushes
+    if: startsWith(github.ref, 'refs/tags/')
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    permissions:
+      # IMPORTANT: mandatory to publish artefacts
+      contents: write
+    steps:
+      - name: "⬇ Download build artefacts"
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ github.ref_name }}
+          path: dist/
+
+      - name: "📦 Publish release to GitHub"
+        uses: ModeSevenIndustrialSolutions/action-automatic-releases@latest
+        with:
+          # Valid inputs are:
+          # repo_token, automatic_release_tag, draft, prerelease, title, files
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          prerelease: false
+          automatic_release_tag: ${{ github.ref_name }}
+          title: ${{ github.ref_name }}
+          files: |
+            dist/*.tar.gz
+            dist/*.whl
+            dist/*.sigstore
+
+  ### PUBLISH PYPI TEST ###
+
+  testpypi:
+    name: "📦 Publish to PyPi Test"
+    # Only publish on tag pushes
+    if: startsWith(github.ref, 'refs/tags/')
+    needs:
+      - build
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+    permissions:
+      # IMPORTANT: mandatory for trusted publishing
+      id-token: write
+    steps:
+      - name: "⬇ Download build artefacts"
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ github.ref_name }}
+          path: dist/
+
+      - name: "Remove files unsupported by PyPi"
+        run: |
+          if [ -f dist/buildvars.txt ]; then
+            rm dist/buildvars.txt
+          fi
+          rm dist/*.sigstore
+
+      - name: Publish distribution to Test PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          verbose: true
+
+  ### PUBLISH PYPI ###
+
+  pypi:
+    name: "📦 Publish to PyPi"
+    # Only publish on tag pushes
+    if: startsWith(github.ref, 'refs/tags/')
+    needs:
+      - testpypi
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+    permissions:
+      # IMPORTANT: mandatory for trusted publishing
+      id-token: write
+    steps:
+      - name: "⬇ Download build artefacts"
+        uses: actions/download-artifact@v3
+        with:
+          name: ${{ github.ref_name }}
+          path: dist/
+
+      - name: "Remove files unsupported by PyPi"
+        run: |
+          if [ -f dist/buildvars.txt ]; then
+            rm dist/buildvars.txt
+          fi
+          rm dist/*.sigstore
+
+      - name: "Setup PDM for build commands"
+        uses: pdm-project/setup-pdm@v3
+
+      - name: "Publish release to PyPI"
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          verbose: true

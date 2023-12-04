@@ -1,0 +1,87 @@
+---
+name: "🧪 Test builds (matrix)"
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, reopened, edited, synchronize]
+
+jobs:
+  pre-release:
+    # Don't run if pull request is NOT merged
+    # if: github.event.pull_request.merged == true
+    runs-on: "ubuntu-latest"
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.10"]
+    steps:
+      - name: "Populate environment variables"
+        id: setenv
+        run: |
+          echo "Action triggered by user: ${GITHUB_TRIGGERING_ACTOR}"
+          set -x
+          datetime=$(date +'%Y%m%d%H%M')
+          export datetime
+          echo "datetime=${datetime}" >> "$GITHUB_OUTPUT"
+          vernum="${{ matrix.python-version }}.${datetime}"
+          echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
+
+      - name: "Checkout repository"
+        uses: actions/checkout@v4
+
+      - name: "Set up Python ${{ matrix.python-version }}"
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: "Install dependencies"
+        run: |
+          python -m pip install --upgrade pip
+          pip install tox tox-gh-actions
+
+      - name: "Tag for test release"
+        # Delete all local tags, then create a synthetic tag for testing
+        # Use the date/time to avoid conflicts uploading to Test PyPI
+        run: |
+          scripts/dev-versioning.sh "${{ steps.setenv.outputs.vernum }}"
+          git tag | xargs -L 1 | xargs git tag --delete
+          git tag "v${{ steps.setenv.outputs.vernum }}"
+          git checkout "tags/v${{ steps.setenv.outputs.vernum }}"
+          grep version pyproject.toml
+
+      - name: "Build with TOX (PDM backend)"
+        run: |
+          mkdir metadata
+          tox -e build
+
+      - name: "Save dependency graph"
+        uses: GuillaumeFalourd/command-output-file-action@v1.1
+        with:
+          command_line: pdm list --graph
+          output_file_name: metadata/dependency-graph.txt
+          # yamllint disable-line rule:truthy
+          display_file_content: NO
+
+      - name: "Save file listing of build directory"
+        uses: GuillaumeFalourd/command-output-file-action@v1.1
+        with:
+          command_line: ls -al dist/*
+          output_file_name: metadata/dist-ls.txt
+          # yamllint disable-line rule:truthy
+          display_file_content: NO
+
+      - name: Store the build metadata
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ github.ref_name }}
+          path: metadata/*
+          retention-days: 14
+
+      - name: Store the build artefacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ github.ref_name }}
+          path: dist/
+          retention-days: 14

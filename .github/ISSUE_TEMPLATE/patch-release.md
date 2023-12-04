@@ -2,7 +2,7 @@
 name: Patch release
 about: Create a new patch release
 title: New patch release
-assignees: 'sesheta'
+assignees: "sesheta"
 labels: bot
 ---
 

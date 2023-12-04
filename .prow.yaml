@@ -1,3 +1,4 @@
+---
 presubmits:
   - name: pre-commit
     decorate: true

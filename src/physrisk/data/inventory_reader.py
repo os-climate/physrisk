@@ -26,7 +26,7 @@ class InventoryReader:
         *,
         get_env: Callable[[str, Optional[str]], str] = get_env,
         fs: Optional[AbstractFileSystem] = None,
-        base_path: Optional[AbstractFileSystem] = None
+        base_path: Optional[AbstractFileSystem] = None,
     ):
         """Class to read and update inventory stored in S3 or supplied AbstractFileSystem.
 

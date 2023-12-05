@@ -46,7 +46,7 @@ class LossModel:
         year: int,
         aggregator: Optional[Aggregator] = None,
         currency: str = "EUR",
-        sims: int = 100000,
+        sims: int = 100000
     ):
         if aggregator is None:
             aggregator = DefaultAggregator()

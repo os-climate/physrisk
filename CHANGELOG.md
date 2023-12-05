@@ -34,15 +34,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.3] - 2022-04-01
 
-**Fixes:**
-
+### Fixes
 - Correct ValueError message raised by physrisk.requests.get
 
 ## [0.1.2] - 2022-04-01
 
-**Fixes:**
-
-- Add missing **init**.py file in src/physrisk/data_objects
+### Fixes
+- Add missing __init__.py file in src/physrisk/data_objects
 
 ## [0.1.1] - 2022-04-01
 
@@ -61,6 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## 0.0.1-b.1 - 2022-02-17
 
 - Early development release
+
 
 [Unreleased]: https://github.com/os-climate/physrisk/compare/v0.3.1...HEAD
 [0.3.1]: https://github.com/os-climate/physrisk/compare/v0.3.0...v0.3.1

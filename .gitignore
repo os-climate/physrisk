@@ -1,28 +1,19 @@
 # Credentials / Secrets
 credentials.env
-config.toml
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
-*$py.class
-
-.idea/*
-*.iml
 
 # C extensions
 *.so
 
 # Distribution / packaging
 .Python
-.pdm-python
-.pdm-build
-.pdm.toml
-.tox
+env/
 build/
 develop-eggs/
-dist/**
-!app/static/frontend/dist/
+dist/
 downloads/
 eggs/
 .eggs/
@@ -31,14 +22,9 @@ lib64/
 parts/
 sdist/
 var/
-wheels/
-pip-wheel-metadata/
-share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
-MANIFEST
-
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -53,16 +39,12 @@ pip-delete-this-directory.txt
 # Unit test / coverage reports
 htmlcov/
 .tox/
-.nox/
 .coverage
 .coverage.*
 .cache
 nosetests.xml
 coverage.xml
 *.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
 
 # Translations
 *.mo
@@ -70,9 +52,6 @@ coverage.xml
 
 # Django stuff:
 *.log
-local_settings.py
-db.sqlite3
-db.sqlite3-journal
 
 # Sphinx documentation
 docs/_build/
@@ -116,33 +95,3 @@ target/
 .venv/*
 src/test/data/coords.json
 credentials.env
-
-# pyenv
-.python-version
-
-# PEP 582; used by e.g. github.com/David-OConnor/pyflow
-__pypackages__/
-
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
-
-# mypy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-%USERPROFILE%/*
-
-# vscode
-.vscode
-
-# Misc
-.noseids
-test/.DS_Store
-.DS_Store

@@ -65,7 +65,7 @@ class PowerGeneratingAsset(Asset):
         *,
         type: Optional[str] = None,
         location: Optional[str] = None,
-        capacity: Optional[float] = None,
+        capacity: Optional[float] = None
     ):
         super().__init__(latitude, longitude)
 
@@ -88,7 +88,7 @@ class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
         *,
         type: Optional[str] = None,
         location: Optional[str] = None,
-        capacity: Optional[float] = None,
+        capacity: Optional[float] = None
     ):
         super().__init__(latitude, longitude, type=type, location=location, capacity=capacity)
 

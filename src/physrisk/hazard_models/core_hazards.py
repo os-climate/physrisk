@@ -156,7 +156,7 @@ def cmip6_scenario_to_rcp(scenario: str):
     elif scenario == "ssp585":
         return "rcp8p5"
     else:
-        if scenario not in ["rcp2p6", "rcp4p5", "rcp8p5", "historical"]:
+        if scenario not in ["rcp2p6", "rcp4p5", "rcp6p0", "rcp8p5", "historical"]:
             raise ValueError(f"unexpected scenario {scenario}")
         return scenario
 

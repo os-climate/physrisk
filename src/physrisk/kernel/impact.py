@@ -5,8 +5,8 @@ from typing import Dict, Iterable, List, NamedTuple, Optional, Sequence, Tuple, 
 
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.hazard_event_distrib import HazardEventDistrib
-from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse, HazardModel
-from physrisk.kernel.impact_distrib import ImpactDistrib
+from physrisk.kernel.hazard_model import HazardDataFailedResponse, HazardDataRequest, HazardDataResponse, HazardModel
+from physrisk.kernel.impact_distrib import EmptyImpactDistrib, ImpactDistrib
 from physrisk.kernel.vulnerability_distrib import VulnerabilityDistrib
 from physrisk.kernel.vulnerability_model import DataRequester, VulnerabilityModelAcuteBase, VulnerabilityModelBase
 from physrisk.utils.helpers import get_iterable
@@ -59,6 +59,10 @@ def calculate_impacts(  # noqa: C901
         for asset in assets:
             requests = asset_requests[(model, asset)]
             hazard_data = [responses[req] for req in get_iterable(requests)]
+            if any(isinstance(hd, HazardDataFailedResponse) for hd in hazard_data):
+                assert isinstance(model, VulnerabilityModelBase)
+                results[ImpactKey(asset, model.hazard_type)] = AssetImpactResult(EmptyImpactDistrib())
+                continue
             if isinstance(model, VulnerabilityModelAcuteBase):
                 impact, vul, event = model.get_impact_details(asset, hazard_data)
                 results[ImpactKey(asset, model.hazard_type)] = AssetImpactResult(

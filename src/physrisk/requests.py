@@ -17,6 +17,7 @@ from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.exposure import JupterExposureMeasure, calculate_exposures
 from physrisk.kernel.hazards import all_hazards
+from physrisk.kernel.impact_distrib import EmptyImpactDistrib
 from physrisk.kernel.risk import AssetLevelRiskModel, BatchId, Measure, MeasureKey
 from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
 
@@ -274,62 +275,68 @@ def _get_asset_impacts(
     vulnerability_models = (
         calc.get_default_vulnerability_models() if vulnerability_models is None else vulnerability_models
     )
-
     # we keep API definition of asset separate from internal Asset class; convert by reflection
     # based on asset_class:
     assets = create_assets(request.assets)
     measure_calcs = calc.get_default_risk_measure_calculators()
     risk_model = AssetLevelRiskModel(hazard_model, vulnerability_models, measure_calcs)
 
-    scenarios = [request.scenario]
-    years = [request.year]
+    scenarios = [request.scenario] if request.scenarios is None or len(request.scenarios) == 0 else request.scenarios
+    years = [request.year] if request.years is None or len(request.years) == 0 else request.years
+    risk_measures = None
     if request.include_measures:
         batch_impacts, measures = risk_model.calculate_risk_measures(assets, scenarios, years)
         measure_ids_for_asset, definitions = risk_model.populate_measure_definitions(assets)
         risk_measures = _create_risk_measures(measures, measure_ids_for_asset, definitions, assets, scenarios, years)
-    else:
+    elif request.include_asset_level:
         batch_impacts = risk_model.calculate_impacts(assets, scenarios, years)
-        risk_measures = None
 
-    results = batch_impacts[BatchId(scenarios[0], years[0])]
+    if request.include_asset_level:
+        results = batch_impacts[BatchId(scenarios[0], years[0])]
+        # note that this does rely on ordering of dictionary (post 3.6)
+        impacts: Dict[Asset, List[AssetSingleImpact]] = {}
+        for (asset, _), v in results.items():
+            if request.include_calc_details:
+                if v.event is not None and v.vulnerability is not None:
+                    hazard_exceedance = v.event.to_exceedance_curve()
 
-    # note that this does rely on ordering of dictionary (post 3.6)
-    impacts: Dict[Asset, List[AssetSingleImpact]] = {}
-    for (asset, _), v in results.items():
-        # calculation details
-        if v.event is not None and v.vulnerability is not None:
-            hazard_exceedance = v.event.to_exceedance_curve()
+                    vulnerability_distribution = VulnerabilityDistrib(
+                        intensity_bin_edges=v.vulnerability.intensity_bins,
+                        impact_bin_edges=v.vulnerability.impact_bins,
+                        prob_matrix=v.vulnerability.prob_matrix,
+                    )
 
-            vulnerability_distribution = VulnerabilityDistrib(
-                intensity_bin_edges=v.vulnerability.intensity_bins,
-                impact_bin_edges=v.vulnerability.impact_bins,
-                prob_matrix=v.vulnerability.prob_matrix,
-            )
+                    calc_details = AcuteHazardCalculationDetails(
+                        hazard_exceedance=ExceedanceCurve(
+                            values=hazard_exceedance.values, exceed_probabilities=hazard_exceedance.probs
+                        ),
+                        hazard_distribution=Distribution(
+                            bin_edges=v.event.intensity_bin_edges, probabilities=v.event.prob
+                        ),
+                        vulnerability_distribution=vulnerability_distribution,
+                    )
+            else:
+                calc_details = None
 
-            calc_details = AcuteHazardCalculationDetails(
-                hazard_exceedance=ExceedanceCurve(
-                    values=hazard_exceedance.values, exceed_probabilities=hazard_exceedance.probs
+            if isinstance(v.impact, EmptyImpactDistrib):
+                continue
+
+            impact_exceedance = v.impact.to_exceedance_curve()
+            hazard_impacts = AssetSingleImpact(
+                hazard_type=v.impact.hazard_type.__name__,
+                impact_type=v.impact.impact_type.name,
+                impact_exceedance=ExceedanceCurve(
+                    values=impact_exceedance.values, exceed_probabilities=impact_exceedance.probs
                 ),
-                hazard_distribution=Distribution(bin_edges=v.event.intensity_bin_edges, probabilities=v.event.prob),
-                vulnerability_distribution=vulnerability_distribution,
+                impact_distribution=Distribution(bin_edges=v.impact.impact_bins, probabilities=v.impact.prob),
+                impact_mean=v.impact.mean_impact(),
+                impact_std_deviation=0,  # TODO!
+                calc_details=None if v.event is None else calc_details,
             )
-
-        impact_exceedance = v.impact.to_exceedance_curve()
-        hazard_impacts = AssetSingleImpact(
-            hazard_type=v.impact.hazard_type.__name__,
-            impact_type=v.impact.impact_type.name,
-            impact_exceedance=ExceedanceCurve(
-                values=impact_exceedance.values, exceed_probabilities=impact_exceedance.probs
-            ),
-            impact_distribution=Distribution(bin_edges=v.impact.impact_bins, probabilities=v.impact.prob),
-            impact_mean=v.impact.mean_impact(),
-            impact_std_deviation=0,  # TODO!
-            calc_details=None if v.event is None else calc_details,
-        )
-
-        impacts.setdefault(asset, []).append(hazard_impacts)
-
-    asset_impacts = [AssetLevelImpact(asset_id="", impacts=a) for a in impacts.values()]
+            impacts.setdefault(asset, []).append(hazard_impacts)
+        asset_impacts = [AssetLevelImpact(asset_id="", impacts=a) for a in impacts.values()]
+    else:
+        asset_impacts = None
 
     return AssetImpactResponse(asset_impacts=asset_impacts, risk_measures=risk_measures)
 

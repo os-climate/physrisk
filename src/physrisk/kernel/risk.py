@@ -6,7 +6,7 @@ from physrisk.kernel.assets import Asset
 from physrisk.kernel.hazard_model import HazardModel
 from physrisk.kernel.hazards import Hazard, all_hazards
 from physrisk.kernel.impact import AssetImpactResult, calculate_impacts
-from physrisk.kernel.impact_distrib import ImpactDistrib
+from physrisk.kernel.impact_distrib import EmptyImpactDistrib, ImpactDistrib
 from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
 
 # from asyncio import ALL_COMPLETED
@@ -155,7 +155,10 @@ class AssetLevelRiskModel(RiskModel):
                         if key in scenario_impacts:
                             base_impact = impacts[("historical", None)][key].impact
                             impact = scenario_impacts[key].impact
-                            risk_ind = measure_calc.calc_measure(hazard_type, base_impact, impact)
-                            measures[MeasureKey(asset, prosp_scen, year, hazard_type)] = risk_ind
+                            if not isinstance(base_impact, EmptyImpactDistrib) and not isinstance(
+                                impact, EmptyImpactDistrib
+                            ):
+                                risk_ind = measure_calc.calc_measure(hazard_type, base_impact, impact)
+                                measures[MeasureKey(asset, prosp_scen, year, hazard_type)] = risk_ind
 
         return impacts, measures

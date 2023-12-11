@@ -1,4 +1,3 @@
----
 # Setup and configuring aicoe-ci with configuration file `.aicoe-ci.yaml`
 # Example `.aicoe-ci.yaml` with a full list of config options is available here: https://github.com/AICoE/aicoe-ci/blob/master/docs/.aicoe-ci.yaml
 check:

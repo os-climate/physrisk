@@ -1893,6 +1893,208 @@
                 }
             ],
             "units": "degree days"
+        },
+		{
+            "hazard_type": "ChronicHeat",
+            "group_id": "",
+            "path": "chronic_heat/nluu/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}",
+            "indicator_id": "weeks_water_temp_above",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "{gcm}",
+            "params": {
+                "gcm": [
+                    "GFDL",
+                    "HadGEM",
+                    "IPSL",
+                    "MIROC",
+                    "NorESM"
+                ]
+            },
+            "display_name": "Weeks with average temperature above threshold in degrees celsius/{gcm}",
+            "display_groups": [
+                "Weeks with average temperature above threshold in degrees celsius"
+            ],
+            "description": "Weeks per year for which the average water temperature is above a threshold specified in °C:\n\n$$I =  \\frac{52}{n_y} \\sum_{i = 1}^{n_y} \\boldsymbol{\\mathbb{1}}_{T^{avg}_i > T^\\text{ref}}$$\n\n$I$ is the indicator, $T^\\text{avg}_i$ is the weekly average water temperature for week index $i$ in °C, $n_y$ is the number of weeks in the sample\nand $T^\\text{ref}$ is the reference temperature.\nThe OS-Climate-generated indicators are inferred from downscaled CMIP5 data. This is done for 5 Global Circulation Models: GFDL-ESM2M, HadGEM2-ES, ISPL-CM5A-LR, MIROC-ESM-CHEM and NorESM1-M.\nThe downscaled data is sourced from the [Futurestreams dataset](https://geo.public.data.uu.nl/vault-futurestreams/research-futurestreams%5B1633685642%5D/original/waterTemp/) on the data publication platform of Utrecht University.\nIndicators are generated for periods: 'historical' (averaged over 1976-2005), 2020 (2006-2030), 2030 (2021-2040), 2040 (2031-2050), 2050 (2041-2060), 2060 (2051-2070), 2070 (2061-2080), 2080 (2071-2090) and 2090 (2081-2100).\n",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 100.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "weeks/year"
+                },
+                "path": "maps/chronic_heat/nluu/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "index_values": [
+                    5,
+                    7.5,
+                    10,
+                    12.5,
+                    15,
+                    17.5,
+                    20,
+                    22.5,
+                    25,
+                    27.5,
+                    30,
+                    32.5,
+                    35,
+                    37.5,
+                    40
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1991
+                    ]
+                },
+                {
+                    "id": "rcp2p6",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2060,
+                        2070,
+                        2080,
+                        2090
+                    ]
+                },
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2060,
+                        2070,
+                        2080,
+                        2090
+                    ]
+                },
+                {
+                    "id": "rcp6p0",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2060,
+                        2070,
+                        2080,
+                        2090
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2020,
+                        2030,
+                        2040,
+                        2050,
+                        2060,
+                        2070,
+                        2080,
+                        2090
+                    ]
+                }
+            ],
+            "units": "weeks/year"
+        },
+        {
+            "hazard_type": "ChronicHeat",
+            "group_id": "",
+            "path": "chronic_heat/nluu/v2/weeks_water_temp_above_E2O_{scenario}_{year}",
+            "indicator_id": "weeks_water_temp_above",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "E2O",
+            "params": {},
+            "display_name": "Weeks with average temperature above threshold in degrees celsius/E2O",
+            "display_groups": [
+                "Weeks with average temperature above threshold in degrees celsius"
+            ],
+            "description": "Weeks per year for which the average water temperature is above a threshold specified in °C:\n\n$$I =  \\frac{52}{n_y} \\sum_{i = 1}^{n_y} \\boldsymbol{\\mathbb{1}}_{T^{avg}_i > T^\\text{ref}}$$\n\n$I$ is the indicator, $T^\\text{avg}_i$ is the weekly average water temperature for week index $i$ in °C, $n_y$ is the number of weeks in the sample\nand $T^\\text{ref}$ is the reference temperature.\nThe OS-Climate-generated indicators are inferred from downscaled CMIP5 data. This is done for 5 Global Circulation Models: GFDL-ESM2M, HadGEM2-ES, ISPL-CM5A-LR, MIROC-ESM-CHEM and NorESM1-M.\nThe downscaled data is sourced from the [Futurestreams dataset](https://geo.public.data.uu.nl/vault-futurestreams/research-futurestreams%5B1633685642%5D/original/waterTemp/) on the data publication platform of Utrecht University.\nIndicators are generated for periods: 'historical' (averaged over 1979-2005), 2020 (2006-2030), 2030 (2021-2040), 2040 (2031-2050), 2050 (2041-2060), 2060 (2051-2070), 2070 (2061-2080), 2080 (2071-2090) and 2090 (2081-2100).\n",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 100.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "weeks/year"
+                },
+                "path": "maps/chronic_heat/nluu/v2/weeks_water_temp_above_E2O_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "index_values": [
+                    5,
+                    7.5,
+                    10,
+                    12.5,
+                    15,
+                    17.5,
+                    20,
+                    22.5,
+                    25,
+                    27.5,
+                    30,
+                    32.5,
+                    35,
+                    37.5,
+                    40
+                ],
+                "source": "map_array"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1991
+                    ]
+                }
+            ],
+            "units": "weeks/year"
         }
-    ]
+	]
 }

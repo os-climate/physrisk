@@ -1894,7 +1894,7 @@
             ],
             "units": "degree days"
         },
-		{
+        {
             "hazard_type": "ChronicHeat",
             "group_id": "",
             "path": "chronic_heat/nluu/v2/weeks_water_temp_above_{gcm}_{scenario}_{year}",
@@ -2096,5 +2096,5 @@
             ],
             "units": "weeks/year"
         }
-	]
+    ]
 }

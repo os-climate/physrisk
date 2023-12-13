@@ -1,0 +1,50 @@
+---
+name: "♻️ Update shared DevOps tooling"
+
+# yamllint disable-line rule:truthy
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 8 * * MON"
+
+jobs:
+  update-actions:
+    name: "Update DevOps tooling"
+    runs-on: ubuntu-latest
+    permissions:
+      # IMPORTANT: mandatory to update content/actions/PRs
+      contents: write
+      actions: write
+      pull-requests: write
+
+    steps:
+      - name: "Checkout primary repository"
+        uses: actions/checkout@v4
+        with:
+          # Note: Requires a specific/defined Personal Access Token
+          token: ${{ secrets.ACTIONS_WORKFLOW }}
+
+      - name: "Pull workflows from central repository"
+        uses: actions/checkout@v4
+        with:
+          repository: "os-climate/devops-toolkit"
+          path: "devops"
+
+      - name: "Update repository workflows and create PR"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email \
+           "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "update-devops-tooling"
+          cp devops/dependabot.yml .github/dependabot.yml
+          cp devops/workflows/* .github/workflows/
+          cp devops/scripts/* scripts
+          cp devops/.pre-commit-config.yaml .pre-commit-config.yaml
+          git add .github scripts/* .pre-commit-config.yaml
+          git commit -m "Chore: Pull DevOps tooling from upstream repository"
+          git push --set-upstream origin update-devops-tooling
+          gh pr create --title \
+           "Chore: Pull DevOps tooling from upstream repository" \
+           --body 'This process automated by a GitHub workflow: bootstrap.yaml'

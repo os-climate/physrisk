@@ -45,5 +45,6 @@ jobs:
           git add .github scripts/* .pre-commit-config.yaml
           git commit -m "Chore: Pull DevOps tooling from upstream repository"
           git push --set-upstream origin update-devops-tooling
-          gh pr create --title "Chore: Pull DevOps tooling from upstream repository" \
+          gh pr create --title \
+           "Chore: Pull DevOps tooling from upstream repository" \
            --body 'This process automated by a GitHub workflow: bootstrap.yaml'

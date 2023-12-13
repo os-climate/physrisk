@@ -38,6 +38,12 @@ jobs:
           git config user.email \
            "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "update-devops-tooling"
+          FOLDERS=".github .github/workflows scripts"
+          for FOLDER in ${FOLDERS}; do
+              if [ ! -d "$FOLDER" ]; then
+                  mkdir "$FOLDER"
+              fi
+          done
           cp devops/dependabot.yml .github/dependabot.yml
           cp devops/workflows/* .github/workflows/
           cp devops/scripts/* scripts
@@ -46,5 +52,5 @@ jobs:
           git commit -m "Chore: Pull DevOps tooling from upstream repository"
           git push --set-upstream origin update-devops-tooling
           gh pr create --title \
-           "Chore: Pull DevOps tooling from upstream repository" \
-           --body 'This process automated by a GitHub workflow: bootstrap.yaml'
+            "Chore: Pull DevOps tooling from upstream repository" \
+            --body 'This process automated by a GitHub workflow: bootstrap.yaml'

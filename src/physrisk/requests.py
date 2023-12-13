@@ -216,7 +216,7 @@ def _get_hazard_data(request: HazardDataRequest, hazard_model: HazardModel):
         intensity_curves = [
             IntensityCurve(intensities=list(resp.intensities), return_periods=list(resp.return_periods))
             if isinstance(resp, hmHazardEventDataResponse)
-            else IntensityCurve(intensities=[float(resp.parameter)], return_periods=[])
+            else IntensityCurve(intensities=list(resp.parameters), return_periods=list(resp.param_defns))
             if isinstance(resp, HazardParameterDataResponse)
             else IntensityCurve(intensities=[], return_periods=[])
             for resp in resps

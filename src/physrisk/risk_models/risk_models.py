@@ -76,8 +76,10 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
         return [
             RiskScoreValue(
                 value=Category.REDFLAG,
-                label="The asset is very significantly impacted and the impact will increase \
-                as a result of climate change.",
+                label=(
+                    "The asset is very significantly impacted and the impact will increase "
+                    "as a result of climate change."
+                ),
                 description=description(Category.REDFLAG),
             ),
             RiskScoreValue(
@@ -87,8 +89,10 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
             ),
             RiskScoreValue(
                 value=Category.MEDIUM,
-                label="The asset is materially impacted but the impact will not significantly increase \
-                    as a result of climate change.",
+                label=(
+                    "The asset is materially impacted but the impact will not significantly increase "
+                    "as a result of climate change."
+                ),
                 description=description(Category.MEDIUM),
             ),
             RiskScoreValue(
@@ -192,18 +196,18 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
         cooling_change = (future_cooling - histo_cooling) / histo_cooling
 
         if (
-            future_cooling > self.measure_thresholds_acute[Threshold.ABS_HIGH]
-            and cooling_change > self.measure_thresholds_acute[Threshold.CHANGE]
+            future_cooling > self.measure_thresholds_cooling[Threshold.ABS_HIGH]
+            and cooling_change > self.measure_thresholds_cooling[Threshold.CHANGE]
         ):
             score = Category.REDFLAG
         elif (
-            future_cooling > self.measure_thresholds_acute[Threshold.ABS_LOW]
-            and cooling_change > self.measure_thresholds_acute[Threshold.CHANGE]
+            future_cooling > self.measure_thresholds_cooling[Threshold.ABS_LOW]
+            and cooling_change > self.measure_thresholds_cooling[Threshold.CHANGE]
         ):
             score = Category.HIGH
         elif (
-            future_cooling > self.measure_thresholds_acute[Threshold.ABS_LOW]
-            and cooling_change <= self.measure_thresholds_acute[Threshold.CHANGE]
+            future_cooling > self.measure_thresholds_cooling[Threshold.ABS_LOW]
+            and cooling_change <= self.measure_thresholds_cooling[Threshold.CHANGE]
         ):
             score = Category.MEDIUM
         else:

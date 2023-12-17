@@ -462,8 +462,3 @@ class TestImpactRequests(TestWithCredentials):
             scores, measure_values, measure_defns = helper.get_measure(hazard_type, "ssp585", 2050)
             label, description = helper.get_score_details(scores[0], measure_defns[0])
             print(label)
-
-
-        
-
-

@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, NamedTuple, Optional, Sequence
 
 from pydantic import BaseModel, Field
 
@@ -159,3 +159,47 @@ class AssetImpactResponse(BaseModel):
 
     asset_impacts: Optional[List[AssetLevelImpact]] = None
     risk_measures: Optional[RiskMeasures] = None
+
+
+class RiskMeasuresHelper:
+    def __init__(self, risk_measures: RiskMeasures):
+        """Helper class to assist in extracting results from a RiskMeasures object.
+
+        Args:
+            risk_measures (RiskMeasures): RiskMeasures result.
+        """
+        self.measures = {self._key(m.key): m for m in risk_measures.measures_for_assets}
+        self.measure_definition = risk_measures.score_based_measure_set_defn
+        self.measure_set_id = self.measure_definition.measure_set_id
+
+    def _key(self, key: RiskMeasureKey):
+        return self.Key(
+            hazard_type=key.hazard_type, scenario_id=key.scenario_id, year=key.year, measure_id=key.measure_id
+        )
+
+    def get_measure(self, hazard_type: str, scenario: str, year: int):
+        measure_key = self.Key(
+            hazard_type=hazard_type, scenario_id=scenario, year=str(year), measure_id=self.measure_set_id
+        )
+        measure = self.measures[measure_key]
+        asset_scores, asset_measures = (
+            measure.scores,
+            [measure.measures_0, measure.measures_1],
+        )  # scores for each asset
+        # measure IDs for each asset (for the hazard type in question)
+        measure_ids = self.measure_definition.asset_measure_ids_for_hazard[hazard_type]
+        # measure definitions for each asset
+        measure_definitions = [
+            self.measure_definition.score_definitions[mid] if mid != "na" else None for mid in measure_ids
+        ]
+        return asset_scores, asset_measures, measure_definitions
+
+    def get_score_details(self, score: int, definition: ScoreBasedRiskMeasureDefinition):
+        rs_value = next(v for v in definition.values if v.value == score)
+        return rs_value.label, rs_value.description
+
+    class Key(NamedTuple):  # hashable key for looking up measures
+        hazard_type: str
+        scenario_id: str
+        year: str
+        measure_id: str

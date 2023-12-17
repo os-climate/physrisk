@@ -89,7 +89,7 @@ class Requester:
             return json.dumps(_get_asset_exposures(request, self.hazard_model).model_dump(exclude_none=True))
         elif request_id == "get_asset_impact":
             request = AssetImpactRequest(**request_dict)
-            return dumps(_get_asset_impacts(request, self.hazard_model).dict())
+            return dumps(_get_asset_impacts(request, self.hazard_model).model_dump())
         elif request_id == "get_example_portfolios":
             return dumps(_get_example_portfolios())
         else:

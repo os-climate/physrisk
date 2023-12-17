@@ -1,3 +1,4 @@
+import concurrent.futures
 from dataclasses import dataclass
 from typing import Dict, List, NamedTuple, Optional, Protocol, Sequence, Set, Tuple, Type, Union
 
@@ -35,23 +36,26 @@ class RiskModel:
     def _calculate_all_impacts(self, assets: Sequence[Asset], prosp_scens: Sequence[str], years: Sequence[int]):
         scenarios = set(["historical"] + list(prosp_scens))
         impact_results: Dict[BatchId, Impact] = {}
-        items = [(scenario, year) for scenario in scenarios for year in years]
-        for scenario, year in items:
-            key_year = None if scenario == "historical" else year
-            impact_results[BatchId(scenario, key_year)] = self._calculate_single_impact(assets, scenario, year)
+
+        # items = [(scenario, year) for scenario in scenarios for year in years]
+        # in case of multiple calculation, run on separate threads
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+            # with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+            tagged_futures = {
+                executor.submit(self._calculate_single_impact, assets, scenario, year): BatchId(
+                    scenario, None if scenario == "historical" else year
+                )
+                for scenario in scenarios
+                for year in years
+            }
+            for future in concurrent.futures.as_completed(tagged_futures):
+                tag = tagged_futures[future]
+                try:
+                    impact_results[tag] = future.result()
+
+                except Exception as exc:
+                    print("%r generated an exception: %s" % (tag, exc))
         return impact_results
-        # consider parallelizing using approach similar to:
-        # with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
-        #    future_to_url = {executor.submit(self._calculate_single_impact, assets, scenario, year): \
-        #                      (scenario, year) for scenario in scenarios for year in years}
-        #    for future in concurrent.futures.as_completed(future_to_url):
-        #        tag = future_to_url[future]
-        #        try:
-        #            data = future.result()
-        #        except Exception as exc:
-        #            print('%r generated an exception: %s' % (tag, exc))
-        #        else:
-        #            ...
 
     def _calculate_single_impact(self, assets: Sequence[Asset], scenario: str, year: int):
         """Calculate impacts for a single scenario and year."""

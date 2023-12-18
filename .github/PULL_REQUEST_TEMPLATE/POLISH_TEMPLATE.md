@@ -7,7 +7,7 @@ about: Finalize notebooks prior to publishing or promoting
 
 …
 
-## The following checklist items have been completed for each notebook in this PR:
+## The following checklist items have been completed for each notebook in this PR
 
 - [ ] Proofread by other team member for grammar and spelling
 - [ ] Proofread by other team member for coherence and reproducibility (does the analysis make sense as you read through the code and markdown from top to bottom?)
@@ -25,7 +25,6 @@ about: Finalize notebooks prior to publishing or promoting
 - [ ] Cell execution counts are in order (a working "run all" was performed just before PR)
 - [ ] All pre-commit checks pass
 
-
-
 ## Additional context
+
 <!-- If there is some reason that one of the above steps could not be completed, please describe what it is and why. -->

@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-affine = "==2.3.0"
+affine = "==2.4.0"
 numpy = "==1.22.0"
 pydantic = "==2.4.2"
 python-dotenv = "==0.19.2"

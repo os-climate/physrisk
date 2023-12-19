@@ -26,8 +26,15 @@ jobs:
       - name: "Checkout repository"
         uses: actions/checkout@v4
 
+      - name: "Setup Python 3.10"
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.python-version }}
+
       - name: "Setup PDM for build commands"
         uses: pdm-project/setup-pdm@v3
+        with:
+          python-version: ${{ env.python-version }}
 
       - name: "Populate environment variables"
         id: setenv
@@ -35,11 +42,6 @@ jobs:
           vernum="${{ env.python-version }}.$(date +'%Y%m%d%H%M')"
           echo "vernum=${vernum}" >> "$GITHUB_OUTPUT"
           echo "vernum=${vernum}" >> buildvars.txt
-
-      - name: "Setup Python 3.10"
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ env.python-version }}
 
       - name: "Tag for test release"
         # Delete all local tags, then create a synthetic tag for testing
@@ -67,7 +69,7 @@ jobs:
             ./dist/*.whl
 
       - name: Store the distribution packages
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: Development
           path: dist/

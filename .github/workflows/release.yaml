@@ -30,13 +30,13 @@ jobs:
       - name: "Checkout repository"
         uses: actions/checkout@v4
 
-      - name: "Setup PDM for build commands"
-        uses: pdm-project/setup-pdm@v3
-
-      - name: "Setup Python 3.10"
+      - name: "Setup Python"
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.python-version }}
+
+      - name: "Setup PDM for build commands"
+        uses: pdm-project/setup-pdm@v3
 
       - name: "Update version from tags for production release"
         run: |
@@ -57,7 +57,7 @@ jobs:
             ./dist/*.whl
 
       - name: Store the distribution packages
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ github.ref_name }}
           path: dist/

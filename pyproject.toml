@@ -1,21 +1,127 @@
-[build-system]
-requires = [
-    "setuptools>=42",
-    "wheel"
+[project]
+name = "osc-data-extractor"
+version = "0.1.0"
+description = "OS-Climate Physical Risk Library"
+authors = [
+    {name = "Joe Moorhouse",email = "5102656+joemoorhouse@users.noreply.github.com"},
 ]
-build-backend = "setuptools.build_meta"
+requires-python = ">=3.9,<3.11"
+readme = "README.rst"
+license = {file = "LICENSE.txt"}
+keywords = ["Climate", "Risk", "Finance"]
+
+classifiers = [
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows",
+  "Operating System :: Unix",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.9",
+  "Topic :: Office/Business :: Financial",
+  "Topic :: Scientific/Engineering",
+  "Topic :: Software Development",
+]
+
+[project.urls]
+Homepage = "https://github.com/os-climate/physrisk"
+Repository = "https://github.com/os-climate/physrisk"
+Downloads = "https://github.com/os-climate/physrisk/releases"
+"Bug Tracker" = "https://github.com/os-climate/physrisk/issues"
+Documentation = "https://github.com/os-climate/physrisk/tree/main/docs"
+"Source Code" = "https://github.com/os-climate/physrisk"
+
+dependencies = [
+  "affine>=2.4.0",
+  "numpy>=1.22.0",
+  "pydantic>=2.4.2",
+  "python-dotenv>=0.19.2",
+  "requests>=2.27.1",
+  "scipy>=1.7.3",
+  "s3fs>=2022.1.0",
+  "zarr>=2.10.3",
+  "pillow>=9.4.0",
+  "dependency-injector>=4.41.0",
+  "numba>=0.56.4",
+  "pint",
+  "shapely",
+]
+
+[tool.pdm.dev-dependencies]
+test = [
+  "pdm[pytest]",
+  "pytest",
+  "pytest-cov"
+]
+
+docs = [
+  "sphinx-toolbox",
+  "sphinx-design",
+  "nbsphinx",
+  "pydata-sphinx-theme"
+]
+lint = [
+  "isort",
+  "black",
+  "pyproject-flake8",
+  "flake8",
+  "mypy",
+  "pre-commit",
+  "tox"
+]
+
+# [project.scripts]
+# osc-data-extractor = "osc_data_extractor.skeleton:run"
+
+[tool.pdm.scripts]
+pre_release = "scripts/dev-versioning.sh"
+release = "scripts/release-versioning.sh"
+test = "pytest"
+tox = "tox"
+docs = { shell = "cd docs && mkdocs serve", help = "Start the dev server for doc preview" }
+lint = "pre-commit run --all-files"
+complete = { call = "tasks.complete:main", help = "Create autocomplete files for bash and fish" }
 
 [tool.pytest.ini_options]
-testpaths = "src/test"
-addopts = "-v"
+testpaths = [
+    "tests/",
+]
+addopts = "--cov --cov-report html --cov-report term-missing --cov-fail-under 95"
 
-[tool.mypy]
-warn_unreachable = true
-ignore_missing_imports = true
+[metadata]
+license-files = ["LICENSES.txt"]
 
-[[tool.mypy.overrides]]
-module = "click"
-ignore_missing_imports = true
+#[tool.pytest.ini_options]
+#testpaths = "tests"
+#addopts = "-v"
+
+#[tool.mypy]
+#module = "click"
+#warn_unreachable = true
+#ignore_missing_imports = true
+
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+include_trailing_comma = true
+force_grid_wrap = 0
+use_parentheses = true
+ensure_newline_before_comments = true
+line_length = 120
+
+[tool.coverage.run]
+source = "src"
+omit = "tests/*"
+relative_files = true
+
+[tool.yapf]
+blank_line_before_nested_class_or_def = true
+column_limit = 88
 
 [tool.black]
 line-length = 120
@@ -31,15 +137,8 @@ exclude = '''
 )/
 '''
 
-[tool.isort]
-multi_line_output = 3
-include_trailing_comma = true
-force_grid_wrap = 0
-use_parentheses = true
-ensure_newline_before_comments = true
-line_length = 120
-
-[tool.coverage.run]
-source = "src"
-omit = "test/*"
-relative_files = true
+[tool.flake8]
+max-line-length = "120"
+extend-ignore = [
+  "E501",
+]

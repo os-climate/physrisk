@@ -28,14 +28,6 @@ classifiers = [
   "Topic :: Software Development",
 ]
 
-[project.urls]
-Homepage = "https://github.com/os-climate/physrisk"
-Repository = "https://github.com/os-climate/physrisk"
-Downloads = "https://github.com/os-climate/physrisk/releases"
-"Bug Tracker" = "https://github.com/os-climate/physrisk/issues"
-Documentation = "https://github.com/os-climate/physrisk/tree/main/docs"
-"Source Code" = "https://github.com/os-climate/physrisk"
-
 dependencies = [
   "affine>=2.4.0",
   "numpy>=1.22.0",
@@ -58,7 +50,6 @@ test = [
   "pytest",
   "pytest-cov"
 ]
-
 docs = [
   "sphinx-toolbox",
   "sphinx-design",
@@ -74,6 +65,14 @@ lint = [
   "pre-commit",
   "tox"
 ]
+
+[project.urls]
+Homepage = "https://github.com/os-climate/physrisk"
+Repository = "https://github.com/os-climate/physrisk"
+Downloads = "https://github.com/os-climate/physrisk/releases"
+"Bug Tracker" = "https://github.com/os-climate/physrisk/issues"
+Documentation = "https://github.com/os-climate/physrisk/tree/main/docs"
+"Source Code" = "https://github.com/os-climate/physrisk"
 
 # [project.scripts]
 # osc-data-extractor = "osc_data_extractor.skeleton:run"

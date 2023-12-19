@@ -78,7 +78,7 @@ def _request_consolidated(
     hazard_model: HazardModel, requester_assets: Dict[DataRequester, List[Asset]], scenario: str, year: int
 ):
     """As an important performance optimization, data requests are consolidated for all requesters
-    (e.g. vulnerability mode) because different requesters may query the same hazard data sets
+    (e.g. vulnerability model) because different requesters may query the same hazard data sets
     note that key for a single request is (requester, asset).
     """
     # the list of requests for each requester and asset

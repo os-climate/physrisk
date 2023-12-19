@@ -1,5 +1,6 @@
 # PDM
 .pdm-python
+__pypackages__
 
 # Credentials / Secrets
 credentials.env

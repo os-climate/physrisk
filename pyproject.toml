@@ -99,10 +99,9 @@ license-files = ["LICENSES.txt"]
 #testpaths = "tests"
 #addopts = "-v"
 
-#[tool.mypy]
-#module = "click"
-#warn_unreachable = true
-#ignore_missing_imports = true
+[tool.mypy]
+warn_unreachable = true
+ignore_missing_imports = true
 
 [tool.isort]
 profile = "black"

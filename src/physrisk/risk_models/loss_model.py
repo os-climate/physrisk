@@ -58,10 +58,10 @@ class LossModel:
 
         rg = np.random.Generator(np.random.MT19937(seed=111))
 
-        for (asset, hazard_type), result in results.items():
+        for impact_key, result in results.items():
             # look up keys for results
             impact = result.impact
-            keys = aggregator.get_aggregation_keys(asset, impact)
+            keys = aggregator.get_aggregation_keys(impact_key.asset, impact)
             # transform units of impact into currency for aggregation
 
             # Monte-Carlo approach: note that if correlations of distributions are simple and model is otherwise linear
@@ -69,9 +69,9 @@ class LossModel:
             impact_samples = self.uncorrelated_samples(impact, sims, rg)
 
             if impact.impact_type == ImpactType.damage:
-                loss = financial_model.damage_to_loss(asset, impact_samples, currency)
+                loss = financial_model.damage_to_loss(impact_key.asset, impact_samples, currency)
             else:  # impact.impact_type == ImpactType.disruption:
-                loss = financial_model.disruption_to_loss(asset, impact_samples, year, currency)
+                loss = financial_model.disruption_to_loss(impact_key.asset, impact_samples, year, currency)
 
             for key in keys:
                 if key not in aggregation_pools:

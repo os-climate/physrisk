@@ -55,10 +55,10 @@ class RiskModel:
                 try:
                     res = future.result()
                     # flatten to use single key
-                    for tempKey, value in res.items():
+                    for temp_key, value in res.items():
                         key = ImpactKey(
-                            asset=tempKey.asset,
-                            hazard_type=tempKey.hazard_type,
+                            asset=temp_key.asset,
+                            hazard_type=temp_key.hazard_type,
                             scenario=tag.scenario,
                             key_year=tag.key_year,
                         )

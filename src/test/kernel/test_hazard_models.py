@@ -90,6 +90,6 @@ def test_using_point_based_hazard_model():
     hazard_model = PointBasedHazardModel([point])
     vulnerability_models = {RealEstateAsset: [GenericTropicalCycloneModel()]}
     results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
-    impact_distrib = results[(assets[0], Wind)].impact
+    impact_distrib = results[(assets[0], Wind, None, None)].impact
     mean_impact = impact_distrib.mean_impact()
     np.testing.assert_almost_equal(mean_impact, 0.009909858317497338)

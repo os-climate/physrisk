@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Dict, List, NamedTuple, Optional, Sequence
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 
 from physrisk.api.v1.common import Assets, Distribution, ExceedanceCurve, VulnerabilityDistrib
 from physrisk.api.v1.hazard_data import Scenario
@@ -119,17 +119,31 @@ class AcuteHazardCalculationDetails(BaseModel):
     vulnerability_distribution: VulnerabilityDistrib
 
 
+class ImpactKey(BaseModel):
+    hazard_type: str = Field("", description="Type of the hazard.")
+    scenario_id: str = Field(None, description="Identifier of the scenario.")
+    year: str = Field(None, description="Year of impact.")
+
+
 class AssetSingleImpact(BaseModel):
     """Impact at level of single asset and single type of hazard."""
 
-    hazard_type: Optional[str] = Field("", description="Type of the hazard.")
-    impact_type: Optional[str] = Field(
+    key: ImpactKey
+
+    @computed_field  # deprecated: use key instead
+    def hazard_type(self) -> str:
+        return self.key.hazard_type
+
+    @computed_field  # deprecated: use key instead
+    def year(self) -> str:
+        return self.key.year
+
+    impact_type: str = Field(
         "damage",
         description="""'damage' or 'disruption'. Whether the impact is fractional damage to the asset
         ('damage') or disruption to an operation, expressed as
         fractional decrease to an equivalent cash amount.""",
     )
-    year: Optional[str] = None
     impact_distribution: Optional[Distribution]
     impact_exceedance: Optional[ExceedanceCurve]
     impact_mean: float

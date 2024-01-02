@@ -15,7 +15,11 @@ from physrisk.utils.helpers import get_iterable
 class ImpactKey(NamedTuple):
     asset: Asset
     hazard_type: type
-    # consider adding type: whether damage or disruption
+    # these additional key items can be set to None, for example
+    # if the calculation is for a given scenario and year
+    # impact_type: Optional[str] = None # consider adding: whether damage or disruption
+    scenario: Optional[str] = None
+    key_year: Optional[int] = None  # this is None for 'historical' scenario
 
 
 @dataclass
@@ -61,11 +65,11 @@ def calculate_impacts(  # noqa: C901
             hazard_data = [responses[req] for req in get_iterable(requests)]
             if any(isinstance(hd, HazardDataFailedResponse) for hd in hazard_data):
                 assert isinstance(model, VulnerabilityModelBase)
-                results[ImpactKey(asset, model.hazard_type)] = AssetImpactResult(EmptyImpactDistrib())
+                results[ImpactKey(asset=asset, hazard_type=model.hazard_type)] = AssetImpactResult(EmptyImpactDistrib())
                 continue
             if isinstance(model, VulnerabilityModelAcuteBase):
                 impact, vul, event = model.get_impact_details(asset, hazard_data)
-                results[ImpactKey(asset, model.hazard_type)] = AssetImpactResult(
+                results[ImpactKey(asset=asset, hazard_type=model.hazard_type)] = AssetImpactResult(
                     impact, vulnerability=vul, event=event, hazard_data=hazard_data
                 )
             elif isinstance(model, VulnerabilityModelBase):

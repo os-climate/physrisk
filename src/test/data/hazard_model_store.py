@@ -25,6 +25,12 @@ class TestData:
     wind_intensities_2 = [37.472500, 44.993752, 49.049999, 51.957500, 53.796249, 55.478748, 56.567501, 57.572498, 58.661251, 59.448750, 63.724998, 65.940002, 66.842499, 67.614998, 68.110001, 68.547501, 68.807503, 69.529999, 70.932503] # noqa
     # fmt: on
 
+    # fmt: off
+    temperature_thresholds = [10, 20, 30, 40, 50] # noqa
+    degree_days_above_index_1 = [6000, 3000, 100, 20, 10] # noqa
+    degree_days_above_index_2 = [7000, 4000, 150, 30, 12] # noqa
+    # fmt: on
+
 
 class ZarrStoreMocker:
     def __init__(self):

@@ -1,3 +1,4 @@
+import concurrent.futures
 from dataclasses import dataclass
 from typing import Dict, List, NamedTuple, Optional, Protocol, Sequence, Set, Tuple, Type, Union
 
@@ -5,7 +6,7 @@ from physrisk.api.v1.impact_req_resp import Category, ScoreBasedRiskMeasureDefin
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.hazard_model import HazardModel
 from physrisk.kernel.hazards import Hazard, all_hazards
-from physrisk.kernel.impact import AssetImpactResult, calculate_impacts
+from physrisk.kernel.impact import AssetImpactResult, ImpactKey, calculate_impacts
 from physrisk.kernel.impact_distrib import EmptyImpactDistrib, ImpactDistrib
 from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
 
@@ -32,26 +33,40 @@ class RiskModel:
     def calculate_risk_measures(self, assets: Sequence[Asset], prosp_scens: Sequence[str], years: Sequence[int]):
         ...
 
-    def _calculate_all_impacts(self, assets: Sequence[Asset], prosp_scens: Sequence[str], years: Sequence[int]):
-        scenarios = set(["historical"] + list(prosp_scens))
-        impact_results: Dict[BatchId, Impact] = {}
-        items = [(scenario, year) for scenario in scenarios for year in years]
-        for scenario, year in items:
-            key_year = None if scenario == "historical" else year
-            impact_results[BatchId(scenario, key_year)] = self._calculate_single_impact(assets, scenario, year)
+    def _calculate_all_impacts(
+        self, assets: Sequence[Asset], prosp_scens: Sequence[str], years: Sequence[int], include_histo: bool = False
+    ):
+        # ensure "historical" is present, e.g. needed for risk measures
+        scenarios = set(["historical"] + list(prosp_scens)) if include_histo else prosp_scens
+        impact_results: Dict[ImpactKey, AssetImpactResult] = {}
+
+        # in case of multiple calculation, run on separate threads
+        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+            # with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+            tagged_futures = {
+                executor.submit(self._calculate_single_impact, assets, scenario, year): BatchId(
+                    scenario, None if scenario == "historical" else year
+                )
+                for scenario in scenarios
+                for year in years
+            }
+            for future in concurrent.futures.as_completed(tagged_futures):
+                tag = tagged_futures[future]
+                try:
+                    res = future.result()
+                    # flatten to use single key
+                    for temp_key, value in res.items():
+                        key = ImpactKey(
+                            asset=temp_key.asset,
+                            hazard_type=temp_key.hazard_type,
+                            scenario=tag.scenario,
+                            key_year=tag.key_year,
+                        )
+                        impact_results[key] = value
+
+                except Exception as exc:
+                    print("%r generated an exception: %s" % (tag, exc))
         return impact_results
-        # consider parallelizing using approach similar to:
-        # with concurrent.futures.ThreadPoolExecutor(max_workers=16) as executor:
-        #    future_to_url = {executor.submit(self._calculate_single_impact, assets, scenario, year): \
-        #                      (scenario, year) for scenario in scenarios for year in years}
-        #    for future in concurrent.futures.as_completed(future_to_url):
-        #        tag = future_to_url[future]
-        #        try:
-        #            data = future.result()
-        #        except Exception as exc:
-        #            print('%r generated an exception: %s' % (tag, exc))
-        #        else:
-        #            ...
 
     def _calculate_single_impact(self, assets: Sequence[Asset], scenario: str, year: int):
         """Calculate impacts for a single scenario and year."""
@@ -140,7 +155,7 @@ class AssetLevelRiskModel(RiskModel):
         return measure_ids_for_hazard, measure_id_lookup
 
     def calculate_risk_measures(self, assets: Sequence[Asset], prosp_scens: Sequence[str], years: Sequence[int]):
-        impacts = self._calculate_all_impacts(assets, prosp_scens, years)
+        impacts = self._calculate_all_impacts(assets, prosp_scens, years, include_histo=True)
         measures: Dict[MeasureKey, Measure] = {}
 
         for asset in assets:
@@ -149,16 +164,16 @@ class AssetLevelRiskModel(RiskModel):
             measure_calc = self._measure_calculators[type(asset)]
             for prosp_scen in prosp_scens:
                 for year in years:
-                    scenario_impacts = impacts[(prosp_scen, year)]
                     for hazard_type in measure_calc.supported_hazards():
-                        key = (asset, hazard_type)
-                        if key in scenario_impacts:
-                            base_impact = impacts[("historical", None)][key].impact
-                            impact = scenario_impacts[key].impact
-                            if not isinstance(base_impact, EmptyImpactDistrib) and not isinstance(
-                                impact, EmptyImpactDistrib
-                            ):
-                                risk_ind = measure_calc.calc_measure(hazard_type, base_impact, impact)
-                                measures[MeasureKey(asset, prosp_scen, year, hazard_type)] = risk_ind
-
+                        base_impact = impacts.get(
+                            ImpactKey(asset=asset, hazard_type=hazard_type, scenario="historical", key_year=None)
+                        ).impact
+                        prosp_impact = impacts.get(
+                            ImpactKey(asset=asset, hazard_type=hazard_type, scenario=prosp_scen, key_year=year)
+                        ).impact
+                        if not isinstance(base_impact, EmptyImpactDistrib) and not isinstance(
+                            prosp_impact, EmptyImpactDistrib
+                        ):
+                            risk_ind = measure_calc.calc_measure(hazard_type, base_impact, prosp_impact)
+                            measures[MeasureKey(asset, prosp_scen, year, hazard_type)] = risk_ind
         return impacts, measures

@@ -1,7 +1,7 @@
 from enum import Enum
-from typing import Dict, List, Optional, Sequence
+from typing import Dict, List, NamedTuple, Optional, Sequence
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, computed_field
 
 from physrisk.api.v1.common import Assets, Distribution, ExceedanceCurve, VulnerabilityDistrib
 from physrisk.api.v1.hazard_data import Scenario
@@ -119,17 +119,31 @@ class AcuteHazardCalculationDetails(BaseModel):
     vulnerability_distribution: VulnerabilityDistrib
 
 
+class ImpactKey(BaseModel):
+    hazard_type: str = Field("", description="Type of the hazard.")
+    scenario_id: str = Field(None, description="Identifier of the scenario.")
+    year: str = Field(None, description="Year of impact.")
+
+
 class AssetSingleImpact(BaseModel):
     """Impact at level of single asset and single type of hazard."""
 
-    hazard_type: Optional[str] = Field("", description="Type of the hazard.")
-    impact_type: Optional[str] = Field(
+    key: ImpactKey
+
+    @computed_field  # deprecated: use key instead
+    def hazard_type(self) -> str:
+        return self.key.hazard_type
+
+    @computed_field  # deprecated: use key instead
+    def year(self) -> str:
+        return self.key.year
+
+    impact_type: str = Field(
         "damage",
         description="""'damage' or 'disruption'. Whether the impact is fractional damage to the asset
         ('damage') or disruption to an operation, expressed as
         fractional decrease to an equivalent cash amount.""",
     )
-    year: Optional[str] = None
     impact_distribution: Optional[Distribution]
     impact_exceedance: Optional[ExceedanceCurve]
     impact_mean: float
@@ -159,3 +173,47 @@ class AssetImpactResponse(BaseModel):
 
     asset_impacts: Optional[List[AssetLevelImpact]] = None
     risk_measures: Optional[RiskMeasures] = None
+
+
+class RiskMeasuresHelper:
+    def __init__(self, risk_measures: RiskMeasures):
+        """Helper class to assist in extracting results from a RiskMeasures object.
+
+        Args:
+            risk_measures (RiskMeasures): RiskMeasures result.
+        """
+        self.measures = {self._key(m.key): m for m in risk_measures.measures_for_assets}
+        self.measure_definition = risk_measures.score_based_measure_set_defn
+        self.measure_set_id = self.measure_definition.measure_set_id
+
+    def _key(self, key: RiskMeasureKey):
+        return self.Key(
+            hazard_type=key.hazard_type, scenario_id=key.scenario_id, year=key.year, measure_id=key.measure_id
+        )
+
+    def get_measure(self, hazard_type: str, scenario: str, year: int):
+        measure_key = self.Key(
+            hazard_type=hazard_type, scenario_id=scenario, year=str(year), measure_id=self.measure_set_id
+        )
+        measure = self.measures[measure_key]
+        asset_scores, asset_measures = (
+            measure.scores,
+            [measure.measures_0, measure.measures_1],
+        )  # scores for each asset
+        # measure IDs for each asset (for the hazard type in question)
+        measure_ids = self.measure_definition.asset_measure_ids_for_hazard[hazard_type]
+        # measure definitions for each asset
+        measure_definitions = [
+            self.measure_definition.score_definitions[mid] if mid != "na" else None for mid in measure_ids
+        ]
+        return asset_scores, asset_measures, measure_definitions
+
+    def get_score_details(self, score: int, definition: ScoreBasedRiskMeasureDefinition):
+        rs_value = next(v for v in definition.values if v.value == score)
+        return rs_value.label, rs_value.description
+
+    class Key(NamedTuple):  # hashable key for looking up measures
+        hazard_type: str
+        scenario_id: str
+        year: str
+        measure_id: str

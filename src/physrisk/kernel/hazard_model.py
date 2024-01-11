@@ -110,6 +110,17 @@ class HazardParameterDataResponse(HazardDataResponse):
         return self.parameters[0]
 
 
+class HazardModelFactory(Protocol):
+    def hazard_model(self, interpolation: str = "floor"):
+        """Create a HazardModel instance based on a number of options.
+
+        Args:
+            interpolation (str): interpolation type to use for sub-pixel raster interpolation (where
+            this is supported by hazard models).
+        """
+        ...
+
+
 class HazardModel(ABC):
     """Hazard event model. The model accepts a set of EventDataRequests and returns the corresponding
     EventDataResponses."""

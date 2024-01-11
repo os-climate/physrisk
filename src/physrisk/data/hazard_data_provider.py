@@ -49,8 +49,8 @@ class HazardDataProvider(ABC):
         """
         self._get_source_path = get_source_path
         self._reader = zarr_reader if zarr_reader is not None else ZarrReader(store=store)
-        if interpolation not in ["floor", "linear"]:
-            raise ValueError("interpolation must be 'floor' or 'linear'")
+        if interpolation not in ["floor", "linear", "max", "min"]:
+            raise ValueError("interpolation must be 'floor', 'linear', 'max' or 'min'")
         self._interpolation = interpolation
 
 

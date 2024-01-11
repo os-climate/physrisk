@@ -53,7 +53,7 @@ from .kernel import Asset, Hazard
 from .kernel import calculation as calc
 from .kernel.hazard_model import HazardDataRequest as hmHazardDataRequest
 from .kernel.hazard_model import HazardEventDataResponse as hmHazardEventDataResponse
-from .kernel.hazard_model import HazardModel, HazardParameterDataResponse
+from .kernel.hazard_model import HazardModel, HazardModelFactory, HazardParameterDataResponse
 
 Colormaps = Dict[str, Any]
 
@@ -61,24 +61,25 @@ Colormaps = Dict[str, Any]
 class Requester:
     def __init__(
         self,
-        hazard_model: HazardModel,
+        hazard_model_factory: HazardModelFactory,
         inventory: Inventory,
         inventory_reader: InventoryReader,
         reader: ZarrReader,
         colormaps: Colormaps,
     ):
         self.colormaps = colormaps
-        self.hazard_model = hazard_model
+        self.hazard_model_factory = hazard_model_factory
         self.inventory = inventory
         self.inventory_reader = inventory_reader
         self.zarr_reader = reader
 
     def get(self, *, request_id, request_dict):
+        # the hazard model can depend
+
         if request_id == "get_hazard_data":
             request = HazardDataRequest(**request_dict)
-            return json.dumps(
-                _get_hazard_data(request, hazard_model=self.hazard_model).model_dump()
-            )  # , allow_nan=False)
+            hazard_model = self.hazard_model_factory.hazard_model(interpolation=request.interpolation)
+            return json.dumps(_get_hazard_data(request, hazard_model=hazard_model).model_dump())  # , allow_nan=False)
         elif request_id == "get_hazard_data_availability":
             request = HazardAvailabilityRequest(**request_dict)
             return json.dumps(_get_hazard_data_availability(request, self.inventory, self.colormaps).model_dump())
@@ -87,10 +88,12 @@ class Requester:
             return json.dumps(_get_hazard_data_description(request).dict())
         elif request_id == "get_asset_exposure":
             request = AssetExposureRequest(**request_dict)
-            return json.dumps(_get_asset_exposures(request, self.hazard_model).model_dump(exclude_none=True))
+            hazard_model = self.hazard_model_factory.hazard_model(interpolation=request.calc_settings.hazard_interp)
+            return json.dumps(_get_asset_exposures(request, hazard_model).model_dump(exclude_none=True))
         elif request_id == "get_asset_impact":
             request = AssetImpactRequest(**request_dict)
-            return dumps(_get_asset_impacts(request, self.hazard_model).model_dump())
+            hazard_model = self.hazard_model_factory.hazard_model(interpolation=request.calc_settings.hazard_interp)
+            return dumps(_get_asset_impacts(request, hazard_model).model_dump())
         elif request_id == "get_example_portfolios":
             return dumps(_get_example_portfolios())
         else:

@@ -7,9 +7,9 @@ import numpy as np
 
 import physrisk.api.v1.common
 from physrisk.api.v1.exposure_req_resp import AssetExposureRequest, AssetExposureResponse
+from physrisk.container import ZarrHazardModelFactory
 from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.inventory_reader import InventoryReader
-from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import Asset
@@ -20,10 +20,10 @@ from physrisk.requests import Requester
 
 class TestExposureMeasures(TestWithCredentials):
     def test_jupiter_exposure_service(self):
-        assets, store, hazard_model, expected = self._get_components()
+        assets, store, hazard_model_factory, expected = self._get_components()
         inventory = EmbeddedInventory()
         requester = Requester(
-            hazard_model=hazard_model,
+            hazard_model_factory=hazard_model_factory,
             inventory=inventory,
             inventory_reader=InventoryReader(fs=local.LocalFileSystem(), base_path=""),
             reader=ZarrReader(store=store),
@@ -43,11 +43,13 @@ class TestExposureMeasures(TestWithCredentials):
             assert result.exposures[key].category == expected[key].name
 
     def test_jupiter_exposure(self):
-        assets, _, hazard_model, expected = self._get_components()
+        assets, _, hazard_model_factory, expected = self._get_components()
         asset = assets[0]
         measure = JupterExposureMeasure()
 
-        results = calculate_exposures([asset], hazard_model, measure, scenario="ssp585", year=2030)
+        results = calculate_exposures(
+            [asset], hazard_model_factory.hazard_model(), measure, scenario="ssp585", year=2030
+        )
         categories = results[asset].hazard_categories
         for k, v in expected.items():
             assert categories[k][0] == v
@@ -84,6 +86,8 @@ class TestExposureMeasures(TestWithCredentials):
 
         store = mock_hazard_model_store_path_curves(TestData.longitudes, TestData.latitudes, path_curves())
 
-        hazard_model = ZarrHazardModel(source_paths=get_default_source_paths(EmbeddedInventory()), store=store)
+        hazard_model_factory = ZarrHazardModelFactory(
+            source_paths=get_default_source_paths(EmbeddedInventory()), store=store
+        )
 
-        return assets, store, hazard_model, expected
+        return assets, store, hazard_model_factory, expected

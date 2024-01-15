@@ -162,14 +162,22 @@ class TestEventRetrieval(TestWithCredentials):
         set_id = r"inundation/wri/v2\\inunriver_rcp8p5_MIROC-ESM-CHEM_2080"
         interpolation = "linear"
         delta_km = 0.100
-        n_grid = 10
+        n_grid = 11
         store_ = mock_hazard_model_store_inundation(lons_, lats_, curve)
         zarrreader_ = ZarrReader(store_)
+
+        lons_ = np.array([3.92083333, 3.925] + list(lons_))
+        lats_ = np.array([50.8875, 50.88333333] + list(lats_))
         curves_max_candidate, _ = zarrreader_.get_max_curves_on_grid(
             set_id, lons_, lats_, interpolation=interpolation, delta_km=delta_km, n_grid=n_grid
         )
+
         curves_max_expected = np.array(
-            [[0.00, 0.04917953, 0.1883151, 0.3619907, 0.49083358, 0.61872474, 0.78648075, 0.91052965, 1.03448614]]
+            [
+                curve,
+                [0.0, 0.02272939, 0.08703392, 0.16730188, 0.22684941, 0.28595709, 0.36348918, 0.42082108, 0.47811026],
+                [0.0, 0.00761365, 0.02915369, 0.056041, 0.0759876, 0.09578686, 0.12175773, 0.14096216, 0.16015228],
+            ]
         )
         numpy.testing.assert_allclose(curves_max_candidate, curves_max_expected, rtol=1e-6)
 
@@ -194,7 +202,10 @@ class TestEventRetrieval(TestWithCredentials):
         ]
         store = mock_hazard_model_store_inundation(longitudes, latitudes, curve)
         zarr_reader = ZarrReader(store)
-        for interpolation in ["floor", "linear"]:
-            curves_max_candidate, _ = zarr_reader.get_max_curves(set_id, shapes, interpolation=interpolation)
-            curves_max_expected = np.array([[0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4]])
-            numpy.testing.assert_allclose(curves_max_candidate, curves_max_expected, rtol=1e-6)
+        curves_max_expected = np.array([[0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4]])
+
+        curves_max_candidate, _ = zarr_reader.get_max_curves(set_id, shapes, interpolation="floor")
+        numpy.testing.assert_allclose(curves_max_candidate, curves_max_expected, rtol=1e-6)
+
+        curves_max_candidate, _ = zarr_reader.get_max_curves(set_id, shapes, interpolation="linear")
+        numpy.testing.assert_allclose(curves_max_candidate, curves_max_expected / 4, rtol=1e-6)

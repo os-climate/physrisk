@@ -73,7 +73,7 @@ class ZarrReader:
         )
         return store
 
-    def get_curves(self, set_id, longitudes, latitudes, interpolation="floor"):
+    def get_curves(self, set_id, longitudes, latitudes, interpolation="floor", pixel_is_area=True):
         """Get intensity curve for each latitude and longitude coordinate pair.
 
         Args:
@@ -81,6 +81,8 @@ class ZarrReader:
             longitudes: list of longitudes.
             latitudes: list of latitudes.
             interpolation: interpolation method, "floor", "linear", "max" or "min".
+            pixel_is_area: whether the pixel filled the 1x1-square centred on the latitude/longitude or not as detailed
+             in https://web.archive.org/web/20160326194152/http://remotesensing.org/geotiff/spec/geotiff2.5.html#2.5.2
 
         Returns:
             curves: numpy array of intensity (no. coordinate pairs, no. return periods).
@@ -98,10 +100,11 @@ class ZarrReader:
 
         # in the case of acute risks, index_values will contain the return periods
         index_values = self.get_index_values(z)
-        image_coords = self._get_coordinates(longitudes, latitudes, transform)
+        image_coords = self._get_coordinates(longitudes, latitudes, transform, pixel_is_area=pixel_is_area)
 
         if interpolation == "floor":
             image_coords = np.floor(image_coords).astype(int)
+            image_coords[0, :] %= z.shape[2]
             iz = np.tile(np.arange(z.shape[0]), image_coords.shape[1])  # type: ignore
             iy = np.repeat(image_coords[1, :], len(index_values))
             ix = np.repeat(image_coords[0, :], len(index_values))
@@ -122,12 +125,14 @@ class ZarrReader:
             index_values = [0]
         return index_values
 
-    def get_max_curves(self, set_id, shapes, interpolation="floor"):
+    def get_max_curves(self, set_id, shapes, interpolation="floor", pixel_is_area=True):
         """Get maximal intensity curve for a given geometry.
 
         Args:
             set_id: string or tuple representing data set, converted into path by path_provider.
             shapes: list of shapely.Polygon.
+            pixel_is_area: whether the pixel filled the 1x1-square centred on the latitude/longitude or not as detailed
+             in https://web.archive.org/web/20160326194152/http://remotesensing.org/geotiff/spec/geotiff2.5.html#2.5.2
 
         Returns:
             curves_max: numpy array of maximum intensity on the grid for a given geometry
@@ -146,10 +151,11 @@ class ZarrReader:
         matrix = np.array(~transform).reshape(3, 3).transpose()[:, :-1].reshape(6)
         transformed_shapes = [affinity.affine_transform(shape, matrix) for shape in shapes]
 
+        pixel_offset = 0.5 if pixel_is_area else 0.0
         multipoints = [
             MultiPoint(
                 [
-                    (x, y)
+                    (x - pixel_offset, y - pixel_offset)
                     for x in range(int(np.floor(shape.bounds[0])), int(np.ceil(shape.bounds[2])) + 1)
                     for y in range(int(np.floor(shape.bounds[1])), int(np.ceil(shape.bounds[3])) + 1)
                 ]
@@ -168,6 +174,7 @@ class ZarrReader:
             image_coords = np.floor(
                 np.array([[point.x, point.y] for multipoint in multipoints for point in multipoint.geoms]).transpose()
             ).astype(int)
+            image_coords[0, :] %= z.shape[2]
 
             iz = np.tile(np.arange(z.shape[0]), image_coords.shape[1])  # type: ignore
             iy = np.repeat(image_coords[1, :], len(index_values))
@@ -209,7 +216,9 @@ class ZarrReader:
 
         return curves_max, np.array(index_values)
 
-    def get_max_curves_on_grid(self, set_id, longitudes, latitudes, interpolation="floor", delta_km=1.0, n_grid=5):
+    def get_max_curves_on_grid(
+        self, set_id, longitudes, latitudes, interpolation="floor", pixel_is_area=True, delta_km=1.0, n_grid=5
+    ):
         """Get maximal intensity curve for a grid around a given latitude and longitude coordinate pair.
             It is almost equivalent to:
                 self.get_max_curves
@@ -233,6 +242,8 @@ class ZarrReader:
             longitudes: list of longitudes.
             latitudes: list of latitudes.
             interpolation: interpolation method, "floor", "linear", "max" or "min".
+            pixel_is_area: whether the pixel filled the 1x1-square centred on the latitude/longitude or not as detailed
+             in https://web.archive.org/web/20160326194152/http://remotesensing.org/geotiff/spec/geotiff2.5.html#2.5.2
             delta_km: linear distance in kilometres of the side of the square grid surrounding a given position.
             n_grid: number of grid points along the latitude and longitude dimensions used for
                     calculating the maximal value.
@@ -263,7 +274,11 @@ class ZarrReader:
         lats_grid = lats_grid_baseline + lats_grid_offsets
         lons_grid = lons_grid_baseline + lons_grid_offsets
         curves, return_periods = self.get_curves(
-            set_id, lons_grid.reshape(-1), lats_grid.reshape(-1), interpolation=interpolation
+            set_id,
+            lons_grid.reshape(-1),
+            lats_grid.reshape(-1),
+            interpolation=interpolation,
+            pixel_is_area=pixel_is_area,
         )
         curves_max = np.nanmax(curves.reshape((n_data, n_grid * n_grid, len(return_periods))), axis=1)
         return curves_max, return_periods
@@ -273,7 +288,9 @@ class ZarrReader:
         """Return linear interpolated data from fractional row and column coordinates."""
         icx = np.floor(image_coords[0, :]).astype(int)[..., None]
         # note periodic boundary condition
-        ix = np.concatenate([icx, icx, (icx + 1) % z.shape[2], (icx + 1) % z.shape[2]], axis=1)[..., None].repeat(
+        ix = np.concatenate(
+            [icx % z.shape[2], icx % z.shape[2], (icx + 1) % z.shape[2], (icx + 1) % z.shape[2]], axis=1
+        )[..., None].repeat(
             len(return_periods), axis=2
         )  # points, 4, return_periods
 
@@ -326,11 +343,13 @@ class ZarrReader:
             raise ValueError("interpolation must have value 'linear', 'max' or 'min")
 
     @staticmethod
-    def _get_coordinates(longitudes, latitudes, transform: Affine):
+    def _get_coordinates(longitudes, latitudes, transform: Affine, pixel_is_area: bool):
         coords = np.vstack((longitudes, latitudes, np.ones(len(longitudes))))  # type: ignore
         inv_trans = ~transform
         mat = np.array(inv_trans).reshape(3, 3)
         frac_image_coords = mat @ coords
+        if pixel_is_area:
+            frac_image_coords[:2, :] -= 0.5
         return frac_image_coords
 
     @staticmethod

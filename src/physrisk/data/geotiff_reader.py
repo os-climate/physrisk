@@ -26,7 +26,9 @@ def zarr_read(path, longitudes, latitudes):
         mat = np.array(inv_trans).reshape(3, 3)
         coords = np.vstack((longitudes, latitudes, np.ones(len(longitudes))))
         frac_image_coords = mat @ coords
+        frac_image_coords[:2, :] -= 0.5
         image_coords = np.floor(frac_image_coords).astype(int)
+        image_coords[0, :] %= zarray.shape[2]
         assert zarray is zarr.core.Array
         data = zarray.get_coordinate_selection((image_coords[1, :], image_coords[0, :]))  # type: ignore
         return data

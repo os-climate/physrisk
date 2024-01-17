@@ -166,8 +166,8 @@ class TestEventRetrieval(TestWithCredentials):
         store_ = mock_hazard_model_store_inundation(lons_, lats_, curve)
         zarrreader_ = ZarrReader(store_)
 
-        lons_ = np.array([3.92083333, 3.925] + list(lons_))
-        lats_ = np.array([50.8875, 50.88333333] + list(lats_))
+        lons_ = np.array([3.92916667, 3.925] + list(lons_))
+        lats_ = np.array([50.87916667, 50.88333333] + list(lats_))
         curves_max_candidate, _ = zarrreader_.get_max_curves_on_grid(
             set_id, lons_, lats_, interpolation=interpolation, delta_km=delta_km, n_grid=n_grid
         )
@@ -175,8 +175,8 @@ class TestEventRetrieval(TestWithCredentials):
         curves_max_expected = np.array(
             [
                 curve,
-                [0.0, 0.02272939, 0.08703392, 0.16730188, 0.22684941, 0.28595709, 0.36348918, 0.42082108, 0.47811026],
-                [0.0, 0.00761365, 0.02915369, 0.056041, 0.0759876, 0.09578686, 0.12175773, 0.14096216, 0.16015228],
+                [0.0, 0.02272942, 0.08703404, 0.16730212, 0.22684974, 0.28595751, 0.3634897, 0.42082168, 0.47811095],
+                [0.0, 0.0432026, 0.16542863, 0.31799695, 0.43118118, 0.54352937, 0.69089751, 0.7998704, 0.90876211],
             ]
         )
         numpy.testing.assert_allclose(curves_max_candidate, curves_max_expected, rtol=1e-6)

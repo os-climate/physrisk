@@ -98,10 +98,11 @@ class ZarrReader:
 
         # in the case of acute risks, index_values will contain the return periods
         index_values = self.get_index_values(z)
-        image_coords = self._get_coordinates(longitudes, latitudes, transform)
+        image_coords = self._get_coordinates(longitudes, latitudes, transform, pixel_is_area=interpolation != "floor")
 
         if interpolation == "floor":
             image_coords = np.floor(image_coords).astype(int)
+            image_coords[0, :] %= z.shape[2]
             iz = np.tile(np.arange(z.shape[0]), image_coords.shape[1])  # type: ignore
             iy = np.repeat(image_coords[1, :], len(index_values))
             ix = np.repeat(image_coords[0, :], len(index_values))
@@ -128,6 +129,7 @@ class ZarrReader:
         Args:
             set_id: string or tuple representing data set, converted into path by path_provider.
             shapes: list of shapely.Polygon.
+            interpolation: interpolation method, "floor", "linear", "max" or "min".
 
         Returns:
             curves_max: numpy array of maximum intensity on the grid for a given geometry
@@ -146,10 +148,11 @@ class ZarrReader:
         matrix = np.array(~transform).reshape(3, 3).transpose()[:, :-1].reshape(6)
         transformed_shapes = [affinity.affine_transform(shape, matrix) for shape in shapes]
 
+        pixel_offset = 0.5 if interpolation != "floor" else 0.0
         multipoints = [
             MultiPoint(
                 [
-                    (x, y)
+                    (x - pixel_offset, y - pixel_offset)
                     for x in range(int(np.floor(shape.bounds[0])), int(np.ceil(shape.bounds[2])) + 1)
                     for y in range(int(np.floor(shape.bounds[1])), int(np.ceil(shape.bounds[3])) + 1)
                 ]
@@ -168,6 +171,7 @@ class ZarrReader:
             image_coords = np.floor(
                 np.array([[point.x, point.y] for multipoint in multipoints for point in multipoint.geoms]).transpose()
             ).astype(int)
+            image_coords[0, :] %= z.shape[2]
 
             iz = np.tile(np.arange(z.shape[0]), image_coords.shape[1])  # type: ignore
             iy = np.repeat(image_coords[1, :], len(index_values))
@@ -273,7 +277,9 @@ class ZarrReader:
         """Return linear interpolated data from fractional row and column coordinates."""
         icx = np.floor(image_coords[0, :]).astype(int)[..., None]
         # note periodic boundary condition
-        ix = np.concatenate([icx, icx, (icx + 1) % z.shape[2], (icx + 1) % z.shape[2]], axis=1)[..., None].repeat(
+        ix = np.concatenate(
+            [icx % z.shape[2], icx % z.shape[2], (icx + 1) % z.shape[2], (icx + 1) % z.shape[2]], axis=1
+        )[..., None].repeat(
             len(return_periods), axis=2
         )  # points, 4, return_periods
 
@@ -326,11 +332,13 @@ class ZarrReader:
             raise ValueError("interpolation must have value 'linear', 'max' or 'min")
 
     @staticmethod
-    def _get_coordinates(longitudes, latitudes, transform: Affine):
+    def _get_coordinates(longitudes, latitudes, transform: Affine, pixel_is_area: bool):
         coords = np.vstack((longitudes, latitudes, np.ones(len(longitudes))))  # type: ignore
         inv_trans = ~transform
         mat = np.array(inv_trans).reshape(3, 3)
         frac_image_coords = mat @ coords
+        if pixel_is_area:
+            frac_image_coords[:2, :] -= 0.5
         return frac_image_coords
 
     @staticmethod

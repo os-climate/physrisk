@@ -77,9 +77,7 @@ class ZarrStoreMocker:
         inv_trans = ~transform
         mat = np.array(inv_trans).reshape(3, 3)
         frac_image_coords = mat @ coords
-        frac_image_coords[:2, :] -= 0.5
         image_coords = np.floor(frac_image_coords).astype(int)
-        image_coords[0, :] %= z.shape[2]
         for j in range(len(longitudes)):
             z[:, image_coords[1, j], image_coords[0, j]] = intensities
 
@@ -123,9 +121,7 @@ def add_curves(
     inv_trans = ~transform
     mat = np.array(inv_trans).reshape(3, 3)
     frac_image_coords = mat @ coords
-    frac_image_coords[:2, :] -= 0.5
     image_coords = np.floor(frac_image_coords).astype(int)
-    image_coords[0, :] %= z.shape[2]
     for j in range(len(longitudes)):
         z[:, image_coords[1, j], image_coords[0, j]] = curve
 
@@ -155,9 +151,7 @@ def get_mock_hazard_model_store_single_curve():
     inv_trans = ~transform
     mat = np.array(inv_trans).reshape(3, 3)
     frac_image_coords = mat @ coords
-    frac_image_coords[:2, :] -= 0.5
     image_coords = np.floor(frac_image_coords).astype(int)
-    image_coords[0, :] %= z.shape[2]
     z[:, image_coords[1, 1], image_coords[0, 1]] = np.linspace(0.1, 1.0, z.shape[0])
 
     return store

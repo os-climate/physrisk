@@ -73,7 +73,7 @@ class ZarrReader:
         )
         return store
 
-    def get_curves(self, set_id, longitudes, latitudes, interpolation="floor", pixel_is_area=True):
+    def get_curves(self, set_id, longitudes, latitudes, interpolation="floor"):
         """Get intensity curve for each latitude and longitude coordinate pair.
 
         Args:
@@ -81,8 +81,6 @@ class ZarrReader:
             longitudes: list of longitudes.
             latitudes: list of latitudes.
             interpolation: interpolation method, "floor", "linear", "max" or "min".
-            pixel_is_area: whether the pixel filled the 1x1-square centred on the latitude/longitude or not as detailed
-             in https://web.archive.org/web/20160326194152/http://remotesensing.org/geotiff/spec/geotiff2.5.html#2.5.2
 
         Returns:
             curves: numpy array of intensity (no. coordinate pairs, no. return periods).
@@ -100,7 +98,7 @@ class ZarrReader:
 
         # in the case of acute risks, index_values will contain the return periods
         index_values = self.get_index_values(z)
-        image_coords = self._get_coordinates(longitudes, latitudes, transform, pixel_is_area=pixel_is_area)
+        image_coords = self._get_coordinates(longitudes, latitudes, transform, pixel_is_area=interpolation != "floor")
 
         if interpolation == "floor":
             image_coords = np.floor(image_coords).astype(int)
@@ -125,14 +123,13 @@ class ZarrReader:
             index_values = [0]
         return index_values
 
-    def get_max_curves(self, set_id, shapes, interpolation="floor", pixel_is_area=True):
+    def get_max_curves(self, set_id, shapes, interpolation="floor"):
         """Get maximal intensity curve for a given geometry.
 
         Args:
             set_id: string or tuple representing data set, converted into path by path_provider.
             shapes: list of shapely.Polygon.
-            pixel_is_area: whether the pixel filled the 1x1-square centred on the latitude/longitude or not as detailed
-             in https://web.archive.org/web/20160326194152/http://remotesensing.org/geotiff/spec/geotiff2.5.html#2.5.2
+            interpolation: interpolation method, "floor", "linear", "max" or "min".
 
         Returns:
             curves_max: numpy array of maximum intensity on the grid for a given geometry
@@ -151,7 +148,7 @@ class ZarrReader:
         matrix = np.array(~transform).reshape(3, 3).transpose()[:, :-1].reshape(6)
         transformed_shapes = [affinity.affine_transform(shape, matrix) for shape in shapes]
 
-        pixel_offset = 0.5 if pixel_is_area else 0.0
+        pixel_offset = 0.5 if interpolation != "floor" else 0.0
         multipoints = [
             MultiPoint(
                 [
@@ -216,9 +213,7 @@ class ZarrReader:
 
         return curves_max, np.array(index_values)
 
-    def get_max_curves_on_grid(
-        self, set_id, longitudes, latitudes, interpolation="floor", pixel_is_area=True, delta_km=1.0, n_grid=5
-    ):
+    def get_max_curves_on_grid(self, set_id, longitudes, latitudes, interpolation="floor", delta_km=1.0, n_grid=5):
         """Get maximal intensity curve for a grid around a given latitude and longitude coordinate pair.
             It is almost equivalent to:
                 self.get_max_curves
@@ -242,8 +237,6 @@ class ZarrReader:
             longitudes: list of longitudes.
             latitudes: list of latitudes.
             interpolation: interpolation method, "floor", "linear", "max" or "min".
-            pixel_is_area: whether the pixel filled the 1x1-square centred on the latitude/longitude or not as detailed
-             in https://web.archive.org/web/20160326194152/http://remotesensing.org/geotiff/spec/geotiff2.5.html#2.5.2
             delta_km: linear distance in kilometres of the side of the square grid surrounding a given position.
             n_grid: number of grid points along the latitude and longitude dimensions used for
                     calculating the maximal value.
@@ -274,11 +267,7 @@ class ZarrReader:
         lats_grid = lats_grid_baseline + lats_grid_offsets
         lons_grid = lons_grid_baseline + lons_grid_offsets
         curves, return_periods = self.get_curves(
-            set_id,
-            lons_grid.reshape(-1),
-            lats_grid.reshape(-1),
-            interpolation=interpolation,
-            pixel_is_area=pixel_is_area,
+            set_id, lons_grid.reshape(-1), lats_grid.reshape(-1), interpolation=interpolation
         )
         curves_max = np.nanmax(curves.reshape((n_data, n_grid * n_grid, len(return_periods))), axis=1)
         return curves_max, return_periods

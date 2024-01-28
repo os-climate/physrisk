@@ -30,13 +30,13 @@ repos:
       - id: black-jupyter
 
   - repo: https://github.com/s-weigand/flake8-nb
-    rev: v7.0.0
+    rev: v0.5.3
     hooks:
       - id: flake8-nb
         additional_dependencies:
           - pep8-naming
         # Ignore all format-related checks as Black takes care of those.
         args:
-          - --ignore=E2, W5, F401, E401
+          - --ignore=E2, W5, F401, E401, E704
           - --select=E, W, F, N
           - --max-line-length=120

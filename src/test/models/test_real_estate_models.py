@@ -1,4 +1,5 @@
 """ Test asset impact calculations."""
+
 import unittest
 from test.data.hazard_model_store import TestData, mock_hazard_model_store_inundation
 

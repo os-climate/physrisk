@@ -160,9 +160,11 @@ class ZarrReader:
             for shape in transformed_shapes
         ]
         multipoints = [
-            Point(0.5 * (shape.bounds[0] + shape.bounds[2]), 0.5 * (shape.bounds[1] + shape.bounds[3]))
-            if multipoint.is_empty
-            else multipoint
+            (
+                Point(0.5 * (shape.bounds[0] + shape.bounds[2]), 0.5 * (shape.bounds[1] + shape.bounds[3]))
+                if multipoint.is_empty
+                else multipoint
+            )
             for shape, multipoint in zip(transformed_shapes, multipoints)
         ]
         multipoints = [MultiPoint([(point.x, point.y)]) if isinstance(point, Point) else point for point in multipoints]

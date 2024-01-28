@@ -24,7 +24,7 @@ repos:
       - id: remove-tabs
 
   - repo: https://github.com/psf/black
-    rev: '23.12.1'
+    rev: '24.1.1'
     hooks:
       - id: black
       - id: black-jupyter
@@ -37,6 +37,6 @@ repos:
           - pep8-naming
         # Ignore all format-related checks as Black takes care of those.
         args:
-          - --ignore=E2, W5, F401, E401
+          - --ignore=E2, W5, F401, E401, E704
           - --select=E, W, F, N
           - --max-line-length=120

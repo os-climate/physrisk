@@ -51,7 +51,8 @@ def sample_from_cumulative_probs(values: np.ndarray, cum_probs: np.ndarray, unif
 
 
 class MultivariateDistribution(Protocol):
-    def inv_cumulative_marginal_probs(self, cum_probs: np.ndarray): ...
+    def inv_cumulative_marginal_probs(self, cum_probs: np.ndarray):
+        ...
 
 
 class EmpiricalMultivariateDistribution(MultivariateDistribution):

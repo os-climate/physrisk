@@ -324,7 +324,7 @@ def _get_asset_impacts(
 
             if isinstance(v.impact, EmptyImpactDistrib):
                 continue
-            
+
             impact_exceedance = v.impact.to_exceedance_curve()
             key = ImpactKey(hazard_type=k.hazard_type.__name__, scenario_id=k.scenario, year=str(k.key_year))
             hazard_impacts = AssetSingleImpact(

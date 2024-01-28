@@ -1,4 +1,5 @@
 """ Test asset impact calculations."""
+
 import test.data.hazard_model_store as hms
 from test.base_test import TestWithCredentials
 from test.data.hazard_model_store import TestData, ZarrStoreMocker

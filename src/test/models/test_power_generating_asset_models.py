@@ -1,4 +1,5 @@
 """ Test asset impact calculations."""
+
 import os
 import unittest
 from test.base_test import TestWithCredentials

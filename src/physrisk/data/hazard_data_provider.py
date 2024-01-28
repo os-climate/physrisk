@@ -29,8 +29,9 @@ class SourcePath(Protocol):
         year: projection year, e.g. 2080.
     """
 
-    def __call__(self, *, indicator_id: str, scenario: str, year: int, hint: Optional[HazardDataHint] = None) -> str:
-        ...
+    def __call__(
+        self, *, indicator_id: str, scenario: str, year: int, hint: Optional[HazardDataHint] = None
+    ) -> str: ...
 
 
 class HazardDataProvider(ABC):
@@ -104,10 +105,12 @@ class AcuteHazardDataProvider(HazardDataProvider):
             curves, return_periods = self._reader.get_max_curves(
                 path,
                 [
-                    Point(longitude, latitude)
-                    if buffer == 0
-                    else Point(longitude, latitude).buffer(
-                        ZarrReader._get_equivalent_buffer_in_arc_degrees(latitude, buffer)
+                    (
+                        Point(longitude, latitude)
+                        if buffer == 0
+                        else Point(longitude, latitude).buffer(
+                            ZarrReader._get_equivalent_buffer_in_arc_degrees(latitude, buffer)
+                        )
                     )
                     for longitude, latitude in zip(longitudes, latitudes)
                 ],

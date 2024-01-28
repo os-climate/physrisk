@@ -30,8 +30,7 @@ class RiskModel:
         self._hazard_model = hazard_model
         self._vulnerability_models = vulnerability_models
 
-    def calculate_risk_measures(self, assets: Sequence[Asset], prosp_scens: Sequence[str], years: Sequence[int]):
-        ...
+    def calculate_risk_measures(self, assets: Sequence[Asset], prosp_scens: Sequence[str], years: Sequence[int]): ...
 
     def _calculate_all_impacts(
         self, assets: Sequence[Asset], prosp_scens: Sequence[str], years: Sequence[int], include_histo: bool = False
@@ -88,14 +87,11 @@ class Measure:
 
 
 class RiskMeasureCalculator(Protocol):
-    def calc_measure(self, hazard_type: type, base_impact: ImpactDistrib, impact: ImpactDistrib) -> Measure:
-        ...
+    def calc_measure(self, hazard_type: type, base_impact: ImpactDistrib, impact: ImpactDistrib) -> Measure: ...
 
-    def get_definition(self, hazard_type: type) -> ScoreBasedRiskMeasureDefinition:
-        ...
+    def get_definition(self, hazard_type: type) -> ScoreBasedRiskMeasureDefinition: ...
 
-    def supported_hazards(self) -> Set[type]:
-        ...
+    def supported_hazards(self) -> Set[type]: ...
 
 
 class AssetLevelRiskModel(RiskModel):

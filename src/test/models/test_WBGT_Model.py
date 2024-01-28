@@ -15,7 +15,6 @@ from physrisk.vulnerability_models.chronic_heat_models import ChronicHeatGZNMode
 
 
 class ExampleWBGTGZNJointModel(ChronicHeatGZNModel):
-
     """Example implementation of the wbgt chronic heat model. This model
     inherits attributes from the ChronicHeatGZN model and estimate the
     results based on applying both GZN and WBGT"""

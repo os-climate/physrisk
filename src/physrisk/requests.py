@@ -218,11 +218,15 @@ def _get_hazard_data(request: HazardDataRequest, hazard_model: HazardModel):
         requests = item_requests[i]
         resps = (response_dict[req] for req in requests)
         intensity_curves = [
-            IntensityCurve(intensities=list(resp.intensities), return_periods=list(resp.return_periods))
-            if isinstance(resp, hmHazardEventDataResponse)
-            else IntensityCurve(intensities=list(resp.parameters), return_periods=list(resp.param_defns))
-            if isinstance(resp, HazardParameterDataResponse)
-            else IntensityCurve(intensities=[], return_periods=[])
+            (
+                IntensityCurve(intensities=list(resp.intensities), return_periods=list(resp.return_periods))
+                if isinstance(resp, hmHazardEventDataResponse)
+                else (
+                    IntensityCurve(intensities=list(resp.parameters), return_periods=list(resp.param_defns))
+                    if isinstance(resp, HazardParameterDataResponse)
+                    else IntensityCurve(intensities=[], return_periods=[])
+                )
+            )
             for resp in resps
         ]
         response.items.append(
@@ -324,7 +328,7 @@ def _get_asset_impacts(
 
             if isinstance(v.impact, EmptyImpactDistrib):
                 continue
-            
+
             impact_exceedance = v.impact.to_exceedance_curve()
             key = ImpactKey(hazard_type=k.hazard_type.__name__, scenario_id=k.scenario, year=str(k.key_year))
             hazard_impacts = AssetSingleImpact(

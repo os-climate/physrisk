@@ -125,12 +125,16 @@ def expand_resource(
                         "indicator_model_gcm": expand(item.indicator_model_gcm, key, param),
                         "display_name": expand(item.display_name, key, param),
                         "path": expand(item.path, key, param),
-                        "map": None
-                        if item.map is None
-                        else (
-                            item.map.model_copy(
-                                deep=True,
-                                update={"path": expand(item.map.path if item.map.path is not None else "", key, param)},
+                        "map": (
+                            None
+                            if item.map is None
+                            else (
+                                item.map.model_copy(
+                                    deep=True,
+                                    update={
+                                        "path": expand(item.map.path if item.map.path is not None else "", key, param)
+                                    },
+                                )
                             )
                         ),
                     },

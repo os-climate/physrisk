@@ -49,8 +49,7 @@ class ExposureMeasure(DataRequester):
     @abstractmethod
     def get_exposures(
         self, asset: Asset, data_responses: Iterable[HazardDataResponse]
-    ) -> Dict[type, Tuple[Category, float]]:
-        ...
+    ) -> Dict[type, Tuple[Category, float]]: ...
 
 
 class JupterExposureMeasure(ExposureMeasure):

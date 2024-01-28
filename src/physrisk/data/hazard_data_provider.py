@@ -29,8 +29,9 @@ class SourcePath(Protocol):
         year: projection year, e.g. 2080.
     """
 
-    def __call__(self, *, indicator_id: str, scenario: str, year: int, hint: Optional[HazardDataHint] = None) -> str:
-        ...
+    def __call__(
+        self, *, indicator_id: str, scenario: str, year: int, hint: Optional[HazardDataHint] = None
+    ) -> str: ...
 
 
 class HazardDataProvider(ABC):

@@ -1,4 +1,5 @@
 """ Test asset impact calculations."""
+
 import unittest
 
 import numpy as np

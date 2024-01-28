@@ -218,11 +218,15 @@ def _get_hazard_data(request: HazardDataRequest, hazard_model: HazardModel):
         requests = item_requests[i]
         resps = (response_dict[req] for req in requests)
         intensity_curves = [
-            IntensityCurve(intensities=list(resp.intensities), return_periods=list(resp.return_periods))
-            if isinstance(resp, hmHazardEventDataResponse)
-            else IntensityCurve(intensities=list(resp.parameters), return_periods=list(resp.param_defns))
-            if isinstance(resp, HazardParameterDataResponse)
-            else IntensityCurve(intensities=[], return_periods=[])
+            (
+                IntensityCurve(intensities=list(resp.intensities), return_periods=list(resp.return_periods))
+                if isinstance(resp, hmHazardEventDataResponse)
+                else (
+                    IntensityCurve(intensities=list(resp.parameters), return_periods=list(resp.param_defns))
+                    if isinstance(resp, HazardParameterDataResponse)
+                    else IntensityCurve(intensities=[], return_periods=[])
+                )
+            )
             for resp in resps
         ]
         response.items.append(
@@ -298,6 +302,8 @@ def _get_asset_impacts(
 
     if request.include_asset_level:
         ordered_impacts: Dict[Asset, List[AssetSingleImpact]] = {}
+        for asset in assets:
+            ordered_impacts[asset] = []
         for k, v in impacts.items():
             if request.include_calc_details:
                 if v.event is not None and v.vulnerability is not None:
@@ -322,6 +328,7 @@ def _get_asset_impacts(
 
             if isinstance(v.impact, EmptyImpactDistrib):
                 continue
+
             impact_exceedance = v.impact.to_exceedance_curve()
             key = ImpactKey(hazard_type=k.hazard_type.__name__, scenario_id=k.scenario, year=str(k.key_year))
             hazard_impacts = AssetSingleImpact(
@@ -335,7 +342,7 @@ def _get_asset_impacts(
                 impact_std_deviation=v.impact.stddev_impact(),
                 calc_details=None if v.event is None else calc_details,
             )
-            ordered_impacts.setdefault(k.asset, []).append(hazard_impacts)
+            ordered_impacts[k.asset].append(hazard_impacts)
 
         # note that this does rely on ordering of dictionary (post 3.6)
         asset_impacts = [AssetLevelImpact(asset_id="", impacts=a) for a in ordered_impacts.values()]

@@ -15,8 +15,7 @@ from ..kernel.vulnerability_model import VulnerabilityModelBase
 
 class Aggregator(ABC):
     @abstractmethod
-    def get_aggregation_keys(self, asset: Asset, impact: ImpactDistrib) -> List:
-        ...
+    def get_aggregation_keys(self, asset: Asset, impact: ImpactDistrib) -> List: ...
 
 
 class DefaultAggregator(Aggregator):

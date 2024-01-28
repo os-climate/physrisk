@@ -132,8 +132,9 @@ class HazardModel(ABC):
 
 
 class DataSource(Protocol):
-    def __call__(self, longitudes, latitudes, *, model: str, scenario: str, year: int) -> Tuple[np.ndarray, np.ndarray]:
-        ...
+    def __call__(
+        self, longitudes, latitudes, *, model: str, scenario: str, year: int
+    ) -> Tuple[np.ndarray, np.ndarray]: ...
 
 
 class CompositeHazardModel(HazardModel):

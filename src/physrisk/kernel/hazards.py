@@ -75,6 +75,16 @@ class Wind(Hazard):
     pass
 
 
+class AirTemperature(Hazard):
+    kind = HazardKind.chronic
+    pass
+
+
+class WaterTemperature(Hazard):
+    kind = HazardKind.chronic
+    pass
+
+
 def all_hazards():
     return [
         obj for _, obj in inspect.getmembers(sys.modules[__name__]) if inspect.isclass(obj) and issubclass(obj, Hazard)

@@ -41,8 +41,7 @@ class ResourceSelector(Protocol):
 
     def __call__(
         self, *, candidates: ResourceSubset, scenario: str, year: int, hint: Optional[HazardDataHint] = None
-    ) -> HazardResource:
-        ...
+    ) -> HazardResource: ...
 
 
 class ResourceSelectorKey(NamedTuple):

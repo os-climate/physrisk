@@ -29,8 +29,9 @@ class SourcePath(Protocol):
         year: projection year, e.g. 2080.
     """
 
-    def __call__(self, *, indicator_id: str, scenario: str, year: int, hint: Optional[HazardDataHint] = None) -> str:
-        ...
+    def __call__(
+        self, *, indicator_id: str, scenario: str, year: int, hint: Optional[HazardDataHint] = None
+    ) -> str: ...
 
 
 class HazardDataProvider(ABC):
@@ -49,8 +50,8 @@ class HazardDataProvider(ABC):
         """
         self._get_source_path = get_source_path
         self._reader = zarr_reader if zarr_reader is not None else ZarrReader(store=store)
-        if interpolation not in ["floor", "linear"]:
-            raise ValueError("interpolation must be 'floor' or 'linear'")
+        if interpolation not in ["floor", "linear", "max", "min"]:
+            raise ValueError("interpolation must be 'floor', 'linear', 'max' or 'min'")
         self._interpolation = interpolation
 
 
@@ -104,10 +105,12 @@ class AcuteHazardDataProvider(HazardDataProvider):
             curves, return_periods = self._reader.get_max_curves(
                 path,
                 [
-                    Point(longitude, latitude)
-                    if buffer == 0
-                    else Point(longitude, latitude).buffer(
-                        ZarrReader._get_equivalent_buffer_in_arc_degrees(latitude, buffer)
+                    (
+                        Point(longitude, latitude)
+                        if buffer == 0
+                        else Point(longitude, latitude).buffer(
+                            ZarrReader._get_equivalent_buffer_in_arc_degrees(latitude, buffer)
+                        )
                     )
                     for longitude, latitude in zip(longitudes, latitudes)
                 ],

@@ -173,7 +173,47 @@ class TestImpactRequests(TestWithCredentials):
                     "location": "North America",
                     "latitude": latitudes[0],
                     "longitude": longitudes[0],
-                }
+                },
+                {
+                    "asset_class": "ThermalPowerGeneratingAsset",
+                    "type": "Gas/Gas",
+                    "capacity": 1288.4,
+                    "location": "North America",
+                    "latitude": latitudes[0],
+                    "longitude": longitudes[0],
+                },
+                {
+                    "asset_class": "ThermalPowerGeneratingAsset",
+                    "type": "Gas/Steam",
+                    "capacity": 1288.4,
+                    "location": "North America",
+                    "latitude": latitudes[0],
+                    "longitude": longitudes[0],
+                },
+                {
+                    "asset_class": "ThermalPowerGeneratingAsset",
+                    "type": "Gas/Steam/Dry",
+                    "capacity": 1288.4,
+                    "location": "North America",
+                    "latitude": latitudes[0],
+                    "longitude": longitudes[0],
+                },
+                {
+                    "asset_class": "ThermalPowerGeneratingAsset",
+                    "type": "Gas/Steam/OnceThrough",
+                    "capacity": 1288.4,
+                    "location": "North America",
+                    "latitude": latitudes[0],
+                    "longitude": longitudes[0],
+                },
+                {
+                    "asset_class": "ThermalPowerGeneratingAsset",
+                    "type": "Gas/Steam/Recirculating",
+                    "capacity": 1288.4,
+                    "location": "North America",
+                    "latitude": latitudes[0],
+                    "longitude": longitudes[0],
+                },
             ]
         }
 
@@ -491,10 +531,37 @@ class TestImpactRequests(TestWithCredentials):
             vulnerability_models=vulnerability_models,
         )
 
+        # Air Temperature
         self.assertEqual(response.asset_impacts[0].impacts[0].impact_mean, 0.0019158610488645982)
+        self.assertEqual(response.asset_impacts[1].impacts[0].impact_mean, 0.0019158610488645982)
+        self.assertEqual(response.asset_impacts[2].impacts[0].impact_mean, 0.0006386203496215328)
+        self.assertEqual(response.asset_impacts[3].impacts[0].impact_mean, 0.0006386203496215328)
+        self.assertEqual(response.asset_impacts[4].impacts[0].impact_mean, 0.0)
+        self.assertEqual(response.asset_impacts[5].impacts[0].impact_mean, 0.0)
+
+        # Drought
         self.assertEqual(response.asset_impacts[0].impacts[1].impact_mean, 0.0005486720213255343)
+        self.assertEqual(response.asset_impacts[1].impacts[1].impact_mean, 0.0)
+        self.assertEqual(response.asset_impacts[2].impacts[1].impact_mean, 0.0005486720213255343)
+        self.assertEqual(response.asset_impacts[3].impacts[1].impact_mean, 0.0)
+        self.assertEqual(response.asset_impacts[4].impacts[1].impact_mean, 0.0005486720213255343)
+        self.assertEqual(response.asset_impacts[5].impacts[1].impact_mean, 0.0005486720213255343)
+
+        # Riverine Inundation
         self.assertEqual(response.asset_impacts[0].impacts[2].impact_mean, 0.005372887389199415)
+        self.assertEqual(response.asset_impacts[1].impacts[2].impact_mean, 0.005372887389199415)
+        self.assertEqual(response.asset_impacts[2].impacts[2].impact_mean, 0.005372887389199415)
+        self.assertEqual(response.asset_impacts[3].impacts[2].impact_mean, 0.005372887389199415)
+        self.assertEqual(response.asset_impacts[4].impacts[2].impact_mean, 0.005372887389199415)
+        self.assertEqual(response.asset_impacts[5].impacts[2].impact_mean, 0.005372887389199415)
+
+        # Water Temperature
         self.assertEqual(response.asset_impacts[0].impacts[3].impact_mean, 0.09913461937103421)
+        self.assertEqual(response.asset_impacts[1].impacts[3].impact_mean, 0.0)
+        self.assertEqual(response.asset_impacts[2].impacts[3].impact_mean, 0.09913461937103421)
+        self.assertEqual(response.asset_impacts[3].impacts[3].impact_mean, 0.0)
+        self.assertEqual(response.asset_impacts[4].impacts[3].impact_mean, 0.09913461937103421)
+        self.assertEqual(response.asset_impacts[5].impacts[3].impact_mean, 0.00413881409575074)
 
     @unittest.skip("example, not test")
     def test_example_portfolios(self):

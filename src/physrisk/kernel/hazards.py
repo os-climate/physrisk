@@ -35,6 +35,14 @@ class ChronicHeat(Hazard):
     pass
 
 
+class AirTemperature(ChronicHeat):
+    pass
+
+
+class WaterTemperature(ChronicHeat):
+    pass
+
+
 class ChronicWind(Hazard):
     kind = HazardKind.chronic
     pass
@@ -72,16 +80,6 @@ class RiverineInundation(Inundation):
 
 class Wind(Hazard):
     kind = HazardKind.acute
-    pass
-
-
-class AirTemperature(Hazard):
-    kind = HazardKind.chronic
-    pass
-
-
-class WaterTemperature(Hazard):
-    kind = HazardKind.chronic
     pass
 
 

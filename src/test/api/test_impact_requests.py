@@ -30,6 +30,7 @@ from physrisk.vulnerability_models.thermal_power_generation_models import (
     ThermalPowerGenerationAirTemperatureModel,
     ThermalPowerGenerationDroughtModel,
     ThermalPowerGenerationRiverineInundationModel,
+    ThermalPowerGenerationWaterTemperatureModel,
 )
 
 # from physrisk.api.v1.impact_req_resp import AssetImpactResponse
@@ -172,7 +173,47 @@ class TestImpactRequests(TestWithCredentials):
                     "location": "North America",
                     "latitude": latitudes[0],
                     "longitude": longitudes[0],
-                }
+                },
+                {
+                    "asset_class": "ThermalPowerGeneratingAsset",
+                    "type": "Gas/Gas",
+                    "capacity": 1288.4,
+                    "location": "North America",
+                    "latitude": latitudes[0],
+                    "longitude": longitudes[0],
+                },
+                {
+                    "asset_class": "ThermalPowerGeneratingAsset",
+                    "type": "Gas/Steam",
+                    "capacity": 1288.4,
+                    "location": "North America",
+                    "latitude": latitudes[0],
+                    "longitude": longitudes[0],
+                },
+                {
+                    "asset_class": "ThermalPowerGeneratingAsset",
+                    "type": "Gas/Steam/Dry",
+                    "capacity": 1288.4,
+                    "location": "North America",
+                    "latitude": latitudes[0],
+                    "longitude": longitudes[0],
+                },
+                {
+                    "asset_class": "ThermalPowerGeneratingAsset",
+                    "type": "Gas/Steam/OnceThrough",
+                    "capacity": 1288.4,
+                    "location": "North America",
+                    "latitude": latitudes[0],
+                    "longitude": longitudes[0],
+                },
+                {
+                    "asset_class": "ThermalPowerGeneratingAsset",
+                    "type": "Gas/Steam/Recirculating",
+                    "capacity": 1288.4,
+                    "location": "North America",
+                    "latitude": latitudes[0],
+                    "longitude": longitudes[0],
+                },
             ]
         }
 
@@ -393,12 +434,94 @@ class TestImpactRequests(TestWithCredentials):
             t,
         )
 
+        return_periods = [5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25, 27.5, 30, 32.5, 35, 37.5, 40]
+        shape, t = shape_transform_21600_43200(return_periods=return_periods)
+        add_curves(
+            root,
+            longitudes,
+            latitudes,
+            "chronic_heat/nluu/v2/weeks_water_temp_above_GFDL_historical_1991",
+            shape,
+            np.array(
+                [
+                    52.0,
+                    51.9,
+                    49.666668,
+                    45.066666,
+                    38.0,
+                    31.1,
+                    26.0,
+                    21.066668,
+                    14.233334,
+                    8.0333338,
+                    5.0999999,
+                    2.3666666,
+                    6.6666669,
+                    3.3333335,
+                    0.0,
+                ]
+            ),
+            return_periods,
+            t,
+        )
+        add_curves(
+            root,
+            longitudes,
+            latitudes,
+            "chronic_heat/nluu/v2/weeks_water_temp_above_GFDL_rcp8p5_2050",
+            shape,
+            np.array([51.85, 51.5, 50.25, 46.75, 41.95, 35.35, 29.4, 24.55, 20.15, 13.85, 6.75, 3.5, 1.3, 0.25, 0.1]),
+            return_periods,
+            t,
+        )
+
+        return_periods = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]
+        shape, t = shape_transform_21600_43200(return_periods=return_periods)
+        add_curves(
+            root,
+            longitudes,
+            latitudes,
+            "chronic_heat/osc/v2/days_wbgt_above_ACCESS-CM2_ssp585_2050",
+            shape,
+            np.array(
+                [
+                    363.65054,
+                    350.21094,
+                    303.6388,
+                    240.48442,
+                    181.82924,
+                    128.46844,
+                    74.400276,
+                    1.3997267,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                ]
+            ),
+            return_periods,
+            t,
+        )
+        add_curves(
+            root,
+            longitudes,
+            latitudes,
+            "chronic_heat/osc/v2/days_wbgt_above_ACCESS-CM2_historical_2005",
+            shape,
+            np.array(
+                [361.95273, 342.51804, 278.8146, 213.5123, 157.4511, 101.78238, 12.6897545, 0.0, 0.0, 0.0, 0.0, 0.0]
+            ),
+            return_periods,
+            t,
+        )
+
         source_paths = get_default_source_paths(EmbeddedInventory())
         vulnerability_models = {
             ThermalPowerGeneratingAsset: [
                 ThermalPowerGenerationAirTemperatureModel(),
                 ThermalPowerGenerationDroughtModel(),
                 ThermalPowerGenerationRiverineInundationModel(),
+                ThermalPowerGenerationWaterTemperatureModel(),
             ]
         }
 
@@ -408,9 +531,37 @@ class TestImpactRequests(TestWithCredentials):
             vulnerability_models=vulnerability_models,
         )
 
-        self.assertEqual(response.asset_impacts[0].impacts[0].impact_mean, 0.009028426082166906)
+        # Air Temperature
+        self.assertEqual(response.asset_impacts[0].impacts[0].impact_mean, 0.0019158610488645982)
+        self.assertEqual(response.asset_impacts[1].impacts[0].impact_mean, 0.0019158610488645982)
+        self.assertEqual(response.asset_impacts[2].impacts[0].impact_mean, 0.0006386203496215328)
+        self.assertEqual(response.asset_impacts[3].impacts[0].impact_mean, 0.0006386203496215328)
+        self.assertEqual(response.asset_impacts[4].impacts[0].impact_mean, 0.0)
+        self.assertEqual(response.asset_impacts[5].impacts[0].impact_mean, 0.0)
+
+        # Drought
         self.assertEqual(response.asset_impacts[0].impacts[1].impact_mean, 0.0005486720213255343)
+        self.assertEqual(response.asset_impacts[1].impacts[1].impact_mean, 0.0)
+        self.assertEqual(response.asset_impacts[2].impacts[1].impact_mean, 0.0005486720213255343)
+        self.assertEqual(response.asset_impacts[3].impacts[1].impact_mean, 0.0)
+        self.assertEqual(response.asset_impacts[4].impacts[1].impact_mean, 0.0005486720213255343)
+        self.assertEqual(response.asset_impacts[5].impacts[1].impact_mean, 0.0005486720213255343)
+
+        # Riverine Inundation
         self.assertEqual(response.asset_impacts[0].impacts[2].impact_mean, 0.005372887389199415)
+        self.assertEqual(response.asset_impacts[1].impacts[2].impact_mean, 0.005372887389199415)
+        self.assertEqual(response.asset_impacts[2].impacts[2].impact_mean, 0.005372887389199415)
+        self.assertEqual(response.asset_impacts[3].impacts[2].impact_mean, 0.005372887389199415)
+        self.assertEqual(response.asset_impacts[4].impacts[2].impact_mean, 0.005372887389199415)
+        self.assertEqual(response.asset_impacts[5].impacts[2].impact_mean, 0.005372887389199415)
+
+        # Water Temperature
+        self.assertEqual(response.asset_impacts[0].impacts[3].impact_mean, 0.09913461937103421)
+        self.assertEqual(response.asset_impacts[1].impacts[3].impact_mean, 0.0)
+        self.assertEqual(response.asset_impacts[2].impacts[3].impact_mean, 0.09913461937103421)
+        self.assertEqual(response.asset_impacts[3].impacts[3].impact_mean, 0.0)
+        self.assertEqual(response.asset_impacts[4].impacts[3].impact_mean, 0.09913461937103421)
+        self.assertEqual(response.asset_impacts[5].impacts[3].impact_mean, 0.00413881409575074)
 
     @unittest.skip("example, not test")
     def test_example_portfolios(self):

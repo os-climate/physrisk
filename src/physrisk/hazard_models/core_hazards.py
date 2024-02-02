@@ -92,7 +92,11 @@ class InventorySourcePaths:
                 raise RuntimeError(
                     f"unable to select unique resource for hazard {hazard_type} " f"and indicator ID {indicator_id}"
                 )
-            proxy_scenario = cmip6_scenario_to_rcp(scenario) if resource.scenarios[0].id.startswith("rcp") else scenario
+            proxy_scenario = (
+                cmip6_scenario_to_rcp(scenario)
+                if resource.scenarios[0].id.startswith("rcp") or resource.scenarios[-1].id.startswith("rcp")
+                else scenario
+            )
             if scenario == "historical":
                 scenarios = next(iter(s for s in resource.scenarios if s.id == "historical"), None)
                 if scenarios is None:

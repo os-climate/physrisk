@@ -35,6 +35,14 @@ class ChronicHeat(Hazard):
     pass
 
 
+class AirTemperature(ChronicHeat):
+    pass
+
+
+class WaterTemperature(ChronicHeat):
+    pass
+
+
 class ChronicWind(Hazard):
     kind = HazardKind.chronic
     pass

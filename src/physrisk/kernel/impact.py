@@ -11,6 +11,8 @@ from physrisk.kernel.vulnerability_distrib import VulnerabilityDistrib
 from physrisk.kernel.vulnerability_model import DataRequester, VulnerabilityModelAcuteBase, VulnerabilityModelBase
 from physrisk.utils.helpers import get_iterable
 
+logger = logging.getLogger(__name__)
+
 
 class ImpactKey(NamedTuple):
     asset: Asset
@@ -67,14 +69,21 @@ def calculate_impacts(  # noqa: C901
                 assert isinstance(model, VulnerabilityModelBase)
                 results[ImpactKey(asset=asset, hazard_type=model.hazard_type)] = AssetImpactResult(EmptyImpactDistrib())
                 continue
-            if isinstance(model, VulnerabilityModelAcuteBase):
-                impact, vul, event = model.get_impact_details(asset, hazard_data)
-                results[ImpactKey(asset=asset, hazard_type=model.hazard_type)] = AssetImpactResult(
-                    impact, vulnerability=vul, event=event, hazard_data=hazard_data
-                )
-            elif isinstance(model, VulnerabilityModelBase):
-                impact = model.get_impact(asset, hazard_data)
-                results[ImpactKey(asset, model.hazard_type)] = AssetImpactResult(impact, hazard_data=hazard_data)
+            try:
+                if isinstance(model, VulnerabilityModelAcuteBase):
+                    impact, vul, event = model.get_impact_details(asset, hazard_data)
+                    results[ImpactKey(asset=asset, hazard_type=model.hazard_type)] = AssetImpactResult(
+                        impact, vulnerability=vul, event=event, hazard_data=hazard_data
+                    )
+                elif isinstance(model, VulnerabilityModelBase):
+                    impact = model.get_impact(asset, hazard_data)
+                    results[ImpactKey(asset=asset, hazard_type=model.hazard_type)] = AssetImpactResult(
+                        impact, hazard_data=hazard_data
+                    )
+            except Exception as e:
+                logger.exception(e)
+                assert isinstance(model, VulnerabilityModelBase)
+                results[ImpactKey(asset=asset, hazard_type=model.hazard_type)] = AssetImpactResult(EmptyImpactDistrib())
     return results
 
 

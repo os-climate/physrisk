@@ -6,6 +6,7 @@ import numpy.typing as npt
 import zarr
 import zarr.storage
 from affine import Affine
+from pyproj import Transformer
 
 from physrisk.hazard_models.core_hazards import cmip6_scenario_to_rcp
 
@@ -71,14 +72,25 @@ class ZarrStoreMocker:
         )
         z.attrs["transform_mat3x3"] = trans
         z.attrs["index_values"] = return_periods
+        z.attrs["crs"] = crs
+
+        if crs.lower() != "epsg:4326":
+            transproj = Transformer.from_crs(
+                "epsg:4326",
+                crs,
+                always_xy=True,
+            )
+            x, y = transproj.transform(longitudes, latitudes)
+        else:
+            x, y = longitudes, latitudes
 
         transform = Affine(trans[0], trans[1], trans[2], trans[3], trans[4], trans[5])
-        coords = np.vstack((longitudes, latitudes, np.ones(len(longitudes))))
+        coords = np.vstack((x, y, np.ones(len(x))))
         inv_trans = ~transform
         mat = np.array(inv_trans).reshape(3, 3)
         frac_image_coords = mat @ coords
         image_coords = np.floor(frac_image_coords).astype(int)
-        for j in range(len(longitudes)):
+        for j in range(len(x)):
             z[:, image_coords[1, j], image_coords[0, j]] = intensities
 
     def _crs_shape_transform(self, width: int, height: int, return_periods: Union[List[float], npt.NDArray] = [0.0]):

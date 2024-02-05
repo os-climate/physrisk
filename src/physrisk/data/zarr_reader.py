@@ -6,6 +6,7 @@ import numpy as np
 import s3fs
 import zarr
 from affine import Affine
+from pyproj import Transformer
 from shapely import MultiPoint, Point, affinity
 
 
@@ -95,10 +96,13 @@ class ZarrReader:
         # OSC-specific attributes contain transform and return periods
         t = z.attrs["transform_mat3x3"]  # type: ignore
         transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
+        crs = z.attrs.get("crs", "epsg:4326")
 
         # in the case of acute risks, index_values will contain the return periods
         index_values = self.get_index_values(z)
-        image_coords = self._get_coordinates(longitudes, latitudes, transform, pixel_is_area=interpolation != "floor")
+        image_coords = self._get_coordinates(
+            longitudes, latitudes, crs, transform, pixel_is_area=interpolation != "floor"
+        )
 
         if interpolation == "floor":
             image_coords = np.floor(image_coords).astype(int)
@@ -334,8 +338,13 @@ class ZarrReader:
             raise ValueError("interpolation must have value 'linear', 'max' or 'min")
 
     @staticmethod
-    def _get_coordinates(longitudes, latitudes, transform: Affine, pixel_is_area: bool):
-        coords = np.vstack((longitudes, latitudes, np.ones(len(longitudes))))  # type: ignore
+    def _get_coordinates(longitudes, latitudes, crs: str, transform: Affine, pixel_is_area: bool):
+        if crs.lower() != "epsg:4236":
+            transproj = Transformer.from_crs("epsg:4326", crs, always_xy=True)
+            x, y = transproj.transform(longitudes, latitudes)
+        else:
+            x, y = longitudes, latitudes
+        coords = np.vstack((x, y, np.ones(len(longitudes))))  # type: ignore
         inv_trans = ~transform
         mat = np.array(inv_trans).reshape(3, 3)
         frac_image_coords = mat @ coords

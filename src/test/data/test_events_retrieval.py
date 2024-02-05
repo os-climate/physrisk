@@ -3,7 +3,7 @@ import unittest
 
 # from pathlib import PurePosixPath
 from test.base_test import TestWithCredentials
-from test.data.hazard_model_store import mock_hazard_model_store_inundation
+from test.data.hazard_model_store import ZarrStoreMocker, mock_hazard_model_store_inundation
 
 # import fsspec.implementations.local as local  # type: ignore
 import numpy as np
@@ -16,7 +16,10 @@ from shapely import Polygon
 from physrisk.api.v1.hazard_data import HazardAvailabilityRequest, HazardResource, Scenario
 from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.data.inventory_reader import InventoryReader
+from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
+from physrisk.kernel.hazard_model import HazardDataRequest
+from physrisk.kernel.hazards import RiverineInundation
 from physrisk.requests import _get_hazard_data_availability
 
 
@@ -25,22 +28,10 @@ class TestEventRetrieval(TestWithCredentials):
     def test_inventory_change(self):
         # check validation passes calling in service-like way
         embedded = EmbeddedInventory()
-
         resources1 = embedded.to_resources()
-        # fs = local.LocalFileSystem()
-        # base_path = PurePosixPath(__file__).parents[2].joinpath("physrisk", "data", "static")
-        # reader = InventoryReader(fs=fs, base_path=str(base_path))
-        # resources2 = inventory.expand(reader.read("hazard"))
-
-        # inventory1 = Inventory([r for r in resources1 if "chronic_heat" not in r.path]).json_ordered()
-        # inventory2 = Inventory([r for r in resources2 if ("jupiter" not in r.group_id and \
-        # "tas" not in r.id and "chronic_heat" not in r.path)]).json_ordered()
-        inventory2 = Inventory(resources1).json_ordered()
-        # with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "inventory1.json"), 'w') as f:
-        #    f.write(inventory1)
-
-        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "inventory2.json"), "w") as f:
-            f.write(inventory2)
+        inventory = Inventory(resources1).json_ordered()
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "inventory.json"), "w") as f:
+            f.write(inventory)
 
     def test_hazard_data_availability_summary(self):
         # check validation passes calling in service-like way
@@ -209,3 +200,27 @@ class TestEventRetrieval(TestWithCredentials):
 
         curves_max_candidate, _ = zarr_reader.get_max_curves(set_id, shapes, interpolation="linear")
         numpy.testing.assert_allclose(curves_max_candidate, curves_max_expected / 4, rtol=1e-6)
+
+    def test_reproject(self):
+        """Test adding data in a non-ESPG-4326 coordinate reference system. Check that attribute
+        end in the correct convertion."""
+        mocker = ZarrStoreMocker()
+        lons = [1.1, -0.31]
+        lats = [47.0, 52.0]
+        mocker._add_curves(
+            "test",
+            lons,
+            lats,
+            "epsg:3035",
+            [3, 39420, 38371],
+            [100.0, 0.0, 2648100.0, 0.0, -100.0, 5404500],
+            [10.0, 100.0, 1000.0],
+            [1.0, 2.0, 3.0],
+        )
+
+        source_paths = {RiverineInundation: lambda indicator_id, scenario, year, hint: "test"}
+        hazard_model = ZarrHazardModel(source_paths=source_paths, store=mocker.store)
+        response = hazard_model.get_hazard_events(
+            [HazardDataRequest(RiverineInundation, lons[0], lats[0], indicator_id="", scenario="", year=2050)]
+        )
+        numpy.testing.assert_equal(next(iter(response.values())).intensities, [1.0, 2.0, 3.0])

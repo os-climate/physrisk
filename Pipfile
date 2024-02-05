@@ -17,6 +17,7 @@ dependency-injector = "==4.41.0"
 numba = "==0.56.4"
 pint = "*"
 shapely = "*"
+pyproj = "*"
 
 [dev-packages]
 isort = "*"
@@ -29,6 +30,7 @@ sphinx-toolbox = "*"
 sphinx-design = "*"
 nbsphinx = "*"
 pydata-sphinx-theme = "*"
+ipykernel = "*"
 
 [requires]
 python_version = "3.8"

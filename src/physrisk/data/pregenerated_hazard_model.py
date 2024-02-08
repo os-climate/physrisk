@@ -1,4 +1,3 @@
-import asyncio
 import concurrent.futures
 from collections import defaultdict
 from typing import Dict, List, Mapping, MutableMapping, Optional, cast
@@ -50,13 +49,11 @@ class PregeneratedHazardModel(HazardModel):
         # e.g. asyncio.get_event_loop().run_in_executor
         # 2) use thread pool
         # for now we do 2; 1 might be preferred if the number of threads needed to download
-        # data in parallel becomes large (probably not given use of async in Zarr).
+        # data in parallel becomes large (probably not, given use of async in Zarr).
 
-        # result = asyncio.gather(self._get_hazard_events(requests))
-        # return result
-        return asyncio.run(self._get_hazard_events(requests))
+        return self._get_hazard_events(requests)
 
-    async def _get_hazard_events(  # noqa: C901
+    def _get_hazard_events(  # noqa: C901
         self, requests: List[HazardDataRequest]
     ) -> Mapping[HazardDataRequest, HazardDataResponse]:
         batches = defaultdict(list)

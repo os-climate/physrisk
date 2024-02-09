@@ -1961,7 +1961,7 @@
                     37.5,
                     40
                 ],
-                "source": "map_array"
+                "source": "map_array_pyramid"
             },
             "scenarios": [
                 {
@@ -2084,7 +2084,7 @@
                     37.5,
                     40
                 ],
-                "source": "map_array"
+                "source": "map_array_pyramid"
             },
             "scenarios": [
                 {
@@ -2161,7 +2161,7 @@
                     55,
                     60
                 ],
-                "source": "map_array"
+                "source": "map_array_pyramid"
             },
             "scenarios": [
                 {

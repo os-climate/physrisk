@@ -2229,11 +2229,11 @@
             "indicator_model_id": null,
             "indicator_model_gcm": "combined",
             "params": {},
-            "display_name": "Measure of the total water withdrawals.",
+            "display_name": "Gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (cm/year).",
             "display_groups": [
-                "Measure of the total water withdrawals."
+                "Gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (cm/year)."
             ],
-            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u00e2\u20ac\u2122s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex \nhydrological data into intuitive indicators of water-related risk:\n\n* **Water use**: two metrics of water use are considered, gross demand and net consumption. Gross demand is the maximum potential water required to meet sectoral demands (including domestic, \nindustrial, irrigation, and livestock), and net consumption is the portion of demand that is \nlost in use\u00e2\u20ac\u201devaporated or incorporated into a product\u00e2\u20ac\u201dand not returned to the system.\n\n* **Water supply**: available blue water, i.e. the total \namount of renewable freshwater available to a sub-basin with upstream consumption removed. \nThe available blue water is computed as internal sub-basin runoff plus the accumulated water flowing into the sub-basin from upstream, where upstream consumption is already removed (i.e., discharge). This includes freshwater from the following sources: surface flow, interflow, and groundwater recharge. \n\n* **Water stress**: the ratio of total water demand to available renewable surface and groundwater supplies. Water demand includes domestic, industrial, irrigation, and livestock consumptive and nonconsumptive uses. Available renewable water supplies include the impact of upstream consumptive \nwater users and large dams on downstream water availability. Higher values indicate more competition among users.\n\n* **Water depletion**: the ratio of total water consumption to available blue water. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users.\n\n*  **Interannual variability**: the average between-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider \nvariations in available supply from year to year.\n\n* **Seasonal variability**: the average within-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider variations of available supply within a year.\n\nThe spatial resolution is 5 \u00c3\u2014 5 arc minutes which equates roughly to 10 kilometer (km) \u00c3\u2014 10 km pixels. \nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).",
+            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u00e2\u20ac\u2122s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex \nhydrological data into intuitive indicators of water-related risk:\n\n* **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (cm/year).\n\n* **Water supply**: available blue water\u00e2\u20ac\u201dthe total amount of renewable freshwater available to a sub-basin with upstream consumption removed\u00e2\u20ac\u201dincludes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (cm/year).\n\n* **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water.\n\n* **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only.\n\n*  **Interannual variability**: the average within-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider variations of available supply within a year.\n\n* **Seasonal variability**: the average within-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider variations of available supply within a year.\n\nThe spatial resolution is 5 \u00c3\u2014 5 arc minutes which equates roughly to 10 kilometer (km) \u00c3\u2014 10 km pixels. \nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -2268,27 +2268,9 @@
             },
             "scenarios": [
                 {
-                    "id": "ssp126",
+                    "id": "historical",
                     "years": [
-                        2030,
-                        2050,
-                        2080
-                    ]
-                },
-                {
-                    "id": "ssp370",
-                    "years": [
-                        2030,
-                        2050,
-                        2080
-                    ]
-                },
-                {
-                    "id": "ssp585",
-                    "years": [
-                        2030,
-                        2050,
-                        2080
+                        1999
                     ]
                 }
             ],
@@ -2302,11 +2284,11 @@
             "indicator_model_id": null,
             "indicator_model_gcm": "combined",
             "params": {},
-            "display_name": "Measure of the total available renewable surface and ground water supplies.",
+            "display_name": "Available blue water \u2014 the total amount of renewable freshwater available to a sub-basin with upstream consumption removed \u2014 includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (cm/year).",
             "display_groups": [
-                "Measure of the total available renewable surface and ground water supplies."
+                "Available blue water \u2014 the total amount of renewable freshwater available to a sub-basin with upstream consumption removed \u2014 includes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (cm/year)."
             ],
-            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u00e2\u20ac\u2122s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex \nhydrological data into intuitive indicators of water-related risk:\n\n* **Water use**: two metrics of water use are considered, gross demand and net consumption. Gross demand is the maximum potential water required to meet sectoral demands (including domestic, \nindustrial, irrigation, and livestock), and net consumption is the portion of demand that is \nlost in use\u00e2\u20ac\u201devaporated or incorporated into a product\u00e2\u20ac\u201dand not returned to the system.\n\n* **Water supply**: available blue water, i.e. the total \namount of renewable freshwater available to a sub-basin with upstream consumption removed. \nThe available blue water is computed as internal sub-basin runoff plus the accumulated water flowing into the sub-basin from upstream, where upstream consumption is already removed (i.e., discharge). This includes freshwater from the following sources: surface flow, interflow, and groundwater recharge. \n\n* **Water stress**: the ratio of total water demand to available renewable surface and groundwater supplies. Water demand includes domestic, industrial, irrigation, and livestock consumptive and nonconsumptive uses. Available renewable water supplies include the impact of upstream consumptive \nwater users and large dams on downstream water availability. Higher values indicate more competition among users.\n\n* **Water depletion**: the ratio of total water consumption to available blue water. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users.\n\n*  **Interannual variability**: the average between-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider \nvariations in available supply from year to year.\n\n* **Seasonal variability**: the average within-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider variations of available supply within a year.\n\nThe spatial resolution is 5 \u00c3\u2014 5 arc minutes which equates roughly to 10 kilometer (km) \u00c3\u2014 10 km pixels. \nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).",
+            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u00e2\u20ac\u2122s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex \nhydrological data into intuitive indicators of water-related risk:\n\n* **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (cm/year).\n\n* **Water supply**: available blue water\u00e2\u20ac\u201dthe total amount of renewable freshwater available to a sub-basin with upstream consumption removed\u00e2\u20ac\u201dincludes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (cm/year).\n\n* **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water.\n\n* **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only.\n\n*  **Interannual variability**: the average within-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider variations of available supply within a year.\n\n* **Seasonal variability**: the average within-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider variations of available supply within a year.\n\nThe spatial resolution is 5 \u00c3\u2014 5 arc minutes which equates roughly to 10 kilometer (km) \u00c3\u2014 10 km pixels. \nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -2341,27 +2323,9 @@
             },
             "scenarios": [
                 {
-                    "id": "ssp126",
+                    "id": "historical",
                     "years": [
-                        2030,
-                        2050,
-                        2080
-                    ]
-                },
-                {
-                    "id": "ssp370",
-                    "years": [
-                        2030,
-                        2050,
-                        2080
-                    ]
-                },
-                {
-                    "id": "ssp585",
-                    "years": [
-                        2030,
-                        2050,
-                        2080
+                        1999
                     ]
                 }
             ],
@@ -2375,11 +2339,11 @@
             "indicator_model_id": null,
             "indicator_model_gcm": "combined",
             "params": {},
-            "display_name": "Measure of the ratio of total water withdrawals to available renewable surface and ground water supplies.",
+            "display_name": "Water stress is an indicator of competition for water resources and is defined informally as the ratio of demand for water by human society divided by available water.",
             "display_groups": [
-                "Measure of the ratio of total water withdrawals to available renewable surface and ground water supplies."
+                "Water stress is an indicator of competition for water resources and is defined informally as the ratio of demand for water by human society divided by available water."
             ],
-            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u00e2\u20ac\u2122s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex \nhydrological data into intuitive indicators of water-related risk:\n\n* **Water use**: two metrics of water use are considered, gross demand and net consumption. Gross demand is the maximum potential water required to meet sectoral demands (including domestic, \nindustrial, irrigation, and livestock), and net consumption is the portion of demand that is \nlost in use\u00e2\u20ac\u201devaporated or incorporated into a product\u00e2\u20ac\u201dand not returned to the system.\n\n* **Water supply**: available blue water, i.e. the total \namount of renewable freshwater available to a sub-basin with upstream consumption removed. \nThe available blue water is computed as internal sub-basin runoff plus the accumulated water flowing into the sub-basin from upstream, where upstream consumption is already removed (i.e., discharge). This includes freshwater from the following sources: surface flow, interflow, and groundwater recharge. \n\n* **Water stress**: the ratio of total water demand to available renewable surface and groundwater supplies. Water demand includes domestic, industrial, irrigation, and livestock consumptive and nonconsumptive uses. Available renewable water supplies include the impact of upstream consumptive \nwater users and large dams on downstream water availability. Higher values indicate more competition among users.\n\n* **Water depletion**: the ratio of total water consumption to available blue water. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users.\n\n*  **Interannual variability**: the average between-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider \nvariations in available supply from year to year.\n\n* **Seasonal variability**: the average within-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider variations of available supply within a year.\n\nThe spatial resolution is 5 \u00c3\u2014 5 arc minutes which equates roughly to 10 kilometer (km) \u00c3\u2014 10 km pixels. \nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).",
+            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u00e2\u20ac\u2122s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex \nhydrological data into intuitive indicators of water-related risk:\n\n* **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (cm/year).\n\n* **Water supply**: available blue water\u00e2\u20ac\u201dthe total amount of renewable freshwater available to a sub-basin with upstream consumption removed\u00e2\u20ac\u201dincludes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (cm/year).\n\n* **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water.\n\n* **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only.\n\n*  **Interannual variability**: the average within-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider variations of available supply within a year.\n\n* **Seasonal variability**: the average within-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider variations of available supply within a year.\n\nThe spatial resolution is 5 \u00c3\u2014 5 arc minutes which equates roughly to 10 kilometer (km) \u00c3\u2014 10 km pixels. \nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -2418,30 +2382,6 @@
                     "years": [
                         1999
                     ]
-                },
-                {
-                    "id": "ssp126",
-                    "years": [
-                        2030,
-                        2050,
-                        2080
-                    ]
-                },
-                {
-                    "id": "ssp370",
-                    "years": [
-                        2030,
-                        2050,
-                        2080
-                    ]
-                },
-                {
-                    "id": "ssp585",
-                    "years": [
-                        2030,
-                        2050,
-                        2080
-                    ]
                 }
             ],
             "units": ""
@@ -2454,11 +2394,11 @@
             "indicator_model_id": null,
             "indicator_model_gcm": "combined",
             "params": {},
-            "display_name": "Measure of the ratio of total water consumption to available renewable water supplies.",
+            "display_name": "Water depletion measures the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only.",
             "display_groups": [
-                "Measure of the ratio of total water consumption to available renewable water supplies."
+                "Water depletion measures the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only."
             ],
-            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u00e2\u20ac\u2122s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex \nhydrological data into intuitive indicators of water-related risk:\n\n* **Water use**: two metrics of water use are considered, gross demand and net consumption. Gross demand is the maximum potential water required to meet sectoral demands (including domestic, \nindustrial, irrigation, and livestock), and net consumption is the portion of demand that is \nlost in use\u00e2\u20ac\u201devaporated or incorporated into a product\u00e2\u20ac\u201dand not returned to the system.\n\n* **Water supply**: available blue water, i.e. the total \namount of renewable freshwater available to a sub-basin with upstream consumption removed. \nThe available blue water is computed as internal sub-basin runoff plus the accumulated water flowing into the sub-basin from upstream, where upstream consumption is already removed (i.e., discharge). This includes freshwater from the following sources: surface flow, interflow, and groundwater recharge. \n\n* **Water stress**: the ratio of total water demand to available renewable surface and groundwater supplies. Water demand includes domestic, industrial, irrigation, and livestock consumptive and nonconsumptive uses. Available renewable water supplies include the impact of upstream consumptive \nwater users and large dams on downstream water availability. Higher values indicate more competition among users.\n\n* **Water depletion**: the ratio of total water consumption to available blue water. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users.\n\n*  **Interannual variability**: the average between-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider \nvariations in available supply from year to year.\n\n* **Seasonal variability**: the average within-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider variations of available supply within a year.\n\nThe spatial resolution is 5 \u00c3\u2014 5 arc minutes which equates roughly to 10 kilometer (km) \u00c3\u2014 10 km pixels. \nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).",
+            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u00e2\u20ac\u2122s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex \nhydrological data into intuitive indicators of water-related risk:\n\n* **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (cm/year).\n\n* **Water supply**: available blue water\u00e2\u20ac\u201dthe total amount of renewable freshwater available to a sub-basin with upstream consumption removed\u00e2\u20ac\u201dincludes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (cm/year).\n\n* **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water.\n\n* **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only.\n\n*  **Interannual variability**: the average within-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider variations of available supply within a year.\n\n* **Seasonal variability**: the average within-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider variations of available supply within a year.\n\nThe spatial resolution is 5 \u00c3\u2014 5 arc minutes which equates roughly to 10 kilometer (km) \u00c3\u2014 10 km pixels. \nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -2497,30 +2437,6 @@
                     "years": [
                         1999
                     ]
-                },
-                {
-                    "id": "ssp126",
-                    "years": [
-                        2030,
-                        2050,
-                        2080
-                    ]
-                },
-                {
-                    "id": "ssp370",
-                    "years": [
-                        2030,
-                        2050,
-                        2080
-                    ]
-                },
-                {
-                    "id": "ssp585",
-                    "years": [
-                        2030,
-                        2050,
-                        2080
-                    ]
                 }
             ],
             "units": ""
@@ -2537,7 +2453,7 @@
             "display_groups": [
                 "Discrete measure of the ratio of total water withdrawals to available renewable surface and ground water supplies:\n-1: Arid and low water use, 0 : Low (<10%), 1: Low-medium (10-20%), 2 : Medium-high (20-40%), 3: High (40-80%), 4 : Extremely high (>80%)."
             ],
-            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u00e2\u20ac\u2122s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex \nhydrological data into intuitive indicators of water-related risk:\n\n* **Water use**: two metrics of water use are considered, gross demand and net consumption. Gross demand is the maximum potential water required to meet sectoral demands (including domestic, \nindustrial, irrigation, and livestock), and net consumption is the portion of demand that is \nlost in use\u00e2\u20ac\u201devaporated or incorporated into a product\u00e2\u20ac\u201dand not returned to the system.\n\n* **Water supply**: available blue water, i.e. the total \namount of renewable freshwater available to a sub-basin with upstream consumption removed. \nThe available blue water is computed as internal sub-basin runoff plus the accumulated water flowing into the sub-basin from upstream, where upstream consumption is already removed (i.e., discharge). This includes freshwater from the following sources: surface flow, interflow, and groundwater recharge. \n\n* **Water stress**: the ratio of total water demand to available renewable surface and groundwater supplies. Water demand includes domestic, industrial, irrigation, and livestock consumptive and nonconsumptive uses. Available renewable water supplies include the impact of upstream consumptive \nwater users and large dams on downstream water availability. Higher values indicate more competition among users.\n\n* **Water depletion**: the ratio of total water consumption to available blue water. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users.\n\n*  **Interannual variability**: the average between-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider \nvariations in available supply from year to year.\n\n* **Seasonal variability**: the average within-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider variations of available supply within a year.\n\nThe spatial resolution is 5 \u00c3\u2014 5 arc minutes which equates roughly to 10 kilometer (km) \u00c3\u2014 10 km pixels. \nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).",
+            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u00e2\u20ac\u2122s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex \nhydrological data into intuitive indicators of water-related risk:\n\n* **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (cm/year).\n\n* **Water supply**: available blue water\u00e2\u20ac\u201dthe total amount of renewable freshwater available to a sub-basin with upstream consumption removed\u00e2\u20ac\u201dincludes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (cm/year).\n\n* **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water.\n\n* **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only.\n\n*  **Interannual variability**: the average within-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider variations of available supply within a year.\n\n* **Seasonal variability**: the average within-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider variations of available supply within a year.\n\nThe spatial resolution is 5 \u00c3\u2014 5 arc minutes which equates roughly to 10 kilometer (km) \u00c3\u2014 10 km pixels. \nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -2576,30 +2492,6 @@
                     "years": [
                         1999
                     ]
-                },
-                {
-                    "id": "ssp126",
-                    "years": [
-                        2030,
-                        2050,
-                        2080
-                    ]
-                },
-                {
-                    "id": "ssp370",
-                    "years": [
-                        2030,
-                        2050,
-                        2080
-                    ]
-                },
-                {
-                    "id": "ssp585",
-                    "years": [
-                        2030,
-                        2050,
-                        2080
-                    ]
                 }
             ],
             "units": ""
@@ -2616,7 +2508,7 @@
             "display_groups": [
                 "Discrete measure of the ratio of total water consumption to available renewable water supplies:\n-1: Arid and low water use, 0 : Low (<5%), 1: Low-medium (5-25%), 2 : Medium-high (25-50%), 3: High (50-75%), 4 : Extremely high (>75%)."
             ],
-            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u00e2\u20ac\u2122s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex \nhydrological data into intuitive indicators of water-related risk:\n\n* **Water use**: two metrics of water use are considered, gross demand and net consumption. Gross demand is the maximum potential water required to meet sectoral demands (including domestic, \nindustrial, irrigation, and livestock), and net consumption is the portion of demand that is \nlost in use\u00e2\u20ac\u201devaporated or incorporated into a product\u00e2\u20ac\u201dand not returned to the system.\n\n* **Water supply**: available blue water, i.e. the total \namount of renewable freshwater available to a sub-basin with upstream consumption removed. \nThe available blue water is computed as internal sub-basin runoff plus the accumulated water flowing into the sub-basin from upstream, where upstream consumption is already removed (i.e., discharge). This includes freshwater from the following sources: surface flow, interflow, and groundwater recharge. \n\n* **Water stress**: the ratio of total water demand to available renewable surface and groundwater supplies. Water demand includes domestic, industrial, irrigation, and livestock consumptive and nonconsumptive uses. Available renewable water supplies include the impact of upstream consumptive \nwater users and large dams on downstream water availability. Higher values indicate more competition among users.\n\n* **Water depletion**: the ratio of total water consumption to available blue water. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users.\n\n*  **Interannual variability**: the average between-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider \nvariations in available supply from year to year.\n\n* **Seasonal variability**: the average within-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider variations of available supply within a year.\n\nThe spatial resolution is 5 \u00c3\u2014 5 arc minutes which equates roughly to 10 kilometer (km) \u00c3\u2014 10 km pixels. \nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).",
+            "description": "The World Resources Institute (WRI) [Aqueduct 4.0](https://www.wri.org/data/aqueduct-global-maps-40-data) is the latest iteration of [WRI\u00e2\u20ac\u2122s water risk framework](https://www.wri.org/data/aqueduct-water-risk-atlas) designed to translate complex \nhydrological data into intuitive indicators of water-related risk:\n\n* **Water demand**: gross demand is the maximum potential water required to meet sectoral demands. Sectoral water demand includes: domestic, industrial, irrigation, and livestock. Demand is displayed as a flux (cm/year).\n\n* **Water supply**: available blue water\u00e2\u20ac\u201dthe total amount of renewable freshwater available to a sub-basin with upstream consumption removed\u00e2\u20ac\u201dincludes surface flow, interflow, and groundwater recharge. Available blue water is displayed as a flux (cm/year).\n\n* **Water stress**: an indicator of competition for water resources defined informally as the ratio of demand for water by human society divided by available water.\n\n* **Water depletion**: the ratio of total water consumption to available renewable water supplies. Total water consumption includes domestic, industrial, irrigation, and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability. Higher values indicate larger impact on the local water supply and decreased water availability for downstream users. Water depletion is similar to water stress; however, instead of looking at total water demand, water depletion is calculated using consumptive withdrawal only.\n\n*  **Interannual variability**: the average within-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider variations of available supply within a year.\n\n* **Seasonal variability**: the average within-year variability of available water supply, including both renewable surface and groundwater supplies. Higher values indicate wider variations of available supply within a year.\n\nThe spatial resolution is 5 \u00c3\u2014 5 arc minutes which equates roughly to 10 kilometer (km) \u00c3\u2014 10 km pixels. \nThe future projections were created using CMIP6 climate forcings based on three future scenarios: optimistic (ssp126), business-as-usual (ssp370), and pessimistic (ssp585) available at [HYPFLOWSCI6](https://public.yoda.uu.nl/geo/UU01/YM7A5H.html). WRI's original data are presented at the HydroBASINS Level 6 scale. Indicators are available for periods: 'historical' (averaged over 1979-2019), 2030 (2015-2045), 2050 (2035-2065) and 2080 (2065-2095).",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -2654,30 +2546,6 @@
                     "id": "historical",
                     "years": [
                         1999
-                    ]
-                },
-                {
-                    "id": "ssp126",
-                    "years": [
-                        2030,
-                        2050,
-                        2080
-                    ]
-                },
-                {
-                    "id": "ssp370",
-                    "years": [
-                        2030,
-                        2050,
-                        2080
-                    ]
-                },
-                {
-                    "id": "ssp585",
-                    "years": [
-                        2030,
-                        2050,
-                        2080
                     ]
                 }
             ],

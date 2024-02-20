@@ -94,19 +94,21 @@
 \title{Physical Climate Risk Methodology}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\author{Joe Moorhouse\thanks{\textit{E-mail}: Joe.Moorhouse@gmail.com}
+\author{Joe Moorhouse\thanks{\textit{E-mail}: joe.Moorhouse@gmail.com}
         \and
-        Florian Gallo\thanks{}
+        Florian Gallo
+        \and
+        Michael Levin
         \and
         Mariem Bouchaala\thanks{{E-mail}: mariem.bouchaala@essec.edu}
         \and
-        Davide Ferri\thanks{\textit{E-mail}:davide.ferri.94@gmail.com
+        Davide Ferri\thanks{\textit{E-mail}: davide.ferri.94@gmail.com
         \smallskip
         \newline% \indent
     The views expressed in this paper are those of the authors and do not necessarily reflect the views and policies of their respective employers.}
     }
 
-\date{May 2023 [Draft]}
+\date{Feb 2024 [Draft]}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -786,13 +788,11 @@ whole globe, leading to a potentially large mismatch between historical and futu
 
 
 
-
-
 %\section{Hazard and vulnerability models}
 
 \section{Inundation}
 \subsection{Hazard models}
-Inundation is modelled as an acute risk using the approach of Section~\ref{SubSec:AcuteAssetImpactModel}. Hazard event models compatible with this method provide inundation depths for different annual probabilities of occurrence -- or equivalently return periods. The need for sufficient granularity in the set of return periods is discussed in \cite{WardEtAl:2011}.
+Inundation is modelled as an acute risk using the approach of Section~\ref{Sec:MathematicalDescriptionOfAssetImpactModel}. Hazard event models compatible with this method provide inundation depths for different annual probabilities of occurrence -- or equivalently return periods. The need for sufficient granularity in the set of return periods is discussed in \cite{WardEtAl:2011}.
 
 Inundation hazards are incorporated into physical risk calculations using the World Resource Institute (WRI) Aqueduct flood model \cite{WardEtAl:2020} which has relatively high return-period granularity. This is based on the global modelling approach of \cite{WardEtAl:2013}.
 
@@ -822,24 +822,19 @@ Acute hazard modelling approaches are based on calculating return periods of eve
 
 
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%% Changes - Heat Vulnerability Model %%%%%%%%%%%%%%%%%%%%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-
 \subsection{Heat Vulnerability Model}
 
 \label{SubSec:HeatVulnerabilityModel}
 
 \subsubsection{Impact of Temperature on labour productivity}
 
-The Heat vulnerability model presented in this section is based on the approach introduced in 'Temperature And Work: Time allocated to work under varying climate and labor market conditions' (2021)\cite{TemperatureAndWork:2021}. The paper uses survey data to estimate labour allocation decisions in the United States (US) based on temperature. It does not extend the analysis beyond the US. It replicates previous research done (original GZN method \cite{TemperatureAndTheAllocationofTime:2014}.) whilst extending the period of data used and adding an assessment based on the economic cycle: the main innovation is that it includes the economic cycle by splitting out the 2008 financial crisis first through segmented regressions and following them by using an indicator variable: the non-recession period is 2003-2007 and 2015-2018. The Great Recessions period is 2008-2014. The methodology in only applied to climate exposed sectors: agriculture, forestry, fishing and hunting, construction, mining, and transportation and utilities.
+The heat vulnerability model presented in this section is based on the approach introduced in \cite{NeidellEtAl:2021}. The paper uses survey data to estimate labour allocation decisions in the United States (US) based on temperature. It does not extend the analysis beyond the US. It replicates previous research done (original GZN method \cite{NeidellEtAl:2014}.) whilst extending the period of data used and adding an assessment based on the economic cycle: the main innovation is that it includes the economic cycle by splitting out the 2008 financial crisis first through segmented regressions and following them by using an indicator variable: the non-recession period is 2003-2007 and 2015-2018. The `Great Recession' period is 2008-2014. The methodology in only applied to climate exposed sectors: agriculture, forestry, fishing and hunting, construction, mining, and transportation and utilities.
 
 
-The paper main conclusions are:
+The paper's main conclusions are:
 \begin{itemize}
-    \item A statistically significant impact of 2.6 minutes lost per degree of temperature above $90^\circ F$ during normal economic periods and no relationship during a recession. This result is converted into the Celsius scale as \emph{physrisk} decided to take that scale as a reference. The 2.6 minutes is multiplied by a scaling factor of 1.8, which returns \textbf{an impact of 4.7 minutes lost per degree of temperature above $32.2^\circ C$}.
-    \item When using an indicator variable and linear regression the estimated impact was 5.6 minutes under Fahrenheit scale (respectively 10.08 minutes under Celsius scale) during normal economic periods, but the parameter was insignificant.
+    \item A statistically significant impact of 2.6 minutes lost per degree of temperature above $90^\circ$F during normal economic periods and no relationship during a recession. This result is converted into the Celsius scale as \emph{physrisk} decided to take that scale as a reference. The 2.6 minutes is multiplied by a scaling factor of 1.8, which returns \textbf{an impact of 4.7 minutes lost per degree of temperature above $\mathbf{32.2^\circ}$C}.
+    \item When using an indicator variable and linear regression the estimated impact was 5.6 minutes under Fahrenheit scale (respectively 10.08 minutes under Celsius scale) during normal economic periods, but the parameter was not significant at the 90\% level.
     \item No relationship between temperature and work allocation with temperatures below  $32.2^\circ C$.
     \item Focus on labour allocation decisions, it does not account for other impacts such as reducing productivity.
 \end{itemize}
@@ -850,7 +845,7 @@ While the results are relevant and significant, is it important to highlight the
     \item The conclusion holds for US (so maybe also for the EU as well other developed countries), but not for developing countries which experience more economic turmoil periods.
 \end{itemize}
 
-The paper attempts to estimate economic cost (assuming the impact of 4.7 minutes lost per degree of temperature above $32.2^\circ C$ during normal economic periods) however it only focuses on the direct costs and does not account for feedback effects (reducing the labour productivity will result in a decrease of the products available, wages, demand, etc.). Figure \ref{fig:economiccost} provides the results, as extracted from the paper:
+The paper attempts to estimate economic cost (assuming the impact of 4.7 minutes lost per degree of temperature above $32.2^\circ $C during normal economic periods) however it only focuses on the direct costs and does not account for feedback effects (reducing the labour productivity will result in a decrease of the products available, wages, demand, etc.). Figure \ref{fig:economiccost} provides the results, as extracted from the paper:
 \begin{figure}[h]
     \centering
     \includegraphics[scale = 0.6]{plots/economic cost.png}
@@ -858,17 +853,18 @@ The paper attempts to estimate economic cost (assuming the impact of 4.7 minutes
     \label{fig:economiccost}
 \end{figure}
 
-Last but not least, it is worth to note that the results of this paper are interpreted as the impact of \textbf{chronic increase in temperature}.
+Last but not least, it is worth noting that the results of this paper are interpreted as the impact of \textbf{chronic increase in temperature}.
 %NEW
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-The GZN hazard  model is based on the projections of the climate variable 'daily maximum temperature'. The projected data spans for 20 years. Then, the following statistical processing is used to compute the daily cooling degree days: if the daily number of degrees is higher than $32.2^\circ C$ then the cooling degree days is equal to the number of degrees, and 0 if not. Once the 20-year projected time series of daily cooling degree days is computed, the indicator of the GZN hazard data is calculated as an annual average of the cooling degree days (over all the days within the 20-year period). That indicator will be used afterwards as an input in the impact function to compute the number of minutes of labour productivity loss. Figure \ref{fig:GZL-Hazard} provides a summary of the methodology:
+The GZN hazard  model is based on the projections of the climate variable `daily maximum temperature'. The projected data spans for 20 years. Then, the following statistical processing is used to compute the daily cooling degree days: if the daily number of degrees is higher than $32.2^\circ C$ then the cooling degree days is equal to the number of degrees, and 0 if not. Once the 20-year projected time series of daily cooling degree days is computed, the indicator of the GZN hazard data is calculated as an annual average of the cooling degree days (over all the days within the 20-year period). That indicator will be used afterwards as an input in the impact function to compute the number of minutes of labour productivity loss. Figure \ref{fig:GZL-Hazard} provides a summary of the methodology:
 
-\begin{figure}[h]
-    \centering
-    %\includegraphics[scale = 0.8]{plots/GZL-Hazard.PNG}
-    \caption{Cooling degree days and labour availability}
-    \label{fig:GZL-Hazard}
-\end{figure}
+$T^\text{max}$ is the daily maximum near-surface temperature. This is a point of attention, given that heating and cooling degree day indicators are often calculated using the daily \emph{average} near-surface temperature. 
+
+\begin{equation}
+	\label{Eq:degree_days}
+	I^\text{dd} = \frac{365}{n_y} \sum_{i = 1}^{n_y} |  T^\text{max}_i - T^\text{ref} | 
+\end{equation}
+
 
 
 \subsubsection{Uncertainty around the vulnerability Heat model}
@@ -917,7 +913,7 @@ The \textbf{economic cycle} is one area where uncertainty exists in the forecast
 The paper shows that labour allocation decisions are sensitive to where in the economic cycle the US is; during a recession there does not appear to be a relationship between labour allocation and temperature. In order to measure the uncertainty explained by the economic cycle, one might consider the probability of a recession as a Bernoulli random variable with a probability p. Based on this there are two possibly approaches. A first approach is a Monte-Carlo like approach where one can randomly sample the 1, 0 value whether a recession occurs at each period on a time path. A second approach would be to use the expected value of the probability of the recession and estimate the impact as:
 \begin{equation}
     \label{Eq:economiccycle}
-        Forecasted \ Minutes \ Lost = p \times 0 + (1-p) \times EV(X)
+        \mathrm{Forecast \ minutes \ lost} = p \times 0 + (1-p) \times EV(X)
 \end{equation}
 Where $X$ is the variable that refers to Minutes Lost during normal economic cycle
 The second approach is attractive in its simplicity and ensuring the model does not lose its focus.
@@ -932,15 +928,15 @@ One concern is that the probability of recession, in reality, may be related to 
 %  publisher={University of Oregon}
 %  year={2022},
 %}
-Instead, we focus on the \textbf{model parameter uncertainty approach}. In \cite{ZhangAndShindell:2021}, there is a linear relationship between temperature and work minutes lost ($\beta$),and a constraint is applied to ensure that total time allocation sums to 24 hours, which returns a non-linear regression model at the end. Given that the main coefficient of interest is denoted $\beta$, an inference is applied assuming that $\beta$ follows a $Student-T$ distribution:
+Instead, we focus on the \textbf{model parameter uncertainty approach}. In \cite{ZhangAndShindell:2021}, there is a linear relationship between temperature and work minutes lost ($\beta$),and a constraint is applied to ensure that total time allocation sums to 24 hours, which returns a non-linear regression model at the end. Given that the main coefficient of interest is denoted $\beta$, an inference is applied assuming that $\beta$ follows a Student's-t distribution:
 \begin{equation}
  \label{Eq:uncertaintyStudentT}
- d\beta \sim T(\beta, SE, N-K)
+ \delta \beta \sim T(\beta, \mathrm{SE}, N-K)
 \end{equation}
 Where $SE$ is the Standard Error of the coefficient and $(N-K)$ is the number of degrees of freedom, $N$ is the number of observations and $K$ is the number of model parameters. Hence, one can estimate the coefficients of the confidence interval (CI) at a given level of confidence $CI\%$:
 \begin{equation}
  \label{Eq:CIStudent}
- d\beta_{CI\%} = \beta \pm T(p) \times SE
+ \beta_{\mathrm{CI\%}} = \beta \pm T(p) \times SE
 \end{equation}
 Where $T(p)$ donates the probability density function (pdf) of the student $T$ distribution with probability $p$ which corresponds to the $CI\%$, the standard error $SE = 2.23 \ min$ and $\beta =  - 4.68$.
 

@@ -83,6 +83,27 @@ class Wind(Hazard):
     pass
 
 
+class WaterRisk(Hazard):
+    kind = HazardKind.chronic
+    pass
+
+
+class WaterDemand(WaterRisk):
+    pass
+
+
+class WaterSupply(WaterRisk):
+    pass
+
+
+class WaterStress(WaterRisk):
+    pass
+
+
+class WaterDepletion(WaterRisk):
+    pass
+
+
 def all_hazards():
     return [
         obj for _, obj in inspect.getmembers(sys.modules[__name__]) if inspect.isclass(obj) and issubclass(obj, Hazard)

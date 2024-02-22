@@ -30,6 +30,7 @@ from physrisk.vulnerability_models.thermal_power_generation_models import (
     ThermalPowerGenerationAirTemperatureModel,
     ThermalPowerGenerationDroughtModel,
     ThermalPowerGenerationRiverineInundationModel,
+    ThermalPowerGenerationWaterStressModel,
     ThermalPowerGenerationWaterTemperatureModel,
 )
 
@@ -292,6 +293,38 @@ class TestImpactRequests(TestWithCredentials):
             t,
         )
 
+        # Add mock water-related risk data:
+        add_curves(
+            root,
+            longitudes,
+            latitudes,
+            "water_risk/wri/v2/water_stress_ssp585_2050",
+            shape,
+            np.array([0.14204320311546326]),
+            return_periods,
+            t,
+        )
+        add_curves(
+            root,
+            longitudes,
+            latitudes,
+            "water_risk/wri/v2/water_supply_ssp585_2050",
+            shape,
+            np.array([76.09415435791016]),
+            return_periods,
+            t,
+        )
+        add_curves(
+            root,
+            longitudes,
+            latitudes,
+            "water_risk/wri/v2/water_supply_historical_1999",
+            shape,
+            np.array([88.62285614013672]),
+            return_periods,
+            t,
+        )
+
         # Add mock chronic heat data:
         add_curves(
             root,
@@ -434,6 +467,7 @@ class TestImpactRequests(TestWithCredentials):
             t,
         )
 
+        # Add mock water temperature data:
         return_periods = [5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25, 27.5, 30, 32.5, 35, 37.5, 40]
         shape, t = shape_transform_21600_43200(return_periods=return_periods)
         add_curves(
@@ -475,6 +509,7 @@ class TestImpactRequests(TestWithCredentials):
             t,
         )
 
+        # Add mock WBGT data:
         return_periods = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60]
         shape, t = shape_transform_21600_43200(return_periods=return_periods)
         add_curves(
@@ -521,6 +556,7 @@ class TestImpactRequests(TestWithCredentials):
                 ThermalPowerGenerationAirTemperatureModel(),
                 ThermalPowerGenerationDroughtModel(),
                 ThermalPowerGenerationRiverineInundationModel(),
+                ThermalPowerGenerationWaterStressModel(),
                 ThermalPowerGenerationWaterTemperatureModel(),
             ]
         }
@@ -555,13 +591,21 @@ class TestImpactRequests(TestWithCredentials):
         self.assertEqual(response.asset_impacts[4].impacts[2].impact_mean, 0.005372887389199415)
         self.assertEqual(response.asset_impacts[5].impacts[2].impact_mean, 0.005372887389199415)
 
-        # Water Temperature
-        self.assertEqual(response.asset_impacts[0].impacts[3].impact_mean, 0.09913461937103421)
+        # Water Stress
+        self.assertEqual(response.asset_impacts[0].impacts[3].impact_mean, 0.010181435900296947)
         self.assertEqual(response.asset_impacts[1].impacts[3].impact_mean, 0.0)
-        self.assertEqual(response.asset_impacts[2].impacts[3].impact_mean, 0.09913461937103421)
+        self.assertEqual(response.asset_impacts[2].impacts[3].impact_mean, 0.010181435900296947)
         self.assertEqual(response.asset_impacts[3].impacts[3].impact_mean, 0.0)
-        self.assertEqual(response.asset_impacts[4].impacts[3].impact_mean, 0.09913461937103421)
-        self.assertEqual(response.asset_impacts[5].impacts[3].impact_mean, 0.00413881409575074)
+        self.assertEqual(response.asset_impacts[4].impacts[3].impact_mean, 0.010181435900296947)
+        self.assertEqual(response.asset_impacts[5].impacts[3].impact_mean, 0.010181435900296947)
+
+        # Water Temperature
+        self.assertEqual(response.asset_impacts[0].impacts[4].impact_mean, 0.09913461937103421)
+        self.assertEqual(response.asset_impacts[1].impacts[4].impact_mean, 0.0)
+        self.assertEqual(response.asset_impacts[2].impacts[4].impact_mean, 0.09913461937103421)
+        self.assertEqual(response.asset_impacts[3].impacts[4].impact_mean, 0.0)
+        self.assertEqual(response.asset_impacts[4].impacts[4].impact_mean, 0.09913461937103421)
+        self.assertEqual(response.asset_impacts[5].impacts[4].impact_mean, 0.00413881409575074)
 
     @unittest.skip("example, not test")
     def test_example_portfolios(self):

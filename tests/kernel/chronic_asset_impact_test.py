@@ -1,5 +1,4 @@
 import unittest
-from test.data.hazard_model_store import TestData, mock_hazard_model_store_heat
 from typing import Iterable, List, Union
 
 import numpy as np
@@ -14,6 +13,7 @@ from physrisk.kernel.impact import calculate_impacts
 from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
 from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
 from physrisk.vulnerability_models.chronic_heat_models import ChronicHeatGZNModel
+from tests.data.hazard_model_store_test import TestData, mock_hazard_model_store_heat
 
 
 class ExampleChronicHeatModel(VulnerabilityModelBase):

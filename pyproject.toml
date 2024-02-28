@@ -6,8 +6,11 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [tool.pytest.ini_options]
-testpaths = "src/test"
+testpaths = "tests"
 addopts = "-v"
+pythonpath = [
+  ".", "src",
+]
 
 [tool.mypy]
 warn_unreachable = true
@@ -41,5 +44,5 @@ line_length = 120
 
 [tool.coverage.run]
 source = "src"
-omit = "test/*"
+omit = "tests/*"
 relative_files = true

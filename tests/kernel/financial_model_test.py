@@ -9,7 +9,7 @@ from physrisk.kernel.assets import Asset, PowerGeneratingAsset
 from physrisk.kernel.financial_model import FinancialDataProvider, FinancialModel
 from physrisk.risk_models.loss_model import LossModel
 
-from ..data.hazard_model_store import TestData, mock_hazard_model_store_inundation
+from ..data.hazard_model_store_test import TestData, mock_hazard_model_store_inundation
 
 
 class MockFinancialDataProvider(FinancialDataProvider):

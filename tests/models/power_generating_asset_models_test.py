@@ -2,7 +2,6 @@
 
 import os
 import unittest
-from test.base_test import TestWithCredentials
 from typing import List
 
 import numpy as np
@@ -15,6 +14,7 @@ from physrisk.kernel.hazard_model import HazardEventDataResponse
 from physrisk.kernel.impact import calculate_impacts
 from physrisk.utils.lazy import lazy_import
 from physrisk.vulnerability_models.power_generating_asset_models import InundationModel
+from tests.base_test import TestWithCredentials
 
 pd = lazy_import("pandas")
 

@@ -1,11 +1,4 @@
 import unittest
-from test.api.container import TestContainer
-from test.base_test import TestWithCredentials
-from test.data.hazard_model_store import (
-    TestData,
-    get_mock_hazard_model_store_single_curve,
-    mock_hazard_model_store_heat,
-)
 
 import numpy as np
 import numpy.testing
@@ -18,6 +11,13 @@ from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.hazards import ChronicHeat, RiverineInundation
+from tests.api.container_test import TestContainer
+from tests.base_test import TestWithCredentials
+from tests.data.hazard_model_store_test import (
+    TestData,
+    get_mock_hazard_model_store_single_curve,
+    mock_hazard_model_store_heat,
+)
 
 
 class TestDataRequests(TestWithCredentials):

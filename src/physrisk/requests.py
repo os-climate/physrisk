@@ -219,12 +219,22 @@ def _get_hazard_data(request: HazardDataRequest, hazard_model: HazardModel):
         resps = (response_dict[req] for req in requests)
         intensity_curves = [
             (
-                IntensityCurve(intensities=list(resp.intensities), return_periods=list(resp.return_periods))
+                IntensityCurve(
+                    intensities=list(resp.intensities),
+                    index_values=list(resp.return_periods),
+                    index_name="return period",
+                    return_periods=[],
+                )
                 if isinstance(resp, hmHazardEventDataResponse)
                 else (
-                    IntensityCurve(intensities=list(resp.parameters), return_periods=list(resp.param_defns))
+                    IntensityCurve(
+                        intensities=list(resp.parameters),
+                        index_values=list(resp.param_defns),
+                        index_name="threshold",
+                        return_periods=[],
+                    )
                     if isinstance(resp, HazardParameterDataResponse)
-                    else IntensityCurve(intensities=[], return_periods=[])
+                    else IntensityCurve(intensities=[], index_values=[], index_name="", return_periods=[])
                 )
             )
             for resp in resps

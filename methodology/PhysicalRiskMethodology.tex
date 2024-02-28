@@ -23,7 +23,6 @@
 \usepackage{framed}
 \usepackage{glossaries}
 \usepackage{graphicx}
-\usepackage[colorlinks,citecolor=blue,urlcolor=black,linkcolor=black,bookmarks=false,hypertexnames=true]{hyperref}
 \usepackage{numprint}
 %\usepackage{physics}  % causing problems; using different notation for bra-ket
 %\usepackage{sfmath}[cmbright]
@@ -33,9 +32,35 @@
 \usepackage{sistyle}
 \usepackage{subcaption}
 
-\usepackage{bookmark}
+%\usepackage{bookmark}
+% Define hyperlink colors
+\usepackage{xcolor}
+\usepackage[linkcolor=blue, colorlinks=true, citecolor=blue, urlcolor=blue]{hyperref}
 
 \usepackage[normalem]{ulem}
+\usepackage{mathtools}
+
+% Theorem environments
+\usepackage{amsthm}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{proposition}[theorem]{Proposition}
+
+
+% Definition environments
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{assumption}{Assumption}
+\newtheorem{error}{Error}
+
+%% Remark environment
+%% Define a 'remark' environment, numbered in sequence with theorem
+\newtheorem{remarkx}[theorem]{Remark}
+\newenvironment{remark}
+{\pushQED{\qed}\renewcommand{\qedsymbol}{$\diamond$}\begin{remarkx}}
+	{\popQED\end{remarkx}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % General settings
@@ -97,6 +122,8 @@
 \author{Joe Moorhouse\thanks{\textit{E-mail}: joe.Moorhouse@gmail.com}
         \and
         Florian Gallo
+        \and
+        Álvaro Romaniega
         \and
         Michael Levin
         \and
@@ -355,25 +382,76 @@ The \emph{return-period-based approach} -- sometimes called, a hazard-map-based 
 
 $f_{S_i}(s_i)$ is usually inferred from a type of hazard indicator data set which are known as \emph{hazard maps}.
 
-\paragraph{Hazard maps.} Hazard maps are three-dimensional data sets from which intensities of hazard indicators can be looked up for different locations and different return periods, i.e. $H(x, y, \tau)$ provides hazard indicator intensity at location $(x, y)$ for return period $\tau$. That is, $H$ is the hazard indicator intensity such that the average time between events with intensity higher than $H$ is $\tau$.
+\paragraph{Hazard maps.} Hazard maps are three-dimensional data sets from which intensities of hazard indicators can be looked up for different locations and different return periods, i.e., $h(x, y, \tau)$ provides hazard indicator intensity at location $(x, y)$ for return period $\tau$. That is, $h$ is the hazard indicator intensity such that the average time between events with intensity higher than $h$ is $\tau$. 
 
-In order to use hazard maps to derive probabilities, we must, strictly, specify the model of probability of occurrence of events with intensity higher than $H$ assumed by the data set. Occurrence may be modelled by a Poisson distribution as in Equation~\ref{Eq:Poisson}. This gives the probability of $k$ occurrences in time interval $t$ where $\tau$ is the return period.
+\begin{remark}
+	More precisely, if we define $X^h_t$ as the number of events in a given period of length $t$ such that the intensity is greater than $h$, then, the return period (in years) satisfies \cite{RaschkeEtAl:2022},
+	\begin{equation}\label{Eq:ReturnPeriodDef}
+		\mathbb{E}\left( X_t^{h(x,y, \tau)}\right)=\frac{t}{\tau}\,.
+	\end{equation}
+For instance, assuming that $X_t^h$ follows a Poisson distribution with parameter $\lambda^h$ (see below), that is, $X_t^h\sim\text{Poi}\left(\lambda^H_t\right)$, then,
+$$
+\mathbb{E}\left( X_t^{h(x,y, \tau)}\right)=\lambda^h_t\,,
+$$
+where $\lambda^h$ is the intensity. Thus, $\lambda^h_t = t/\tau .$ By definition, we set  $X_1^h\coloneqq X^h,$ that is, if there is no subindex we are assuming one year.
+\end{remark}
+	
+In order to use hazard maps to derive probabilities, we must specify the model of probability of occurrence of events with intensity higher than $h$ assumed by the data set. Occurrence may be modelled by a Poisson distribution as in Equation~\ref{Eq:Poisson}. This gives the probability of $k$ occurrences in time interval $t$ where $\tau$ is the return period.
 
- \begin{equation}
-    \label{Eq:Poisson}
-    \mathbb{P}[X = k] = \frac{(t / \tau)^k}{k!}  e^{-\frac{t}{\tau}}
+\begin{equation}
+\label{Eq:Poisson}
+\mathbb{P}[{X^h_t} = k] = \frac{(t / \tau)^k}{k!}  e^{-\frac{t}{\tau}}
 \end{equation}
 
-Alternatively, the number of occurrences can be modelled as a Binomial distribution as in Equation~\ref{Eq:Binomial}, which provides the probability that $k$ occurrences occur in $n$ years, assuming that $\tau$ is specified in years.
 
-According to Equation~\ref{Eq:Binomial}, \emph{the probability that in a single year there is at least one event with intensity of $H$ or higher is $1/\tau$}. Unless otherwise specified, this is the interpretation used for $\tau$. Note that for Equation~\ref{Eq:Poisson} this relationship only applies approximately.
+\begin{remark}
+	It can be noted that by Taylor's Theorem,
+\begin{equation}\label{Eq:PoissonApprox}
+		\mathbb{P}(X_t^h\ge1)=1-e^{-t/\tau}=t/\tau+o\left(t/\tau\right)\approx t/\tau\,,
+\end{equation}
+	where the last approximation is valid if $t/\tau$ is ``small''. $\mathbb{P}(X_t^h\ge1)$ is also known as the \emph{occurrence exceedance probability}: the probability that the intensity of the highest-intensity event in $t$ exceeds $h$. Using this notation, $F'_S$ is more precisely defined: $F'_S(h) = \mathbb{P}(X_1^h\ge1)$. That is, $F'_S$ is the occurrence exceedance probability. 
+\end{remark}
 
- \begin{equation}
-    \label{Eq:Binomial}
-    \mathbb{P}[X = k] = \binom{n}{k} (1/\tau)^k (1-1/\tau)^{n - k}
+Alternatively, the number of occurrences can be modelled as a Binomial distribution as in Equation~\ref{Eq:Binomial}, which provides the probability that $k$ years have at least one occurrence, for a period of $n$ years, assuming that $\tau$ is specified in years. This is given by
+\begin{equation}
+	\label{Eq:Binomial}
+	\binom{n}{k} (1/\tau)^k (1-1/\tau)^{n - k}.
 \end{equation}
 
-$F_{S_i}$ can then be inferred from the hazard map for point-like assets. The curve $H(x_i, y_i, \tau)$ is looked up, providing $\tau$ and thereby annual exceedance probabilities for different intensities, $H$. In the case of a point-like asset, the look up is from spatial coordinates ($x_i$, $y_i$). A hazard map will have an associated co-ordinate reference system (CRS). For example the CRS of whole-globe maps is often the WGS84 World Geodetic System (EPSG:4326). In this case ($x_i$, $y_i$) represent longitude and latitude under that CRS.
+According to Equation~\ref{Eq:Binomial}, \emph{the probability that in a single year there is at least one event with intensity of $h$ or higher is $1/\tau$}. Unless otherwise specified, this is the interpretation used for $\tau$. Note that for Equation~\ref{Eq:Poisson} this relationship only applies approximately, see \eqref{Eq:PoissonApprox}.
+
+
+$F_{S_i}$ can then be inferred from the hazard map for point-like assets. The curve $h(x_i, y_i, \tau)$ is looked up, providing $\tau$ and thereby annual (occurrence) exceedance probabilities for different intensities, $h$. 
+
+\begin{remark}\label{rem:OEPvsFS}
+	More precisely, let us define occurrence exceedance probability, $F'_{S,t}(\cdot)$, as
+	\begin{equation}\label{Eq:DefOEP}
+		F'_{S,t}(s)\coloneqq \mathbb{P}\left(\exists~S~\text{in the period }t/~S>s\right)=\mathbb{P}\left(X_t^s\ge 1\right)\,.
+	\end{equation}
+	How does this relate to the cumulative probability of each individual event,  $F^{(e)}_S$? As before, $F'_S\coloneqq F'_{S,1}$. Then, if we consider a collection of identically distributed variables for each event $\{S^k\}_{k\in \mathbb{N}}$:
+	\begin{align*}
+		1-F'_S(s)&=\sum_{k=0}^{\infty} \mathbb{P}\left(S^1\le s,\ldots, S^k\le s\right)\mathbb{P}\left(X^{H=0}=k\right)\\
+		&=\sum_{k=0}^{\infty} \mathbb{P}\left(S\le s,\ldots, S\le s\right)\mathbb{P}\left(X^{H=0}=k\right)\,.
+	\end{align*}
+Note that $X^{H=0}$ represents the number of events in the given period, no matter the intensity. Using Sklar's Theorem, there exist copulas $C_k$ such that
+	\begin{equation*}
+		1-F'_S(s)=\sum_{k=0}^{\infty} C_k\left(F^{(e)}_S(s),\ldots, F^{(e)}_S(s)\right)\mathbb{P}\left(X^{H=0}=k\right)=:G(F^{(e)}_S(s))\,.
+	\end{equation*}
+By the rectangle inequality for copulas, we know that $\tilde{C}_k(F^{(e)}_S(s))\coloneqq C_k\left(F^{(e)}_S(s),\ldots, F^{(e)}_S(s)\right)$ is non-decreasing. If furthermore, it is strictly increasing, it is sufficient\footnote{Consider the case of $\mathbb{P}(N=2)=1$ and the countermonotonicity copula $C_2(u,v)=(u+v-1)_+$, then $G\mid_{[0,1]}$ is not invertible, so $F^{(e)}_S$ cannot be always recovered from $O$.} to guarantee that $G$ is increasing. So we can recover $F^{(e)}_S=G^{-1}\circ O$. For instance, if we assume independence and a Poisson process, using the Taylor series of the exponential function,
+\begin{equation}
+	1-F'_S(s) = \sum_{k=0}^{\infty}F^{(e)}_S(s)^k \frac{\lambda^k}{k!}e^{-\lambda}=e^{F^{(e)}_S(s)\lambda -\lambda}\,,
+\end{equation}
+where $\lambda\coloneqq \lambda^{H=0}$. Thus, the relation between exceedance probability and occurrence exceedance probability is the following
+$$
+F^{(e)}_S(s)=\frac1\lambda\log\left(1-F'_S(s)\right)+1\,.
+$$
+Note that in this case, by \eqref{Eq:PoissonApprox},
+$$
+F'_S(s)\approx\frac1{\tau_s}\,.
+$$
+\end{remark}
+
+In the case of a point-like asset, the look up is from spatial coordinates ($x_i$, $y_i$). A hazard map will have an associated co-ordinate reference system (CRS). For example the CRS of whole-globe maps is often the WGS84 World Geodetic System (EPSG:4326). In this case ($x_i$, $y_i$) represent longitude and latitude under that CRS. 
 
 \paragraph{Effective impact.} Once $F_{S_i}$ and thereby $f_{S_i}$ is obtained, Equation~\ref{Eq:ImpactEffective} can be applied to obtain the impact distributions for each location $i$:
 
@@ -613,30 +691,40 @@ from which we can write:
 
 Using Equation~\ref{Eq:DiscreteExceed2}, a set of probability bins for the hazard event can be inferred from an exceedance probability curve. An exceedance probability curve can readily be inferred from a return-period curve using the result that the annual exceedance probability is the reciprocal of the return period expressed in years.
 
-As an example, suppose that we have a hazard map for flood which contains return periods of 2, 5, 10, 25, 50, 100, 250, 500 and 1000 years. For a certain latitude/longitude the flood depths corresponding to the 9 return periods are, in metres: 0.06, 0.33, 0.51, 0.72, 0.86, 1.00, 1.15, 1.16 and 1.16. The data is shown together with the exceedance probability in Table~\ref{Table:HazardData}.
+As an example, suppose that we have a hazard map for flood which contains return periods of 2, 5, 10, 25, 50, 100, 250, 500 and 1000 years. For a certain latitude/longitude the flood depths corresponding to the 9 return periods are, in metres: 0.06, 0.33, 0.51, 0.72, 0.86, 1.00, 1.15, 1.16 and 1.16. The data is shown together with the exceedance probability in Table~\ref{Table:HazardData}. 
 
 \begin{table}[ht]
-    \caption{Example hazard event data.}
-    \centering
-    \begin{tabular}{c c c c}
-        \hline
-        Return period (years) & Flood depth (m) & Exceedance probability  \\ [0.5ex]
-        \hline
-        2 & 0.06 & 0.5 \\
-        5 & 0.33 & 0.2 \\
-        10 & 0.51 & 0.1 \\
-        25 & 0.72 & 0.04 \\
-        50 & 0.86 & 0.02 \\
-        100 & 1.00 & 0.01 \\
-        250 & 1.15 & 0.004 \\
-        500 & 1.16 & 0.002 \\
-        1000 & 1.16 & 0.001 \\
-        \hline
-    \end{tabular}
-    \label{Table:HazardData}
+	\caption{Example hazard event data. The exceedance probability calculated via $1 / \tau$ is provided as well as the value assuming a Poisson distribution. There is a significant difference for short return periods only. } 
+	\centering 
+	\begin{tabular}{c c c c} 
+		\hline
+		Return period (years) & Flood depth (m) & $F'_S(s)$  & Poisson $F'_S(s)$ \\ [0.5ex] 
+		\hline 
+2 & 0.06 & 0.5 & 0.39347 \\
+5 & 0.33 & 0.2 & 0.18127 \\
+10 & 0.51 & 0.1 & 0.09516 \\
+25 & 0.72 & 0.04 & 0.03921 \\
+50 & 0.86 & 0.02 & 0.01980 \\
+100 & 1.00 & 0.01 & 0.00995 \\
+250 & 1.15 & 0.004 & 0.00399 \\
+500 & 1.16 & 0.002 & 0.00199 \\
+1000 & 1.16 & 0.001 & 0.00099 \\
+		\hline 
+	\end{tabular}
+	\label{Table:HazardData} 
 \end{table}
 
-The flood depths become the bin edges of the probability distribution and the probabilities are calculated from Equation~\ref{Eq:DiscreteExceed2}. For example, the probability of occurrence of a flood with depth in the range (0.86m,  1.00m] is $0.02 - 0.01 = 0.01$\footnote{Care is needed at either end of the curve. There is a 0.001 probability that flood depth exceeds 1.16m in this example; should this be included in the (point-like) 1.16m bin?}. Note that in defining a set of bins in this way, no assumption about the interpolation between the flood depths is required. However, if we assume this to be linear then this implies that the probability density is constant across each bin since $f_S = \frac{dF_S(s)}{ds}$.
+The flood depths become the bin edges of the probability distribution and the probabilities are calculated from Equation~\ref{Eq:DiscreteExceed2}.
+\begin{remark}
+	As before, $F'_S$ is the \emph{occurrence} exceedance probability. Similarly to Remark \ref{rem:OEPvsFS}, for $u>l$,
+	\begin{align*}
+		\mathbb{P}\left(\exists~S~/~S\in(l,u]\right)&=\mathbb{P}\left(\exists~S~/~S> l\right) - \mathbb{P}\left(\exists~S~/~S> u\right) \\
+		&=
+		\mathbb{P}\left(X^l\ge 1\right) - \mathbb{P}\left(X^u\ge 1\right) =
+		F'_S(l)-F'_S(u)\,,
+	\end{align*}
+\end{remark}
+For example, the probability of occurrence of a flood with depth in the range (0.86m,  1.00m] is $0.02 - 0.01 = 0.01$\footnote{Care is needed at either end of the curve. There is a 0.001 probability that flood depth exceeds 1.16m in this example; should this be included in the (point-like) 1.16m bin?}. Note that in defining a set of bins in this way, no assumption about the interpolation between the flood depths is required. However, if we assume this to be linear then this implies that the probability density is constant across each bin since $f_S = \frac{dF_S(s)}{ds}$.
 
 
 \subsubsection{Vulnerability distributions and heuristics}

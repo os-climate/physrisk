@@ -13,7 +13,7 @@ from physrisk.kernel.impact_distrib import ImpactType
 from physrisk.kernel.vulnerability_matrix_provider import VulnMatrixProvider
 from physrisk.kernel.vulnerability_model import VulnerabilityModel
 from physrisk.vulnerability_models.example_models import ExampleCdfBasedVulnerabilityModel
-from tests.data.hazard_model_store import TestData, mock_hazard_model_store_inundation
+from tests.data.hazard_model_store_test import TestData, mock_hazard_model_store_inundation
 
 
 class ExampleRealEstateInundationModel(VulnerabilityModel):

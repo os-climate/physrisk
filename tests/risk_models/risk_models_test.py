@@ -4,7 +4,7 @@ from typing import Sequence
 
 import numpy as np
 
-import tests.data.hazard_model_store as hms
+import tests.data.hazard_model_store_test as hms
 from physrisk import requests
 from physrisk.api.v1.impact_req_resp import RiskMeasureKey, RiskMeasuresHelper
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
@@ -16,7 +16,7 @@ from physrisk.kernel.risk import AssetLevelRiskModel, MeasureKey
 from physrisk.requests import _create_risk_measures
 from physrisk.risk_models.risk_models import RealEstateToyRiskMeasures
 from tests.base_test import TestWithCredentials
-from tests.data.hazard_model_store import TestData, ZarrStoreMocker
+from tests.data.hazard_model_store_test import TestData, ZarrStoreMocker
 
 
 class TestRiskModels(TestWithCredentials):

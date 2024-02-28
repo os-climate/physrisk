@@ -11,7 +11,7 @@ from physrisk.kernel.hazards import ChronicHeat
 from physrisk.kernel.impact import calculate_impacts
 from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
 from physrisk.vulnerability_models.chronic_heat_models import ChronicHeatGZNModel, get_impact_distrib
-from tests.data.hazard_model_store import TestData, mock_hazard_model_store_heat_wbgt
+from tests.data.hazard_model_store_test import TestData, mock_hazard_model_store_heat_wbgt
 
 
 class ExampleWBGTGZNJointModel(ChronicHeatGZNModel):

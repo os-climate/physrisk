@@ -20,7 +20,7 @@ from physrisk.requests import _get_hazard_data_availability
 
 # from pathlib import PurePosixPath
 from tests.base_test import TestWithCredentials
-from tests.data.hazard_model_store import ZarrStoreMocker, mock_hazard_model_store_inundation
+from tests.data.hazard_model_store_test import ZarrStoreMocker, mock_hazard_model_store_inundation
 
 
 class TestEventRetrieval(TestWithCredentials):

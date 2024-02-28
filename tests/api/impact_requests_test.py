@@ -26,7 +26,7 @@ from physrisk.vulnerability_models.thermal_power_generation_models import (
     ThermalPowerGenerationWaterTemperatureModel,
 )
 from tests.base_test import TestWithCredentials
-from tests.data.hazard_model_store import (
+from tests.data.hazard_model_store_test import (
     TestData,
     add_curves,
     mock_hazard_model_store_inundation,

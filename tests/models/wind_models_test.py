@@ -1,7 +1,6 @@
-import test.data.hazard_model_store as hms
-
 import numpy as np
 
+import tests.data.hazard_model_store_test as hms
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.hazard_models.core_hazards import ResourceSubset, get_default_source_path_provider
 from physrisk.kernel.assets import RealEstateAsset

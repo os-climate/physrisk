@@ -1,6 +1,5 @@
 import os
 import unittest
-from test.base_test import TestWithCredentials
 
 import numpy as np
 import zarr
@@ -9,6 +8,7 @@ import zarr.storage
 from physrisk.data import colormap_provider
 from physrisk.data.image_creator import ImageCreator
 from physrisk.data.zarr_reader import ZarrReader
+from tests.base_test import TestWithCredentials
 
 
 class TestImageCreation(TestWithCredentials):

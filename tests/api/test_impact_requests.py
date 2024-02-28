@@ -1,13 +1,5 @@
 import json
 import unittest
-from test.base_test import TestWithCredentials
-from test.data.hazard_model_store import (
-    TestData,
-    add_curves,
-    mock_hazard_model_store_inundation,
-    shape_transform_21600_43200,
-    zarr_memory_store,
-)
 
 import numpy as np
 from pydantic import TypeAdapter
@@ -32,6 +24,14 @@ from physrisk.vulnerability_models.thermal_power_generation_models import (
     ThermalPowerGenerationRiverineInundationModel,
     ThermalPowerGenerationWaterStressModel,
     ThermalPowerGenerationWaterTemperatureModel,
+)
+from tests.base_test import TestWithCredentials
+from tests.data.hazard_model_store import (
+    TestData,
+    add_curves,
+    mock_hazard_model_store_inundation,
+    shape_transform_21600_43200,
+    zarr_memory_store,
 )
 
 # from physrisk.api.v1.impact_req_resp import AssetImpactResponse

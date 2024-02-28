@@ -1,7 +1,6 @@
 """ Test asset impact calculations."""
 
 import unittest
-from test.data.hazard_model_store import TestData, mock_hazard_model_store_inundation
 
 import numpy as np
 
@@ -14,6 +13,7 @@ from physrisk.vulnerability_models.real_estate_models import (
     RealEstateCoastalInundationModel,
     RealEstateRiverineInundationModel,
 )
+from tests.data.hazard_model_store import TestData, mock_hazard_model_store_inundation
 
 
 class TestRealEstateModels(unittest.TestCase):

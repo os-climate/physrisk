@@ -1,9 +1,9 @@
-import test.data.hazard_model_store as hms
 from dataclasses import dataclass
 from typing import Dict, List, Mapping, NamedTuple, Sequence, Tuple
 
 import numpy as np
 
+import tests.data.hazard_model_store as hms
 from physrisk.kernel.assets import RealEstateAsset
 from physrisk.kernel.hazard_model import (
     HazardDataRequest,

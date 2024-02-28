@@ -1,10 +1,6 @@
 import os
 import unittest
 
-# from pathlib import PurePosixPath
-from test.base_test import TestWithCredentials
-from test.data.hazard_model_store import ZarrStoreMocker, mock_hazard_model_store_inundation
-
 # import fsspec.implementations.local as local  # type: ignore
 import numpy as np
 import numpy.testing
@@ -21,6 +17,10 @@ from physrisk.data.zarr_reader import ZarrReader
 from physrisk.kernel.hazard_model import HazardDataRequest
 from physrisk.kernel.hazards import RiverineInundation
 from physrisk.requests import _get_hazard_data_availability
+
+# from pathlib import PurePosixPath
+from tests.base_test import TestWithCredentials
+from tests.data.hazard_model_store import ZarrStoreMocker, mock_hazard_model_store_inundation
 
 
 class TestEventRetrieval(TestWithCredentials):

@@ -1,6 +1,6 @@
 [project]
 name = "physrisk"
-version = "0.23.0"
+version = "0.24.0"
 description = "OS-Climate Physical Risk Library"
 authors = [
     {name = "Joe Moorhouse",email = "5102656+joemoorhouse@users.noreply.github.com"},

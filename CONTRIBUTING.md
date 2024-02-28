@@ -91,7 +91,7 @@ https://gist.github.com/Chaser324/ce0505fbed06b947d962
     │
     ├── src                <- Source code for use in this project.
     │   └── physrisk       <- physrisk source code.
-    │     
+    │    
     ├── tests              <- physrisk tests; follows same folder structure as physrisk.
     │
     ├── pyproject.toml     <- central location of project settings.

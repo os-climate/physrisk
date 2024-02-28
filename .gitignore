@@ -95,3 +95,4 @@ target/
 .venv/*
 src/test/data/coords.json
 credentials.env
+.pdm-python

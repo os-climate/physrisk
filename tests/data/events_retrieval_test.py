@@ -98,8 +98,12 @@ class TestEventRetrieval(TestWithCredentials):
         values_surr = ZarrReader._linear_interp_frac_coordinates(
             data_zarr, image_coords_surr, np.array([0, 1]), interpolation="linear"
         ).reshape((4, 3, 2))
-        interp_scipy0 = scipy.interpolate.interp2d(np.linspace(0, 9, 10), np.linspace(0, 9, 10), data0, kind="linear")
-        interp_scipy1 = scipy.interpolate.interp2d(np.linspace(0, 9, 10), np.linspace(0, 9, 10), data1, kind="linear")
+        interp_scipy0 = scipy.interpolate.RectBivariateSpline(
+            np.linspace(0, 9, 10), np.linspace(0, 9, 10), data0.T, kx=1, ky=1
+        )
+        interp_scipy1 = scipy.interpolate.RectBivariateSpline(
+            np.linspace(0, 9, 10), np.linspace(0, 9, 10), data1.T, kx=1, ky=1
+        )
         expected0_lin = interp_scipy0(x, y).diagonal().reshape(len(y))
         expected1_lin = interp_scipy1(x, y).diagonal().reshape(len(y))
         expected0_max = np.max(values_surr[:, :, 0], axis=0)

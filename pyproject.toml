@@ -35,7 +35,7 @@ dependencies = [
   "numba>=0.56.4",
   "numpy>=1.22.0",
   "pint",
-  "pillow>=9.4.0",
+  "pillow>=10.2.0",
   "pydantic>=2.4.2",
   "pyproj>=3.5.0",
   "python-dotenv>=0.19.2",

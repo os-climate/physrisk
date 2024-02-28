@@ -7,17 +7,16 @@ git clone git@github.com:os-climate/physrisk.git
 cd physrisk
 ```
 
-We recommend using [pipenv](https://pipenv.pypa.io/en/latest/) for a
+We recommend using [pdm](https://pdm-project.org/latest/) for a
 consistent working environment.
 ```
-pip install pipenv
-pipenv install
-pipenv shell
+pip install pdm
+pdm install
 ```
 
 When adding a package for use in new or improved functionality,
-`pipenv install <package-name>`. Or, when adding something helpful for
-testing or development, `pipenv install -d <package-name>`.
+`pdm add <package-name>`. Or, when adding something helpful for
+testing or development, `pdm add -dG <group> <package-name>`.
 
 ## Development
 Patches may be contributed via pull requests to
@@ -77,26 +76,26 @@ https://gist.github.com/Chaser324/ce0505fbed06b947d962
 ------------
 
     ├── LICENSE
-    ├── Pipfile            <- Pipfile stating package configuration as used by Pipenv.
-    ├── Pipfile.lock       <- Pipfile.lock stating a pinned down software stack with as used by Pipenv.
+    ├── pdm.lock           <- pdm.lock stating a pinned down software stack as used by pdm.
     ├── README.md          <- The top-level README for developers using this project.
     │
-    ├── methodology        <- Contains LaTeX methodology document
-    │    └── literature    <- Literature review
+    ├── methodology        <- Contains LaTeX methodology document.
+    │    └── literature    <- Literature review.
     │
-    ├── docs               <- A default Sphinx project; see sphinx-doc.org for details
+    ├── docs               <- A default Sphinx project; see sphinx-doc.org for details.
     │
     ├── notebooks          <- Jupyter notebooks. These comprise notebooks used for on-boarding
-    │                         hazard data, on-boarding vulnerability models and tutorial
+    │                         hazard data, on-boarding vulnerability models and tutorial.
     │
-    ├── setup.py           <- makes project pip installable (pip install -e .) so src can be imported
+    ├── setup.py           <- makes project pip installable (pip install -e .) so src can be imported.
     │
     ├── src                <- Source code for use in this project.
-    │   ├── physrisk       <- physrisk source code
-    │   ├── test           <- physrisk tests; follows same folder structure as physrisk
-    │   └── visualization  <- Deprecated visualizations, migrated to physrisk-ui)
+    │   └── physrisk       <- physrisk source code.
+    │     
+    ├── tests              <- physrisk tests; follows same folder structure as physrisk.
     │
-    └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io
-
+    ├── pyproject.toml     <- central location of project settings.
+    │
+    └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io.
 
 --------

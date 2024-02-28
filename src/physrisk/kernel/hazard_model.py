@@ -23,7 +23,7 @@ class HazardDataRequest:
         scenario: str,
         year: int,
         hint: Optional[HazardDataHint] = None,
-        buffer: Optional[int] = None
+        buffer: Optional[int] = None,
     ):
         """Create HazardDataRequest.
 

@@ -1,4 +1,5 @@
 import io
+import logging
 from functools import lru_cache
 from pathlib import PurePosixPath
 from typing import Callable, List, NamedTuple, Optional
@@ -9,6 +10,8 @@ import zarr.storage
 
 from physrisk.data import colormap_provider
 from physrisk.data.zarr_reader import ZarrReader
+
+logger = logging.getLogger(__name__)
 
 
 class Tile(NamedTuple):
@@ -46,7 +49,11 @@ class ImageCreator:
         Returns:
             bytes: Image data.
         """
-        image = self._to_image(path, colormap, tile=tile, min_value=min_value, max_value=max_value)
+        try:
+            image = self._to_image(path, colormap, tile=tile, min_value=min_value, max_value=max_value)
+        except Exception as e:
+            logger.exception(e)
+            image = Image.fromarray(np.array([[0]]), mode="RGBA")
         image_bytes = io.BytesIO()
         image.save(image_bytes, format=format)
         return image_bytes.getvalue()

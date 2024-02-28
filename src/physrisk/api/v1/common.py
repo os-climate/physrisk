@@ -69,10 +69,25 @@ class Countries(BaseModel):
 
 
 class IntensityCurve(BaseModel):
-    """Intensity curve of an acute hazard."""
+    """Hazard indicator intensity curve. Acute hazards are parameterized by event intensities and
+    return periods in years. Chronic hazards are parameterized by a set of index values.
+    Index values are defined per indicator."""
 
-    intensities: List[float]
-    return_periods: List[float]
+    intensities: List[float] = Field([], description="Hazard indicator intensities.")
+    return_periods: Optional[List[float]] = Field(
+        [], description="[Deprecated] Return period in years in the case of an acute hazard."
+    )
+    index_values: Optional[List[float]] = Field(
+        [],
+        description="Set of index values. \
+            This is return period in years in the case of an acute hazard or \
+            a set of indicator value thresholds in the case of a multi-threshold chronic hazard.",
+    )
+    index_name: str = Field(
+        "",
+        description="Name of the index. In the case of an acute hazard this is 'return period'; \
+            for a multi-threshold chronic hazard this is 'threshold'.",
+    )
 
 
 class ExceedanceCurve(BaseModel):

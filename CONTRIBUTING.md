@@ -8,11 +8,17 @@ cd physrisk
 ```
 
 We recommend using [pdm](https://pdm-project.org/latest/) for a
-consistent working environment.
+consistent working environment. Install via, e.g.:
 ```
 pip install pdm
+```
+
+The command:
+```
 pdm install
 ```
+will create a virtual environment (typically .venv folder in the project folder) and install the dependencies.
+We recommend that the IDE workspace uses this virtual environment when developing.
 
 When adding a package for use in new or improved functionality,
 `pdm add <package-name>`. Or, when adding something helpful for
@@ -61,7 +67,7 @@ to allow running of tests within the IDE.
 
 ## Releasing
 Actions are configured to release to PyPI on pushing a tag. In order to do this:
-- Ensure VERSION is updated (will require pull request like any other change)
+- Ensure version in pyproject.toml is updated (will require pull request like any other change)
 - Create new annotated tag and push
 ```
 git tag -a v1.0.0 -m "v1.0.0"

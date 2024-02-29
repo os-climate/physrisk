@@ -6,7 +6,7 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Publish Packages to PyPI and TestPyPI
+name: Publish Packages to TestPyPI
 
 on: push
 
@@ -26,19 +26,22 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install build
 
-    - name: Output Run ID
+    - name: Set up PDM for build commands
+      uses: pdm-project/setup-pdm@v3
+
+    - name: Output Run ID and update version
       run: |
-        value=`cat VERSION`
-        echo "$value-dev${{ github.run_id }}" > VERSION
+        value=`scripts/version.sh`
+        scripts/dev-versioning.sh "$value-dev${{ github.run_id }}"
+        echo "$value-dev${{ github.run_id }}"
         echo ${{ github.run_id }}
 
     - name: Output Run Number
       run: echo ${{ github.run_number }}
 
     - name: Build package
-      run: python -m build
+      run: pdm build
 
     - name: Publish package to Test PyPI
       uses: pypa/gh-action-pypi-publish@master

@@ -18,7 +18,7 @@ The command:
 pdm install
 ```
 will create a virtual environment (typically .venv folder in the project folder) and install the dependencies.
-We recommend that the IDE workspace uses this virtual environment when developing. 
+We recommend that the IDE workspace uses this virtual environment when developing.
 
 When adding a package for use in new or improved functionality,
 `pdm add <package-name>`. Or, when adding something helpful for

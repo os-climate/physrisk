@@ -1,23 +1,18 @@
 ---
-name: "🐍📦 Production build and release"
+name: "🐍📦 Test build and publish to Test PyPI"
 
 # GitHub/PyPI trusted publisher documentation:
 # https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
 
 # yamllint disable-line rule:truthy
-on:
-  # workflow_dispatch:
-  push:
-    # Only invoked on release tag pushes
-    tags:
-      - v*.*.*
+on: push
 
 env:
   python-version: "3.8"
 
 jobs:
   publish:
-    name: "🐍📦 Build and publish"
+    name: "🐍📦 Test build and publish"
     runs-on: ubuntu-latest
     steps:
       - name: "Checkout repository"
@@ -33,6 +28,13 @@ jobs:
         with:
           python-version: ${{ env.python-version }}
 
+      - name: "Update version and output Run ID"
+        run: |
+          value=`scripts/version.sh`
+          scripts/dev-versioning.sh "$value-dev${{ github.run_id }}"
+          echo "$value-dev${{ github.run_id }}"
+          echo ${{ github.run_id }}
+
       - name: "Output Run Number"
         run: echo ${{ github.run_number }}
 
@@ -40,9 +42,9 @@ jobs:
         run: |
           pdm build
 
-      - name: "Publish package to PyPI"
+      - name: "Publish package to Test PyPI"
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           verbose: true
-
-
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/

@@ -14,6 +14,11 @@ jobs:
   publish:
     name: "🐍📦 Test build and publish"
     runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+    permissions:
+      # IMPORTANT: mandatory for trusted publishing
+      id-token: write
     steps:
       - name: "Checkout repository"
         uses: actions/checkout@v4
@@ -42,9 +47,15 @@ jobs:
         run: |
           pdm build
 
-      - name: "Publish package to Test PyPI"
+      - name: "Sign packages with Sigstore"
+        uses: sigstore/gh-action-sigstore-python@v2.1.0
+        with:
+          inputs: >-
+            ./dist/*.tar.gz
+            ./dist/*.whl
+
+      - name: Publish distribution to Test PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           verbose: true
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
-          repository_url: https://test.pypi.org/legacy/
+          repository-url: https://test.pypi.org/legacy/

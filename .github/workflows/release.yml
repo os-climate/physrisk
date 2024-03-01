@@ -38,16 +38,18 @@ jobs:
         with:
           python-version: ${{ env.python-version }}
 
-      - name: "Output Run Number"
-        run: echo ${{ github.run_number }}
-
       - name: "Build with PDM backend"
         run: |
           pdm build
+
+      - name: "Sign packages with Sigstore"
+        uses: sigstore/gh-action-sigstore-python@v1.2.3
+        with:
+          inputs: >-
+            ./dist/*.tar.gz
+            ./dist/*.whl
 
       - name: "Publish package to PyPI"
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           verbose: true
-
-

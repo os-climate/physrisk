@@ -1,5 +1,5 @@
 [project]
-name = "physrisk"
+name = "physrisk-lib"
 version = "0.25.0"
 description = "OS-Climate Physical Risk Library"
 authors = [

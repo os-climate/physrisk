@@ -49,6 +49,13 @@ jobs:
             ./dist/*.tar.gz
             ./dist/*.whl
 
+      - name: "Remove files unsupported by PyPi"
+        run: |
+          if [ -f dist/buildvars.txt ]; then
+            rm dist/buildvars.txt
+          fi
+          rm dist/*.sigstore | true
+
       - name: "Publish package to PyPI"
         uses: pypa/gh-action-pypi-publish@release/v1
         with:

@@ -43,7 +43,7 @@ jobs:
           pdm build
 
       - name: "Sign packages with Sigstore"
-        uses: sigstore/gh-action-sigstore-python@v1.2.3
+        uses: sigstore/gh-action-sigstore-python@v2.1.0
         with:
           inputs: >-
             ./dist/*.tar.gz

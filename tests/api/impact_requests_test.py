@@ -278,20 +278,32 @@ class TestImpactRequests(TestWithCredentials):
             t,
         )
 
-        return_periods = [0.0]
-        shape, t = shape_transform_21600_43200(return_periods=return_periods)
-
         # Add mock drought data:
+        return_periods = [0.0, -1.0, -1.5, -2.0, -2.5, -3.0, -3.6]
+        shape, t = shape_transform_21600_43200(return_periods=return_periods)
         add_curves(
             root,
             longitudes,
             latitudes,
-            "drought/jupiter/v1/months_spei3m_below_-2_ssp585_2050",
+            "drought/osc/v1/months_spei12m_below_index_MIROC6_ssp585_2050",
             shape,
-            np.array([0.16958899796009064]),
+            np.array(
+                [
+                    6.900000095367432,
+                    1.7999999523162842,
+                    0.44999998807907104,
+                    0.06584064255906408,
+                    0.06584064255906408,
+                    0.0,
+                    0.0,
+                ]
+            ),
             return_periods,
             t,
         )
+
+        return_periods = [0.0]
+        shape, t = shape_transform_21600_43200(return_periods=return_periods)
 
         # Add mock water-related risk data:
         add_curves(
@@ -576,12 +588,12 @@ class TestImpactRequests(TestWithCredentials):
         self.assertEqual(response.asset_impacts[5].impacts[0].impact_mean, 0.0)
 
         # Drought
-        self.assertEqual(response.asset_impacts[0].impacts[1].impact_mean, 0.0005486720213255343)
+        self.assertEqual(response.asset_impacts[0].impacts[1].impact_mean, 0.0005486719775944949)
         self.assertEqual(response.asset_impacts[1].impacts[1].impact_mean, 0.0)
-        self.assertEqual(response.asset_impacts[2].impacts[1].impact_mean, 0.0005486720213255343)
+        self.assertEqual(response.asset_impacts[2].impacts[1].impact_mean, 0.0005486719775944949)
         self.assertEqual(response.asset_impacts[3].impacts[1].impact_mean, 0.0)
-        self.assertEqual(response.asset_impacts[4].impacts[1].impact_mean, 0.0005486720213255343)
-        self.assertEqual(response.asset_impacts[5].impacts[1].impact_mean, 0.0005486720213255343)
+        self.assertEqual(response.asset_impacts[4].impacts[1].impact_mean, 0.0005486719775944949)
+        self.assertEqual(response.asset_impacts[5].impacts[1].impact_mean, 0.0005486719775944949)
 
         # Riverine Inundation
         self.assertEqual(response.asset_impacts[0].impacts[2].impact_mean, 0.005372887389199415)

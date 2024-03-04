@@ -576,12 +576,12 @@ class TestImpactRequests(TestWithCredentials):
         self.assertEqual(response.asset_impacts[5].impacts[0].impact_mean, 0.0)
 
         # Drought
-        self.assertEqual(response.asset_impacts[0].impacts[1].impact_mean, 0.0005486720213255343)
+        self.assertEqual(response.asset_impacts[0].impacts[1].impact_mean, 0.000548672021325534)
         self.assertEqual(response.asset_impacts[1].impacts[1].impact_mean, 0.0)
-        self.assertEqual(response.asset_impacts[2].impacts[1].impact_mean, 0.0005486720213255343)
+        self.assertEqual(response.asset_impacts[2].impacts[1].impact_mean, 0.000548672021325534)
         self.assertEqual(response.asset_impacts[3].impacts[1].impact_mean, 0.0)
-        self.assertEqual(response.asset_impacts[4].impacts[1].impact_mean, 0.0005486720213255343)
-        self.assertEqual(response.asset_impacts[5].impacts[1].impact_mean, 0.0005486720213255343)
+        self.assertEqual(response.asset_impacts[4].impacts[1].impact_mean, 0.000548672021325534)
+        self.assertEqual(response.asset_impacts[5].impacts[1].impact_mean, 0.000548672021325534)
 
         # Riverine Inundation
         self.assertEqual(response.asset_impacts[0].impacts[2].impact_mean, 0.005372887389199415)

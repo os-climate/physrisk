@@ -59,6 +59,22 @@ Please, visit the `official webpage! <https://os-climate.org/physical-risk-resil
       ^^^
       See `Contributing <https://github.com/os-climate/physrisk/blob/main/CONTRIBUTING.md>`_
 
+.. grid:: 2
+    :gutter: 1
+
+    .. grid-item-card::  methodology
+      :link: methodology.html
+      :text-align: center
+
+      :octicon:`book;5em;sd-text-info`
+      ^^^
+
+    .. grid-item-card::  hazards
+      :link: hazards.html
+      :text-align: center
+
+      :octicon:`flame;5em;sd-text-info`
+      ^^^
 
 
 Physical Risk and Resilience
@@ -110,7 +126,8 @@ Contents
    physrisk
    commands
    handbook/onboarding
-
+   Methodology <methodology>
+   hazards
 
 Indices and tables
 ==================

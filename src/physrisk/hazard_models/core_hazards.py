@@ -4,12 +4,15 @@ from physrisk.api.v1.hazard_data import HazardResource
 from physrisk.data.hazard_data_provider import HazardDataHint, SourcePath
 from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.kernel import hazards
-from physrisk.kernel.hazards import ChronicHeat, CoastalInundation, RiverineInundation
+from physrisk.kernel.hazards import ChronicHeat, CoastalInundation, RiverineInundation, Wind
 
 
 class ResourceSubset:
     def __init__(self, resources: Iterable[HazardResource]):
-        self.resources = resources
+        self.resources = list(resources)
+
+    def any(self):
+        return any(self.resources)
 
     def first(self):
         return next(r for r in self.resources)
@@ -17,11 +20,18 @@ class ResourceSubset:
     def match(self, hint: HazardDataHint):
         return next(r for r in self.resources if r.path == hint.path)
 
-    def with_model_gcm(self, gcm):
+    def prefer_group_id(self, group_id: str):
+        with_condition = self.with_group_id(group_id)
+        return with_condition if with_condition.any() else self
+
+    def with_group_id(self, group_id: str):
+        return ResourceSubset(r for r in self.resources if r.group_id == group_id)
+
+    def with_model_gcm(self, gcm: str):
         return ResourceSubset(r for r in self.resources if r.indicator_model_gcm == gcm)
 
-    def with_model_id(self, gcm):
-        return ResourceSubset(r for r in self.resources if r.indicator_model_id == gcm)
+    def with_model_id(self, model_id: str):
+        return ResourceSubset(r for r in self.resources if r.indicator_model_id == model_id)
 
 
 class ResourceSelector(Protocol):
@@ -31,8 +41,7 @@ class ResourceSelector(Protocol):
 
     def __call__(
         self, *, candidates: ResourceSubset, scenario: str, year: int, hint: Optional[HazardDataHint] = None
-    ) -> HazardResource:
-        ...
+    ) -> HazardResource: ...
 
 
 class ResourceSelectorKey(NamedTuple):
@@ -58,7 +67,7 @@ class InventorySourcePaths:
             )
         return source_paths
 
-    def _add_selector(self, hazard_type: type, indicator_id: str, selector: ResourceSelector):
+    def add_selector(self, hazard_type: type, indicator_id: str, selector: ResourceSelector):
         self._selectors[ResourceSelectorKey(hazard_type, indicator_id)] = selector
 
     def _get_resource_source_path(self, hazard_type: str):
@@ -69,14 +78,31 @@ class InventorySourcePaths:
                 self._no_selector,
             )
             resources = self._inventory.resources_by_type_id[(hazard_type, indicator_id)]
+            if len(resources) == 0:
+                raise RuntimeError(
+                    f"unable to find any resources for hazard {hazard_type} " f"and indicator ID {indicator_id}"
+                )
             candidates = ResourceSubset(resources)
-            if hint is not None:
-                resource = candidates.match(hint)
-            else:
-                resource = selector(candidates=candidates, scenario=scenario, year=year, hint=hint)
-            proxy_scenario = cmip6_scenario_to_rcp(scenario) if resource.scenarios[0].id.startswith("rcp") else scenario
+            try:
+                if hint is not None:
+                    resource = candidates.match(hint)
+                else:
+                    resource = selector(candidates=candidates, scenario=scenario, year=year, hint=hint)
+            except Exception:
+                raise RuntimeError(
+                    f"unable to select unique resource for hazard {hazard_type} " f"and indicator ID {indicator_id}"
+                )
+            proxy_scenario = (
+                cmip6_scenario_to_rcp(scenario)
+                if resource.scenarios[0].id.startswith("rcp") or resource.scenarios[-1].id.startswith("rcp")
+                else scenario
+            )
             if scenario == "historical":
-                year = next(y for y in next(s for s in resource.scenarios if s.id == "historical").years)
+                scenarios = next(iter(s for s in resource.scenarios if s.id == "historical"), None)
+                if scenarios is None:
+                    scenarios = next(s for s in sorted(resource.scenarios, key=lambda s: next(y for y in s.years)))
+                proxy_scenario = scenarios.id
+                year = next(s for s in scenarios.years)
             return resource.path.format(id=indicator_id, scenario=proxy_scenario, year=year)
 
         return _get_source_path
@@ -90,10 +116,11 @@ class CoreInventorySourcePaths(InventorySourcePaths):
     def __init__(self, inventory: Inventory):
         super().__init__(inventory)
         for indicator_id in ["mean_work_loss/low", "mean_work_loss/medium", "mean_work_loss/high"]:
-            self._add_selector(ChronicHeat, indicator_id, self._select_chronic_heat)
-        self._add_selector(ChronicHeat, "mean/degree/days/above/32c", self._select_chronic_heat)
-        self._add_selector(RiverineInundation, "flood_depth", self._select_riverine_inundation)
-        self._add_selector(CoastalInundation, "flood_depth", self._select_coastal_inundation)
+            self.add_selector(ChronicHeat, indicator_id, self._select_chronic_heat)
+        self.add_selector(ChronicHeat, "mean/degree/days/above/32c", self._select_chronic_heat)
+        self.add_selector(RiverineInundation, "flood_depth", self._select_riverine_inundation)
+        self.add_selector(CoastalInundation, "flood_depth", self._select_coastal_inundation)
+        self.add_selector(Wind, "max_speed", self._select_wind)
 
     def resources_with(self, *, hazard_type: type, indicator_id: str):
         return ResourceSubset(self._inventory.resources_by_type_id[(hazard_type.__name__, indicator_id)])
@@ -124,6 +151,10 @@ class CoreInventorySourcePaths(InventorySourcePaths):
             else candidates.with_model_gcm("MIROC-ESM-CHEM").first()
         )
 
+    @staticmethod
+    def _select_wind(candidates: ResourceSubset, scenario: str, year: int, hint: Optional[HazardDataHint] = None):
+        return candidates.prefer_group_id("iris_osc").first()
+
 
 def cmip6_scenario_to_rcp(scenario: str):
     """Convention is that CMIP6 scenarios are expressed by identifiers:
@@ -141,9 +172,13 @@ def cmip6_scenario_to_rcp(scenario: str):
     elif scenario == "ssp585":
         return "rcp8p5"
     else:
-        if scenario not in ["rcp2p6", "rcp4p5", "rcp8p5", "historical"]:
+        if scenario not in ["rcp2p6", "rcp4p5", "rcp6p0", "rcp8p5", "historical"]:
             raise ValueError(f"unexpected scenario {scenario}")
         return scenario
+
+
+def get_default_source_path_provider(inventory: Inventory = EmbeddedInventory()):
+    return CoreInventorySourcePaths(inventory)
 
 
 def get_default_source_paths(inventory: Inventory = EmbeddedInventory()):

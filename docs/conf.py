@@ -14,8 +14,13 @@ sys.path.insert(0, os.path.abspath("../src/"))
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 project = "PhysicalRisk"
+<<<<<<< HEAD
 copyright = "2024, DCV"
 author = "DCV"
+=======
+copyright = "2023, OSC"
+author = "OSC"
+>>>>>>> upstream/main
 
 # The full version, including alpha/beta/rc tags
 release = "1.0.0"
@@ -37,6 +42,7 @@ extensions = [
     "sphinx.ext.autosectionlabel",
     "sphinx_design",
     "sphinx.ext.intersphinx",
+<<<<<<< HEAD
     # 'myst_nb',
     # "myst_parser",
     "nbsphinx",
@@ -51,6 +57,11 @@ bibtex_default_style = "alpha"
 bibtex_encoding = "latin"
 
 
+=======
+    "nbsphinx",
+]
+
+>>>>>>> upstream/main
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 

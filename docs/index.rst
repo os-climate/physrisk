@@ -8,7 +8,11 @@ Please, visit the `official webpage! <https://os-climate.org/physical-risk-resil
 .. _cards-clickable:
 
 ..
+<<<<<<< HEAD
   list with all the possible icons for the grid 
+=======
+  list with all the possible icons for the grid
+>>>>>>> upstream/main
   https://sphinx-design.readthedocs.io/en/latest/badges_buttons.html
 
 .. raw:: html
@@ -59,6 +63,7 @@ Please, visit the `official webpage! <https://os-climate.org/physical-risk-resil
       ^^^
       See `Contributing <https://github.com/os-climate/physrisk/blob/main/CONTRIBUTING.md>`_
 
+<<<<<<< HEAD
 .. grid:: 2
     :gutter: 1
 
@@ -75,11 +80,14 @@ Please, visit the `official webpage! <https://os-climate.org/physical-risk-resil
 
       :octicon:`flame;5em;sd-text-info`
       ^^^
+=======
+>>>>>>> upstream/main
 
 
 Physical Risk and Resilience
 =============================
 
+<<<<<<< HEAD
 .. image:: images/PRR-1.jpg
   :width: 800
 
@@ -114,6 +122,9 @@ Physical Risk and Resilience
   :width: 800  
 
 |
+=======
+This is the documentation of the Physical Risk and Resilience project of OS-Climate!
+>>>>>>> upstream/main
 
 
 Contents
@@ -126,8 +137,12 @@ Contents
    physrisk
    commands
    handbook/onboarding
+<<<<<<< HEAD
    Methodology <methodology>
    hazards
+=======
+
+>>>>>>> upstream/main
 
 Indices and tables
 ==================

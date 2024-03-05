@@ -10,7 +10,9 @@ class AssetExposureRequest(BaseModel):
     """Impact calculation request."""
 
     assets: Assets
-    calc_settings: CalcSettings = Field(default_factory=CalcSettings, description="Interpolation method.")
+    calc_settings: CalcSettings = Field(
+        default_factory=CalcSettings, description="Interpolation method."  # type:ignore
+    )
     scenario: str = Field("rcp8p5", description="Name of scenario ('rcp8p5')")
     year: int = Field(
         2050,

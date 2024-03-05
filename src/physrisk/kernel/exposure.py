@@ -7,6 +7,7 @@ from typing import Dict, Iterable, List, Tuple
 
 import numpy as np
 
+from physrisk.data.hazard_data_provider import HazardDataHint
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.hazard_model import (
     HazardDataRequest,
@@ -48,13 +49,12 @@ class ExposureMeasure(DataRequester):
     @abstractmethod
     def get_exposures(
         self, asset: Asset, data_responses: Iterable[HazardDataResponse]
-    ) -> Dict[type, Tuple[Category, float]]:
-        ...
+    ) -> Dict[type, Tuple[Category, float]]: ...
 
 
 class JupterExposureMeasure(ExposureMeasure):
     def __init__(self):
-        self.exposure_bins: Dict[Tuple[type, str], Tuple[np.ndarray, np.ndarray]] = self.get_exposure_bins()
+        self.exposure_bins = self.get_exposure_bins()
 
     def get_data_requests(self, asset: Asset, *, scenario: str, year: int) -> Iterable[HazardDataRequest]:
         return [
@@ -65,6 +65,8 @@ class JupterExposureMeasure(ExposureMeasure):
                 scenario=scenario,
                 year=year,
                 indicator_id=indicator_id,
+                # select specific model for wind for consistency with thresholds
+                hint=HazardDataHint(path="wind/jupiter/v1/max_1min_{scenario}_{year}") if hazard_type == Wind else None,
             )
             for (hazard_type, indicator_id) in self.exposure_bins.keys()
         ]
@@ -88,7 +90,7 @@ class JupterExposureMeasure(ExposureMeasure):
         return result
 
     def get_exposure_bins(self):
-        categories: Dict[Tuple[type, str], Tuple[np.ndarray, np.ndarray]] = {}
+        categories = {}
         # specify exposure bins as dataclass in case desirable to use JSON in future
         categories[(CombinedInundation, "flooded_fraction")] = self.bounds_to_lookup(
             [
@@ -156,7 +158,7 @@ def calculate_exposures(
     assets: List[Asset], hazard_model: HazardModel, exposure_measure: ExposureMeasure, scenario: str, year: int
 ) -> Dict[Asset, AssetExposureResult]:
     requester_assets: Dict[DataRequester, List[Asset]] = {exposure_measure: assets}
-    assetRequests, responses = _request_consolidated(hazard_model, requester_assets, scenario, year)
+    asset_requests, responses = _request_consolidated(hazard_model, requester_assets, scenario, year)
 
     logging.info(
         "Applying exposure measure {0} to {1} assets of type {2}".format(
@@ -166,7 +168,7 @@ def calculate_exposures(
     result: Dict[Asset, AssetExposureResult] = {}
 
     for asset in assets:
-        requests = assetRequests[(exposure_measure, asset)]  # (ordered) requests for a given asset
+        requests = asset_requests[(exposure_measure, asset)]  # (ordered) requests for a given asset
         hazard_data = [responses[req] for req in get_iterable(requests)]
         result[asset] = AssetExposureResult(hazard_categories=exposure_measure.get_exposures(asset, hazard_data))
 

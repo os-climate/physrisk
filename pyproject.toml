@@ -57,6 +57,9 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 include = ["physrisk*"]
 
+
+
+
 [tool.pdm.dev-dependencies]
 test = [
   "pdm[pytest]",
@@ -78,14 +81,12 @@ lint = [
   "pre-commit",
   "tox"
 ]
-
-[project.urls]
-Homepage = "https://github.com/os-climate/physrisk"
-Repository = "https://github.com/os-climate/physrisk"
-Downloads = "https://github.com/os-climate/physrisk/releases"
-"Bug Tracker" = "https://github.com/os-climate/physrisk/issues"
-Documentation = "https://github.com/os-climate/physrisk/tree/main/docs"
-"Source Code" = "https://github.com/os-climate/physrisk"
+"black[jupyter]" = []
+pandas = []
+dev = [
+    "pandas>=2.0.3",
+    "geopandas>=0.13.2",
+]
 
 [tool.pdm.scripts]
 pre_release = "scripts/dev-versioning.sh"
@@ -95,6 +96,15 @@ tox = "tox"
 docs = { shell = "cd docs && mkdocs serve", help = "Start the dev server for doc preview" }
 lint = "pre-commit run --all-files"
 complete = { call = "tasks.complete:main", help = "Create autocomplete files for bash and fish" }
+
+
+[project.urls]
+Homepage = "https://github.com/os-climate/physrisk"
+Repository = "https://github.com/os-climate/physrisk"
+Downloads = "https://github.com/os-climate/physrisk/releases"
+"Bug Tracker" = "https://github.com/os-climate/physrisk/issues"
+Documentation = "https://github.com/os-climate/physrisk/tree/main/docs"
+"Source Code" = "https://github.com/os-climate/physrisk"
 
 [tool.pytest.ini_options]
 testpaths = "tests"

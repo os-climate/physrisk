@@ -50,7 +50,6 @@ bibtex_bibfiles = ["references.bib"]
 bibtex_default_style = "alpha"
 bibtex_encoding = "latin"
 
-
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 

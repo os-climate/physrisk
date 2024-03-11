@@ -6,8 +6,7 @@ import logging
 from collections import defaultdict
 from typing import DefaultDict, Dict, Iterable, List, Tuple
 
-from pydantic import TypeAdapter
-
+from pydantic import TypeAdapter, parse_obj_as
 
 import physrisk.data.colormap_provider as colormap_provider
 import physrisk.data.static.hazard
@@ -35,7 +34,7 @@ class Inventory:
 
     def json_ordered(self):
         sorted_resources = sorted(self.resources_by_type_id.items())
-        resource_list: List[HazardResource] = []
+        resource_list = []
         for _, resources in sorted_resources:
             resource_list.extend(resources)
         models = HazardModels(resources=resource_list)
@@ -51,8 +50,7 @@ class EmbeddedInventory(Inventory):
 
     def __init__(self):
         with importlib.resources.open_text(physrisk.data.static.hazard, "inventory.json") as f:
-            adapter = TypeAdapter(HazardModels)
-            models = adapter.validate_python(json.load(f)).resources
+            models = TypeAdapter(HazardModels).validate_python(json.load(f)).resources
             expanded_models = expand(models)
             super().__init__(expanded_models)
 

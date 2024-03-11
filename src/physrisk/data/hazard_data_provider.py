@@ -22,15 +22,16 @@ class HazardDataHint:
 
 class SourcePath(Protocol):
     """Provides path to hazard event data source. Each source should have its own implementation.
-    
+
     Args:
         model: model identifier.
         scenario: identifier of scenario, e.g. rcp8p5 (RCP 8.5).
         year: projection year, e.g. 2080.
     """
 
-    def __call__(self, *, indicator_id: str, scenario: str, year: int, hint: Optional[HazardDataHint] = None) -> str:
-        ...
+    def __call__(
+        self, *, indicator_id: str, scenario: str, year: int, hint: Optional[HazardDataHint] = None
+    ) -> str: ...
 
 
 class HazardDataProvider(ABC):

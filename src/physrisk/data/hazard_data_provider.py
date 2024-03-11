@@ -23,6 +23,7 @@ class HazardDataHint:
 
 class SourcePath(Protocol):
     """Provides path to hazard event data source. Each source should have its own implementation.
+
     Args:
         model: model identifier.
         scenario: identifier of scenario, e.g. rcp8p5 (RCP 8.5).

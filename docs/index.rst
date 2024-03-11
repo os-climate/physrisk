@@ -77,6 +77,7 @@ Please, visit the `official webpage! <https://os-climate.org/physical-risk-resil
       ^^^
 
 
+
 Physical Risk and Resilience
 =============================
 
@@ -113,7 +114,6 @@ Physical Risk and Resilience
 .. image:: images/PRR-6.jpg
   :width: 800
 
-|
 
 
 Contents

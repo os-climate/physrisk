@@ -41,7 +41,10 @@ def to_exceedance_curve(bin_edges, probs):
     fnz = nz[0][0] if len(nz[0]) > 0 else 0
     nz_values = bin_edges[fnz:]
     nz_probs = probs[fnz:]
-    cum_prob = np.insert(np.cumsum(nz_probs[::-1]), 0, 0.0)[::-1]
+    if len(nz_values) == len(nz_probs):
+        cum_prob = 1.0 - np.cumsum(nz_probs)
+    else:
+        cum_prob = np.insert(np.cumsum(nz_probs[::-1]), 0, 0.0)[::-1]
     return ExceedanceCurve(cum_prob, nz_values)
 
 
@@ -142,14 +145,13 @@ class ExceedanceCurve:
         """Add a point to the curve with specified value and exceedance
         probability determined from existing curve by linear interpolation.
         """
-
         values, probs = add_x_value_to_curve(value, self.values, self.probs)
         return ExceedanceCurve(probs, values)
 
     def get_value(self, prob):
         return np.interp(prob, self.probs[::-1], self.values[::-1])
 
-    def get_probability_bins(self):
+    def get_probability_bins(self, include_last: bool = False):
         r"""Convert from exceedance (cumulative) probability to bins of constant probability density.
         This is equivalent to the assumption of linear interpolation of exceedance points.
 
@@ -161,9 +163,11 @@ class ExceedanceCurve:
             If value_bins is of length n then there are n-1 bins and n-1 probabilities
 
         """
-        # value bins are contiguous
         value_bins = self.values[:]
         probs = self.probs[:-1] - self.probs[1:]  # type: ignore
+        if include_last or len(self.values) == 1:
+            value_bins = np.append(value_bins, value_bins[-1])  # last bin has zero width
+            probs = np.append(probs, self.probs[-1])
         return value_bins, probs
 
     def get_samples(self, uniforms):

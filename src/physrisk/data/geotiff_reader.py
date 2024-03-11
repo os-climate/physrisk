@@ -1,5 +1,4 @@
 from itertools import chain
-from typing import List, Tuple
 
 import numpy as np
 import zarr
@@ -15,8 +14,8 @@ affine = lazy_import("affine")
 def zarr_read(path, longitudes, latitudes):
     """A version that uses Zarr rather than GDAL. Typically faster than GDAL / rasterio."""
     with tifffile.tifffile.Tifffile(path) as tif:
-        scale: Tuple[float, float, float] = tif.geotiff_metadata["ModelPixelScale"]
-        tie_point: List[float] = tif.geotiff_metadata["ModelTiepoint"]
+        scale = tif.geotiff_metadata["ModelPixelScale"]
+        tie_point = tif.geotiff_metadata["ModelTiepoint"]
         store = tif.series[0].aszarr()
         zarray = zarr.open(store, mode="r")
         # shape: List[int] = tif.series[0].shape

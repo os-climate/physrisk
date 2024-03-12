@@ -14,3 +14,5 @@ sys.path.insert(0, os.path.abspath(".."))
 sys.path.insert(0, os.path.abspath("../src/"))
 
 config = SphinxConfig("../pyproject.toml", globalns=globals())
+
+extensions = ["sphinx_pyproject"]

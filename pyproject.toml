@@ -61,7 +61,8 @@ include = ["physrisk*"]
 test = [
   "pdm[pytest]",
   "pytest",
-  "pytest-cov"
+  "pytest-cov",
+  "sphinx-pyproject"
 ]
 docs = [
   "sphinx",

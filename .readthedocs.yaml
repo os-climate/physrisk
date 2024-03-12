@@ -9,15 +9,27 @@ version: 2
 build:
   os: ubuntu-22.04
   tools:
-    python: "3.8"
-    # You can also specify other tool versions:
-    # nodejs: "19"
-    # rust: "1.64"
-    # golang: "1.19"
+    python: "3.9"
+
+# The below will effectively execute:
+#   pip install .[docs]
+python:
+  install:
+    - method: pip
+      path: .
+      extra_requirements:
+        - docs
+
+
+### Disabled due to configuration migrated to pyproject.toml ###
+
+# We are using a metadata file to describe code dependencies , pyproject.toml
+# Use the extra_requirements option in that file (see Packages)
+# As such, the options below are redundant and now commented out
 
 # Build documentation in the "docs/" directory with Sphinx
-sphinx:
-   configuration: docs/conf.py
+#sphinx:
+#   configuration: docs/conf.py
 
 # Optionally build your docs in additional formats such as PDF and ePub
 # formats:
@@ -27,6 +39,6 @@ sphinx:
 # Optional but recommended, declare the Python requirements required
 # to build your documentation
 # See https://docs.readthedocs.io/en/stable/guides/reproducible-builds.html
-python:
-   install:
-   - requirements: docs/requirements-docs.txt
+#python:
+#   install:
+#   - requirements: docs/requirements-docs.txt

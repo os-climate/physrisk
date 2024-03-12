@@ -57,9 +57,6 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 include = ["physrisk*"]
 
-
-
-
 [tool.pdm.dev-dependencies]
 test = [
   "pdm[pytest]",
@@ -67,11 +64,45 @@ test = [
   "pytest-cov"
 ]
 docs = [
+  "sphinx",
+  "linkcheck",
+  "sphinx-pyproject",
   "sphinx-toolbox",
   "sphinx-design",
   "nbsphinx",
-  "pydata-sphinx-theme"
+  "pydata-sphinx-theme",
+  "sphinxcontrib-details-directive",
+  "sphinxcontrib-bibtex",
+  "sphinx-simplepdf",
+  "sphinx-design",
+  "sphinx-toolbox"
 ]
+
+[tool.sphinx-pyproject]
+project = "PhysicalRisk"
+copyright = "2024, DCV"
+author = "DCV"
+extensions = [
+  # Imported from docs/conf.py
+  "sphinx.ext.autodoc",
+  "sphinx.ext.napoleon",
+  "sphinx_toolbox.installation",
+  "sphinx_toolbox.latex",
+  "sphinx.ext.autosummary",
+  "sphinx.ext.graphviz",
+  "sphinx.ext.inheritance_diagram",
+  "sphinx.ext.autosectionlabel",
+  "sphinx_design",
+  "sphinx.ext.intersphinx",
+  "nbsphinx",
+  "sphinxcontrib.details",
+  "sphinxcontrib.bibtex",
+  "sphinx.ext.mathjax",
+  "sphinx_simplepdf"
+  ## 'myst_nb',
+  ## "myst_parser",
+]
+
 lint = [
   "isort",
   "black",

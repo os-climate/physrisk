@@ -1,5 +1,5 @@
 sphinx==5.3.0
-sphinx-pyproject
+sphinxcontrib-details-directive
 numpydoc==1.0.0
 sphinx-copybutton==0.5.0
 myst-nb==0.16.0

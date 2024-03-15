@@ -1,5 +1,7 @@
 [project]
 name = "physrisk-lib"
+# Could test changing the below to be sourced "dynamically"
+# dynamic = ['version']
 version = "0.25.0"
 description = "OS-Climate Physical Risk Library"
 authors = [
@@ -46,10 +48,22 @@ dependencies = [
   "zarr>=2.10.3"
 ]
 
+[project.urls]
+Homepage = "https://github.com/os-climate/physrisk"
+Repository = "https://github.com/os-climate/physrisk"
+Downloads = "https://github.com/os-climate/physrisk/releases"
+"Bug Tracker" = "https://github.com/os-climate/physrisk/issues"
+Documentation = "https://github.com/os-climate/physrisk/tree/main/docs"
+"Source Code" = "https://github.com/os-climate/physrisk"
+
+[metadata]
+license-files = ["LICENSE"]
+
 [build-system]
 requires = [
     "setuptools>=42",
-    "wheel"
+    "wheel",
+    "pdm"
 ]
 build-backend = "setuptools.build_meta"
 
@@ -57,20 +71,12 @@ build-backend = "setuptools.build_meta"
 where = ["src"]
 include = ["physrisk*"]
 
-
-
-
 [tool.pdm.dev-dependencies]
 test = [
   "pdm[pytest]",
   "pytest",
-  "pytest-cov"
-]
-docs = [
-  "sphinx-toolbox",
-  "sphinx-design",
-  "nbsphinx",
-  "pydata-sphinx-theme"
+  "pytest-cov",
+  "sphinx-pyproject"
 ]
 lint = [
   "isort",
@@ -85,7 +91,7 @@ lint = [
 pandas = []
 dev = [
     "pandas>=2.0.3",
-    "geopandas>=0.13.2",
+    "geopandas>=0.13.2"
 ]
 
 [tool.pdm.scripts]
@@ -97,22 +103,10 @@ docs = { shell = "cd docs && mkdocs serve", help = "Start the dev server for doc
 lint = "pre-commit run --all-files"
 complete = { call = "tasks.complete:main", help = "Create autocomplete files for bash and fish" }
 
-
-[project.urls]
-Homepage = "https://github.com/os-climate/physrisk"
-Repository = "https://github.com/os-climate/physrisk"
-Downloads = "https://github.com/os-climate/physrisk/releases"
-"Bug Tracker" = "https://github.com/os-climate/physrisk/issues"
-Documentation = "https://github.com/os-climate/physrisk/tree/main/docs"
-"Source Code" = "https://github.com/os-climate/physrisk"
-
 [tool.pytest.ini_options]
 testpaths = "tests"
 addopts = "-v"
 #addopts = "--cov --cov-report html --cov-report term-missing --cov-fail-under 95"
-
-[metadata]
-license-files = ["LICENSE"]
 
 [tool.mypy]
 warn_unreachable = true

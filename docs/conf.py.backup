@@ -13,12 +13,12 @@ sys.path.insert(0, os.path.abspath("../src/"))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "PhysicalRisk"
-copyright = "2024, DCV"
-author = "DCV"
+#project = "PhysicalRisk"
+#copyright = "2024, DCV"
+#author = "DCV"
 
 # The full version, including alpha/beta/rc tags
-# release = "1.1.0"
+#release = "1.1.0"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -40,7 +40,7 @@ extensions = [
     # 'myst_nb',
     # "myst_parser",
     "nbsphinx",
-    "sphinxcontrib.details.directive",
+    # "sphinxcontrib.details"
     "sphinxcontrib.bibtex",
     "sphinx.ext.mathjax",
     "sphinx_simplepdf",

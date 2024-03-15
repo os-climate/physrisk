@@ -20,18 +20,13 @@ class Hazard:
         return cast(HazardKind, hazard_type.kind)
 
 
-class Inundation(Hazard):
-    kind = HazardKind.acute
-    pass
-
-
-class CoastalInundation(Inundation):
-    kind = HazardKind.acute
-    pass
-
-
 class ChronicHeat(Hazard):
     kind = HazardKind.chronic
+    pass
+
+
+class Inundation(Hazard):
+    kind = HazardKind.acute
     pass
 
 
@@ -39,7 +34,8 @@ class AirTemperature(ChronicHeat):
     pass
 
 
-class WaterTemperature(ChronicHeat):
+class CoastalInundation(Inundation):
+    kind = HazardKind.acute
     pass
 
 
@@ -68,17 +64,17 @@ class Hail(Hazard):
     pass
 
 
+class PluvialInundation(Inundation):
+    kind = HazardKind.acute
+    pass
+
+
 class Precipitation(Hazard):
     kind = HazardKind.chronic
     pass
 
 
 class RiverineInundation(Inundation):
-    kind = HazardKind.acute
-    pass
-
-
-class Wind(Hazard):
     kind = HazardKind.acute
     pass
 
@@ -100,7 +96,16 @@ class WaterStress(WaterRisk):
     pass
 
 
+class WaterTemperature(ChronicHeat):
+    pass
+
+
 class WaterDepletion(WaterRisk):
+    pass
+
+
+class Wind(Hazard):
+    kind = HazardKind.acute
     pass
 
 

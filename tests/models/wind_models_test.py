@@ -6,6 +6,7 @@ from physrisk.hazard_models.core_hazards import ResourceSubset, get_default_sour
 from physrisk.kernel.assets import RealEstateAsset
 from physrisk.kernel.hazards import Wind
 from physrisk.kernel.impact import calculate_impacts
+from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels
 from physrisk.vulnerability_models.real_estate_models import GenericTropicalCycloneModel
 
 
@@ -37,7 +38,7 @@ def test_wind_real_estate_model():
         RealEstateAsset(lat, lon, location="Asia", type="Buildings/Industrial")
         for lon, lat in zip(hms.TestData.longitudes[0:1], hms.TestData.latitudes[0:1])
     ]
-    vulnerability_models = {RealEstateAsset: [GenericTropicalCycloneModel()]}
+    vulnerability_models = DictBasedVulnerabilityModels({RealEstateAsset: [GenericTropicalCycloneModel()]})
     results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
     # check calculation
     cum_probs = 1.0 / np.array(return_periods)

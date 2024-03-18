@@ -13,6 +13,7 @@ from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import PowerGeneratingAsset, RealEstateAsset, ThermalPowerGeneratingAsset
+from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels
 from physrisk.vulnerability_models.power_generating_asset_models import InundationModel
 from physrisk.vulnerability_models.real_estate_models import (
     RealEstateCoastalInundationModel,
@@ -98,10 +99,12 @@ class TestImpactRequests(TestWithCredentials):
         store = mock_hazard_model_store_inundation(TestData.longitudes, TestData.latitudes, curve)
 
         source_paths = get_default_source_paths(EmbeddedInventory())
-        vulnerability_models = {
-            PowerGeneratingAsset: [InundationModel()],
-            RealEstateAsset: [RealEstateCoastalInundationModel(), RealEstateRiverineInundationModel()],
-        }
+        vulnerability_models = DictBasedVulnerabilityModels(
+            {
+                PowerGeneratingAsset: [InundationModel()],
+                RealEstateAsset: [RealEstateCoastalInundationModel(), RealEstateRiverineInundationModel()],
+            }
+        )
 
         response = requests._get_asset_impacts(
             request,
@@ -148,10 +151,12 @@ class TestImpactRequests(TestWithCredentials):
         store = mock_hazard_model_store_inundation(TestData.longitudes, TestData.latitudes, curve)
 
         source_paths = get_default_source_paths(EmbeddedInventory())
-        vulnerability_models = {
-            PowerGeneratingAsset: [InundationModel()],
-            RealEstateAsset: [RealEstateCoastalInundationModel(), RealEstateRiverineInundationModel()],
-        }
+        vulnerability_models = DictBasedVulnerabilityModels(
+            {
+                PowerGeneratingAsset: [InundationModel()],
+                RealEstateAsset: [RealEstateCoastalInundationModel(), RealEstateRiverineInundationModel()],
+            }
+        )
 
         response = requests._get_asset_impacts(
             request,
@@ -563,15 +568,17 @@ class TestImpactRequests(TestWithCredentials):
         )
 
         source_paths = get_default_source_paths(EmbeddedInventory())
-        vulnerability_models = {
-            ThermalPowerGeneratingAsset: [
-                ThermalPowerGenerationAirTemperatureModel(),
-                ThermalPowerGenerationDroughtModel(),
-                ThermalPowerGenerationRiverineInundationModel(),
-                ThermalPowerGenerationWaterStressModel(),
-                ThermalPowerGenerationWaterTemperatureModel(),
-            ]
-        }
+        vulnerability_models = DictBasedVulnerabilityModels(
+            {
+                ThermalPowerGeneratingAsset: [
+                    ThermalPowerGenerationAirTemperatureModel(),
+                    ThermalPowerGenerationDroughtModel(),
+                    ThermalPowerGenerationRiverineInundationModel(),
+                    ThermalPowerGenerationWaterStressModel(),
+                    ThermalPowerGenerationWaterTemperatureModel(),
+                ]
+            }
+        )
 
         response = requests._get_asset_impacts(
             request,

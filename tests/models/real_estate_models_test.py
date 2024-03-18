@@ -9,6 +9,7 @@ from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import RealEstateAsset
 from physrisk.kernel.hazards import CoastalInundation, RiverineInundation
 from physrisk.kernel.impact import ImpactKey, calculate_impacts
+from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels
 from physrisk.vulnerability_models.real_estate_models import (
     RealEstateCoastalInundationModel,
     RealEstateRiverineInundationModel,
@@ -33,7 +34,7 @@ class TestRealEstateModels(unittest.TestCase):
         scenario = "rcp8p5"
         year = 2080
 
-        vulnerability_models = {RealEstateAsset: [RealEstateRiverineInundationModel()]}
+        vulnerability_models = DictBasedVulnerabilityModels({RealEstateAsset: [RealEstateRiverineInundationModel()]})
 
         results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
 
@@ -102,7 +103,7 @@ class TestRealEstateModels(unittest.TestCase):
         scenario = "rcp8p5"
         year = 2080
 
-        vulnerability_models = {RealEstateAsset: [RealEstateCoastalInundationModel()]}
+        vulnerability_models = DictBasedVulnerabilityModels({RealEstateAsset: [RealEstateCoastalInundationModel()]})
 
         results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
 
@@ -144,27 +145,29 @@ class TestRealEstateModels(unittest.TestCase):
 
         # impact bin edges are calibrated so that hazard_bin_probs == impact_bin_probs
         # when the impact standard deviation is negligible:
-        vulnerability_models = {
-            RealEstateAsset: [
-                RealEstateRiverineInundationModel(
-                    impact_bin_edges=np.array(
-                        [
-                            0,
-                            0.030545039098059,
-                            0.125953058445539,
-                            0.322702019487674,
-                            0.566880882840096,
-                            0.731980974578735,
-                            0.823993215529066,
-                            0.884544511664047,
-                            0.922115133960502,
-                            0.969169745946688,
-                            1.0,
-                        ]
+        vulnerability_models = DictBasedVulnerabilityModels(
+            {
+                RealEstateAsset: [
+                    RealEstateRiverineInundationModel(
+                        impact_bin_edges=np.array(
+                            [
+                                0,
+                                0.030545039098059,
+                                0.125953058445539,
+                                0.322702019487674,
+                                0.566880882840096,
+                                0.731980974578735,
+                                0.823993215529066,
+                                0.884544511664047,
+                                0.922115133960502,
+                                0.969169745946688,
+                                1.0,
+                            ]
+                        )
                     )
-                )
-            ]
-        }
+                ]
+            }
+        )
 
         results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
 

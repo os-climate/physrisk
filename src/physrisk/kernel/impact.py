@@ -1,14 +1,19 @@
 import logging
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, NamedTuple, Optional, Sequence, Tuple, Union
+from typing import Dict, Iterable, List, NamedTuple, Optional, Tuple, Union
 
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.hazard_event_distrib import HazardEventDistrib
 from physrisk.kernel.hazard_model import HazardDataFailedResponse, HazardDataRequest, HazardDataResponse, HazardModel
 from physrisk.kernel.impact_distrib import EmptyImpactDistrib, ImpactDistrib
 from physrisk.kernel.vulnerability_distrib import VulnerabilityDistrib
-from physrisk.kernel.vulnerability_model import DataRequester, VulnerabilityModelAcuteBase, VulnerabilityModelBase
+from physrisk.kernel.vulnerability_model import (
+    DataRequester,
+    VulnerabilityModelAcuteBase,
+    VulnerabilityModelBase,
+    VulnerabilityModels,
+)
 from physrisk.utils.helpers import get_iterable
 
 logger = logging.getLogger(__name__)
@@ -35,7 +40,7 @@ class AssetImpactResult:
 def calculate_impacts(  # noqa: C901
     assets: Iterable[Asset],
     hazard_model: HazardModel,
-    vulnerability_models: Dict[type, Sequence[VulnerabilityModelBase]],
+    vulnerability_models: VulnerabilityModels,
     *,
     scenario: str,
     year: int,
@@ -48,7 +53,7 @@ def calculate_impacts(  # noqa: C901
 
     for asset in assets:
         asset_type = type(asset)
-        mappings = vulnerability_models[asset_type]
+        mappings = vulnerability_models.vuln_model_for_asset_of_type(asset_type)
         for mapping in mappings:
             model_assets[mapping].append(asset)
     results = {}

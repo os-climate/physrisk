@@ -1,6 +1,7 @@
 import fsspec.implementations.local as local
 from dependency_injector import containers, providers
 
+from physrisk.container import Container
 from physrisk.data.inventory_reader import InventoryReader
 from tests.data.hazard_model_store_test import mock_hazard_model_store_heat
 

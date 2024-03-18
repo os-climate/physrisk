@@ -14,6 +14,7 @@ from physrisk.kernel.hazard_model import (
 )
 from physrisk.kernel.hazards import ChronicHeat, Wind
 from physrisk.kernel.impact import calculate_impacts
+from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels
 from physrisk.vulnerability_models.real_estate_models import GenericTropicalCycloneModel
 
 
@@ -88,7 +89,7 @@ def test_using_point_based_hazard_model():
     )
 
     hazard_model = PointBasedHazardModel([point])
-    vulnerability_models = {RealEstateAsset: [GenericTropicalCycloneModel()]}
+    vulnerability_models = DictBasedVulnerabilityModels({RealEstateAsset: [GenericTropicalCycloneModel()]})
     results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
     impact_distrib = results[(assets[0], Wind, None, None)].impact
     mean_impact = impact_distrib.mean_impact()

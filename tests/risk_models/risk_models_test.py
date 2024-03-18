@@ -13,6 +13,7 @@ from physrisk.kernel.assets import RealEstateAsset
 from physrisk.kernel.calculation import get_default_vulnerability_models
 from physrisk.kernel.hazards import ChronicHeat, CoastalInundation, RiverineInundation, Wind
 from physrisk.kernel.risk import AssetLevelRiskModel, MeasureKey
+from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels
 from physrisk.requests import _create_risk_measures
 from physrisk.risk_models.risk_models import RealEstateToyRiskMeasures
 from tests.base_test import TestWithCredentials
@@ -28,7 +29,9 @@ class TestRiskModels(TestWithCredentials):
         hazard_model = self._create_hazard_model(scenarios, years)
 
         model = AssetLevelRiskModel(
-            hazard_model, get_default_vulnerability_models(), {RealEstateAsset: RealEstateToyRiskMeasures()}
+            hazard_model,
+            DictBasedVulnerabilityModels(get_default_vulnerability_models()),
+            {RealEstateAsset: RealEstateToyRiskMeasures()},
         )
         measure_ids_for_asset, definitions = model.populate_measure_definitions(assets)
         _, measures = model.calculate_risk_measures(assets, prosp_scens=scenarios, years=years)
@@ -161,7 +164,7 @@ class TestRiskModels(TestWithCredentials):
         response = requests._get_asset_impacts(
             request,
             hazard_model,
-            vulnerability_models=get_default_vulnerability_models(),
+            vulnerability_models=DictBasedVulnerabilityModels(get_default_vulnerability_models()),
         )
         res = next(
             ma for ma in response.risk_measures.measures_for_assets if ma.key.hazard_type == "RiverineInundation"

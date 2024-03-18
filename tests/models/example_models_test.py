@@ -11,7 +11,7 @@ from physrisk.kernel.hazards import Inundation, RiverineInundation
 from physrisk.kernel.impact import calculate_impacts
 from physrisk.kernel.impact_distrib import ImpactType
 from physrisk.kernel.vulnerability_matrix_provider import VulnMatrixProvider
-from physrisk.kernel.vulnerability_model import VulnerabilityModel
+from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels, VulnerabilityModel
 from physrisk.vulnerability_models.example_models import ExampleCdfBasedVulnerabilityModel
 from tests.data.hazard_model_store_test import TestData, mock_hazard_model_store_inundation
 
@@ -84,7 +84,7 @@ class TestExampleModels(unittest.TestCase):
         scenario = "rcp8p5"
         year = 2080
 
-        vulnerability_models = {RealEstateAsset: [ExampleRealEstateInundationModel()]}
+        vulnerability_models = DictBasedVulnerabilityModels({RealEstateAsset: [ExampleRealEstateInundationModel()]})
 
         assets = [
             RealEstateAsset(lat, lon, location="Asia", type="Building/Industrial")

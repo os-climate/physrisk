@@ -10,6 +10,7 @@ from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse, 
 from physrisk.kernel.hazards import ChronicHeat
 from physrisk.kernel.impact import calculate_impacts
 from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
+from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels
 from physrisk.vulnerability_models.chronic_heat_models import ChronicHeatGZNModel, get_impact_distrib
 from tests.data.hazard_model_store_test import TestData, mock_hazard_model_store_heat_wbgt
 
@@ -182,7 +183,7 @@ class TestChronicAssetImpact(unittest.TestCase):
         scenario = "ssp585"
         year = 2050
 
-        vulnerability_models = {IndustrialActivity: [ExampleWBGTGZNJointModel()]}
+        vulnerability_models = DictBasedVulnerabilityModels({IndustrialActivity: [ExampleWBGTGZNJointModel()]})
 
         assets = [
             IndustrialActivity(lat, lon, type="high") for lon, lat in zip(TestData.longitudes, TestData.latitudes)

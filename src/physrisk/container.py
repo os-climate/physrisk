@@ -7,7 +7,13 @@ from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
+from physrisk.kernel import calculation as calc
 from physrisk.kernel.hazard_model import HazardModelFactory
+from physrisk.kernel.vulnerability_model import (
+    DictBasedVulnerabilityModels,
+    VulnerabilityModels,
+    VulnerabilityModelsFactory,
+)
 from physrisk.requests import Requester, _create_inventory, create_source_paths
 
 
@@ -30,6 +36,11 @@ class ZarrHazardModelFactory(HazardModelFactory):
         )
 
 
+class DictBasedVulnerabilityModelsFactory(VulnerabilityModelsFactory):
+    def vulnerability_models(self) -> VulnerabilityModels:
+        return DictBasedVulnerabilityModels(calc.get_default_vulnerability_models())
+
+
 class Container(containers.DeclarativeContainer):
     config = providers.Configuration(default={"zarr_sources": ["embedded", "hazard"]})
 
@@ -47,9 +58,12 @@ class Container(containers.DeclarativeContainer):
 
     hazard_model_factory = providers.Factory(ZarrHazardModelFactory, reader=zarr_reader, source_paths=source_paths)
 
+    vulnerability_models_factory = providers.Factory(DictBasedVulnerabilityModelsFactory)
+
     requester = providers.Singleton(
         Requester,
         hazard_model_factory=hazard_model_factory,
+        vulnerability_models_factory=vulnerability_models_factory,
         inventory=inventory,
         inventory_reader=inventory_reader,
         reader=zarr_reader,

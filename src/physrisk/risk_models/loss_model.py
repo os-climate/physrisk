@@ -10,7 +10,7 @@ from ..kernel.calculation import get_default_hazard_model, get_default_vulnerabi
 from ..kernel.financial_model import FinancialModelBase
 from ..kernel.hazard_model import HazardModel
 from ..kernel.impact import calculate_impacts
-from ..kernel.vulnerability_model import VulnerabilityModelBase
+from ..kernel.vulnerability_model import DictBasedVulnerabilityModels, VulnerabilityModels
 
 
 class Aggregator(ABC):
@@ -27,11 +27,13 @@ class LossModel:
     def __init__(
         self,
         hazard_model: Optional[HazardModel] = None,
-        vulnerability_models: Optional[Dict[type, Sequence[VulnerabilityModelBase]]] = None,
+        vulnerability_models: Optional[VulnerabilityModels] = None,
     ):
         self.hazard_model = get_default_hazard_model() if hazard_model is None else hazard_model
         self.vulnerability_models = (
-            get_default_vulnerability_models() if vulnerability_models is None else vulnerability_models
+            DictBasedVulnerabilityModels(get_default_vulnerability_models())
+            if vulnerability_models is None
+            else vulnerability_models
         )
 
     """Calculates the financial impact on a list of assets."""

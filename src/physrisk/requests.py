@@ -19,7 +19,11 @@ from physrisk.kernel.exposure import JupterExposureMeasure, calculate_exposures
 from physrisk.kernel.hazards import all_hazards
 from physrisk.kernel.impact_distrib import EmptyImpactDistrib
 from physrisk.kernel.risk import AssetLevelRiskModel, Measure, MeasureKey
-from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
+from physrisk.kernel.vulnerability_model import (
+    DictBasedVulnerabilityModels,
+    VulnerabilityModels,
+    VulnerabilityModelsFactory,
+)
 
 from .api.v1.hazard_data import (
     HazardAvailabilityRequest,
@@ -62,6 +66,7 @@ class Requester:
     def __init__(
         self,
         hazard_model_factory: HazardModelFactory,
+        vulnerability_models_factory: VulnerabilityModelsFactory,
         inventory: Inventory,
         inventory_reader: InventoryReader,
         reader: ZarrReader,
@@ -69,6 +74,7 @@ class Requester:
     ):
         self.colormaps = colormaps
         self.hazard_model_factory = hazard_model_factory
+        self.vulnerability_models_factory = vulnerability_models_factory
         self.inventory = inventory
         self.inventory_reader = inventory_reader
         self.zarr_reader = reader
@@ -93,7 +99,8 @@ class Requester:
         elif request_id == "get_asset_impact":
             request = AssetImpactRequest(**request_dict)
             hazard_model = self.hazard_model_factory.hazard_model(interpolation=request.calc_settings.hazard_interp)
-            return dumps(_get_asset_impacts(request, hazard_model).model_dump())
+            vulnerability_models = self.vulnerability_models_factory.vulnerability_models()
+            return dumps(_get_asset_impacts(request, hazard_model).model_dump(), vulnerability_models)
         elif request_id == "get_example_portfolios":
             return dumps(_get_example_portfolios())
         else:
@@ -288,10 +295,12 @@ def _get_asset_exposures(request: AssetExposureRequest, hazard_model: HazardMode
 def _get_asset_impacts(
     request: AssetImpactRequest,
     hazard_model: HazardModel,
-    vulnerability_models: Optional[Dict[Type[Asset], Sequence[VulnerabilityModelBase]]] = None,
+    vulnerability_models: Optional[VulnerabilityModels] = None,
 ):
     vulnerability_models = (
-        calc.get_default_vulnerability_models() if vulnerability_models is None else vulnerability_models
+        DictBasedVulnerabilityModels(calc.get_default_vulnerability_models())
+        if vulnerability_models is None
+        else vulnerability_models
     )
     # we keep API definition of asset separate from internal Asset class; convert by reflection
     # based on asset_class:

@@ -24,6 +24,7 @@ class TestExposureMeasures(TestWithCredentials):
         inventory = EmbeddedInventory()
         requester = Requester(
             hazard_model_factory=hazard_model_factory,
+            vulnerability_models_factory=None,
             inventory=inventory,
             inventory_reader=InventoryReader(fs=local.LocalFileSystem(), base_path=""),
             reader=ZarrReader(store=store),

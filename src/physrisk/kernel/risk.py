@@ -8,7 +8,7 @@ from physrisk.kernel.hazard_model import HazardModel
 from physrisk.kernel.hazards import Hazard, all_hazards
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey, calculate_impacts
 from physrisk.kernel.impact_distrib import EmptyImpactDistrib, ImpactDistrib
-from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
+from physrisk.kernel.vulnerability_model import VulnerabilityModels
 
 # from asyncio import ALL_COMPLETED
 # import concurrent.futures
@@ -26,7 +26,7 @@ class RiskModel:
     """Base class for a risk model (i.e. a calculation of risk that makes use of hazard and vulnerability
     models)."""
 
-    def __init__(self, hazard_model: HazardModel, vulnerability_models: Dict[type, Sequence[VulnerabilityModelBase]]):
+    def __init__(self, hazard_model: HazardModel, vulnerability_models: VulnerabilityModels):
         self._hazard_model = hazard_model
         self._vulnerability_models = vulnerability_models
 
@@ -98,7 +98,7 @@ class AssetLevelRiskModel(RiskModel):
     def __init__(
         self,
         hazard_model: HazardModel,
-        vulnerability_models: Dict[type, Sequence[VulnerabilityModelBase]],
+        vulnerability_models: VulnerabilityModels,
         measure_calculators: Dict[type, RiskMeasureCalculator],
     ):
         """Risk model that calculates risk measures at the asset level for a sequence

@@ -100,7 +100,7 @@ class Requester:
             request = AssetImpactRequest(**request_dict)
             hazard_model = self.hazard_model_factory.hazard_model(interpolation=request.calc_settings.hazard_interp)
             vulnerability_models = self.vulnerability_models_factory.vulnerability_models()
-            return dumps(_get_asset_impacts(request, hazard_model).model_dump(), vulnerability_models)
+            return dumps(_get_asset_impacts(request, hazard_model, vulnerability_models).model_dump())
         elif request_id == "get_example_portfolios":
             return dumps(_get_example_portfolios())
         else:

@@ -84,23 +84,7 @@ class WaterRisk(Hazard):
     pass
 
 
-class WaterDemand(WaterRisk):
-    pass
-
-
-class WaterSupply(WaterRisk):
-    pass
-
-
-class WaterStress(WaterRisk):
-    pass
-
-
 class WaterTemperature(ChronicHeat):
-    pass
-
-
-class WaterDepletion(WaterRisk):
     pass
 
 

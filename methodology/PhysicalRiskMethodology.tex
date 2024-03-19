@@ -915,9 +915,9 @@ Water levels in rivers and/or reservoirs are low during droughts. Wet-cooled pla
 \begin{itemize}
 \item The number of months per year that the 12-month rolling average of SPEI at the geolocation of the generation unit is below a discrete set of thresholds ranging from $-3.6$ to $0$. An alternative hazard indicator provides only the number of months per year that the 3-month rolling average of SPEI is below $-2$. When relying on this alternative hazard indicator, we assume that the number of months per year that the 3-month rolling average of SPEI is below a threshold $x$ lower than $-2$ satisfies
 $$
-\left(\text{estimated \#months/year with 3-month SPEI $<-2$}\right)\left(\frac{\Phi\left(x\right)}{\Phi\left(-2\right)}\right)
+\left(\text{estimated \#months/year with 3-month SPEI $<-2$}\right)\left(\frac{\Phi_{\mathcal{N}\left(0,1\right)}\left(x\right)}{\Phi_{\mathcal{N}\left(0,1\right)}\left(-2\right)}\right)
 $$
-given the cumulative distribution function $\Phi$ of a standard normal random variable.
+given the cumulative distribution function $\Phi_{\mathcal{N}\left(0,1\right)}$ of a standard normal random variable $\mathcal{N}\left(0,1\right)$.
 \item The SPEI-disruption curve estimating the fraction of inoperable capacity with respect to the 12-month rolling average of SPEI. It applies to once-through or recirculating steam turbine. The largest inoperable capacity ratio interpolated for a given SPEI threshold across potential disruption curves is chosen when turbine and/or cooling system is not provided as an asset archetype.
 \end{itemize}
 The output is a discrete disruption probability curve due to drought risks. It provides the probability in a future projection that the operations of the generation unit are disrupted for a given period expressed as a year fraction.
@@ -969,10 +969,10 @@ Water temperature primarily affects a power plant’s cooling efficiency and/or 
 \end{itemize}
 \item The number of days per year that the daily average WBGT at the geolocation of the generation unit is above a discrete set of thresholds ranging from 5°C to 60°C. The 99\%-quantile interpolated from the probability curve in a baseline scenario corresponds to the WBGT below which a steam turbine with a recirculating cooling system does not experience generation losses. The joint distribution of water temperature and WBGT in a climate-conditioned projection is estimated using a Gaussian copula with a correlation $\rho$ set to $50$\% by default. The discrete exceedance probability curve for water temperature (WT) knowing that WBGT exceeds the 99\%-quantile of the baseline scenario (denoted $\text{WBGT}^{99\%}_{\text{baseline}}$) is thus given by:
 $$
-\frac{\Phi_{\rho}\left(\Phi^{-1}\left(\text{\#weeks/year WT}>.\right),\Phi^{-1}\left(\text{\#days/year WBGT }>\text{WBGT}^{99\%}_{\text{baseline}}\right)\right)}
+\frac{\Phi_{\rho}\left(\Phi^{-1}_{\mathcal{N}\left(0,1\right)}\left(\text{\#weeks/year WT}>.\right),\Phi^{-1}_{\mathcal{N}\left(0,1\right)}\left(\text{\#days/year WBGT }>\text{WBGT}^{99\%}_{\text{baseline}}\right)\right)}
 {\left(\text{\#days/year WBGT }> \text{WBGT}^{99\%}_{\text{baseline}}\right)}
 $$
-with $\Phi_{\rho}$ the cumulative distribution functions of a $\rho$-correlated standard normal random pair. Scaled by the probability in a climate-conditioned projection that WBGT exceeds the 99\%-quantile of the baseline scenario, it replaces the unconditional discrete exceedance probability curve calculated in the first step when the generation unit features a steam turbine with a recirculating cooling system. DWT is also floored at 24.7°C\footnote{The intake water temperature equivalent to a 35°C discharge water temperature given the linear approximation:
+with $\Phi_{\rho}$ the cumulative distribution functions of a $\rho$-correlated standard normal random pair. Scaled by the probability in a climate-conditioned projection that WBGT exceeds the 99\%-quantile of the baseline scenario, it replaces the unconditional discrete exceedance probability curve calculated in the first step when the generation unit features a steam turbine with a recirculating cooling system. DWT is also capped at 24.7°C\footnote{The intake water temperature equivalent to a 35°C discharge water temperature given the linear approximation:
 $$
 T_{\text{discharge}}=1.0191\times T_{\text{intake}}+9.7951^{\circ}C
 $$
@@ -1195,11 +1195,30 @@ To get the final impact we assume that the product of the two variables are norm
 
 \section{Water stress}
 \subsection{Hazard models}
+Water stress is modelled as a chronic risk using some indicators of water-related risks implemented by the World Resources Institute (WRI) Aqueduct 4.0 \cite{KuzmaEtAl:2023}:
+\begin{itemize}
+\item Water demand is the maximum potential water required to meet sectoral demands (domestic, industrial, irrigation and livestock).
+\item Water supply is the available blue water, that is, the total amount of renewable freshwater available to a sub-basin with upstream consumption removed.
+\item Water stress is an indicator of competition for water resources defined as the ratio of water demand by human society divided by available blue water.
+\item Water depletion is the ratio of total water consumption divided by available renewable water supplies. Total water consumption includes domestic, industrial, irrigation and livestock consumptive uses. Available renewable water supplies include the impact of upstream consumptive water users and large dams on downstream water availability.
+\end{itemize}
 \subsection{Vulnerability models}
 \subsubsection{Thermal power generation projects}
 In high water-stress areas, decreased water availability, caused either by reduced runoff or increased demand/competition, can result in reduction in permitted water withdrawals and/or more stringent water efficiency regulations in the future. The water stress module described in \cite{LuoEtAl:2021,LuoEtAl:2023} is implemented in the \emph{physrisk} library. The inputs are:
 \begin{itemize}
-\item TODO
+\item The indicator for water stress in a climate-conditioned projection at the geolocation of the generation unit. A catchment with Water Stress (WS) higher than 40\% is considered highly water stressed and prone to water-stressed induced efficiency reductions impacting wet-cooled plants. In this vulnerability model, a steam turbine with a once-through or recirculating cooling system experiences generation losses when Water Stress exceeds 40\%. From its mean provided as an input, Water Stress is assumed to follow a shifted uniform probability distribution
+$$
+\text{WS}\sim\left(\text{water demand indicator}\right)_{\text{climate-conditioned projection}}-0.5+\mathcal{U}\left(0,1\right)
+$$
+so that
+$$
+\mathbb{P}\left(WS>0.4\right)=\max\left(0,\min\left(0.1+\left(\text{water demand indicator}\right)_{\text{climate-conditioned projection}},1\right)\right)
+$$
+\item The indicator for water demand in both a climate-conditioned projection and a baseline scenario at the geolocation of the generation unit. It allows to calculate the Supply Reduction Rate (SRR) corresponding to the relative change of the future blue water availability from baseline
+$$
+\text{SRR}=\displaystyle\frac{\left(\text{water demand indicator}\right)_{\text{climate-conditioned projection}}}{\left(\text{water demand indicator}\right)_{\text{baseline}}}-1
+$$
+\item The disruption curve estimating the number of stranded days in a year from the supply reduction rate due to a limited cooling water budget. It depends on the cooling technology (once-through or recirculating) of the steam turbine. The maximum number of inoperable days interpolated for a given SRR across potential disruption curves is chosen when turbine and/or cooling system is not provided as an asset archetype.
 \end{itemize}
 The output is a discrete disruption probability curve due to water stress risks. It provides the probability in a future projection that the operations of the generation unit are disrupted for a given period expressed as a year fraction.
 

@@ -94,5 +94,5 @@ class TestExampleModels(unittest.TestCase):
         results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
 
         self.assertAlmostEqual(
-            results[assets[0], RiverineInundation, None, None].impact.to_exceedance_curve().probs[0], 0.499
+            results[assets[0], RiverineInundation, scenario, year].impact.to_exceedance_curve().probs[0], 0.499
         )

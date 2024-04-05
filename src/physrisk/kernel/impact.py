@@ -72,23 +72,27 @@ def calculate_impacts(  # noqa: C901
             hazard_data = [responses[req] for req in get_iterable(requests)]
             if any(isinstance(hd, HazardDataFailedResponse) for hd in hazard_data):
                 assert isinstance(model, VulnerabilityModelBase)
-                results[ImpactKey(asset=asset, hazard_type=model.hazard_type)] = AssetImpactResult(EmptyImpactDistrib())
+                results[ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)] = (
+                    AssetImpactResult(EmptyImpactDistrib())
+                )
                 continue
             try:
                 if isinstance(model, VulnerabilityModelAcuteBase):
                     impact, vul, event = model.get_impact_details(asset, hazard_data)
-                    results[ImpactKey(asset=asset, hazard_type=model.hazard_type)] = AssetImpactResult(
-                        impact, vulnerability=vul, event=event, hazard_data=hazard_data
+                    results[ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)] = (
+                        AssetImpactResult(impact, vulnerability=vul, event=event, hazard_data=hazard_data)
                     )
                 elif isinstance(model, VulnerabilityModelBase):
                     impact = model.get_impact(asset, hazard_data)
-                    results[ImpactKey(asset=asset, hazard_type=model.hazard_type)] = AssetImpactResult(
-                        impact, hazard_data=hazard_data
+                    results[ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)] = (
+                        AssetImpactResult(impact, hazard_data=hazard_data)
                     )
             except Exception as e:
                 logger.exception(e)
                 assert isinstance(model, VulnerabilityModelBase)
-                results[ImpactKey(asset=asset, hazard_type=model.hazard_type)] = AssetImpactResult(EmptyImpactDistrib())
+                results[ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)] = (
+                    AssetImpactResult(EmptyImpactDistrib())
+                )
     return results
 
 

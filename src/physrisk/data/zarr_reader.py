@@ -300,7 +300,13 @@ class ZarrReader:
 
         data = z.get_coordinate_selection((iz, iy, ix))  # type: ignore # index, row, column
 
-        nan_value = -9999.0
+        # nodata in the zarr files are considered to be
+        # 1) float("nan") (which Zarr supports) or 2) nan_value of -9999.0
+        # 2 is legacy behaviour: for Zarr better to use float("nan")
+        nan_input_value = -9999.0
+        # retain ability to output arbitrary NaN value, although might be no longer needed as
+        # physrisk deals separately, e.g. with removing NaNs before passing back via JSON
+        nan_output_value = float("nan")
 
         if interpolation == "linear":
             xf = image_coords[0, :][..., None] - icx  # type: ignore
@@ -310,28 +316,28 @@ class ZarrReader:
             w2 = (1 - yf) * xf
             w3 = yf * xf
             w = np.transpose(np.array([w0, w1, w2, w3]), (1, 0, 2))
-            mask = 1 - np.isnan(np.where(data == nan_value, np.nan, data))
+            mask = 1 - np.isnan(np.where(data == nan_input_value, np.nan, data))
             w_good = w * mask
             w_good_sum = np.transpose(
                 np.sum(w_good, axis=1).reshape(tuple([1]) + np.sum(w_good, axis=1).shape), axes=(1, 0, 2)
             )
             w_used = np.divide(w_good, np.where(w_good_sum == 0.0, np.nan, w_good_sum))
-            return np.nan_to_num(np.sum(w_used * data, axis=1), nan=nan_value)
+            return np.nan_to_num(np.sum(w_used * data, axis=1), nan=nan_output_value)
 
         elif interpolation == "max":
-            data = np.where(data == nan_value, -np.inf, data)
+            data = np.where(data == nan_input_value, -np.inf, data)
             return np.nan_to_num(
                 np.maximum.reduce([data[:, 0, :], data[:, 1, :], data[:, 2, :], data[:, 3, :]]),
-                nan=nan_value,
-                neginf=nan_value,
+                nan=nan_output_value,
+                neginf=nan_output_value,
             )
 
         elif interpolation == "min":
-            data = np.where(data == nan_value, np.inf, data)
+            data = np.where(data == nan_input_value, np.inf, data)
             return np.nan_to_num(
                 np.minimum.reduce([data[:, 0, :], data[:, 1, :], data[:, 2, :], data[:, 3, :]]),
-                nan=nan_value,
-                posinf=nan_value,
+                nan=nan_output_value,
+                posinf=nan_output_value,
             )
 
         else:

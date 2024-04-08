@@ -106,7 +106,8 @@ class PregeneratedHazardModel(HazardModel):
                 )
 
                 for i, req in enumerate(batch):
-                    responses[req] = HazardParameterDataResponse(parameters[i, :], defns)
+                    valid = ~np.isnan(parameters[i, :])
+                    responses[req] = HazardParameterDataResponse(parameters[i, :][valid], defns[valid])
         except Exception as err:
             # e.g. the requested data is unavailable
             for i, req in enumerate(batch):

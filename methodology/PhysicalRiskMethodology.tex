@@ -118,17 +118,19 @@
 \title{Physical Climate Risk Methodology}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\author{Joe Moorhouse\thanks{\textit{E-mail}: joe.Moorhouse@gmail.com}
+\author{Joe Moorhouse\thanks{\textit{E-mail}: joe.moorhouse@gmail.com}
+        \and
+        Mariem Bouchaala\thanks{\textit{E-mail}: mariem.bouchaala@essec.edu}
+        \and
+        Davide Ferri
         \and
         Florian Gallo
         \and
-        Álvaro Romaniega
+        Eglantine Giraud
         \and
         Michael Levin
         \and
-        Mariem Bouchaala\thanks{{E-mail}: mariem.bouchaala@essec.edu}
-        \and
-        Davide Ferri\thanks{\textit{E-mail}: davide.ferri.94@gmail.com
+        Álvaro Romaniega\thanks{\textit{E-mail}: aromaniega@arfimaconsulting.com. Romaniega´s work has been developed under CPP2021-008644, financed by MCIN/AEI/10.13039/501100011033 and Europe´s NextGenerationEU/PRTR.
         \smallskip
         \newline% \indent
     The views expressed in this paper are those of the authors and do not necessarily reflect the views and policies of their respective employers.}
@@ -883,7 +885,18 @@ whole globe, leading to a potentially large mismatch between historical and futu
 \subsection{Hazard models}
 Inundation is modelled as an acute risk using the approach of Section~\ref{Sec:MathematicalDescriptionOfAssetImpactModel}. Hazard event models compatible with this method provide inundation depths for different annual probabilities of occurrence -- or equivalently return periods. The need for sufficient granularity in the set of return periods is discussed in \cite{WardEtAl:2011}.
 
-Inundation hazards are incorporated into physical risk calculations using the World Resource Institute (WRI) Aqueduct flood model \cite{WardEtAl:2020} which has relatively high return-period granularity. This is based on the global modelling approach of \cite{WardEtAl:2013}.
+Inundation comprises three types:
+\begin{itemize}
+\item Coastal
+\item Pluvial
+\item Riverine (aka Fluvial)
+\end{itemize}
+
+The World Resource Institute (WRI) Aqueduct flood model \cite{WardEtAl:2020} is a public-domain global flood model, comprising coastal and riverine inundation, which has relatively high return-period granularity. The data set is based on the modelling approach of \cite{WardEtAl:2013}. The WRI data set has a spatial resolution of approximately 1 km at the equator.
+
+Higher resolution public-domain sets are available, albeit the ones we are aware of -- and have on-boarded into OS-Climate -- cover limited geographical regions. TU Delft provide a pan-European set \cite{PaprotnyEtAl:2016} with a 100 m resolution, covering riverine and coastal hazards.
+
+Some commercial flood models provide global coastal, pluvial and riverine hazard maps and event sets with resolution sufficient to model street-level inundation (approx. 5 m resolution or finer). OS-Climate provides connectors for certain model-providers, to facilitate integration of commercial alongside public-domain models.
 
 {\textcolor{red}{\emph{[Discuss and include refs for approaches based on flooded area?]}}}
 
@@ -1221,6 +1234,71 @@ $$
 \item The disruption curve estimating the number of stranded days in a year from the supply reduction rate due to a limited cooling water budget. It depends on the cooling technology (once-through or recirculating) of the steam turbine. The maximum number of inoperable days interpolated for a given SRR across potential disruption curves is chosen when turbine and/or cooling system is not provided as an asset archetype.
 \end{itemize}
 The output is a discrete disruption probability curve due to water-related risks. It provides the probability in a future projection that the operations of the generation unit are disrupted for a given period expressed as a year fraction.
+
+\section{Disaggregation data sets}
+
+Where asset locations are unknown, the vulnerability of those assets to climate hazards may still be modelled by using aggregate exposure information. For example, the total value of a portfolio of assets may be known as well as the region containing those assets, even if the individual locations are unknown. The total asset value can be \emph{disaggregated} using  a (two dimension) probability distribution of the asset locations.
+
+For high resolution hazards such as flood and wildfire, two possible approaches are:
+\begin{itemize}
+\item Sample a number of point locations from the distribution of asset locations.
+\item Split the region into grid cells and integrate over the cells.
+\end{itemize}
+
+The latter is challenging in case of high resolution hazards, although techniques do exist to reduce the number of grid cells -- i.e. to use a resolution lower than the resolution of the original hazard indicator data set (in cases where that may be impractical). For example, distributions of grid cell fractions experiencing hazard intensities of different magnitudes can be derived.
+
+In this section however, we focus more on the former approach . Essentially, this is the sampling of a proxy portfolio which is used to disaggregate the total asset value and has the advantage that the proxy portfolios can be treated in the same way as known asset portfolios.
+
+
+\subsection{Sampling from two dimensional data sets}
+The probability density of the asset locations is given by $f_{X, Y}(x, y)$ where $x$ and $y$ are spatial co-ordinates. The fraction of the exposure measure (e.g. asset total value) within a particular region is given by:
+
+\begin{equation}
+    \label{Eq:Disagg1}
+    \iint\limits_{\mathrm{region}} f_{X, Y}(x, y) \, dx \, dy
+\end{equation}
+
+In order to sample $n$ locations from $f_{X, Y}$, the marginal distribution is calculated:
+
+\begin{equation}
+    \label{Eq:Disagg2}
+    f_X(x) = \int_{y} f_{X, Y}(x, y) \, dy
+\end{equation}
+
+and values $x_k$, $k \in [1..n]$ are sampled from this. For each $k$, $y_k$ is then sampled from the conditional distribution, $f_{Y|X}(y, x_k)$.
+
+\begin{equation}
+    \label{Eq:Disagg3}
+    f_{Y|X}(y, x_k) = f_{X, Y}(x_k, y) / f_X(x_k)
+\end{equation}
+
+In both cases, sampling is done by finding the inverse cumulative of the distribution. In the discrete case, say we have a two dimensional exposure data set $\mathbf{E}$ with elements $E_{i, j}$, $i$ corresponding to the $x$ spatial dimension and $j$ the $y$ dimension. $\sum_{i,j} E_{i,j} = 1$ by construction. We can define a discrete form of the cumulative $\int_{-\infty}^{x} f_X(u) \, du$, $F_X(i)$ as:
+
+\begin{equation}
+    \label{Eq:Disagg4}
+    F_X(i) = \sum_{u = 1}^{i} \sum_{j=1}^{n_j} E_{u, j}
+\end{equation}
+
+The index $i_k$ is then sampled by drawing uniforms $p_k$ from $P \sim \mathcal{U}(0, 1)$ and finding $i_k$, the largest value of $i$ such that $p_k < F_X(i)$
+
+\begin{equation}
+    \label{Eq:Disagg4}
+    i_k = \sup \{ i : p_k <= F_X(i) \}
+\end{equation}
+
+The discrete conditional is then calculated:
+
+\begin{equation}
+    \label{Eq:Disagg5}
+    F_{Y|X}(j, i_k,) = \sum_{u = 1}^{j} E_{i_k, u} / \sum_{u = 1}^{n_j} E_{i_k, u}
+\end{equation}
+
+and index $j_k$ is then sampled by drawing another set of uniforms $q_k$:
+
+\begin{equation}
+    \label{Eq:Disagg4}
+    j_k = \sup \{ j : q_k <= F_{Y|X}(j, i_k) \}
+\end{equation}
 
 \clearpage
 \printglossaries

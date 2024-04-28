@@ -260,25 +260,33 @@ def _get_hazard_data(request: HazardDataRequest, hazard_model: HazardModel):
     return response
 
 
-def create_assets(assets: Assets):
+def create_assets(asset: Assets, assets: Optional[List[Asset]]):
     """Create list of Asset objects from the Assets API object:"""
     module = import_module("physrisk.kernel.assets")
-    asset_objs = []
-    for asset in assets.items:
-        asset_obj = cast(
-            Asset,
-            getattr(module, asset.asset_class)(
-                asset.latitude, asset.longitude, type=asset.type, location=asset.location
-            ),
-        )
-        asset_objs.append(asset_obj)
-    return asset_objs
+    if assets is not None:
+        if len(asset.items) != 0:
+            raise ValueError("Cannot provide asset items in the request while specifying an explicit asset list")
+        return assets
+    else:
+        asset_objs = []
+        for item in asset.items:
+            if hasattr(module, item.asset_class):
+                asset_obj = cast(
+                    Asset,
+                    getattr(module, item.asset_class)(
+                        item.latitude, item.longitude, type=item.type, location=item.location
+                    ),
+                )
+                asset_objs.append(asset_obj)
+        return asset_objs
 
 
-def _get_asset_exposures(request: AssetExposureRequest, hazard_model: HazardModel):
-    assets = create_assets(request.assets)
+def _get_asset_exposures(
+    request: AssetExposureRequest, hazard_model: HazardModel, assets: Optional[List[Asset]] = None
+):
+    _assets = create_assets(request.assets, assets)
     measure = JupterExposureMeasure()
-    results = calculate_exposures(assets, hazard_model, measure, scenario="ssp585", year=2030)
+    results = calculate_exposures(_assets, hazard_model, measure, scenario="ssp585", year=2030)
     return AssetExposureResponse(
         items=[
             AssetExposure(
@@ -296,6 +304,7 @@ def _get_asset_impacts(
     request: AssetImpactRequest,
     hazard_model: HazardModel,
     vulnerability_models: Optional[VulnerabilityModels] = None,
+    assets: Optional[List[Asset]] = None,
 ):
     vulnerability_models = (
         DictBasedVulnerabilityModels(calc.get_default_vulnerability_models())
@@ -304,7 +313,7 @@ def _get_asset_impacts(
     )
     # we keep API definition of asset separate from internal Asset class; convert by reflection
     # based on asset_class:
-    assets = create_assets(request.assets)
+    _assets = create_assets(request.assets, assets)
     measure_calcs = calc.get_default_risk_measure_calculators()
     risk_model = AssetLevelRiskModel(hazard_model, vulnerability_models, measure_calcs)
 
@@ -312,16 +321,16 @@ def _get_asset_impacts(
     years = [request.year] if request.years is None or len(request.years) == 0 else request.years
     risk_measures = None
     if request.include_measures:
-        impacts, measures = risk_model.calculate_risk_measures(assets, scenarios, years)
-        measure_ids_for_asset, definitions = risk_model.populate_measure_definitions(assets)
+        impacts, measures = risk_model.calculate_risk_measures(_assets, scenarios, years)
+        measure_ids_for_asset, definitions = risk_model.populate_measure_definitions(_assets)
         # create object for API:
-        risk_measures = _create_risk_measures(measures, measure_ids_for_asset, definitions, assets, scenarios, years)
+        risk_measures = _create_risk_measures(measures, measure_ids_for_asset, definitions, _assets, scenarios, years)
     elif request.include_asset_level:
-        impacts = risk_model.calculate_impacts(assets, scenarios, years)
+        impacts = risk_model.calculate_impacts(_assets, scenarios, years)
 
     if request.include_asset_level:
         ordered_impacts: Dict[Asset, List[AssetSingleImpact]] = {}
-        for asset in assets:
+        for asset in _assets:
             ordered_impacts[asset] = []
         for k, v in impacts.items():
             if request.include_calc_details:

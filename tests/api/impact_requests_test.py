@@ -190,19 +190,7 @@ class TestImpactRequests(TestWithCredentials):
         ]
 
         request_dict = {
-            "assets": Assets(
-                items=[
-                    {
-                        "asset_class": asset.__class__.__name__ + "_DO_NOT_USE",
-                        "type": asset.type,
-                        "capacity": asset.capacity,
-                        "location": asset.location,
-                        "latitude": asset.latitude,
-                        "longitude": asset.longitude,
-                    }
-                    for asset in assets[::-1]
-                ]
-            ),
+            "assets": Assets(items=[]),
             "include_asset_level": True,
             "include_calc_details": True,
             "years": [2050],
@@ -562,7 +550,7 @@ class TestImpactRequests(TestWithCredentials):
             request,
             ZarrHazardModel(source_paths=source_paths, reader=ZarrReader(store)),
             vulnerability_models=vulnerability_models,
-            extra_assets=assets,
+            assets=assets,
         )
 
         # Air Temperature

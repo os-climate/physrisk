@@ -175,7 +175,7 @@ class TestImpactRequests(TestWithCredentials):
             ThermalPowerGeneratingAsset(
                 latitude=latitudes[0],
                 longitude=longitudes[0],
-                location="North Americal",
+                location="North America",
                 capacity=1288.4,
                 type=archetype,
             )

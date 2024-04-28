@@ -167,64 +167,42 @@ class TestImpactRequests(TestWithCredentials):
         self.assertEqual(response.asset_impacts[0].impacts[0].hazard_type, "CoastalInundation")
 
     def test_thermal_power_generation(self):
+
         latitudes = np.array([32.6017])
         longitudes = np.array([-87.7811])
 
-        assets = {
-            "items": [
-                {
-                    "asset_class": "ThermalPowerGeneratingAsset",
-                    "type": "Gas",
-                    "capacity": 1288.4,
-                    "location": "North America",
-                    "latitude": latitudes[0],
-                    "longitude": longitudes[0],
-                },
-                {
-                    "asset_class": "ThermalPowerGeneratingAsset",
-                    "type": "Gas/Gas",
-                    "capacity": 1288.4,
-                    "location": "North America",
-                    "latitude": latitudes[0],
-                    "longitude": longitudes[0],
-                },
-                {
-                    "asset_class": "ThermalPowerGeneratingAsset",
-                    "type": "Gas/Steam",
-                    "capacity": 1288.4,
-                    "location": "North America",
-                    "latitude": latitudes[0],
-                    "longitude": longitudes[0],
-                },
-                {
-                    "asset_class": "ThermalPowerGeneratingAsset",
-                    "type": "Gas/Steam/Dry",
-                    "capacity": 1288.4,
-                    "location": "North America",
-                    "latitude": latitudes[0],
-                    "longitude": longitudes[0],
-                },
-                {
-                    "asset_class": "ThermalPowerGeneratingAsset",
-                    "type": "Gas/Steam/OnceThrough",
-                    "capacity": 1288.4,
-                    "location": "North America",
-                    "latitude": latitudes[0],
-                    "longitude": longitudes[0],
-                },
-                {
-                    "asset_class": "ThermalPowerGeneratingAsset",
-                    "type": "Gas/Steam/Recirculating",
-                    "capacity": 1288.4,
-                    "location": "North America",
-                    "latitude": latitudes[0],
-                    "longitude": longitudes[0],
-                },
+        assets = [
+            ThermalPowerGeneratingAsset(
+                latitude=latitudes[0],
+                longitude=longitudes[0],
+                location="North Americal",
+                capacity=1288.4,
+                type=archetype,
+            )
+            for archetype in [
+                "Gas",
+                "Gas/Gas",
+                "Gas/Steam",
+                "Gas/Steam/Dry",
+                "Gas/Steam/OnceThrough",
+                "Gas/Steam/Recirculating",
             ]
-        }
+        ]
 
         request_dict = {
-            "assets": assets,
+            "assets": Assets(
+                items=[
+                    {
+                        "asset_class": asset.__class__.__name__ + "_DO_NOT_USE",
+                        "type": asset.type,
+                        "capacity": asset.capacity,
+                        "location": asset.location,
+                        "latitude": asset.latitude,
+                        "longitude": asset.longitude,
+                    }
+                    for asset in assets[::-1]
+                ]
+            ),
             "include_asset_level": True,
             "include_calc_details": True,
             "years": [2050],
@@ -584,6 +562,7 @@ class TestImpactRequests(TestWithCredentials):
             request,
             ZarrHazardModel(source_paths=source_paths, reader=ZarrReader(store)),
             vulnerability_models=vulnerability_models,
+            extra_assets=assets,
         )
 
         # Air Temperature

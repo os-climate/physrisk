@@ -265,18 +265,19 @@ def create_assets(assets: Assets):
     module = import_module("physrisk.kernel.assets")
     asset_objs = []
     for asset in assets.items:
-        asset_obj = cast(
-            Asset,
-            getattr(module, asset.asset_class)(
-                asset.latitude, asset.longitude, type=asset.type, location=asset.location
-            ),
-        )
-        asset_objs.append(asset_obj)
+        if hasattr(module, asset.asset_class):
+            asset_obj = cast(
+                Asset,
+                getattr(module, asset.asset_class)(
+                    asset.latitude, asset.longitude, type=asset.type, location=asset.location
+                ),
+            )
+            asset_objs.append(asset_obj)
     return asset_objs
 
 
-def _get_asset_exposures(request: AssetExposureRequest, hazard_model: HazardModel):
-    assets = create_assets(request.assets)
+def _get_asset_exposures(request: AssetExposureRequest, hazard_model: HazardModel, extra_assets: List[Asset] = []):
+    assets = create_assets(request.assets) + extra_assets
     measure = JupterExposureMeasure()
     results = calculate_exposures(assets, hazard_model, measure, scenario="ssp585", year=2030)
     return AssetExposureResponse(
@@ -296,6 +297,7 @@ def _get_asset_impacts(
     request: AssetImpactRequest,
     hazard_model: HazardModel,
     vulnerability_models: Optional[VulnerabilityModels] = None,
+    extra_assets: List[Asset] = [],
 ):
     vulnerability_models = (
         DictBasedVulnerabilityModels(calc.get_default_vulnerability_models())
@@ -304,7 +306,7 @@ def _get_asset_impacts(
     )
     # we keep API definition of asset separate from internal Asset class; convert by reflection
     # based on asset_class:
-    assets = create_assets(request.assets)
+    assets = create_assets(request.assets) + extra_assets
     measure_calcs = calc.get_default_risk_measure_calculators()
     risk_model = AssetLevelRiskModel(hazard_model, vulnerability_models, measure_calcs)
 

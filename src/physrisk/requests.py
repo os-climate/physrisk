@@ -262,12 +262,12 @@ def _get_hazard_data(request: HazardDataRequest, hazard_model: HazardModel):
 
 def create_assets(asset: Assets, assets: Optional[List[Asset]]):
     """Create list of Asset objects from the Assets API object:"""
-    module = import_module("physrisk.kernel.assets")
     if assets is not None:
         if len(asset.items) != 0:
             raise ValueError("Cannot provide asset items in the request while specifying an explicit asset list")
         return assets
     else:
+        module = import_module("physrisk.kernel.assets")
         asset_objs = []
         for item in asset.items:
             if hasattr(module, item.asset_class):
@@ -278,6 +278,8 @@ def create_assets(asset: Assets, assets: Optional[List[Asset]]):
                     ),
                 )
                 asset_objs.append(asset_obj)
+            else:
+                raise ValueError(f"asset type '{item.asset_class}' not found")
         return asset_objs
 
 

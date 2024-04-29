@@ -28,7 +28,7 @@ class ZarrHazardModelFactory(HazardModelFactory):
         self.store = store
         self.reader = reader
 
-    def hazard_model(self, interpolation: str = "floor"):
+    def hazard_model(self, interpolation: str = "floor", provider_max_requests: Dict[str, int] = {}):
         # this is done to allow interpolation to be set dynamically, e.g. different requests can have different
         # parameters.
         return ZarrHazardModel(

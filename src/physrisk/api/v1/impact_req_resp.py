@@ -21,6 +21,12 @@ class AssetImpactRequest(BaseModel):
     include_asset_level: bool = Field(True, description="If true, include asset-level impacts.")
     include_measures: bool = Field(False, description="If true, include calculation of risk measures.")
     include_calc_details: bool = Field(True, description="If true, include impact calculation details.")
+    provider_max_requests: Dict[str, int] = Field(
+        {},
+        description="The maximum permitted number of requests \
+        to external providers. This setting is intended in particular for paid-for data. The key is the provider \
+        ID and the value is the maximum permitted requests.",
+    )
     scenarios: Optional[Sequence[str]] = Field([], description="Name of scenarios ('rcp8p5')")
     years: Optional[Sequence[int]] = Field(
         [],

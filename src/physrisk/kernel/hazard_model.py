@@ -111,12 +111,14 @@ class HazardParameterDataResponse(HazardDataResponse):
 
 
 class HazardModelFactory(Protocol):
-    def hazard_model(self, interpolation: str = "floor"):
+    def hazard_model(self, interpolation: str = "floor", provider_max_requests: Dict[str, int] = {}):
         """Create a HazardModel instance based on a number of options.
 
         Args:
-            interpolation (str): interpolation type to use for sub-pixel raster interpolation (where
+            interpolation (str): Interpolation type to use for sub-pixel raster interpolation (where
             this is supported by hazard models).
+            provider_max_requests (Dict[str, int]): The maximum permitted number of permitted
+            requests to external providers.
         """
         ...
 

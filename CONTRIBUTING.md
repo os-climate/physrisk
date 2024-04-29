@@ -12,6 +12,10 @@ consistent working environment. Install via, e.g.:
 ```
 pip install pdm
 ```
+For ease of using Jupyter notebooks (e.g. in VS Code) the config can be used:
+```
+pdm config venv.with_pip True
+```
 
 The command:
 ```

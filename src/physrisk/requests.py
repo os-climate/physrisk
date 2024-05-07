@@ -84,7 +84,9 @@ class Requester:
 
         if request_id == "get_hazard_data":
             request = HazardDataRequest(**request_dict)
-            hazard_model = self.hazard_model_factory.hazard_model(interpolation=request.interpolation)
+            hazard_model = self.hazard_model_factory.hazard_model(
+                interpolation=request.interpolation, provider_max_requests=request.provider_max_requests
+            )
             return json.dumps(_get_hazard_data(request, hazard_model=hazard_model).model_dump())  # , allow_nan=False)
         elif request_id == "get_hazard_data_availability":
             request = HazardAvailabilityRequest(**request_dict)
@@ -94,11 +96,15 @@ class Requester:
             return json.dumps(_get_hazard_data_description(request).dict())
         elif request_id == "get_asset_exposure":
             request = AssetExposureRequest(**request_dict)
-            hazard_model = self.hazard_model_factory.hazard_model(interpolation=request.calc_settings.hazard_interp)
+            hazard_model = self.hazard_model_factory.hazard_model(
+                interpolation=request.calc_settings.hazard_interp, provider_max_requests=request.provider_max_requests
+            )
             return json.dumps(_get_asset_exposures(request, hazard_model).model_dump(exclude_none=True))
         elif request_id == "get_asset_impact":
             request = AssetImpactRequest(**request_dict)
-            hazard_model = self.hazard_model_factory.hazard_model(interpolation=request.calc_settings.hazard_interp)
+            hazard_model = self.hazard_model_factory.hazard_model(
+                interpolation=request.calc_settings.hazard_interp, provider_max_requests=request.provider_max_requests
+            )
             vulnerability_models = self.vulnerability_models_factory.vulnerability_models()
             return dumps(_get_asset_impacts(request, hazard_model, vulnerability_models).model_dump())
         elif request_id == "get_example_portfolios":

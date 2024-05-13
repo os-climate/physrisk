@@ -113,8 +113,23 @@ class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
         return 250.0
 
 
+class Generic(Asset):
+    def __init__(self, latitude: float, longitude: float, *, location: Optional[str] = None):
+        super().__init__(latitude, longitude)
+        self.location = location
+
+
 class RealEstateAsset(Asset):
     def __init__(self, latitude: float, longitude: float, *, location: str, type: str):
+        super().__init__(latitude, longitude)
+        self.location = location
+        self.type = type
+
+
+class ManufacturingAsset(Asset):
+    def __init__(
+        self, latitude: float, longitude: float, *, location: Optional[str] = None, type: Optional[str] = None
+    ):
         super().__init__(latitude, longitude)
         self.location = location
         self.type = type

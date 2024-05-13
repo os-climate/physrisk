@@ -116,7 +116,7 @@ class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
 class Generic(Asset):
     def __init__(self, latitude: float, longitude: float, *, location: Optional[str] = None):
         super().__init__(latitude, longitude)
-        self.location: Optional[str] = location
+        self.location = location
 
 
 class RealEstateAsset(Asset):
@@ -127,7 +127,9 @@ class RealEstateAsset(Asset):
 
 
 class ManufacturingAsset(Asset):
-    def __init__(self, latitude: float, longitude: float, *, location: str, type: str):
+    def __init__(
+        self, latitude: float, longitude: float, *, location: Optional[str] = None, type: Optional[str] = None
+    ):
         super().__init__(latitude, longitude)
         self.location = location
         self.type = type

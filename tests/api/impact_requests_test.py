@@ -5,7 +5,7 @@ import numpy as np
 from pydantic import TypeAdapter
 
 from physrisk import requests
-from physrisk.api.v1.common import Assets
+from physrisk.api.v1.common import Asset, Assets
 from physrisk.api.v1.impact_req_resp import RiskMeasures, RiskMeasuresHelper
 from physrisk.container import Container
 from physrisk.data.inventory import EmbeddedInventory
@@ -189,8 +189,26 @@ class TestImpactRequests(TestWithCredentials):
             ]
         ]
 
+        assets_provided_in_the_request = False
+
         request_dict = {
-            "assets": Assets(items=[]),
+            "assets": Assets(
+                items=(
+                    [
+                        Asset(
+                            asset_class=asset.__class__.__name__,
+                            latitude=asset.latitude,
+                            longitude=asset.longitude,
+                            type=asset.type,
+                            capacity=asset.capacity,
+                            location=asset.location,
+                        )
+                        for asset in assets
+                    ]
+                    if assets_provided_in_the_request
+                    else []
+                )
+            ),
             "include_asset_level": True,
             "include_calc_details": True,
             "years": [2050],
@@ -550,7 +568,7 @@ class TestImpactRequests(TestWithCredentials):
             request,
             ZarrHazardModel(source_paths=source_paths, reader=ZarrReader(store)),
             vulnerability_models=vulnerability_models,
-            assets=assets,
+            assets=None if assets_provided_in_the_request else assets,
         )
 
         # Air Temperature

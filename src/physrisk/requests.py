@@ -266,7 +266,7 @@ def _get_hazard_data(request: HazardDataRequest, hazard_model: HazardModel):
     return response
 
 
-def create_assets(asset: Assets, assets: Optional[List[Asset]]):
+def create_assets(asset: Assets, assets: Optional[List[Asset]]):  # noqa: max-complexity=11
     """Create list of Asset objects from the Assets API object:"""
     if assets is not None:
         if len(asset.items) != 0:
@@ -277,12 +277,28 @@ def create_assets(asset: Assets, assets: Optional[List[Asset]]):
         asset_objs = []
         for item in asset.items:
             if hasattr(module, item.asset_class):
+                kwargs: Dict[str, Any] = {}
+                if item.type is not None:
+                    kwargs["type"] = item.type
+                if item.location is not None:
+                    kwargs["location"] = item.location
+                if item.capacity is not None:
+                    kwargs["capacity"] = item.capacity
                 asset_obj = cast(
                     Asset,
-                    getattr(module, item.asset_class)(
-                        item.latitude, item.longitude, type=item.type, location=item.location
-                    ),
+                    getattr(module, item.asset_class)(item.latitude, item.longitude, **kwargs),
                 )
+                if item.attributes is not None:
+                    for key, value in item.attributes.items():
+                        if value.isdigit():
+                            value_as_double = float(value)
+                            setattr(
+                                asset_obj,
+                                key,
+                                int(value_as_double) if value_as_double.is_integer() else value_as_double,
+                            )
+                        else:
+                            setattr(asset_obj, key, value)
                 asset_objs.append(asset_obj)
             else:
                 raise ValueError(f"asset type '{item.asset_class}' not found")

@@ -41,10 +41,7 @@ def to_exceedance_curve(bin_edges, probs):
     fnz = nz[0][0] if len(nz[0]) > 0 else 0
     nz_values = bin_edges[fnz:]
     nz_probs = probs[fnz:]
-    if len(nz_values) == len(nz_probs):
-        cum_prob = 1.0 - np.cumsum(nz_probs)
-    else:
-        cum_prob = np.insert(np.cumsum(nz_probs[::-1]), 0, 0.0)[::-1]
+    cum_prob = np.insert(np.cumsum(nz_probs[::-1]), 0, 0.0)[::-1]
     return ExceedanceCurve(cum_prob, nz_values)
 
 

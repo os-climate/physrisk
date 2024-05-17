@@ -12,6 +12,7 @@ from physrisk.kernel import Asset, PowerGeneratingAsset, calculation
 from physrisk.kernel.assets import IndustrialActivity, RealEstateAsset, ThermalPowerGeneratingAsset
 from physrisk.kernel.hazard_model import HazardEventDataResponse
 from physrisk.kernel.impact import calculate_impacts
+from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels
 from physrisk.utils.lazy import lazy_import
 from physrisk.vulnerability_models.power_generating_asset_models import InundationModel
 from tests.base_test import TestWithCredentials
@@ -146,7 +147,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         year = 2030
 
         hazard_model = calculation.get_default_hazard_model()
-        vulnerability_models = calculation.get_default_vulnerability_models()
+        vulnerability_models = DictBasedVulnerabilityModels(calculation.get_default_vulnerability_models())
 
         results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
         out = [

@@ -12,6 +12,8 @@ from physrisk.kernel import Asset, PowerGeneratingAsset, calculation
 from physrisk.kernel.assets import IndustrialActivity, RealEstateAsset, ThermalPowerGeneratingAsset
 from physrisk.kernel.hazard_model import HazardEventDataResponse
 from physrisk.kernel.impact import calculate_impacts
+from physrisk.kernel.impact_distrib import EmptyImpactDistrib
+from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels
 from physrisk.utils.lazy import lazy_import
 from physrisk.vulnerability_models.power_generating_asset_models import InundationModel
 from tests.base_test import TestWithCredentials
@@ -143,27 +145,29 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         ]
 
         scenario = "ssp585"
-        year = 2030
+        year = 2050
 
         hazard_model = calculation.get_default_hazard_model()
-        vulnerability_models = calculation.get_default_vulnerability_models()
+        vulnerability_models = DictBasedVulnerabilityModels(calculation.get_default_vulnerability_models())
 
         results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
         out = [
             {
                 "asset": type(result.asset).__name__,
-                "type": getattr(result.asset, "type") if hasattr(result.asset, "type") else None,
-                "capacity": getattr(result.asset, "capacity") if hasattr(result.asset, "capacity") else None,
-                "location": getattr(result.asset, "location") if hasattr(result.asset, "location") else None,
+                "type": getattr(result.asset, "type"),
+                "capacity": getattr(result.asset, "capacity"),
+                "location": getattr(result.asset, "location"),
                 "latitude": result.asset.latitude,
                 "longitude": result.asset.longitude,
-                "impact_mean": results[key].impact.mean_impact(),
-                "hazard_type": results[key].impact.hazard_type.__name__,
+                "impact_mean": (
+                    None if isinstance(results[key].impact, EmptyImpactDistrib) else results[key].impact.mean_impact()
+                ),
+                "hazard_type": key.hazard_type.__name__,
             }
             for result, key in zip(results, results.keys())
         ]
         pd.DataFrame.from_dict(out).to_csv(
-            os.path.join(cache_folder, "thermal_ power_generation_example_" + scenario + "_" + str(year) + ".csv")
+            os.path.join(cache_folder, "thermal_power_generation_example_" + scenario + "_" + str(year) + ".csv")
         )
         self.assertAlmostEqual(1, 1)
 

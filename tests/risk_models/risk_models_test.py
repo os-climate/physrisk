@@ -4,7 +4,6 @@ from typing import Sequence
 
 import numpy as np
 
-import tests.data.hazard_model_store_test as hms
 from physrisk import requests
 from physrisk.api.v1.impact_req_resp import RiskMeasureKey, RiskMeasuresHelper
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
@@ -16,8 +15,9 @@ from physrisk.kernel.risk import AssetLevelRiskModel, MeasureKey
 from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels
 from physrisk.requests import _create_risk_measures
 from physrisk.risk_models.risk_models import RealEstateToyRiskMeasures
-from tests.base_test import TestWithCredentials
-from tests.data.hazard_model_store_test import TestData, ZarrStoreMocker
+
+from ..base_test import TestWithCredentials
+from ..data.hazard_model_store_test import TestData, ZarrStoreMocker, inundation_return_periods
 
 
 class TestRiskModels(TestWithCredentials):
@@ -104,7 +104,7 @@ class TestRiskModels(TestWithCredentials):
             return source_paths[ChronicHeat](indicator_id="mean_degree_days/above/index", scenario=scenario, year=year)
 
         mocker = ZarrStoreMocker()
-        return_periods = hms.inundation_return_periods()
+        return_periods = inundation_return_periods()
         flood_histo_curve = np.array([0.0596, 0.333, 0.505, 0.715, 0.864, 1.003, 1.149, 1.163, 1.163])
         flood_projected_curve = np.array([0.0596, 0.333, 0.605, 0.915, 1.164, 1.503, 1.649, 1.763, 1.963])
 

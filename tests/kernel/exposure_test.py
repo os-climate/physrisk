@@ -14,8 +14,9 @@ from physrisk.kernel.assets import Asset
 from physrisk.kernel.exposure import Category, JupterExposureMeasure, calculate_exposures
 from physrisk.kernel.hazards import ChronicHeat, CombinedInundation, Drought, Fire, Hail, Wind
 from physrisk.requests import Requester
-from tests.base_test import TestWithCredentials
-from tests.data.hazard_model_store_test import TestData, mock_hazard_model_store_path_curves
+
+from ..base_test import TestWithCredentials
+from ..data.hazard_model_store_test import TestData, mock_hazard_model_store_path_curves
 
 
 class TestExposureMeasures(TestWithCredentials):

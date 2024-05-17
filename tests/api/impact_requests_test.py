@@ -26,8 +26,9 @@ from physrisk.vulnerability_models.thermal_power_generation_models import (
     ThermalPowerGenerationWaterStressModel,
     ThermalPowerGenerationWaterTemperatureModel,
 )
-from tests.base_test import TestWithCredentials
-from tests.data.hazard_model_store_test import (
+
+from ..base_test import TestWithCredentials
+from ..data.hazard_model_store_test import (
     TestData,
     add_curves,
     mock_hazard_model_store_inundation,
@@ -572,28 +573,28 @@ class TestImpactRequests(TestWithCredentials):
         )
 
         # Air Temperature
-        self.assertEqual(response.asset_impacts[0].impacts[0].impact_mean, 0.0019158610488645982)
-        self.assertEqual(response.asset_impacts[1].impacts[0].impact_mean, 0.0019158610488645982)
-        self.assertEqual(response.asset_impacts[2].impacts[0].impact_mean, 0.0006386203496215328)
-        self.assertEqual(response.asset_impacts[3].impacts[0].impact_mean, 0.0006386203496215328)
+        self.assertEqual(response.asset_impacts[0].impacts[0].impact_mean, 0.0075618606988512764)
+        self.assertEqual(response.asset_impacts[1].impacts[0].impact_mean, 0.0075618606988512764)
+        self.assertEqual(response.asset_impacts[2].impacts[0].impact_mean, 0.0025192163596997963)
+        self.assertEqual(response.asset_impacts[3].impacts[0].impact_mean, 0.0025192163596997963)
         self.assertEqual(response.asset_impacts[4].impacts[0].impact_mean, 0.0)
         self.assertEqual(response.asset_impacts[5].impacts[0].impact_mean, 0.0)
 
         # Drought
-        self.assertEqual(response.asset_impacts[0].impacts[1].impact_mean, 0.0005486719775944949)
+        self.assertEqual(response.asset_impacts[0].impacts[1].impact_mean, 0.0008230079663917424)
         self.assertEqual(response.asset_impacts[1].impacts[1].impact_mean, 0.0)
-        self.assertEqual(response.asset_impacts[2].impacts[1].impact_mean, 0.0005486719775944949)
+        self.assertEqual(response.asset_impacts[2].impacts[1].impact_mean, 0.0008230079663917424)
         self.assertEqual(response.asset_impacts[3].impacts[1].impact_mean, 0.0)
-        self.assertEqual(response.asset_impacts[4].impacts[1].impact_mean, 0.0005486719775944949)
-        self.assertEqual(response.asset_impacts[5].impacts[1].impact_mean, 0.0005486719775944949)
+        self.assertEqual(response.asset_impacts[4].impacts[1].impact_mean, 0.0008230079663917424)
+        self.assertEqual(response.asset_impacts[5].impacts[1].impact_mean, 0.0008230079663917424)
 
         # Riverine Inundation
-        self.assertEqual(response.asset_impacts[0].impacts[2].impact_mean, 0.005372887389199415)
-        self.assertEqual(response.asset_impacts[1].impacts[2].impact_mean, 0.005372887389199415)
-        self.assertEqual(response.asset_impacts[2].impacts[2].impact_mean, 0.005372887389199415)
-        self.assertEqual(response.asset_impacts[3].impacts[2].impact_mean, 0.005372887389199415)
-        self.assertEqual(response.asset_impacts[4].impacts[2].impact_mean, 0.005372887389199415)
-        self.assertEqual(response.asset_impacts[5].impacts[2].impact_mean, 0.005372887389199415)
+        self.assertEqual(response.asset_impacts[0].impacts[2].impact_mean, 0.0046864436945997625)
+        self.assertEqual(response.asset_impacts[1].impacts[2].impact_mean, 0.0046864436945997625)
+        self.assertEqual(response.asset_impacts[2].impacts[2].impact_mean, 0.0046864436945997625)
+        self.assertEqual(response.asset_impacts[3].impacts[2].impact_mean, 0.0046864436945997625)
+        self.assertEqual(response.asset_impacts[4].impacts[2].impact_mean, 0.0046864436945997625)
+        self.assertEqual(response.asset_impacts[5].impacts[2].impact_mean, 0.0046864436945997625)
 
         # Water Stress
         self.assertEqual(response.asset_impacts[0].impacts[3].impact_mean, 0.010181435900296947)
@@ -604,12 +605,12 @@ class TestImpactRequests(TestWithCredentials):
         self.assertEqual(response.asset_impacts[5].impacts[3].impact_mean, 0.010181435900296947)
 
         # Water Temperature
-        self.assertEqual(response.asset_impacts[0].impacts[4].impact_mean, 0.09913461937103421)
+        self.assertEqual(response.asset_impacts[0].impacts[4].impact_mean, 0.1448076958069578)
         self.assertEqual(response.asset_impacts[1].impacts[4].impact_mean, 0.0)
-        self.assertEqual(response.asset_impacts[2].impacts[4].impact_mean, 0.09913461937103421)
+        self.assertEqual(response.asset_impacts[2].impacts[4].impact_mean, 0.1448076958069578)
         self.assertEqual(response.asset_impacts[3].impacts[4].impact_mean, 0.0)
-        self.assertEqual(response.asset_impacts[4].impacts[4].impact_mean, 0.09913461937103421)
-        self.assertEqual(response.asset_impacts[5].impacts[4].impact_mean, 0.00413881409575074)
+        self.assertEqual(response.asset_impacts[4].impacts[4].impact_mean, 0.1448076958069578)
+        self.assertEqual(response.asset_impacts[5].impacts[4].impact_mean, 0.005896707722257193)
 
     @unittest.skip("example, not test")
     def test_example_portfolios(self):

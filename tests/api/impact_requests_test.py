@@ -295,6 +295,18 @@ class TestImpactRequests(TestWithCredentials):
         return_periods = [0.0]
         shape, t = shape_transform_21600_43200(return_periods=return_periods)
 
+        # Add mock drought (Jupiter) data:
+        add_curves(
+            root,
+            longitudes,
+            latitudes,
+            "drought/jupiter/v1/months_spei3m_below_-2_ssp585_2050",
+            shape,
+            np.array([0.06584064255906408]),
+            return_periods,
+            t,
+        )
+
         # Add mock water-related risk data:
         add_curves(
             root,
@@ -611,6 +623,29 @@ class TestImpactRequests(TestWithCredentials):
         self.assertEqual(response.asset_impacts[3].impacts[4].impact_mean, 0.0)
         self.assertEqual(response.asset_impacts[4].impacts[4].impact_mean, 0.1448076958069578)
         self.assertEqual(response.asset_impacts[5].impacts[4].impact_mean, 0.005896707722257193)
+
+        vulnerability_models = DictBasedVulnerabilityModels(
+            {
+                ThermalPowerGeneratingAsset: [
+                    ThermalPowerGenerationDroughtModel(impact_based_on_a_single_point=True),
+                ]
+            }
+        )
+
+        response = requests._get_asset_impacts(
+            request,
+            ZarrHazardModel(source_paths=source_paths, reader=ZarrReader(store)),
+            vulnerability_models=vulnerability_models,
+            assets=None if assets_provided_in_the_request else assets,
+        )
+
+        # Drought (Jupiter)
+        self.assertEqual(response.asset_impacts[0].impacts[0].impact_mean, 0.0005859470850072303)
+        self.assertEqual(response.asset_impacts[1].impacts[0].impact_mean, 0.0)
+        self.assertEqual(response.asset_impacts[2].impacts[0].impact_mean, 0.0005859470850072303)
+        self.assertEqual(response.asset_impacts[3].impacts[0].impact_mean, 0.0)
+        self.assertEqual(response.asset_impacts[4].impacts[0].impact_mean, 0.0005859470850072303)
+        self.assertEqual(response.asset_impacts[5].impacts[0].impact_mean, 0.0005859470850072303)
 
     @unittest.skip("example, not test")
     def test_example_portfolios(self):

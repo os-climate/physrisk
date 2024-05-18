@@ -44,7 +44,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         assets = [Asset(latitude, longitude)]
         model = InundationModel(assets)
 
-        impact, vul, event = model.get_impact_details(assets[0], responses_mock)
+        impact, _, _ = model.get_impact_details(assets[0], responses_mock)
         mean = impact.mean_impact()
 
         self.assertAlmostEqual(mean, 4.8453897 / 365.0)
@@ -80,7 +80,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         interesting = [k for (k, m) in zip(keys, means) if m > 0]
         assets_out = self.api_assets(item[0] for item in interesting[0:10])
         with open(os.path.join(cache_folder, "assets_example_power_generating_small.json"), "w") as f:
-            f.write(assets_out.json(indent=4))
+            f.write(assets_out.model_dump_json(indent=4))
 
         # Synthetic portfolio; industrial activity at different locations
         assets = [
@@ -94,7 +94,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         interesting = [k for (k, m) in zip(keys, means) if m > 0]
         assets_out = self.api_assets(item[0] for item in interesting[0:10])
         with open(os.path.join(cache_folder, "assets_example_industrial_activity_small.json"), "w") as f:
-            f.write(assets_out.json(indent=4))
+            f.write(assets_out.model_dump_json(indent=4))
 
         # Synthetic portfolio; real estate assets at different locations
         assets = [
@@ -108,7 +108,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         interesting = [k for (k, m) in zip(keys, means) if m > 0]
         assets_out = self.api_assets(item[0] for item in interesting[0:10])
         with open(os.path.join(cache_folder, "assets_example_real_estate_small.json"), "w") as f:
-            f.write(assets_out.json(indent=4))
+            f.write(assets_out.model_dump_json(indent=4))
         self.assertAlmostEqual(1, 1)
 
     @unittest.skip("example, not test")
@@ -145,7 +145,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         ]
 
         scenario = "ssp585"
-        year = 2050
+        year = 2030
 
         hazard_model = calculation.get_default_hazard_model()
         vulnerability_models = DictBasedVulnerabilityModels(calculation.get_default_vulnerability_models())
@@ -175,8 +175,8 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         items = [
             physrisk.api.v1.common.Asset(
                 asset_class=type(a).__name__,
-                type=getattr(a, "type") if hasattr(a, "type") else None,
-                location=getattr(a, "location") if hasattr(a, "location") else None,
+                type=getattr(a, "type"),
+                location=getattr(a, "location"),
                 latitude=a.latitude,
                 longitude=a.longitude,
             )

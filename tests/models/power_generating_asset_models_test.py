@@ -154,9 +154,9 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         out = [
             {
                 "asset": type(result.asset).__name__,
-                "type": getattr(result.asset, "type"),
-                "capacity": getattr(result.asset, "capacity"),
-                "location": getattr(result.asset, "location"),
+                "type": getattr(result.asset, "type", None),
+                "capacity": getattr(result.asset, "capacity", None),
+                "location": getattr(result.asset, "location", None),
                 "latitude": result.asset.latitude,
                 "longitude": result.asset.longitude,
                 "impact_mean": (
@@ -175,8 +175,8 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         items = [
             physrisk.api.v1.common.Asset(
                 asset_class=type(a).__name__,
-                type=getattr(a, "type"),
-                location=getattr(a, "location"),
+                type=getattr(a, "type", None),
+                location=getattr(a, "location", None),
                 latitude=a.latitude,
                 longitude=a.longitude,
             )

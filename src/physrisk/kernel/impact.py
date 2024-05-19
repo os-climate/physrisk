@@ -72,9 +72,13 @@ def calculate_impacts(  # noqa: C901
             hazard_data = [responses[req] for req in get_iterable(requests)]
             if any(isinstance(hd, HazardDataFailedResponse) for hd in hazard_data):
                 assert isinstance(model, VulnerabilityModelBase)
-                results[ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)] = (
-                    AssetImpactResult(EmptyImpactDistrib())
-                )
+                if (
+                    ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)
+                    not in results
+                ):
+                    results[ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)] = (
+                        AssetImpactResult(EmptyImpactDistrib())
+                    )
                 continue
             try:
                 if isinstance(model, VulnerabilityModelAcuteBase):
@@ -90,9 +94,13 @@ def calculate_impacts(  # noqa: C901
             except Exception as e:
                 logger.exception(e)
                 assert isinstance(model, VulnerabilityModelBase)
-                results[ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)] = (
-                    AssetImpactResult(EmptyImpactDistrib())
-                )
+                if (
+                    ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)
+                    not in results
+                ):
+                    results[ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)] = (
+                        AssetImpactResult(EmptyImpactDistrib())
+                    )
     return results
 
 

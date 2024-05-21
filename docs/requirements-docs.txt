@@ -18,7 +18,7 @@ affine==2.3.0
 numpy==1.22.0
 pydantic==1.9.0
 python-dotenv==0.19.2
-requests==2.27.1
+requests==2.32.0
 scipy==1.11.1
 s3fs==2022.1.0
 zarr==2.10.3

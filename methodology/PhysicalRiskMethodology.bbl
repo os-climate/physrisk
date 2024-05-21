@@ -1,5 +1,12 @@
 \begin{thebibliography}{10}
 
+\bibitem{BavandiEtAl:2022}
+{\sc Bavandi, A., Berrais, D., Dolk, M., and Mahul, O.}
+\newblock Physical climate risk assessment: Practical lessons for the
+  development of climate scenarios with extreme weather events from emerging
+  markets and developing economies.
+\newblock Tech. rep., Network for Greening the Financial System, 2022.
+
 \bibitem{BertramEtAl:2020}
 {\sc Bertram, C., Hilaire, J., Kriegler, E., Beck, T., Bresch, D., Clarke, L.,
   Cui, R., Edmonds, J., Min, J., Piontek, F., et~al.}
@@ -10,6 +17,10 @@
 \newblock Valuing corporate securities: some effects of bond indenture
   provisions.
 \newblock {\em Journal of Finance 31}, 2 (1976), 351--367.
+
+\bibitem{ChauvetEtAl:2024}
+{\sc Chauvet, M., and Piger, J.~M.}
+\newblock Smoothed u.s. recession probabilities.
 
 \bibitem{Christidis:2021}
 {\sc Christidis, N.}
@@ -40,6 +51,26 @@
 \newblock Climate change valuation adjustment (ccva) using parameterized
   climate change impacts.
 \newblock {\em Risk\/} (2021).
+
+\bibitem{KuzmaEtAl:2023}
+{\sc Kuzma, S., Bierkens, M.~F., S.~Lakshman, S., Luo, T., Saccoccia, L.,
+  Sutanudjaja, E.~H., and Van~Beek, R.}
+\newblock Aqueduct 4.0: Updated decision-relevant global water risk indicators.
+\newblock {\em World Resources Institute\/} (2023).
+
+\bibitem{LuoEtAl:2021}
+{\sc Luo, T., Zhou, L., Falzon, J., Cheng, Y., Christianson, G., Wu, Y., and
+  Habchi, A.}
+\newblock Assessing physical climate risks for the european bank for
+  reconstruction and development's power generation project investment
+  portfolio.
+
+\bibitem{LuoEtAl:2023}
+{\sc Luo, T., Zhou, L., Falzon, J., Cheng, Y., Christianson, G., Wu, Y., and
+  Habchi, A.}
+\newblock A framework to assess multi-hazard physical climate risk for power
+  generation projects from publicly-accessible sources.
+\newblock {\em Communications Earth \& Environment 4}, 117 (2023).
 
 \bibitem{MaskreyEtAl:2011}
 {\sc Maskrey, A., Peduzzi, P., Chatenoux, B., Herold, C., Dao, Q.-H., and
@@ -74,6 +105,24 @@
   practitioner's guide}.
 \newblock John Wiley \& Sons, 2017.
 
+\bibitem{NeidellEtAl:2014}
+{\sc Neidell, M., and Graff~Zivin, J.}
+\newblock Temperature and the allocation of time: Implications for climate
+  change.
+\newblock {\em Journal of Labor Economics 32}, 1 (2006), 1--26.
+
+\bibitem{NeidellEtAl:2021}
+{\sc Neidell, M., Graff~Zivin, J., Sheahan, M., Willwerth, J., Fant, C.,
+  Sarofim, M., and Martinich, J.}
+\newblock Temperature and work: Time allocated to work under varying climate
+  and labor market conditions.
+\newblock {\em PloS one 16}, 8 (2021), e0254224.
+
+\bibitem{Nelsen:2007}
+{\sc Nelsen, R.~B.}
+\newblock {\em An Introduction to Copulas}, 2nd~ed.
+\newblock Princeton University Press, New York~(NY), 2007.
+
 \bibitem{OasisLMF}
 {\sc Oasis}.
 \newblock Oasis loss modelling framework: open source catastrophe modelling
@@ -82,6 +131,38 @@
 \bibitem{OSC}
 {\sc OS-C}.
 \newblock {OS-Climate} {(OS-C)} platform, 2021.
+
+\bibitem{PaprotnyEtAl:2016}
+{\sc Paprotny, D., and Morales~Nápoles, O.~O.}
+\newblock Pan-european data sets of river flood probability of occurrence under
+  present and future climate, 2016.
+
+\bibitem{PortnerEtAl:2022}
+{\sc P{\"o}rtner, H.-O., Roberts, D.~C., Adams, H., Adler, C., Aldunce, P.,
+  Ali, E., Begum, R.~A., Betts, R., Kerr, R.~B., Biesbroek, R., et~al.}
+\newblock {\em Climate change 2022: Impacts, adaptation and vulnerability}.
+\newblock IPCC Geneva, Switzerland:, 2022.
+
+\bibitem{RangerEtAl:2022}
+{\sc Ranger, N.~A., Mahul, O., and Monasterolo, I.}
+\newblock Assessing financial risks from physical climate shocks.
+
+\bibitem{RaschkeEtAl:2022}
+{\sc Raschke, M.}
+\newblock About the return period of a catastrophe.
+\newblock {\em Natural Hazards and Earth System Sciences 22}, 1 (2022),
+  245--263.
+
+\bibitem{ReisingerEtAl:2020}
+{\sc Reisinger, A., Howden, M., Vera, C., et~al.}
+\newblock {\em The Concept of Risk in the IPCC Sixth Assessment Report: A
+  Summary of Cross-Working Group Discussions}.
+\newblock IPCC Geneva, Switzerland:, 2020.
+
+\bibitem{RichtersEtAl:2022}
+{\sc Richters, O., et~al.}
+\newblock Climate scenarios database: Technical documentation v3.1.
+\newblock Tech. rep., Network for Greening the Financial System, 2022.
 
 \bibitem{ScawthornEtAl:2006}
 {\sc Scawthorn, C., Blais, N., Seligson, H., Tate, E., Mifflin, E., Thomas, W.,
@@ -114,6 +195,12 @@
   R.}
 \newblock Nasa global daily downscaled projections, {CMIP6}.
 \newblock {\em Scientific Data 9}, 1 (2022), 1--6.
+
+\bibitem{VicenteSerranoEtAl:2010}
+{\sc Vicente-Serrano, S., Begueria, S., and Lopez-Moreno, J.~I.}
+\newblock A multiscalar drought index sensitive to global warming: the
+  standardized precipitation evapotranspiration index.
+\newblock {\em Journal of Climate 23}, 7 (2010), 1696--1718.
 
 \bibitem{WardEtAl:2011}
 {\sc Ward, P.~J., De~Moel, H., and Aerts, J.}

@@ -18,6 +18,12 @@ class AssetExposureRequest(BaseModel):
         2050,
         description="Projection year (2030, 2050, 2080). Any year before 2030, e.g. 1980, is treated as historical.",
     )
+    provider_max_requests: Dict[str, int] = Field(
+        {},
+        description="The maximum permitted number of \
+        requests to external providers. This setting is intended in particular for paid-for data. The key \
+        is the provider ID and the value is the maximum permitted requests.",
+    )
 
 
 class Exposure(BaseModel):

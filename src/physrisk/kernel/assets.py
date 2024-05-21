@@ -120,6 +120,15 @@ class RealEstateAsset(Asset):
         self.type = type
 
 
+class ManufacturingAsset(Asset):
+    def __init__(
+        self, latitude: float, longitude: float, *, location: Optional[str] = None, type: Optional[str] = None
+    ):
+        super().__init__(latitude, longitude)
+        self.location = location
+        self.type = type
+
+
 class IndustrialActivity(Asset):
     def __init__(self, latitude: float, longitude: float, *, location: Optional[str] = None, type: str):
         super().__init__(latitude, longitude)

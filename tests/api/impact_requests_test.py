@@ -5,7 +5,7 @@ import numpy as np
 from pydantic import TypeAdapter
 
 from physrisk import requests
-from physrisk.api.v1.common import Assets
+from physrisk.api.v1.common import Asset, Assets
 from physrisk.api.v1.impact_req_resp import RiskMeasures, RiskMeasuresHelper
 from physrisk.container import Container
 from physrisk.data.inventory import EmbeddedInventory
@@ -26,8 +26,9 @@ from physrisk.vulnerability_models.thermal_power_generation_models import (
     ThermalPowerGenerationWaterStressModel,
     ThermalPowerGenerationWaterTemperatureModel,
 )
-from tests.base_test import TestWithCredentials
-from tests.data.hazard_model_store_test import (
+
+from ..base_test import TestWithCredentials
+from ..data.hazard_model_store_test import (
     TestData,
     add_curves,
     mock_hazard_model_store_inundation,
@@ -189,8 +190,26 @@ class TestImpactRequests(TestWithCredentials):
             ]
         ]
 
+        assets_provided_in_the_request = False
+
         request_dict = {
-            "assets": Assets(items=[]),
+            "assets": Assets(
+                items=(
+                    [
+                        Asset(
+                            asset_class=asset.__class__.__name__,
+                            latitude=asset.latitude,
+                            longitude=asset.longitude,
+                            type=asset.type,
+                            capacity=asset.capacity,
+                            location=asset.location,
+                        )
+                        for asset in assets
+                    ]
+                    if assets_provided_in_the_request
+                    else []
+                )
+            ),
             "include_asset_level": True,
             "include_calc_details": True,
             "years": [2050],
@@ -275,6 +294,18 @@ class TestImpactRequests(TestWithCredentials):
 
         return_periods = [0.0]
         shape, t = shape_transform_21600_43200(return_periods=return_periods)
+
+        # Add mock drought (Jupiter) data:
+        add_curves(
+            root,
+            longitudes,
+            latitudes,
+            "drought/jupiter/v1/months_spei3m_below_-2_ssp585_2050",
+            shape,
+            np.array([0.06584064255906408]),
+            return_periods,
+            t,
+        )
 
         # Add mock water-related risk data:
         add_curves(
@@ -550,48 +581,71 @@ class TestImpactRequests(TestWithCredentials):
             request,
             ZarrHazardModel(source_paths=source_paths, reader=ZarrReader(store)),
             vulnerability_models=vulnerability_models,
-            assets=assets,
+            assets=None if assets_provided_in_the_request else assets,
         )
 
         # Air Temperature
-        self.assertEqual(response.asset_impacts[0].impacts[0].impact_mean, 0.0019158610488645982)
-        self.assertEqual(response.asset_impacts[1].impacts[0].impact_mean, 0.0019158610488645982)
-        self.assertEqual(response.asset_impacts[2].impacts[0].impact_mean, 0.0006386203496215328)
-        self.assertEqual(response.asset_impacts[3].impacts[0].impact_mean, 0.0006386203496215328)
-        self.assertEqual(response.asset_impacts[4].impacts[0].impact_mean, 0.0)
-        self.assertEqual(response.asset_impacts[5].impacts[0].impact_mean, 0.0)
+        self.assertAlmostEqual(response.asset_impacts[0].impacts[0].impact_mean, 0.0075618606988512764)
+        self.assertAlmostEqual(response.asset_impacts[1].impacts[0].impact_mean, 0.0075618606988512764)
+        self.assertAlmostEqual(response.asset_impacts[2].impacts[0].impact_mean, 0.0025192163596997963)
+        self.assertAlmostEqual(response.asset_impacts[3].impacts[0].impact_mean, 0.0025192163596997963)
+        self.assertAlmostEqual(response.asset_impacts[4].impacts[0].impact_mean, 0.0)
+        self.assertAlmostEqual(response.asset_impacts[5].impacts[0].impact_mean, 0.0)
 
         # Drought
-        self.assertEqual(response.asset_impacts[0].impacts[1].impact_mean, 0.0005486719775944949)
-        self.assertEqual(response.asset_impacts[1].impacts[1].impact_mean, 0.0)
-        self.assertEqual(response.asset_impacts[2].impacts[1].impact_mean, 0.0005486719775944949)
-        self.assertEqual(response.asset_impacts[3].impacts[1].impact_mean, 0.0)
-        self.assertEqual(response.asset_impacts[4].impacts[1].impact_mean, 0.0005486719775944949)
-        self.assertEqual(response.asset_impacts[5].impacts[1].impact_mean, 0.0005486719775944949)
+        self.assertAlmostEqual(response.asset_impacts[0].impacts[1].impact_mean, 0.0008230079663917424)
+        self.assertAlmostEqual(response.asset_impacts[1].impacts[1].impact_mean, 0.0)
+        self.assertAlmostEqual(response.asset_impacts[2].impacts[1].impact_mean, 0.0008230079663917424)
+        self.assertAlmostEqual(response.asset_impacts[3].impacts[1].impact_mean, 0.0)
+        self.assertAlmostEqual(response.asset_impacts[4].impacts[1].impact_mean, 0.0008230079663917424)
+        self.assertAlmostEqual(response.asset_impacts[5].impacts[1].impact_mean, 0.0008230079663917424)
 
         # Riverine Inundation
-        self.assertEqual(response.asset_impacts[0].impacts[2].impact_mean, 0.005372887389199415)
-        self.assertEqual(response.asset_impacts[1].impacts[2].impact_mean, 0.005372887389199415)
-        self.assertEqual(response.asset_impacts[2].impacts[2].impact_mean, 0.005372887389199415)
-        self.assertEqual(response.asset_impacts[3].impacts[2].impact_mean, 0.005372887389199415)
-        self.assertEqual(response.asset_impacts[4].impacts[2].impact_mean, 0.005372887389199415)
-        self.assertEqual(response.asset_impacts[5].impacts[2].impact_mean, 0.005372887389199415)
+        self.assertAlmostEqual(response.asset_impacts[0].impacts[2].impact_mean, 0.0046864436945997625)
+        self.assertAlmostEqual(response.asset_impacts[1].impacts[2].impact_mean, 0.0046864436945997625)
+        self.assertAlmostEqual(response.asset_impacts[2].impacts[2].impact_mean, 0.0046864436945997625)
+        self.assertAlmostEqual(response.asset_impacts[3].impacts[2].impact_mean, 0.0046864436945997625)
+        self.assertAlmostEqual(response.asset_impacts[4].impacts[2].impact_mean, 0.0046864436945997625)
+        self.assertAlmostEqual(response.asset_impacts[5].impacts[2].impact_mean, 0.0046864436945997625)
 
         # Water Stress
-        self.assertEqual(response.asset_impacts[0].impacts[3].impact_mean, 0.010181435900296947)
-        self.assertEqual(response.asset_impacts[1].impacts[3].impact_mean, 0.0)
-        self.assertEqual(response.asset_impacts[2].impacts[3].impact_mean, 0.010181435900296947)
-        self.assertEqual(response.asset_impacts[3].impacts[3].impact_mean, 0.0)
-        self.assertEqual(response.asset_impacts[4].impacts[3].impact_mean, 0.010181435900296947)
-        self.assertEqual(response.asset_impacts[5].impacts[3].impact_mean, 0.010181435900296947)
+        self.assertAlmostEqual(response.asset_impacts[0].impacts[3].impact_mean, 0.010181435900296947)
+        self.assertAlmostEqual(response.asset_impacts[1].impacts[3].impact_mean, 0.0)
+        self.assertAlmostEqual(response.asset_impacts[2].impacts[3].impact_mean, 0.010181435900296947)
+        self.assertAlmostEqual(response.asset_impacts[3].impacts[3].impact_mean, 0.0)
+        self.assertAlmostEqual(response.asset_impacts[4].impacts[3].impact_mean, 0.010181435900296947)
+        self.assertAlmostEqual(response.asset_impacts[5].impacts[3].impact_mean, 0.010181435900296947)
 
         # Water Temperature
-        self.assertEqual(response.asset_impacts[0].impacts[4].impact_mean, 0.09913461937103421)
-        self.assertEqual(response.asset_impacts[1].impacts[4].impact_mean, 0.0)
-        self.assertEqual(response.asset_impacts[2].impacts[4].impact_mean, 0.09913461937103421)
-        self.assertEqual(response.asset_impacts[3].impacts[4].impact_mean, 0.0)
-        self.assertEqual(response.asset_impacts[4].impacts[4].impact_mean, 0.09913461937103421)
-        self.assertEqual(response.asset_impacts[5].impacts[4].impact_mean, 0.00413881409575074)
+        self.assertAlmostEqual(response.asset_impacts[0].impacts[4].impact_mean, 0.1448076958069578)
+        self.assertAlmostEqual(response.asset_impacts[1].impacts[4].impact_mean, 0.0)
+        self.assertAlmostEqual(response.asset_impacts[2].impacts[4].impact_mean, 0.1448076958069578)
+        self.assertAlmostEqual(response.asset_impacts[3].impacts[4].impact_mean, 0.0)
+        self.assertAlmostEqual(response.asset_impacts[4].impacts[4].impact_mean, 0.1448076958069578)
+        self.assertAlmostEqual(response.asset_impacts[5].impacts[4].impact_mean, 0.005896707722257193)
+
+        vulnerability_models = DictBasedVulnerabilityModels(
+            {
+                ThermalPowerGeneratingAsset: [
+                    ThermalPowerGenerationDroughtModel(impact_based_on_a_single_point=True),
+                ]
+            }
+        )
+
+        response = requests._get_asset_impacts(
+            request,
+            ZarrHazardModel(source_paths=source_paths, reader=ZarrReader(store)),
+            vulnerability_models=vulnerability_models,
+            assets=None if assets_provided_in_the_request else assets,
+        )
+
+        # Drought (Jupiter)
+        self.assertAlmostEqual(response.asset_impacts[0].impacts[0].impact_mean, 0.0005859470850072303)
+        self.assertAlmostEqual(response.asset_impacts[1].impacts[0].impact_mean, 0.0)
+        self.assertAlmostEqual(response.asset_impacts[2].impacts[0].impact_mean, 0.0005859470850072303)
+        self.assertAlmostEqual(response.asset_impacts[3].impacts[0].impact_mean, 0.0)
+        self.assertAlmostEqual(response.asset_impacts[4].impacts[0].impact_mean, 0.0005859470850072303)
+        self.assertAlmostEqual(response.asset_impacts[5].impacts[0].impact_mean, 0.0005859470850072303)
 
     @unittest.skip("example, not test")
     def test_example_portfolios(self):

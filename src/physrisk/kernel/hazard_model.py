@@ -82,7 +82,7 @@ class HazardEventDataResponse(HazardDataResponse):
 
         self.return_periods = return_periods
         self.intensities = intensities
-        self.path = sys.intern(path)
+        self.path = sys.intern(path) if path is not None else None
 
 
 class HazardParameterDataResponse(HazardDataResponse):
@@ -103,7 +103,7 @@ class HazardParameterDataResponse(HazardDataResponse):
         """
         self.parameters = parameters
         self.param_defns = param_defns
-        self.path = sys.intern(path)
+        self.path = sys.intern(path) if path is not None else None
 
     @property
     def parameter(self) -> float:

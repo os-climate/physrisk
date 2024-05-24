@@ -113,7 +113,7 @@ class RiskMeasures(BaseModel):
     measures_for_assets: List[RiskMeasuresForAssets]
     score_based_measure_set_defn: ScoreBasedRiskMeasureSetDefinition
     measures_definitions: Optional[List[RiskMeasureDefinition]]
-    scenarios: List[Scenario]
+    scenarios: List[Scenario]s
     asset_ids: List[str]
 
 
@@ -123,7 +123,7 @@ class AcuteHazardCalculationDetails(BaseModel):
     hazard_exceedance: ExceedanceCurve
     hazard_distribution: Distribution
     vulnerability_distribution: VulnerabilityDistrib
-    hazard_path: Optional[str] = Field(None, description="Path to the hazard event data source.")
+    hazard_path: Optional[List[str]] = Field(None, description="Path to the hazard event data source.")
 
 
 class ImpactKey(BaseModel):

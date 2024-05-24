@@ -22,7 +22,7 @@ class ImpactDistrib:
         impact_bins: Union[List[float], np.ndarray],
         prob: Union[List[float], np.ndarray],
         impact_type: ImpactType = ImpactType.damage,
-        path: str = None
+        path: List[str] = None
     ):
         """Create a new asset event distribution.
         Args:
@@ -64,7 +64,7 @@ class ImpactDistrib:
         return self.__prob
 
     @property
-    def path(self) -> str:
+    def path(self) -> List[str]:
         return self.__path
 
 

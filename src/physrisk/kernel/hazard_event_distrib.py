@@ -13,7 +13,7 @@ class HazardEventDistrib:
 
     def __init__(
         self, event_type: type, intensity_bins: Union[List[float], np.ndarray], prob: Union[List[float], np.ndarray],
-        path: str = None
+        path: List[str] = None
     ):
         """Create a new asset event distribution.
         Args:
@@ -43,5 +43,5 @@ class HazardEventDistrib:
         return self.__prob
 
     @property
-    def path(self) -> str:
+    def path(self) -> List[str]:
         return self.__path

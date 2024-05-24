@@ -29,6 +29,7 @@ class AssetExposureRequest(BaseModel):
 class Exposure(BaseModel):
     category: str
     value: Optional[float]
+    path: Optional[str] = Field(None, description="""Path to the hazard event data source.""")
 
 
 class AssetExposure(BaseModel):

@@ -123,6 +123,7 @@ class AcuteHazardCalculationDetails(BaseModel):
     hazard_exceedance: ExceedanceCurve
     hazard_distribution: Distribution
     vulnerability_distribution: VulnerabilityDistrib
+    hazard_path: Optional[str] = Field(None, description="Path to the hazard event data source.")
 
 
 class ImpactKey(BaseModel):

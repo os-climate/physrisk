@@ -72,7 +72,7 @@ class JupterExposureMeasure(ExposureMeasure):
         ]
 
     def get_exposures(self, asset: Asset, data_responses: Iterable[HazardDataResponse]):
-        result: Dict[type, Tuple[Category, float]] = {}
+        result: Dict[type, Tuple[Category, float, str]] = {}
         for (k, v), resp in zip(self.exposure_bins.items(), data_responses):
             if isinstance(resp, HazardParameterDataResponse):
                 param = resp.parameter
@@ -86,7 +86,7 @@ class JupterExposureMeasure(ExposureMeasure):
                 result[hazard_type] = (Category.NODATA, float(param))
             else:
                 index = np.searchsorted(lower_bounds, param, side="right") - 1
-                result[hazard_type] = (categories[index], float(param))
+                result[hazard_type] = (categories[index], float(param), resp.path)
         return result
 
     def get_exposure_bins(self):

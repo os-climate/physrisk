@@ -113,7 +113,7 @@ class RiskMeasures(BaseModel):
     measures_for_assets: List[RiskMeasuresForAssets]
     score_based_measure_set_defn: ScoreBasedRiskMeasureSetDefinition
     measures_definitions: Optional[List[RiskMeasureDefinition]]
-    scenarios: List[Scenario]s
+    scenarios: List[Scenario]
     asset_ids: List[str]
 
 

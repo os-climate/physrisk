@@ -80,13 +80,14 @@ class JupterExposureMeasure(ExposureMeasure):
                 if len(resp.intensities) > 1:
                     raise ValueError("single-value curve expected")
                 param = resp.intensities[0]
+            hazard_path = resp.path
             (hazard_type, _) = k
             (lower_bounds, categories) = v
             if math.isnan(param):
-                result[hazard_type] = (Category.NODATA, float(param))
+                result[hazard_type] = (Category.NODATA, float(param), hazard_path)
             else:
                 index = np.searchsorted(lower_bounds, param, side="right") - 1
-                result[hazard_type] = (categories[index], float(param), resp.path)
+                result[hazard_type] = (categories[index], float(param), hazard_path)
         return result
 
     def get_exposure_bins(self):

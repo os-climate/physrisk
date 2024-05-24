@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import List, Union, Optional
 
 import numpy as np
 
@@ -16,12 +16,12 @@ class HazardEventDistrib:
         event_type: type,
         intensity_bins: Union[List[float], np.ndarray],
         prob: Union[List[float], np.ndarray],
-        path: List[str] = None,
+        path: List[Optional[str]] = None,
     ):
         """Create a new asset event distribution.
         Args:
             event_type: type of event
-            intensity_bins: non-decreasing intensity bin edges.
+            intensity_bins: non-decreasing intensity bin edgess.
             e.g. bin edges [1.0, 1.5, 2.0] imply two bins: 1.0 < i <= 1.5, 1.5 < i <= 2.0
             prob: (annual) probability of occurrence for each intensity bin with size [len(intensity_bins) - 1].
             path: path to the hazard event data source.

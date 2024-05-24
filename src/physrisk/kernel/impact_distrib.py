@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import List, Union
+from typing import List, Union, Optional
 
 import numpy as np
 
@@ -22,7 +22,7 @@ class ImpactDistrib:
         impact_bins: Union[List[float], np.ndarray],
         prob: Union[List[float], np.ndarray],
         impact_type: ImpactType = ImpactType.damage,
-        path: List[str] = None,
+        path: List[Optional[str]] = None,
     ):
         """Create a new asset event distribution.
         Args:

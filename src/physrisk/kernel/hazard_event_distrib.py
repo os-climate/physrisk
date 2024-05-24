@@ -12,8 +12,11 @@ class HazardEventDistrib:
     __slots__ = ["__event_type", "__intensity_bins", "__prob", "__path", "__exceedance"]
 
     def __init__(
-        self, event_type: type, intensity_bins: Union[List[float], np.ndarray], prob: Union[List[float], np.ndarray],
-        path: List[str] = None
+        self,
+        event_type: type,
+        intensity_bins: Union[List[float], np.ndarray],
+        prob: Union[List[float], np.ndarray],
+        path: List[str] = None,
     ):
         """Create a new asset event distribution.
         Args:

@@ -818,6 +818,37 @@ If the random variables are uncorrelated, then the aggregated effective impact d
 
 {\textcolor{red}{\emph{[Add version with discrete binned data.]}}}
 
+\subsection{Discrete hazard indicators and interpolation}
+Two dimensional geospatial raster data is typically either `pixel-is-area' or `pixel-is-point'. As the name suggests, for pixel-is-area data the pixel value is thought of as filling an area. For for pixel-is-point the values are a grid of points.  Hazard indicator data sets are generally pixel-is-area. In this case, a raster grid space is defined with $i$ as the spatial $x$ and $j$ as the spatial $y$ coordinate. A point in the space is given by $(i, j)$ with $i$ increasing to the right and $j$ increasing downwards. The top left of the image is at point $(0, 0)$ and the bottom right corner of the top left pixel is at point $(1, 1)$. The bottom right of the image is at $(n, m)$. The centre of the top left pixel is at point $(0.5, 0.5)$. 
+
+The usual convention for coordinates (e.g. Python's \emph{xarray}) is that the positions of the \emph{centres} of the pixels are provided. For example the spatial $x$ coordinates are the transformed values of points in raster space with $i \in \{ 0.5, 1.5, \dots, n - 0.5 \}$.
+
+For pixel-is-area data, `floor' interpolation typically means that the value of the pixel containing the point is returned. For example, the top left pixel value is returned for any point such that $0 <= i < 1$ and $0 <= j < 1$. For `bilinear' interpolation the pixel value is taken to be located at the centre of each pixel. This is shown in Figure~\ref{Fig:interp_pixel_is_area}. Note that the use of pixel centres makes the algorithm for bilinear interpolation different to that of pixel-is-point data.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[ht]
+	
+	\begin{framed}
+		% left, bottom, right, top
+		\includegraphics[clip, trim=0cm 0cm 0cm 0cm, width=1.00\textwidth]{plots/interp_pixel_is_area.pdf}
+		
+	\end{framed}
+	
+	\footnotesize
+	
+	\renewcommand{\arraystretch}{1.01}
+	
+	\vspace{-3ex}
+	
+	\vspace{-0.5ex}
+	
+	\caption{\small Points used for interpolation under the pixel-is-area convention. The cross marks the asset location in question and the squares are the centres of the four pixels that contribute to the hazard indicator value if using bilinear interpolation.}
+	\label{Fig:interp_pixel_is_area}
+	
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 \subsection{Financial model}
 
 \subsubsection{Types of calculation.}

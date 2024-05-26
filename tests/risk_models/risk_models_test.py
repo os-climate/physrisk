@@ -62,6 +62,7 @@ class TestRiskModels(TestWithCredentials):
         label, description = helper.get_score_details(asset_scores[0], definitions[0])
         assert asset_scores[0] == 4
 
+
     def _create_assets(self):
         assets = [
             RealEstateAsset(TestData.latitudes[0], TestData.longitudes[0], location="Asia", type="Buildings/Industrial")

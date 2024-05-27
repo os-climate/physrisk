@@ -46,10 +46,11 @@ class ZarrStoreMocker:
         intensities: Union[List[float], npt.NDArray],
         width: int = 43200,
         height: int = 21600,
+        units: str = "default",
     ):
         crs = "epsg:4326"
         crs, shape, trans = self._crs_shape_transform_global(return_periods=return_periods, width=width, height=height)
-        self._add_curves(array_path, longitudes, latitudes, crs, shape, trans, return_periods, intensities)
+        self._add_curves(array_path, longitudes, latitudes, crs, shape, trans, return_periods, intensities, units=units)
 
     def _crs_shape_transform_global(
         self, width: int = 43200, height: int = 21600, return_periods: Union[List[float], npt.NDArray] = [0.0]
@@ -66,6 +67,7 @@ class ZarrStoreMocker:
         trans: List[float],
         return_periods: Union[List[float], npt.NDArray],
         intensities: Union[List[float], npt.NDArray],
+        units: str = "default",
     ):
         z = self._root.create_dataset(  # type: ignore
             array_path, shape=(shape[0], shape[1], shape[2]), chunks=(shape[0], 1000, 1000), dtype="f4"
@@ -73,6 +75,7 @@ class ZarrStoreMocker:
         z.attrs["transform_mat3x3"] = trans
         z.attrs["index_values"] = return_periods
         z.attrs["crs"] = crs
+        z.attrs["units"] = units
 
         if crs.lower() != "epsg:4326":
             transproj = Transformer.from_crs(

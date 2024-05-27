@@ -8,6 +8,7 @@ from physrisk.api.v1.impact_req_resp import (
     ScoreBasedRiskMeasureDefinition,
 )
 from physrisk.kernel.hazards import ChronicHeat, CoastalInundation, Hazard, RiverineInundation, Wind
+from physrisk.kernel.impact import AssetImpactResult
 from physrisk.kernel.impact_distrib import ImpactDistrib
 from physrisk.kernel.risk import Measure, RiskMeasureCalculator
 
@@ -159,11 +160,13 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
             description = "No Data"
         return description
 
-    def calc_measure(self, hazard_type: Type[Hazard], base_impact: ImpactDistrib, impact: ImpactDistrib) -> Measure:
+    def calc_measure(
+        self, hazard_type: Type[Hazard], base_impact_res: AssetImpactResult, impact_res: AssetImpactResult
+    ) -> Measure:
         if hazard_type == ChronicHeat:
-            return self.calc_measure_cooling(hazard_type, base_impact, impact)
+            return self.calc_measure_cooling(hazard_type, base_impact_res.impact, impact_res.impact)
         else:
-            return self.calc_measure_acute(hazard_type, base_impact, impact)
+            return self.calc_measure_acute(hazard_type, base_impact_res.impact, impact_res.impact)
 
     def calc_measure_acute(self, hazard_type: type, base_impact: ImpactDistrib, impact: ImpactDistrib) -> Measure:
         return_period = 100.0  # criterion based on 1 in 100-year flood events

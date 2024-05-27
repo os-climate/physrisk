@@ -115,8 +115,8 @@ class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
 
 
 class RealEstateAsset(Asset):
-    def __init__(self, latitude: float, longitude: float, *, location: str, type: str):
-        super().__init__(latitude, longitude)
+    def __init__(self, latitude: float, longitude: float, *, location: str, type: str, **kwargs):
+        super().__init__(latitude, longitude, **kwargs)
         self.location = location
         self.type = type
 

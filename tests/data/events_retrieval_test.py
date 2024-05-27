@@ -199,10 +199,10 @@ class TestEventRetrieval(TestWithCredentials):
         zarr_reader = ZarrReader(store)
         curves_max_expected = np.array([[0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4]])
 
-        curves_max_candidate, _ = zarr_reader.get_max_curves(set_id, shapes, interpolation="floor")
+        curves_max_candidate, _, _ = zarr_reader.get_max_curves(set_id, shapes, interpolation="floor")
         numpy.testing.assert_allclose(curves_max_candidate, curves_max_expected, rtol=1e-6)
 
-        curves_max_candidate, _ = zarr_reader.get_max_curves(set_id, shapes, interpolation="linear")
+        curves_max_candidate, _, _ = zarr_reader.get_max_curves(set_id, shapes, interpolation="linear")
         numpy.testing.assert_allclose(curves_max_candidate, curves_max_expected / 4, rtol=1e-6)
 
     def test_reproject(self):

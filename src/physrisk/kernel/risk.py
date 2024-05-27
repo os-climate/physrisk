@@ -7,7 +7,7 @@ from physrisk.kernel.assets import Asset
 from physrisk.kernel.hazard_model import HazardModel
 from physrisk.kernel.hazards import Hazard, all_hazards
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey, calculate_impacts
-from physrisk.kernel.impact_distrib import EmptyImpactDistrib, ImpactDistrib
+from physrisk.kernel.impact_distrib import EmptyImpactDistrib
 from physrisk.kernel.vulnerability_model import VulnerabilityModels
 
 # from asyncio import ALL_COMPLETED
@@ -87,7 +87,7 @@ class Measure:
 
 
 class RiskMeasureCalculator(Protocol):
-    def calc_measure(self, hazard_type: type, base_impact: ImpactDistrib, impact: ImpactDistrib) -> Measure: ...
+    def calc_measure(self, hazard_type: type, base_impact: AssetImpactResult, impact: AssetImpactResult) -> Measure: ...
 
     def get_definition(self, hazard_type: type) -> ScoreBasedRiskMeasureDefinition: ...
 
@@ -163,12 +163,12 @@ class AssetLevelRiskModel(RiskModel):
                     for hazard_type in measure_calc.supported_hazards():
                         base_impact = impacts.get(
                             ImpactKey(asset=asset, hazard_type=hazard_type, scenario="historical", key_year=None)
-                        ).impact
+                        )
                         prosp_impact = impacts.get(
                             ImpactKey(asset=asset, hazard_type=hazard_type, scenario=prosp_scen, key_year=year)
-                        ).impact
-                        if not isinstance(base_impact, EmptyImpactDistrib) and not isinstance(
-                            prosp_impact, EmptyImpactDistrib
+                        )
+                        if not isinstance(base_impact.impact, EmptyImpactDistrib) and not isinstance(
+                            prosp_impact.impact, EmptyImpactDistrib
                         ):
                             risk_ind = measure_calc.calc_measure(hazard_type, base_impact, prosp_impact)
                             measures[MeasureKey(asset, prosp_scen, year, hazard_type)] = risk_ind

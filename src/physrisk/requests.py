@@ -266,27 +266,26 @@ def _get_hazard_data(request: HazardDataRequest, hazard_model: HazardModel):
     return response
 
 
-def create_assets(asset: Assets, assets: Optional[List[Asset]]):  # noqa: max-complexity=11
+def create_assets(api_assets: Assets, assets: Optional[List[Asset]] = None):  # noqa: max-complexity=11
     """Create list of Asset objects from the Assets API object:"""
     if assets is not None:
-        if len(asset.items) != 0:
+        if len(api_assets.items) != 0:
             raise ValueError("Cannot provide asset items in the request while specifying an explicit asset list")
         return assets
     else:
         module = import_module("physrisk.kernel.assets")
         asset_objs = []
-        for item in asset.items:
+        for item in api_assets.items:
             if hasattr(module, item.asset_class):
-                kwargs: Dict[str, Any] = {}
-                if item.type is not None:
-                    kwargs["type"] = item.type
-                if item.location is not None:
-                    kwargs["location"] = item.location
-                if item.capacity is not None:
-                    kwargs["capacity"] = item.capacity
+                init = getattr(module, item.asset_class)
+                kwargs = {}
+                kwargs.update(item.__dict__)
+                if item.model_extra is not None:
+                    kwargs.update(item.model_extra)
+                del kwargs["asset_class"], kwargs["attributes"], kwargs["latitude"], kwargs["longitude"]
                 asset_obj = cast(
                     Asset,
-                    getattr(module, item.asset_class)(item.latitude, item.longitude, **kwargs),
+                    init(item.latitude, item.longitude, **kwargs),
                 )
                 if item.attributes is not None:
                     for key, value in item.attributes.items():

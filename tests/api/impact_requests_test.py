@@ -63,6 +63,25 @@ class TestImpactRequests(TestWithCredentials):
         assets_obj = Assets(**assets)
         self.assertIsNotNone(assets_obj)
 
+    def test_extra_fields(self):
+        assets = {
+            "items": [
+                {
+                    "asset_class": "RealEstateAsset",
+                    "type": "Buildings/Industrial",
+                    "location": "Asia",
+                    "longitude": 69.4787,
+                    "latitude": 34.556,
+                    "extra_field": 2.0,
+                    "capacity": 1000.0,
+                }
+            ],
+        }
+        assets = requests.create_assets(Assets(**assets))
+        # in the case of RealEstateAsset, extra fields are allowed, including those not in the Pydantic Asset object
+        assert assets[0].capacity == 1000.0
+        assert assets[0].extra_field == 2.0
+
     def test_impact_request(self):
         """Runs short asset-level impact request."""
 

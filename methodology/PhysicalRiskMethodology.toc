@@ -24,37 +24,38 @@
 \contentsline {subsubsection}{\numberline {2.3.8}Vulnerability distributions and heuristics}{26}{subsubsection.2.3.8}%
 \contentsline {paragraph}{Modelling impact using a Beta distribution.}{27}{section*.16}%
 \contentsline {subsection}{\numberline {2.4}Aggregation of impacts}{28}{subsection.2.4}%
-\contentsline {subsection}{\numberline {2.5}Financial model}{29}{subsection.2.5}%
-\contentsline {subsubsection}{\numberline {2.5.1}Types of calculation.}{29}{subsubsection.2.5.1}%
-\contentsline {subsubsection}{\numberline {2.5.2}Climate risk measures and importance of change.}{29}{subsubsection.2.5.2}%
-\contentsline {paragraph}{Definition of measures.}{30}{section*.18}%
-\contentsline {subsubsection}{\numberline {2.5.3}Structural models of credit risk}{30}{subsubsection.2.5.3}%
-\contentsline {subsection}{\numberline {2.6}Uncertainties in the calculation}{31}{subsection.2.6}%
-\contentsline {subsection}{\numberline {2.7}Model limitations}{31}{subsection.2.7}%
-\contentsline {subsubsection}{\numberline {2.7.1}Data availability}{31}{subsubsection.2.7.1}%
-\contentsline {section}{\numberline {3}Inundation}{32}{section.3}%
-\contentsline {subsection}{\numberline {3.1}Hazard models}{32}{subsection.3.1}%
-\contentsline {subsection}{\numberline {3.2}Vulnerability models}{33}{subsection.3.2}%
-\contentsline {subsubsection}{\numberline {3.2.1}Real estate assets}{33}{subsubsection.3.2.1}%
-\contentsline {subsubsection}{\numberline {3.2.2}Thermal power generation projects}{33}{subsubsection.3.2.2}%
-\contentsline {section}{\numberline {4}Drought}{34}{section.4}%
-\contentsline {subsection}{\numberline {4.1}Hazard models}{34}{subsection.4.1}%
-\contentsline {subsection}{\numberline {4.2}Vulnerability models}{34}{subsection.4.2}%
-\contentsline {subsubsection}{\numberline {4.2.1}Thermal power generation projects}{34}{subsubsection.4.2.1}%
-\contentsline {section}{\numberline {5}Heat}{35}{section.5}%
-\contentsline {subsection}{\numberline {5.1}Hazard Models}{35}{subsection.5.1}%
-\contentsline {subsubsection}{\numberline {5.1.1}Chronic hazard models}{35}{subsubsection.5.1.1}%
-\contentsline {subsubsection}{\numberline {5.1.2}Acute hazard models}{36}{subsubsection.5.1.2}%
-\contentsline {subsection}{\numberline {5.2}Vulnerability models}{36}{subsection.5.2}%
-\contentsline {subsubsection}{\numberline {5.2.1}Thermal power generation projects}{36}{subsubsection.5.2.1}%
-\contentsline {paragraph}{\numberline {5.2.1.1}Air temperature\\}{36}{paragraph.5.2.1.1}%
-\contentsline {paragraph}{\numberline {5.2.1.2}Water temperature\\}{37}{paragraph.5.2.1.2}%
-\contentsline {subsubsection}{\numberline {5.2.2}Heat vulnerability model}{39}{subsubsection.5.2.2}%
-\contentsline {paragraph}{\numberline {5.2.2.1}Impact of temperature on labour productivity\\}{39}{paragraph.5.2.2.1}%
-\contentsline {paragraph}{\numberline {5.2.2.2}Uncertainty around the vulnerability Heat model\\}{41}{paragraph.5.2.2.2}%
-\contentsline {section}{\numberline {6}Water-related risks}{48}{section.6}%
-\contentsline {subsection}{\numberline {6.1}Hazard models}{48}{subsection.6.1}%
-\contentsline {subsection}{\numberline {6.2}Vulnerability models}{48}{subsection.6.2}%
-\contentsline {subsubsection}{\numberline {6.2.1}Thermal power generation projects}{48}{subsubsection.6.2.1}%
-\contentsline {section}{\numberline {7}Disaggregation data sets}{49}{section.7}%
-\contentsline {subsection}{\numberline {7.1}Sampling from two dimensional data sets}{50}{subsection.7.1}%
+\contentsline {subsection}{\numberline {2.5}Discrete hazard indicators and interpolation}{29}{subsection.2.5}%
+\contentsline {subsection}{\numberline {2.6}Financial model}{29}{subsection.2.6}%
+\contentsline {subsubsection}{\numberline {2.6.1}Types of calculation.}{29}{subsubsection.2.6.1}%
+\contentsline {subsubsection}{\numberline {2.6.2}Climate risk measures and importance of change.}{30}{subsubsection.2.6.2}%
+\contentsline {paragraph}{Definition of measures.}{31}{section*.19}%
+\contentsline {subsubsection}{\numberline {2.6.3}Structural models of credit risk}{31}{subsubsection.2.6.3}%
+\contentsline {subsection}{\numberline {2.7}Uncertainties in the calculation}{32}{subsection.2.7}%
+\contentsline {subsection}{\numberline {2.8}Model limitations}{32}{subsection.2.8}%
+\contentsline {subsubsection}{\numberline {2.8.1}Data availability}{32}{subsubsection.2.8.1}%
+\contentsline {section}{\numberline {3}Inundation}{33}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Hazard models}{33}{subsection.3.1}%
+\contentsline {subsection}{\numberline {3.2}Vulnerability models}{34}{subsection.3.2}%
+\contentsline {subsubsection}{\numberline {3.2.1}Real estate assets}{34}{subsubsection.3.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.2}Thermal power generation projects}{34}{subsubsection.3.2.2}%
+\contentsline {section}{\numberline {4}Drought}{35}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Hazard models}{35}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Vulnerability models}{36}{subsection.4.2}%
+\contentsline {subsubsection}{\numberline {4.2.1}Thermal power generation projects}{36}{subsubsection.4.2.1}%
+\contentsline {section}{\numberline {5}Heat}{36}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Hazard Models}{37}{subsection.5.1}%
+\contentsline {subsubsection}{\numberline {5.1.1}Chronic hazard models}{37}{subsubsection.5.1.1}%
+\contentsline {subsubsection}{\numberline {5.1.2}Acute hazard models}{38}{subsubsection.5.1.2}%
+\contentsline {subsection}{\numberline {5.2}Vulnerability models}{38}{subsection.5.2}%
+\contentsline {subsubsection}{\numberline {5.2.1}Thermal power generation projects}{38}{subsubsection.5.2.1}%
+\contentsline {paragraph}{\numberline {5.2.1.1}Air temperature\\}{38}{paragraph.5.2.1.1}%
+\contentsline {paragraph}{\numberline {5.2.1.2}Water temperature\\}{39}{paragraph.5.2.1.2}%
+\contentsline {subsubsection}{\numberline {5.2.2}Heat vulnerability model}{40}{subsubsection.5.2.2}%
+\contentsline {paragraph}{\numberline {5.2.2.1}Impact of temperature on labour productivity\\}{40}{paragraph.5.2.2.1}%
+\contentsline {paragraph}{\numberline {5.2.2.2}Uncertainty around the vulnerability Heat model\\}{42}{paragraph.5.2.2.2}%
+\contentsline {section}{\numberline {6}Water-related risks}{50}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Hazard models}{50}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Vulnerability models}{50}{subsection.6.2}%
+\contentsline {subsubsection}{\numberline {6.2.1}Thermal power generation projects}{50}{subsubsection.6.2.1}%
+\contentsline {section}{\numberline {7}Disaggregation data sets}{51}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Sampling from two dimensional data sets}{52}{subsection.7.1}%

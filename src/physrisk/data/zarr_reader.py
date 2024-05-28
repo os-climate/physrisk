@@ -97,6 +97,7 @@ class ZarrReader:
         t = z.attrs["transform_mat3x3"]  # type: ignore
         transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
         crs = z.attrs.get("crs", "epsg:4326")
+        units: str = z.attrs.get("units", "default")
 
         # in the case of acute risks, index_values will contain the return periods
         index_values = self.get_index_values(z)
@@ -112,11 +113,11 @@ class ZarrReader:
             ix = np.repeat(image_coords[0, :], len(index_values))
 
             data = z.get_coordinate_selection((iz, iy, ix))  # type: ignore
-            return data.reshape([len(longitudes), len(index_values)]), np.array(index_values)
+            return data.reshape([len(longitudes), len(index_values)]), np.array(index_values), units
 
         elif interpolation in ["linear", "max", "min"]:
             res = ZarrReader._linear_interp_frac_coordinates(z, image_coords, index_values, interpolation=interpolation)
-            return res, np.array(index_values)
+            return res, np.array(index_values), units
 
         else:
             raise ValueError("interpolation must have value 'floor', 'linear', 'max' or 'min")
@@ -139,6 +140,7 @@ class ZarrReader:
             curves_max: numpy array of maximum intensity on the grid for a given geometry
             (no. coordinate pairs, no. return periods).
             return_periods: return periods in years.
+            units: units.
         """
         path = self._path_provider(set_id) if self._path_provider is not None else set_id
         z = self._root[path]  # e.g. inundation/wri/v2/<filename>
@@ -148,6 +150,7 @@ class ZarrReader:
 
         t = z.attrs["transform_mat3x3"]  # type: ignore
         transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
+        units: str = z.attrs.get("units", "default")
 
         matrix = np.array(~transform).reshape(3, 3).transpose()[:, :-1].reshape(6)
         transformed_shapes = [affinity.affine_transform(shape, matrix) for shape in shapes]
@@ -217,7 +220,7 @@ class ZarrReader:
             ]
         )
 
-        return curves_max, np.array(index_values)
+        return curves_max, np.array(index_values), units
 
     def get_max_curves_on_grid(self, set_id, longitudes, latitudes, interpolation="floor", delta_km=1.0, n_grid=5):
         """Get maximal intensity curve for a grid around a given latitude and longitude coordinate pair.
@@ -272,7 +275,7 @@ class ZarrReader:
         )
         lats_grid = lats_grid_baseline + lats_grid_offsets
         lons_grid = lons_grid_baseline + lons_grid_offsets
-        curves, return_periods = self.get_curves(
+        curves, return_periods, _ = self.get_curves(
             set_id, lons_grid.reshape(-1), lats_grid.reshape(-1), interpolation=interpolation
         )
         curves_max = np.nanmax(curves.reshape((n_data, n_grid * n_grid, len(return_periods))), axis=1)

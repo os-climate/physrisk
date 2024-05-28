@@ -99,7 +99,7 @@ class AcuteHazardDataProvider(HazardDataProvider):
 
         path = self._get_source_path(indicator_id=indicator_id, scenario=scenario, year=year, hint=hint)
         if buffer is None:
-            curves, return_periods = self._reader.get_curves(
+            curves, return_periods, units = self._reader.get_curves(
                 path, longitudes, latitudes, self._interpolation
             )  # type: ignore
         else:

@@ -28,6 +28,13 @@ class ImpactKey(NamedTuple):
     scenario: Optional[str] = None
     key_year: Optional[int] = None  # this is None for 'historical' scenario
 
+    def __repr__(self) -> str:
+        asset_id = self.asset.id if self.asset.id is not None else "no_id"
+        return (
+            f"ImpactKey(asset={asset_id},hazard_type={self.hazard_type.__name__},"
+            f"scenario={self.scenario},key_year={self.key_year})"
+        )
+
 
 @dataclass
 class AssetImpactResult:

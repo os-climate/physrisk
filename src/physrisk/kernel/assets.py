@@ -40,9 +40,10 @@ class TurbineKind(Enum):
 
 
 class Asset:
-    def __init__(self, latitude: float, longitude: float, **kwargs):
+    def __init__(self, latitude: float, longitude: float, id: Optional[str] = None, **kwargs):
         self.latitude = latitude
         self.longitude = longitude
+        self.id = id
         self.__dict__.update(kwargs)
 
 
@@ -114,8 +115,8 @@ class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
 
 
 class RealEstateAsset(Asset):
-    def __init__(self, latitude: float, longitude: float, *, location: str, type: str):
-        super().__init__(latitude, longitude)
+    def __init__(self, latitude: float, longitude: float, *, location: str, type: str, **kwargs):
+        super().__init__(latitude, longitude, **kwargs)
         self.location = location
         self.type = type
 

@@ -23,7 +23,7 @@ class Array(np.ndarray, metaclass=ArrayMeta):
     pass
 
 
-class Asset(BaseModel):
+class Asset(BaseModel, extra="allow"):
     """Defines an asset. An asset is identified first by its asset_class and then by its type within the class.
     An asset's value may be impacted through damage or through disruption
     disruption being reduction of an asset's ability to generate cashflows

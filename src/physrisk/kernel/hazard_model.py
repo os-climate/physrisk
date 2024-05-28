@@ -76,7 +76,6 @@ class HazardEventDataResponse(HazardDataResponse):
             return_periods: np.ndarray,
             intensities: np.ndarray,
             units: str = "default",
-            path: Optional[str] = None
     ):
         """Create HazardEventDataResponse.
 
@@ -89,7 +88,6 @@ class HazardEventDataResponse(HazardDataResponse):
         self.return_periods = return_periods
         self.intensities = intensities
         self.units = sys.intern(units)
-        self.path = sys.intern(path) if path is not None else None
 
 
 class HazardParameterDataResponse(HazardDataResponse):
@@ -100,7 +98,6 @@ class HazardParameterDataResponse(HazardDataResponse):
             parameters: np.ndarray,
             param_defns: np.ndarray = np.empty([]),
             units: str = "default",
-            path: Optional[str] = None
     ):
         """Create HazardParameterDataResponse. In general the chronic parameters are an array of values.
         For example, a chronic hazard may be the number of days per year with average temperature
@@ -117,7 +114,6 @@ class HazardParameterDataResponse(HazardDataResponse):
         self.parameters = parameters
         self.param_defns = param_defns
         self.units = sys.intern(units)
-        self.path = sys.intern(path) if path is not None else None
 
     @property
     def parameter(self) -> float:

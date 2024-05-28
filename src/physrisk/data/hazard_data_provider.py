@@ -158,9 +158,8 @@ class ChronicHazardDataProvider(HazardDataProvider):
             parameters: numpy array of parameters.
             defns: numpy array defining the parameters (e.g. provides thresholds).
             units: units of the parameters.
-            path: path to the hazard event data source.
         """
 
         path = self._get_source_path(indicator_id=indicator_id, scenario=scenario, year=year, hint=hint)
         parameters, defns, units = self._reader.get_curves(path, longitudes, latitudes, self._interpolation)
-        return parameters, defns, units, path
+        return parameters, defns, units

@@ -73,11 +73,7 @@ class HazardEventDataResponse(HazardDataResponse):
     """Response to HazardDataRequest for acute hazards."""
 
     def __init__(
-            self,
-            return_periods: np.ndarray,
-            intensities: np.ndarray,
-            units: str = "default",
-            path: Optional[str] = None
+        self, return_periods: np.ndarray, intensities: np.ndarray, units: str = "default", path: Optional[str] = None
     ):
         """Create HazardEventDataResponse.
 
@@ -97,11 +93,11 @@ class HazardParameterDataResponse(HazardDataResponse):
     """Response to HazardDataRequest."""
 
     def __init__(
-            self,
-            parameters: np.ndarray,
-            param_defns: np.ndarray = np.empty([]),
-            units: str = "default",
-            path: Optional[str] = None
+        self,
+        parameters: np.ndarray,
+        param_defns: np.ndarray = np.empty([]),
+        units: str = "default",
+        path: Optional[str] = None,
     ):
         """Create HazardParameterDataResponse. In general the chronic parameters are an array of values.
         For example, a chronic hazard may be the number of days per year with average temperature

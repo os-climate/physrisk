@@ -84,7 +84,7 @@ class PregeneratedHazardModel(HazardModel):
             longitudes = [req.longitude for req in batch]
             latitudes = [req.latitude for req in batch]
             if hazard_type.kind == HazardKind.acute:  # type: ignore
-                intensities, return_periods, path = self.acute_hazard_data_providers[hazard_type].get_intensity_curves(
+                intensities, return_periods, units, path = self.acute_hazard_data_providers[hazard_type].get_intensity_curves(
                     longitudes,
                     latitudes,
                     indicator_id=indicator_id,
@@ -99,15 +99,15 @@ class PregeneratedHazardModel(HazardModel):
                     valid_periods, valid_intensities = return_periods[valid], intensities[i, :][valid]
                     if len(valid_periods) == 0:
                         valid_periods, valid_intensities = np.array([100]), np.array([0])
-                    responses[req] = HazardEventDataResponse(valid_periods, valid_intensities, path)
+                    responses[req] = HazardEventDataResponse(valid_periods, valid_intensities, units, path)
             elif hazard_type.kind == HazardKind.chronic:  # type: ignore
-                parameters, defns, path = self.chronic_hazard_data_providers[hazard_type].get_parameters(
+                parameters, defns, units, path = self.chronic_hazard_data_providers[hazard_type].get_parameters(
                     longitudes, latitudes, indicator_id=indicator_id, scenario=scenario, year=year, hint=hint
                 )
 
                 for i, req in enumerate(batch):
                     valid = ~np.isnan(parameters[i, :])
-                    responses[req] = HazardParameterDataResponse(parameters[i, :][valid], defns[valid], path)
+                    responses[req] = HazardParameterDataResponse(parameters[i, :][valid], defns[valid], units, path)
         except Exception as err:
             # e.g. the requested data is unavailable
             for i, req in enumerate(batch):

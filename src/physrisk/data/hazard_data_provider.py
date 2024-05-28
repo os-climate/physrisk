@@ -93,6 +93,7 @@ class AcuteHazardDataProvider(HazardDataProvider):
         Returns:
             curves: numpy array of intensity (no. coordinate pairs, no. return periods).
             return_periods: return periods in years.
+            units: units.
             path: path to the hazard event data source.
         """
 
@@ -104,7 +105,7 @@ class AcuteHazardDataProvider(HazardDataProvider):
         else:
             if buffer < 0 or 1000 < buffer:
                 raise Exception("The buffer must be an integer between 0 and 1000 metres.")
-            curves, return_periods = self._reader.get_max_curves(
+            curves, return_periods, units = self._reader.get_max_curves(
                 path,
                 [
                     (
@@ -118,7 +119,7 @@ class AcuteHazardDataProvider(HazardDataProvider):
                 ],
                 self._interpolation,
             )  # type: ignore
-        return curves, return_periods, path
+        return curves, return_periods, units, path
 
 
 class ChronicHazardDataProvider(HazardDataProvider):
@@ -155,9 +156,11 @@ class ChronicHazardDataProvider(HazardDataProvider):
 
         Returns:
             parameters: numpy array of parameters.
+            defns: numpy array defining the parameters (e.g. provides thresholds).
+            units: units of the parameters.
             path: path to the hazard event data source.
         """
 
         path = self._get_source_path(indicator_id=indicator_id, scenario=scenario, year=year, hint=hint)
-        parameters, defns = self._reader.get_curves(path, longitudes, latitudes, self._interpolation)
-        return parameters, defns, path
+        parameters, defns, units = self._reader.get_curves(path, longitudes, latitudes, self._interpolation)
+        return parameters, defns, units, path

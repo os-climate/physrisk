@@ -71,7 +71,13 @@ class HazardDataFailedResponse(HazardDataResponse):
 class HazardEventDataResponse(HazardDataResponse):
     """Response to HazardDataRequest for acute hazards."""
 
-    def __init__(self, return_periods: np.ndarray, intensities: np.ndarray, path: Optional[str] = None):
+    def __init__(
+            self,
+            return_periods: np.ndarray,
+            intensities: np.ndarray,
+            units: str = "default",
+            path: Optional[str] = None
+    ):
         """Create HazardEventDataResponse.
 
         Args:
@@ -82,13 +88,20 @@ class HazardEventDataResponse(HazardDataResponse):
 
         self.return_periods = return_periods
         self.intensities = intensities
+        self.units = sys.intern(units)
         self.path = sys.intern(path) if path is not None else None
 
 
 class HazardParameterDataResponse(HazardDataResponse):
     """Response to HazardDataRequest."""
 
-    def __init__(self, parameters: np.ndarray, param_defns: np.ndarray = np.empty([]), path: Optional[str] = None):
+    def __init__(
+            self,
+            parameters: np.ndarray,
+            param_defns: np.ndarray = np.empty([]),
+            units: str = "default",
+            path: Optional[str] = None
+    ):
         """Create HazardParameterDataResponse. In general the chronic parameters are an array of values.
         For example, a chronic hazard may be the number of days per year with average temperature
         above :math:`x' degrees for :math:`x' in [25, 30, 35, 40]°C. In this case the param_defns would
@@ -103,6 +116,7 @@ class HazardParameterDataResponse(HazardDataResponse):
         """
         self.parameters = parameters
         self.param_defns = param_defns
+        self.units = sys.intern(units)
         self.path = sys.intern(path) if path is not None else None
 
     @property

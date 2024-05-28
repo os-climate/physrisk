@@ -94,6 +94,7 @@ class AcuteHazardDataProvider(HazardDataProvider):
             curves: numpy array of intensity (no. coordinate pairs, no. return periods).
             return_periods: return periods in years.
             units: units.
+            path: path to the hazard event data source.
         """
 
         path = self._get_source_path(indicator_id=indicator_id, scenario=scenario, year=year, hint=hint)
@@ -118,7 +119,7 @@ class AcuteHazardDataProvider(HazardDataProvider):
                 ],
                 self._interpolation,
             )  # type: ignore
-        return curves, return_periods, units
+        return curves, return_periods, units, path
 
 
 class ChronicHazardDataProvider(HazardDataProvider):
@@ -157,8 +158,9 @@ class ChronicHazardDataProvider(HazardDataProvider):
             parameters: numpy array of parameters.
             defns: numpy array defining the parameters (e.g. provides thresholds).
             units: units of the parameters.
+            path: path to the hazard event data source.
         """
 
         path = self._get_source_path(indicator_id=indicator_id, scenario=scenario, year=year, hint=hint)
         parameters, defns, units = self._reader.get_curves(path, longitudes, latitudes, self._interpolation)
-        return parameters, defns, units
+        return parameters, defns, units, path

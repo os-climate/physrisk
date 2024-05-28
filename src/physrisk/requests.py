@@ -282,22 +282,11 @@ def create_assets(api_assets: Assets, assets: Optional[List[Asset]] = None):  # 
                 kwargs.update(item.__dict__)
                 if item.model_extra is not None:
                     kwargs.update(item.model_extra)
-                del kwargs["asset_class"], kwargs["attributes"], kwargs["latitude"], kwargs["longitude"]
+                del kwargs["asset_class"], kwargs["latitude"], kwargs["longitude"]
                 asset_obj = cast(
                     Asset,
                     init(item.latitude, item.longitude, **kwargs),
                 )
-                if item.attributes is not None:
-                    for key, value in item.attributes.items():
-                        if value.isdigit():
-                            value_as_double = float(value)
-                            setattr(
-                                asset_obj,
-                                key,
-                                int(value_as_double) if value_as_double.is_integer() else value_as_double,
-                            )
-                        else:
-                            setattr(asset_obj, key, value)
                 asset_objs.append(asset_obj)
             else:
                 raise ValueError(f"asset type '{item.asset_class}' not found")

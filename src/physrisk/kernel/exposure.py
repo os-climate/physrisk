@@ -76,11 +76,12 @@ class JupterExposureMeasure(ExposureMeasure):
         for (k, v), resp in zip(self.exposure_bins.items(), data_responses):
             if isinstance(resp, HazardParameterDataResponse):
                 param = resp.parameter
+                hazard_path = resp.path
             elif isinstance(resp, HazardEventDataResponse):
                 if len(resp.intensities) > 1:
                     raise ValueError("single-value curve expected")
                 param = resp.intensities[0]
-            hazard_path = resp.path
+                hazard_path = resp.path
             (hazard_type, _) = k
             (lower_bounds, categories) = v
             if math.isnan(param):

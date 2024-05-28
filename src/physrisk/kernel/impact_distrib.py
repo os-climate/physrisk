@@ -22,7 +22,7 @@ class ImpactDistrib:
         impact_bins: Union[List[float], np.ndarray],
         prob: Union[List[float], np.ndarray],
         impact_type: ImpactType = ImpactType.damage,
-        path: List[Optional[str]] = None,
+        path: List[str] = None,
     ):
         """Create a new asset event distribution.
         Args:

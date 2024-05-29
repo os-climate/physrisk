@@ -16,7 +16,7 @@ class HazardEventDistrib:
         event_type: type,
         intensity_bins: Union[List[float], np.ndarray],
         prob: Union[List[float], np.ndarray],
-        path: List[str] = None,
+        path: Optional[List[str]] = None,
     ):
         """Create a new asset event distribution.
         Args:

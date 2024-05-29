@@ -107,11 +107,11 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
 
 
 def get_impact_distrib(
-        fraction_loss_mean: float,
-        fraction_loss_std: float,
-        hazard_type: type,
-        hazard_paths: List[str],
-        impact_type: ImpactType
+    fraction_loss_mean: float,
+    fraction_loss_std: float,
+    hazard_type: type,
+    hazard_paths: List[str],
+    impact_type: ImpactType,
 ) -> ImpactDistrib:
     """Calculate impact (disruption) of asset based on the hazard data returned.
 

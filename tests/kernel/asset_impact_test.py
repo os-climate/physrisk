@@ -93,11 +93,11 @@ class TestAssetImpact(unittest.TestCase):
         vul = VulnerabilityDistrib(
             type(RiverineInundation), depth_bins, impact_bins, np.diag(probs_w_cutoff)
         )  # np.eye(n_bins, n_bins))
-        event = HazardEventDistrib(type(RiverineInundation), depth_bins, probs)  # type: ignore
+        hazard_paths = ["unknown"]
+        event = HazardEventDistrib(type(RiverineInundation), depth_bins, probs, hazard_paths)  # type: ignore
 
         impact_prob = vul.prob_matrix.T @ event.prob
-        hazard_paths = []
-        impact = ImpactDistrib(vul.event_type, vul.impact_bins, impact_prob, hazard_paths)
+        impact = ImpactDistrib(vul.event_type, vul.impact_bins, impact_prob, event.path)
 
         mean = impact.mean_impact()
 

@@ -84,7 +84,9 @@ class PregeneratedHazardModel(HazardModel):
             longitudes = [req.longitude for req in batch]
             latitudes = [req.latitude for req in batch]
             if hazard_type.kind == HazardKind.acute:  # type: ignore
-                intensities, return_periods, units, path = self.acute_hazard_data_providers[hazard_type].get_intensity_curves(
+                intensities, return_periods, units, path = self.acute_hazard_data_providers[
+                    hazard_type
+                ].get_intensity_curves(
                     longitudes,
                     latitudes,
                     indicator_id=indicator_id,

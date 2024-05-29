@@ -1,9 +1,10 @@
+import sys
+
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from typing import Dict, List, Mapping, Optional, Protocol, Tuple
 
 import numpy as np
-import sys
 
 from physrisk.data.hazard_data_provider import HazardDataHint
 

@@ -100,6 +100,8 @@ class ExampleWBGTGZNJointModel(ChronicHeatGZNModel):
         assert isinstance(asset, IndustrialActivity)
         wbgt_responses = [cast(HazardParameterDataResponse, r) for r in data_responses[2:]]
 
+        hazard_paths = [cast(HazardParameterDataResponse, r).path for r in data_responses]
+
         baseline_dd_above_mean = cast(HazardParameterDataResponse, data_responses[0])
         scenario_dd_above_mean = cast(HazardParameterDataResponse, data_responses[1])
 
@@ -164,7 +166,7 @@ class ExampleWBGTGZNJointModel(ChronicHeatGZNModel):
 
         total_work_loss_delta: float = baseline_work_ability - scenario_work_ability
 
-        return get_impact_distrib(total_work_loss_delta, std_delta, ChronicHeat, ImpactType.disruption)
+        return get_impact_distrib(total_work_loss_delta, std_delta, ChronicHeat, hazard_paths, ImpactType.disruption)
 
 
 def two_variable_joint_variance(ex, varx, ey, vary):

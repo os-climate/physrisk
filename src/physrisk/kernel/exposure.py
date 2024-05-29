@@ -42,14 +42,14 @@ class Bounds:
 
 @dataclass
 class AssetExposureResult:
-    hazard_categories: Dict[type, Tuple[Category, float]]
+    hazard_categories: Dict[type, Tuple[Category, float, str]]
 
 
 class ExposureMeasure(DataRequester):
     @abstractmethod
     def get_exposures(
         self, asset: Asset, data_responses: Iterable[HazardDataResponse]
-    ) -> Dict[type, Tuple[Category, float]]: ...
+    ) -> Dict[type, Tuple[Category, float, str]]: ...
 
 
 class JupterExposureMeasure(ExposureMeasure):

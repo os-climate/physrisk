@@ -96,7 +96,8 @@ class TestAssetImpact(unittest.TestCase):
         event = HazardEventDistrib(type(RiverineInundation), depth_bins, probs)  # type: ignore
 
         impact_prob = vul.prob_matrix.T @ event.prob
-        impact = ImpactDistrib(vul.event_type, vul.impact_bins, impact_prob)
+        hazard_paths = []
+        impact = ImpactDistrib(vul.event_type, vul.impact_bins, impact_prob, hazard_paths)
 
         mean = impact.mean_impact()
 

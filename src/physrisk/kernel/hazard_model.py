@@ -76,7 +76,7 @@ class HazardEventDataResponse(HazardDataResponse):
             return_periods: np.ndarray,
             intensities: np.ndarray,
             units: str = "default",
-            path: str = ""
+            path: str = "unknown"
     ):
         """Create HazardEventDataResponse.
 
@@ -100,7 +100,7 @@ class HazardParameterDataResponse(HazardDataResponse):
             parameters: np.ndarray,
             param_defns: np.ndarray = np.empty([]),
             units: str = "default",
-            path: str = ""
+            path: str = "unknown"
     ):
         """Create HazardParameterDataResponse. In general the chronic parameters are an array of values.
         For example, a chronic hazard may be the number of days per year with average temperature

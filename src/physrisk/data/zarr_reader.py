@@ -21,8 +21,8 @@ def get_env(key: str, default: Optional[str] = None) -> str:
 
 
 class ZarrReader:
-    """Reads hazard event data from Zarr files, including OSC-format-specific attributes."""
-
+    """Reads hazard event data from Zarr files, including OSC-format-specific attributes.
+    """
     # environment variable names:
     __access_key = "OSC_S3_ACCESS_KEY"
     __secret_key = "OSC_S3_SECRET_KEY"

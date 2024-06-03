@@ -12,6 +12,10 @@ consistent working environment. Install via, e.g.:
 ```
 pip install pdm
 ```
+For ease of using Jupyter notebooks (e.g. in VS Code) the config can be used:
+```
+pdm config venv.with_pip True
+```
 
 The command:
 ```
@@ -37,6 +41,10 @@ and enabling automatic formatting via [pre-commit](https://pre-commit.com/)
 is recommended:
 ```
 pre-commit install
+```
+or
+```
+pre-commit run --all-files
 ```
 
 To ensure compliance with static check tools, developers may wish to run black and isort against modified files.

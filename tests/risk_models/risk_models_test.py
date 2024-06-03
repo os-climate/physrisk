@@ -4,20 +4,21 @@ from typing import Sequence
 
 import numpy as np
 
-import tests.data.hazard_model_store_test as hms
 from physrisk import requests
 from physrisk.api.v1.impact_req_resp import RiskMeasureKey, RiskMeasuresHelper
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.hazard_models.core_hazards import get_default_source_paths
-from physrisk.kernel.assets import RealEstateAsset
+from physrisk.kernel.assets import Asset, RealEstateAsset
 from physrisk.kernel.calculation import get_default_vulnerability_models
 from physrisk.kernel.hazards import ChronicHeat, CoastalInundation, RiverineInundation, Wind
 from physrisk.kernel.risk import AssetLevelRiskModel, MeasureKey
 from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels
 from physrisk.requests import _create_risk_measures
+from physrisk.risk_models.generic_risk_model import GenericScoreBasedRiskMeasures
 from physrisk.risk_models.risk_models import RealEstateToyRiskMeasures
-from tests.base_test import TestWithCredentials
-from tests.data.hazard_model_store_test import TestData, ZarrStoreMocker
+
+from ..base_test import TestWithCredentials
+from ..data.hazard_model_store_test import TestData, ZarrStoreMocker, inundation_return_periods
 
 
 class TestRiskModels(TestWithCredentials):
@@ -78,6 +79,10 @@ class TestRiskModels(TestWithCredentials):
                     "location": asset.location,
                     "longitude": asset.longitude,
                     "latitude": asset.latitude,
+                    "attributes": {
+                        "number_of_storeys": "2",
+                        "structure_type": "concrete",
+                    },
                 }
                 for asset in assets
             ],
@@ -100,7 +105,7 @@ class TestRiskModels(TestWithCredentials):
             return source_paths[ChronicHeat](indicator_id="mean_degree_days/above/index", scenario=scenario, year=year)
 
         mocker = ZarrStoreMocker()
-        return_periods = hms.inundation_return_periods()
+        return_periods = inundation_return_periods()
         flood_histo_curve = np.array([0.0596, 0.333, 0.505, 0.715, 0.864, 1.003, 1.149, 1.163, 1.163])
         flood_projected_curve = np.array([0.0596, 0.333, 0.605, 0.915, 1.164, 1.503, 1.649, 1.763, 1.963])
 
@@ -118,6 +123,7 @@ class TestRiskModels(TestWithCredentials):
             TestData.latitudes,
             TestData.wind_return_periods,
             TestData.wind_intensities_1,
+            units="m/s",
         )
         mocker.add_curves_global(
             sp_wind("rcp8p5", 2050),
@@ -125,6 +131,7 @@ class TestRiskModels(TestWithCredentials):
             TestData.latitudes,
             TestData.wind_return_periods,
             TestData.wind_intensities_2,
+            units="m/s",
         )
         mocker.add_curves_global(
             sp_heat("historical", -1),
@@ -171,3 +178,21 @@ class TestRiskModels(TestWithCredentials):
         )
         np.testing.assert_allclose(res.measures_0, [0.89306593179, 0.89306593179])
         # json_str = json.dumps(response.model_dump(), cls=NumpyArrayEncoder)
+
+    def test_generic_model(self):
+        scenarios = ["rcp8p5"]
+        years = [2050]
+
+        assets = [Asset(TestData.latitudes[0], TestData.longitudes[0]) for i in range(2)]
+        hazard_model = self._create_hazard_model(scenarios, years)
+
+        model = AssetLevelRiskModel(
+            hazard_model,
+            DictBasedVulnerabilityModels(get_default_vulnerability_models()),
+            {Asset: GenericScoreBasedRiskMeasures()},
+        )
+        measure_ids_for_asset, definitions = model.populate_measure_definitions(assets)
+        _, measures = model.calculate_risk_measures(assets, prosp_scens=scenarios, years=years)
+        np.testing.assert_approx_equal(
+            measures[MeasureKey(assets[0], scenarios[0], years[0], Wind)].measure_0, 214.01549835205077
+        )

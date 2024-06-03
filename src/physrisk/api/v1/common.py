@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import numpy as np
 from pydantic import BaseModel, Field
@@ -23,7 +23,7 @@ class Array(np.ndarray, metaclass=ArrayMeta):
     pass
 
 
-class Asset(BaseModel):
+class Asset(BaseModel, extra="allow"):
     """Defines an asset. An asset is identified first by its asset_class and then by its type within the class.
     An asset's value may be impacted through damage or through disruption
     disruption being reduction of an asset's ability to generate cashflows
@@ -33,10 +33,16 @@ class Asset(BaseModel):
     asset_class: str = Field(
         description="name of asset class; corresponds to physrisk class names, e.g. PowerGeneratingAsset"
     )
-    type: Optional[str] = Field(None, description="Type of the asset <level_1>/<level_2>/<level_3>")
-    location: Optional[str] = None
     latitude: float = Field(description="Latitude in degrees")
     longitude: float = Field(description="Longitude in degrees")
+    type: Optional[str] = Field(None, description="Type of the asset <level_1>/<level_2>/<level_3>")
+    location: Optional[str] = Field(
+        None, description="Location (e.g. Africa, Asia, Europe, Global, Oceania, North America, South America)"
+    )
+    capacity: Optional[float] = Field(None, description="Power generation capacity")
+    attributes: Optional[Dict[str, str]] = Field(
+        None, description="Bespoke attributes (e.g. number of storeys, structure type, occupancy type)"
+    )
 
 
 class Assets(BaseModel):

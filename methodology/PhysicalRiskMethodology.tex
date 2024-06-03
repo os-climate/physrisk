@@ -818,6 +818,37 @@ If the random variables are uncorrelated, then the aggregated effective impact d
 
 {\textcolor{red}{\emph{[Add version with discrete binned data.]}}}
 
+\subsection{Discrete hazard indicators and interpolation}
+Two dimensional geospatial raster data is typically either `pixel-is-area' or `pixel-is-point'. As the name suggests, for pixel-is-area data the pixel value is thought of as filling an area. For for pixel-is-point the values are a grid of points.  Hazard indicator data sets are generally pixel-is-area. In this case, a raster grid space is defined with $i$ as the spatial $x$ and $j$ as the spatial $y$ coordinate. A point in the space is given by $(i, j)$ with $i$ increasing to the right and $j$ increasing downwards. The top left of the image is at point $(0, 0)$ and the bottom right corner of the top left pixel is at point $(1, 1)$. The bottom right of the image is at $(n, m)$. The centre of the top left pixel is at point $(0.5, 0.5)$.
+
+The usual convention for coordinates (e.g. Python's \emph{xarray}) is that the positions of the \emph{centres} of the pixels are provided. For example the spatial $x$ coordinates are the transformed values of points in raster space with $i \in \{ 0.5, 1.5, \dots, n - 0.5 \}$.
+
+For pixel-is-area data, `floor' interpolation typically means that the value of the pixel containing the point is returned. For example, the top left pixel value is returned for any point such that $0 <= i < 1$ and $0 <= j < 1$. For `bilinear' interpolation the pixel value is taken to be located at the centre of each pixel. This is shown in Figure~\ref{Fig:interp_pixel_is_area}. Note that the use of pixel centres makes the algorithm for bilinear interpolation different to that of pixel-is-point data.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{figure}[ht]
+
+    \begin{framed}
+        % left, bottom, right, top
+        \includegraphics[clip, trim=0cm 0cm 0cm 0cm, width=1.00\textwidth]{plots/interp_pixel_is_area.pdf}
+
+    \end{framed}
+
+    \footnotesize
+
+    \renewcommand{\arraystretch}{1.01}
+
+    \vspace{-3ex}
+
+    \vspace{-0.5ex}
+
+    \caption{\small Points used for interpolation under the pixel-is-area convention. The cross marks the asset location in question and the squares are the centres of the four pixels that contribute to the hazard indicator value if using bilinear interpolation.}
+    \label{Fig:interp_pixel_is_area}
+
+\end{figure}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 \subsection{Financial model}
 
 \subsubsection{Types of calculation.}
@@ -918,8 +949,14 @@ When flood water inundated a thermal power plant, operations are disrupted due t
 The output is a discrete disruption probability curve due to the assessed flood risk, that is, either riverine or coastal inundation. It provides the probability in a future projection that the operations of the generation unit are disrupted for a given period expressed as a year fraction.
 
 \section{Drought}
+
 \subsection{Hazard models}
-Drought is modelled as a chronic risk using the number of months per year that the Standardised Precipitation-Evotranspiration Index (SPEI) calculated on a specific timescale (3 or 12 months) is below a given threshold. The SPEI is designed to take into account both precipitation and potential evapotranspiration in determining drought as detailed in \cite{VicenteSerranoEtAl:2010}. This allows to capture the main impact of increased temperatures on water demand.
+Drought, a significant global natural hazard, leads to substantial economic, environmental, and human distress. Numerous indices have been developed to measure drought intenstiy. In this framework, standard precipitation evapotranspiration index (SPEI) is used to assess meteorological drought. SPEI is a multi-scalar index designed to take into account both precipitation and potential evapotranspiration as detailed in \cite{VicenteSerranoEtAl:2010,begueria2014standardized}. Based on this index, drought is modelled as a chronic risk using the number of months per year that the Standardised Precipitation-Evotranspiration Index (SPEI) calculated on a specific timescale (3 or 12 months) is below a given threshold.
+The SPEI is computed using temprature and percipitation from General Circulation Models under various Representative Concentartion Pathways (e.g., RCP 8.5). Potential evapotranspiration (PET) is estimated from surface daily temprature according to \cite{tanguy2018historical} using xclim: Climate services library. For the scope of this methodology, 12-month Standardized Precipitation-Evapotranspiration Index (SPEI) has been considered following \cite{marzi2021assessing,arias2020impacts,inform2022climate}. The SPEI at each grid point is calculated for calibration period of (1985 - 2015) and projected on (2015 - 2100) period using xclim: Climate services library.
+
+In litterature, SPEI below -1.5 is often considered as severe and extreme drought \cite{smirnov2016relative}, in this framework, the dorught index is measured as number of months per year where the 12-month rolling average of SPEI is below  set of thresholds ranging from -3.6 to 0 following \cite{LuoEtAl:2021} . Eventually, the drought index at each grid point is calculated for periods of 2005 (1995-2015), 2030 (2020-2040), 2040 (2030-2050), 2050 (2040-2060), and 2080 (2070-2090) averaged over 20 years.
+
+%Drought is modelled as a chronic risk using the number of months per year that the Standardised Precipitation-Evotranspiration Index (SPEI) calculated on a specific timescale (3 or 12 months) is below a given threshold. The SPEI is designed to take into account both precipitation and potential evapotranspiration in determining drought as detailed in \cite{VicenteSerranoEtAl:2010}. This allows to capture the main impact of increased temperatures on water demand.
 
 \subsection{Vulnerability models}
 

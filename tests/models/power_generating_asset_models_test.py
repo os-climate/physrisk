@@ -12,6 +12,8 @@ from physrisk.kernel import Asset, PowerGeneratingAsset, calculation
 from physrisk.kernel.assets import IndustrialActivity, RealEstateAsset, ThermalPowerGeneratingAsset
 from physrisk.kernel.hazard_model import HazardEventDataResponse
 from physrisk.kernel.impact import calculate_impacts
+from physrisk.kernel.impact_distrib import EmptyImpactDistrib
+from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels
 from physrisk.utils.lazy import lazy_import
 from physrisk.vulnerability_models.power_generating_asset_models import InundationModel
 from tests.base_test import TestWithCredentials
@@ -42,7 +44,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         assets = [Asset(latitude, longitude)]
         model = InundationModel(assets)
 
-        impact, vul, event = model.get_impact_details(assets[0], responses_mock)
+        impact, _, _ = model.get_impact_details(assets[0], responses_mock)
         mean = impact.mean_impact()
 
         self.assertAlmostEqual(mean, 4.8453897 / 365.0)
@@ -78,7 +80,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         interesting = [k for (k, m) in zip(keys, means) if m > 0]
         assets_out = self.api_assets(item[0] for item in interesting[0:10])
         with open(os.path.join(cache_folder, "assets_example_power_generating_small.json"), "w") as f:
-            f.write(assets_out.json(indent=4))
+            f.write(assets_out.model_dump_json(indent=4))
 
         # Synthetic portfolio; industrial activity at different locations
         assets = [
@@ -92,7 +94,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         interesting = [k for (k, m) in zip(keys, means) if m > 0]
         assets_out = self.api_assets(item[0] for item in interesting[0:10])
         with open(os.path.join(cache_folder, "assets_example_industrial_activity_small.json"), "w") as f:
-            f.write(assets_out.json(indent=4))
+            f.write(assets_out.model_dump_json(indent=4))
 
         # Synthetic portfolio; real estate assets at different locations
         assets = [
@@ -106,7 +108,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         interesting = [k for (k, m) in zip(keys, means) if m > 0]
         assets_out = self.api_assets(item[0] for item in interesting[0:10])
         with open(os.path.join(cache_folder, "assets_example_real_estate_small.json"), "w") as f:
-            f.write(assets_out.json(indent=4))
+            f.write(assets_out.model_dump_json(indent=4))
         self.assertAlmostEqual(1, 1)
 
     @unittest.skip("example, not test")
@@ -146,24 +148,26 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         year = 2030
 
         hazard_model = calculation.get_default_hazard_model()
-        vulnerability_models = calculation.get_default_vulnerability_models()
+        vulnerability_models = DictBasedVulnerabilityModels(calculation.get_default_vulnerability_models())
 
         results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
         out = [
             {
                 "asset": type(result.asset).__name__,
-                "type": getattr(result.asset, "type") if hasattr(result.asset, "type") else None,
-                "capacity": getattr(result.asset, "capacity") if hasattr(result.asset, "capacity") else None,
-                "location": getattr(result.asset, "location") if hasattr(result.asset, "location") else None,
+                "type": getattr(result.asset, "type", None),
+                "capacity": getattr(result.asset, "capacity", None),
+                "location": getattr(result.asset, "location", None),
                 "latitude": result.asset.latitude,
                 "longitude": result.asset.longitude,
-                "impact_mean": results[key].impact.mean_impact(),
-                "hazard_type": results[key].impact.hazard_type.__name__,
+                "impact_mean": (
+                    None if isinstance(results[key].impact, EmptyImpactDistrib) else results[key].impact.mean_impact()
+                ),
+                "hazard_type": key.hazard_type.__name__,
             }
             for result, key in zip(results, results.keys())
         ]
         pd.DataFrame.from_dict(out).to_csv(
-            os.path.join(cache_folder, "thermal_ power_generation_example_" + scenario + "_" + str(year) + ".csv")
+            os.path.join(cache_folder, "thermal_power_generation_example_" + scenario + "_" + str(year) + ".csv")
         )
         self.assertAlmostEqual(1, 1)
 
@@ -171,8 +175,8 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         items = [
             physrisk.api.v1.common.Asset(
                 asset_class=type(a).__name__,
-                type=getattr(a, "type") if hasattr(a, "type") else None,
-                location=getattr(a, "location") if hasattr(a, "location") else None,
+                type=getattr(a, "type", None),
+                location=getattr(a, "location", None),
                 latitude=a.latitude,
                 longitude=a.longitude,
             )

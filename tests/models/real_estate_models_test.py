@@ -14,7 +14,8 @@ from physrisk.vulnerability_models.real_estate_models import (
     RealEstateCoastalInundationModel,
     RealEstateRiverineInundationModel,
 )
-from tests.data.hazard_model_store_test import TestData, mock_hazard_model_store_inundation
+
+from ..data.hazard_model_store_test import TestData, mock_hazard_model_store_inundation
 
 
 class TestRealEstateModels(unittest.TestCase):

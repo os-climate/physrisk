@@ -25,8 +25,15 @@ class ImpactKey(NamedTuple):
     # these additional key items can be set to None, for example
     # if the calculation is for a given scenario and year
     # impact_type: Optional[str] = None # consider adding: whether damage or disruption
-    scenario: Optional[str] = None
+    scenario: str
     key_year: Optional[int] = None  # this is None for 'historical' scenario
+
+    def __repr__(self) -> str:
+        asset_id = self.asset.id if self.asset.id is not None else "no_id"
+        return (
+            f"ImpactKey(asset={asset_id},hazard_type={self.hazard_type.__name__},"
+            f"scenario={self.scenario},key_year={self.key_year})"
+        )
 
 
 @dataclass
@@ -72,9 +79,13 @@ def calculate_impacts(  # noqa: C901
             hazard_data = [responses[req] for req in get_iterable(requests)]
             if any(isinstance(hd, HazardDataFailedResponse) for hd in hazard_data):
                 assert isinstance(model, VulnerabilityModelBase)
-                results[ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)] = (
-                    AssetImpactResult(EmptyImpactDistrib())
-                )
+                if (
+                    ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)
+                    not in results
+                ):
+                    results[ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)] = (
+                        AssetImpactResult(EmptyImpactDistrib())
+                    )
                 continue
             try:
                 if isinstance(model, VulnerabilityModelAcuteBase):
@@ -90,9 +101,13 @@ def calculate_impacts(  # noqa: C901
             except Exception as e:
                 logger.exception(e)
                 assert isinstance(model, VulnerabilityModelBase)
-                results[ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)] = (
-                    AssetImpactResult(EmptyImpactDistrib())
-                )
+                if (
+                    ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)
+                    not in results
+                ):
+                    results[ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)] = (
+                        AssetImpactResult(EmptyImpactDistrib())
+                    )
     return results
 
 

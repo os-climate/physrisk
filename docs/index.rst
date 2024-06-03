@@ -1,9 +1,8 @@
-Welcome to PhysicalRisk's documentation!
+Physrisk documentation
 ========================================
 
-This website contains the documentation related to the Physical Risk engine of OS-Climate.
+This website contains the documentation for Physrisk, a calculation engine for Physical Climate Risk.
 
-Please, visit the `official webpage! <https://os-climate.org/physical-risk-resilience/>`_
 
 .. _cards-clickable:
 
@@ -33,78 +32,54 @@ Please, visit the `official webpage! <https://os-climate.org/physical-risk-resil
 
       :octicon:`location;5em;sd-text-info`
       ^^^
+      Tutorials and walk-throughs.
 
-    .. grid-item-card::  Code documentation
-      :link: physrisk.html
-      :text-align: center
-
-      :octicon:`code;5em;sd-text-info`
-      ^^^
-
-.. grid:: 2
-    :gutter: 1
-
-    .. grid-item-card::  Commands
-      :link: commands.html
-      :text-align: center
-
-      :octicon:`terminal;5em;sd-text-info`
-      ^^^
-
-    .. grid-item-card::  Onboarding
-      :link: handbook/onboarding.html
-      :text-align: center
-
-      :octicon:`upload;5em;sd-text-info`
-      ^^^
-      See `Contributing <https://github.com/os-climate/physrisk/blob/main/CONTRIBUTING.md>`_
-
-.. grid:: 2
-    :gutter: 1
-
-    .. grid-item-card::  methodology
+    .. grid-item-card::  Methodology
       :link: methodology.html
       :text-align: center
 
       :octicon:`book;5em;sd-text-info`
       ^^^
+      Main methodology document.
 
-    .. grid-item-card::  hazards
-      :link: hazards.html
+.. grid:: 2
+    :gutter: 1
+
+    .. grid-item-card::  User guide
+      :link: user-guide.html
       :text-align: center
 
-      :octicon:`flame;5em;sd-text-info`
+      :octicon:`upload;5em;sd-text-info`
       ^^^
+      Technical notes for users/contributors.
 
 
+    .. grid-item-card::  API reference
+      :link: api/physrisk.html
+      :text-align: center
+
+      :octicon:`code;5em;sd-text-info`
+      ^^^
+      API reference derived from code.
 
 Physical Risk and Resilience
 =============================
 
-.. image:: images/PRR-1.jpg
-  :width: 800
+Physrisk is a library for assessing the physical effects of climate change and thereby the potential benefit of measures to improve resilience.
+Physrisk is primarily designed to run 'bottom-up' calculations that model the impact of climate hazards on large numbers of individual assets
+(including natural) and operations. These calculations can be used to assess financial risks or socio-economic impacts. To do this physrisk collects:
 
-|
+- hazard indicators and
+- models of vulnerability of assets/operations to hazards.
 
-.. image:: images/PRR-2.jpg
-  :width: 800
+Hazard indicators are on-boarded from public resources or inferred from climate projections, e.g. from CMIP or CORDEX data sets. Indicators are created from code in the
+[hazard repo](https://github.com/os-climate/hazard) to make calculations as transparent as possible.
 
-|
+Physrisk is also designed to be a hosted, e.g. to provide on-demand calculations. [physrisk-api](https://github.com/os-climate/physrisk-api) and [physrisk-ui](https://github.com/os-climate/physrisk-ui) provide an example API and user interface.
+A [development version of the UI](https://physrisk-ui-sandbox.apps.odh-cl1.apps.os-climate.org) is hosted by OS-Climate.
 
-.. image:: images/ProjectsPhysicalRisk_Image3.jpg
-  :width: 800
+Please also see the `OSC webpage <https://os-climate.org/physical-risk-resilience/>`_
 
-|
-
-.. image:: images/PRR-3.jpg
-  :width: 800
-
-|
-
-.. image:: images/PRR-4.jpg
-  :width: 800
-
-|
 
 .. image:: images/PRR-5.jpg
   :width: 800
@@ -122,12 +97,10 @@ Contents
 .. toctree::
    :maxdepth: 2
 
-   getting-started
-   physrisk
-   commands
-   handbook/onboarding
-   Methodology <methodology>
-   hazards
+  getting-started
+  methodology
+  user-guide
+  api/physrisk
 
 Indices and tables
 ==================

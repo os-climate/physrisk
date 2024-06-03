@@ -17,6 +17,7 @@ from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.exposure import JupterExposureMeasure, calculate_exposures
 from physrisk.kernel.hazards import all_hazards
+from physrisk.kernel.impact import AssetImpactResult, ImpactKey  # , ImpactKey
 from physrisk.kernel.impact_distrib import EmptyImpactDistrib
 from physrisk.kernel.risk import AssetLevelRiskModel, Measure, MeasureKey
 from physrisk.kernel.vulnerability_model import (
@@ -44,7 +45,9 @@ from .api.v1.impact_req_resp import (
     AssetLevelImpact,
     Assets,
     AssetSingleImpact,
-    ImpactKey,
+)
+from .api.v1.impact_req_resp import ImpactKey as APIImpactKey
+from .api.v1.impact_req_resp import (
     RiskMeasureKey,
     RiskMeasures,
     RiskMeasuresForAssets,
@@ -84,7 +87,9 @@ class Requester:
 
         if request_id == "get_hazard_data":
             request = HazardDataRequest(**request_dict)
-            hazard_model = self.hazard_model_factory.hazard_model(interpolation=request.interpolation)
+            hazard_model = self.hazard_model_factory.hazard_model(
+                interpolation=request.interpolation, provider_max_requests=request.provider_max_requests
+            )
             return json.dumps(_get_hazard_data(request, hazard_model=hazard_model).model_dump())  # , allow_nan=False)
         elif request_id == "get_hazard_data_availability":
             request = HazardAvailabilityRequest(**request_dict)
@@ -94,11 +99,15 @@ class Requester:
             return json.dumps(_get_hazard_data_description(request).dict())
         elif request_id == "get_asset_exposure":
             request = AssetExposureRequest(**request_dict)
-            hazard_model = self.hazard_model_factory.hazard_model(interpolation=request.calc_settings.hazard_interp)
+            hazard_model = self.hazard_model_factory.hazard_model(
+                interpolation=request.calc_settings.hazard_interp, provider_max_requests=request.provider_max_requests
+            )
             return json.dumps(_get_asset_exposures(request, hazard_model).model_dump(exclude_none=True))
         elif request_id == "get_asset_impact":
             request = AssetImpactRequest(**request_dict)
-            hazard_model = self.hazard_model_factory.hazard_model(interpolation=request.calc_settings.hazard_interp)
+            hazard_model = self.hazard_model_factory.hazard_model(
+                interpolation=request.calc_settings.hazard_interp, provider_max_requests=request.provider_max_requests
+            )
             vulnerability_models = self.vulnerability_models_factory.vulnerability_models()
             return dumps(_get_asset_impacts(request, hazard_model, vulnerability_models).model_dump())
         elif request_id == "get_example_portfolios":
@@ -260,25 +269,39 @@ def _get_hazard_data(request: HazardDataRequest, hazard_model: HazardModel):
     return response
 
 
-def create_assets(assets: Assets):
+def create_assets(api_assets: Assets, assets: Optional[List[Asset]] = None):  # noqa: max-complexity=11
     """Create list of Asset objects from the Assets API object:"""
-    module = import_module("physrisk.kernel.assets")
-    asset_objs = []
-    for asset in assets.items:
-        asset_obj = cast(
-            Asset,
-            getattr(module, asset.asset_class)(
-                asset.latitude, asset.longitude, type=asset.type, location=asset.location
-            ),
-        )
-        asset_objs.append(asset_obj)
-    return asset_objs
+    if assets is not None:
+        if len(api_assets.items) != 0:
+            raise ValueError("Cannot provide asset items in the request while specifying an explicit asset list")
+        return assets
+    else:
+        module = import_module("physrisk.kernel.assets")
+        asset_objs = []
+        for item in api_assets.items:
+            if hasattr(module, item.asset_class):
+                init = getattr(module, item.asset_class)
+                kwargs = {}
+                kwargs.update(item.__dict__)
+                if item.model_extra is not None:
+                    kwargs.update(item.model_extra)
+                del kwargs["asset_class"], kwargs["latitude"], kwargs["longitude"]
+                asset_obj = cast(
+                    Asset,
+                    init(item.latitude, item.longitude, **kwargs),
+                )
+                asset_objs.append(asset_obj)
+            else:
+                raise ValueError(f"asset type '{item.asset_class}' not found")
+        return asset_objs
 
 
-def _get_asset_exposures(request: AssetExposureRequest, hazard_model: HazardModel):
-    assets = create_assets(request.assets)
+def _get_asset_exposures(
+    request: AssetExposureRequest, hazard_model: HazardModel, assets: Optional[List[Asset]] = None
+):
+    _assets = create_assets(request.assets, assets)
     measure = JupterExposureMeasure()
-    results = calculate_exposures(assets, hazard_model, measure, scenario="ssp585", year=2030)
+    results = calculate_exposures(_assets, hazard_model, measure, scenario="ssp585", year=2030)
     return AssetExposureResponse(
         items=[
             AssetExposure(
@@ -296,6 +319,7 @@ def _get_asset_impacts(
     request: AssetImpactRequest,
     hazard_model: HazardModel,
     vulnerability_models: Optional[VulnerabilityModels] = None,
+    assets: Optional[List[Asset]] = None,
 ):
     vulnerability_models = (
         DictBasedVulnerabilityModels(calc.get_default_vulnerability_models())
@@ -304,7 +328,7 @@ def _get_asset_impacts(
     )
     # we keep API definition of asset separate from internal Asset class; convert by reflection
     # based on asset_class:
-    assets = create_assets(request.assets)
+    _assets = create_assets(request.assets, assets)
     measure_calcs = calc.get_default_risk_measure_calculators()
     risk_model = AssetLevelRiskModel(hazard_model, vulnerability_models, measure_calcs)
 
@@ -312,63 +336,75 @@ def _get_asset_impacts(
     years = [request.year] if request.years is None or len(request.years) == 0 else request.years
     risk_measures = None
     if request.include_measures:
-        impacts, measures = risk_model.calculate_risk_measures(assets, scenarios, years)
-        measure_ids_for_asset, definitions = risk_model.populate_measure_definitions(assets)
+        impacts, measures = risk_model.calculate_risk_measures(_assets, scenarios, years)
+        measure_ids_for_asset, definitions = risk_model.populate_measure_definitions(_assets)
         # create object for API:
-        risk_measures = _create_risk_measures(measures, measure_ids_for_asset, definitions, assets, scenarios, years)
+        risk_measures = _create_risk_measures(measures, measure_ids_for_asset, definitions, _assets, scenarios, years)
     elif request.include_asset_level:
-        impacts = risk_model.calculate_impacts(assets, scenarios, years)
+        impacts = risk_model.calculate_impacts(_assets, scenarios, years)
 
     if request.include_asset_level:
-        ordered_impacts: Dict[Asset, List[AssetSingleImpact]] = {}
-        for asset in assets:
-            ordered_impacts[asset] = []
-        for k, v in impacts.items():
-            if request.include_calc_details:
-                if v.event is not None and v.vulnerability is not None:
-                    hazard_exceedance = v.event.to_exceedance_curve()
-
-                    vulnerability_distribution = VulnerabilityDistrib(
-                        intensity_bin_edges=v.vulnerability.intensity_bins,
-                        impact_bin_edges=v.vulnerability.impact_bins,
-                        prob_matrix=v.vulnerability.prob_matrix,
-                    )
-                    calc_details = AcuteHazardCalculationDetails(
-                        hazard_exceedance=ExceedanceCurve(
-                            values=hazard_exceedance.values, exceed_probabilities=hazard_exceedance.probs
-                        ),
-                        hazard_distribution=Distribution(
-                            bin_edges=v.event.intensity_bin_edges, probabilities=v.event.prob
-                        ),
-                        vulnerability_distribution=vulnerability_distribution,
-                    )
-            else:
-                calc_details = None
-
-            if isinstance(v.impact, EmptyImpactDistrib):
-                continue
-
-            impact_exceedance = v.impact.to_exceedance_curve()
-            key = ImpactKey(hazard_type=k.hazard_type.__name__, scenario_id=k.scenario, year=str(k.key_year))
-            hazard_impacts = AssetSingleImpact(
-                key=key,
-                impact_type=v.impact.impact_type.name,
-                impact_exceedance=ExceedanceCurve(
-                    values=impact_exceedance.values, exceed_probabilities=impact_exceedance.probs
-                ),
-                impact_distribution=Distribution(bin_edges=v.impact.impact_bins, probabilities=v.impact.prob),
-                impact_mean=v.impact.mean_impact(),
-                impact_std_deviation=v.impact.stddev_impact(),
-                calc_details=None if v.event is None else calc_details,
-            )
-            ordered_impacts[k.asset].append(hazard_impacts)
-
-        # note that this does rely on ordering of dictionary (post 3.6)
-        asset_impacts = [AssetLevelImpact(asset_id="", impacts=a) for a in ordered_impacts.values()]
+        asset_impacts = compile_asset_impacts(impacts, _assets, request.include_calc_details)
     else:
         asset_impacts = None
 
     return AssetImpactResponse(asset_impacts=asset_impacts, risk_measures=risk_measures)
+
+
+def compile_asset_impacts(impacts: Dict[ImpactKey, AssetImpactResult], assets: List[Asset], include_calc_details: bool):
+    """Convert (internal) AssetImpactResult objects to a list of AssetLevelImpact objects
+    ready for serialization.
+
+    Args:
+        impacts (Dict[ImpactKey, AssetImpactResult]): Impact results.
+        assets (List[Asset]): Assets: the list will be returned using this order.
+        include_calc_details (bool): Include calculation details.
+
+    Returns:
+        List[AssetLevelImpact]: AssetImpactResult objects for serialization.
+    """
+    ordered_impacts: Dict[Asset, List[AssetSingleImpact]] = {}
+    for asset in assets:
+        ordered_impacts[asset] = []
+    for k, v in impacts.items():
+        if include_calc_details:
+            if v.event is not None and v.vulnerability is not None:
+                hazard_exceedance = v.event.to_exceedance_curve()
+
+                vulnerability_distribution = VulnerabilityDistrib(
+                    intensity_bin_edges=v.vulnerability.intensity_bins,
+                    impact_bin_edges=v.vulnerability.impact_bins,
+                    prob_matrix=v.vulnerability.prob_matrix,
+                )
+                calc_details = AcuteHazardCalculationDetails(
+                    hazard_exceedance=ExceedanceCurve(
+                        values=hazard_exceedance.values, exceed_probabilities=hazard_exceedance.probs
+                    ),
+                    hazard_distribution=Distribution(bin_edges=v.event.intensity_bin_edges, probabilities=v.event.prob),
+                    vulnerability_distribution=vulnerability_distribution,
+                )
+        else:
+            calc_details = None
+
+        if isinstance(v.impact, EmptyImpactDistrib):
+            continue
+
+        impact_exceedance = v.impact.to_exceedance_curve()
+        key = APIImpactKey(hazard_type=k.hazard_type.__name__, scenario_id=k.scenario, year=str(k.key_year))
+        hazard_impacts = AssetSingleImpact(
+            key=key,
+            impact_type=v.impact.impact_type.name,
+            impact_exceedance=ExceedanceCurve(
+                values=impact_exceedance.values, exceed_probabilities=impact_exceedance.probs
+            ),
+            impact_distribution=Distribution(bin_edges=v.impact.impact_bins, probabilities=v.impact.prob),
+            impact_mean=v.impact.mean_impact(),
+            impact_std_deviation=v.impact.stddev_impact(),
+            calc_details=None if v.event is None else calc_details,
+        )
+        ordered_impacts[k.asset].append(hazard_impacts)
+        # note that this does rely on ordering of dictionary (post 3.6)
+    return [AssetLevelImpact(asset_id="", impacts=a) for a in ordered_impacts.values()]
 
 
 def _create_risk_measures(

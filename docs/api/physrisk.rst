@@ -1,4 +1,4 @@
-Code documentation
+API reference
 ====================
 
 Subpackages

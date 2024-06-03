@@ -1,3 +1,4 @@
+import sys
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from typing import Dict, List, Mapping, Optional, Protocol, Tuple
@@ -70,7 +71,7 @@ class HazardDataFailedResponse(HazardDataResponse):
 class HazardEventDataResponse(HazardDataResponse):
     """Response to HazardDataRequest for acute hazards."""
 
-    def __init__(self, return_periods: np.ndarray, intensities: np.ndarray):
+    def __init__(self, return_periods: np.ndarray, intensities: np.ndarray, units: str = "default"):
         """Create HazardEventDataResponse.
 
         Args:
@@ -80,12 +81,13 @@ class HazardEventDataResponse(HazardDataResponse):
 
         self.return_periods = return_periods
         self.intensities = intensities
+        self.units = sys.intern(units)
 
 
 class HazardParameterDataResponse(HazardDataResponse):
     """Response to HazardDataRequest."""
 
-    def __init__(self, parameters: np.ndarray, param_defns: np.ndarray = np.empty([])):
+    def __init__(self, parameters: np.ndarray, param_defns: np.ndarray = np.empty([]), units: str = "default"):
         """Create HazardParameterDataResponse. In general the chronic parameters are an array of values.
         For example, a chronic hazard may be the number of days per year with average temperature
         above :math:`x' degrees for :math:`x' in [25, 30, 35, 40]°C. In this case the param_defns would
@@ -99,6 +101,7 @@ class HazardParameterDataResponse(HazardDataResponse):
         """
         self.parameters = parameters
         self.param_defns = param_defns
+        self.units = sys.intern(units)
 
     @property
     def parameter(self) -> float:
@@ -111,12 +114,14 @@ class HazardParameterDataResponse(HazardDataResponse):
 
 
 class HazardModelFactory(Protocol):
-    def hazard_model(self, interpolation: str = "floor"):
+    def hazard_model(self, interpolation: str = "floor", provider_max_requests: Dict[str, int] = {}):
         """Create a HazardModel instance based on a number of options.
 
         Args:
-            interpolation (str): interpolation type to use for sub-pixel raster interpolation (where
+            interpolation (str): Interpolation type to use for sub-pixel raster interpolation (where
             this is supported by hazard models).
+            provider_max_requests (Dict[str, int]): The maximum permitted number of permitted
+            requests to external providers.
         """
         ...
 

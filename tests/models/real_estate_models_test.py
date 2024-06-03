@@ -14,7 +14,8 @@ from physrisk.vulnerability_models.real_estate_models import (
     RealEstateCoastalInundationModel,
     RealEstateRiverineInundationModel,
 )
-from tests.data.hazard_model_store_test import TestData, mock_hazard_model_store_inundation
+
+from ..data.hazard_model_store_test import TestData, mock_hazard_model_store_inundation
 
 
 class TestRealEstateModels(unittest.TestCase):
@@ -38,8 +39,8 @@ class TestRealEstateModels(unittest.TestCase):
 
         results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
 
-        hazard_bin_edges = results[ImpactKey(assets[0], RiverineInundation)].event.intensity_bin_edges
-        hazard_bin_probs = results[ImpactKey(assets[0], RiverineInundation)].event.prob
+        hazard_bin_edges = results[ImpactKey(assets[0], RiverineInundation, scenario, year)].event.intensity_bin_edges
+        hazard_bin_probs = results[ImpactKey(assets[0], RiverineInundation, scenario, year)].event.prob
 
         # check one:
         # the probability of inundation greater than 0.505m in a year is 1/10.0
@@ -50,12 +51,12 @@ class TestRealEstateModels(unittest.TestCase):
 
         # check that intensity bin edges for vulnerability matrix are same as for hazard
         vulnerability_intensity_bin_edges = results[
-            ImpactKey(assets[0], RiverineInundation)
+            ImpactKey(assets[0], RiverineInundation, scenario, year)
         ].vulnerability.intensity_bins
         np.testing.assert_almost_equal(vulnerability_intensity_bin_edges, hazard_bin_edges)
 
         # check the impact distribution the matrix is size [len(intensity_bins) - 1, len(impact_bins) - 1]
-        cond_probs = results[ImpactKey(assets[0], RiverineInundation)].vulnerability.prob_matrix[1, :]
+        cond_probs = results[ImpactKey(assets[0], RiverineInundation, scenario, year)].vulnerability.prob_matrix[1, :]
         # check conditional prob for inundation intensity 0.333..0.505
         mean, std = np.mean(cond_probs), np.std(cond_probs)
         np.testing.assert_almost_equal(cond_probs.sum(), 1)
@@ -63,13 +64,14 @@ class TestRealEstateModels(unittest.TestCase):
 
         # probability that impact occurs between impact bin edge 1 and impact bin edge 2
         prob_impact = np.dot(
-            hazard_bin_probs, results[ImpactKey(assets[0], RiverineInundation)].vulnerability.prob_matrix[:, 1]
+            hazard_bin_probs,
+            results[ImpactKey(assets[0], RiverineInundation, scenario, year)].vulnerability.prob_matrix[:, 1],
         )
         np.testing.assert_almost_equal(prob_impact, 0.19350789547968042)
 
         # no check with pre-calculated values for others:
         np.testing.assert_allclose(
-            results[ImpactKey(assets[0], RiverineInundation)].impact.prob,
+            results[ImpactKey(assets[0], RiverineInundation, scenario, year)].impact.prob,
             np.array(
                 [
                     0.02815762,
@@ -108,7 +110,7 @@ class TestRealEstateModels(unittest.TestCase):
         results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
 
         np.testing.assert_allclose(
-            results[ImpactKey(assets[0], CoastalInundation)].impact.prob,
+            results[ImpactKey(assets[0], CoastalInundation, scenario, year)].impact.prob,
             np.array(
                 [
                     2.78081230e-02,
@@ -171,8 +173,8 @@ class TestRealEstateModels(unittest.TestCase):
 
         results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
 
-        hazard_bin_edges = results[ImpactKey(assets[0], RiverineInundation)].event.intensity_bin_edges
-        hazard_bin_probs = results[ImpactKey(assets[0], RiverineInundation)].event.prob
+        hazard_bin_edges = results[ImpactKey(assets[0], RiverineInundation, scenario, year)].event.intensity_bin_edges
+        hazard_bin_probs = results[ImpactKey(assets[0], RiverineInundation, scenario, year)].event.prob
 
         # check one:
         # the probability of inundation greater than 0.531271m in a year is 1/25
@@ -183,12 +185,12 @@ class TestRealEstateModels(unittest.TestCase):
 
         # check that intensity bin edges for vulnerability matrix are same as for hazard
         vulnerability_intensity_bin_edges = results[
-            ImpactKey(assets[0], RiverineInundation)
+            ImpactKey(assets[0], RiverineInundation, scenario, year)
         ].vulnerability.intensity_bins
         np.testing.assert_almost_equal(vulnerability_intensity_bin_edges, hazard_bin_edges)
 
         # check the impact distribution the matrix is size [len(intensity_bins) - 1, len(impact_bins) - 1]
-        cond_probs = results[ImpactKey(assets[0], RiverineInundation)].vulnerability.prob_matrix[2, :]
+        cond_probs = results[ImpactKey(assets[0], RiverineInundation, scenario, year)].vulnerability.prob_matrix[2, :]
         # check conditional prob for inundation intensity at 0.371712725m
         mean, std = np.mean(cond_probs), np.std(cond_probs)
         np.testing.assert_almost_equal(cond_probs.sum(), 1)
@@ -196,13 +198,14 @@ class TestRealEstateModels(unittest.TestCase):
 
         # probability that impact occurs between impact bin edge 2 and impact bin edge 3
         prob_impact = np.dot(
-            hazard_bin_probs, results[ImpactKey(assets[0], RiverineInundation)].vulnerability.prob_matrix[:, 2]
+            hazard_bin_probs,
+            results[ImpactKey(assets[0], RiverineInundation, scenario, year)].vulnerability.prob_matrix[:, 2],
         )
         np.testing.assert_almost_equal(prob_impact, 0.10040196672295522)
 
         # no check with pre-calculated values for others:
         np.testing.assert_allclose(
-            results[ImpactKey(assets[0], RiverineInundation)].impact.prob,
+            results[ImpactKey(assets[0], RiverineInundation, scenario, year)].impact.prob,
             np.array(
                 [
                     2.009085e-07,

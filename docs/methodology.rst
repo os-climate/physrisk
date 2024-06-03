@@ -1,12 +1,12 @@
 =================================
-Physical Climate Risk Methodology
+Physical Climate Risk methodology
 =================================
 
 :download:`Download PDF <../methodology/PhysicalRiskMethodology.pdf>`
 
 ..
     In order to display the pdf, it has to be included in the _static directory
-    There has to be a way of reading it automatically from the repo.. #TODO
+    A symbolic link redirects this to the methodology folder.
 
 .. pdf-include:: _static/PhysicalRiskMethodology.pdf
    :toolbar: 0

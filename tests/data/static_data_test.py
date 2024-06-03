@@ -1,7 +1,8 @@
 import unittest
 
 from physrisk.data.static.world import World, get_countries_and_continents, get_countries_json
-from tests.data.hazard_model_store_test import TestData
+
+from ..data.hazard_model_store_test import TestData
 
 
 class TestStaticDate(unittest.TestCase):

@@ -28,6 +28,13 @@ class ImpactKey(NamedTuple):
     scenario: Optional[str] = None
     key_year: Optional[int] = None  # this is None for 'historical' scenario
 
+    def __repr__(self) -> str:
+        asset_id = self.asset.id if self.asset.id is not None else "no_id"
+        return (
+            f"ImpactKey(asset={asset_id},hazard_type={self.hazard_type.__name__},"
+            f"scenario={self.scenario},key_year={self.key_year})"
+        )
+
 
 @dataclass
 class AssetImpactResult:
@@ -72,23 +79,35 @@ def calculate_impacts(  # noqa: C901
             hazard_data = [responses[req] for req in get_iterable(requests)]
             if any(isinstance(hd, HazardDataFailedResponse) for hd in hazard_data):
                 assert isinstance(model, VulnerabilityModelBase)
-                results[ImpactKey(asset=asset, hazard_type=model.hazard_type)] = AssetImpactResult(EmptyImpactDistrib())
+                if (
+                    ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)
+                    not in results
+                ):
+                    results[ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)] = (
+                        AssetImpactResult(EmptyImpactDistrib())
+                    )
                 continue
             try:
                 if isinstance(model, VulnerabilityModelAcuteBase):
                     impact, vul, event = model.get_impact_details(asset, hazard_data)
-                    results[ImpactKey(asset=asset, hazard_type=model.hazard_type)] = AssetImpactResult(
-                        impact, vulnerability=vul, event=event, hazard_data=hazard_data
+                    results[ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)] = (
+                        AssetImpactResult(impact, vulnerability=vul, event=event, hazard_data=hazard_data)
                     )
                 elif isinstance(model, VulnerabilityModelBase):
                     impact = model.get_impact(asset, hazard_data)
-                    results[ImpactKey(asset=asset, hazard_type=model.hazard_type)] = AssetImpactResult(
-                        impact, hazard_data=hazard_data
+                    results[ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)] = (
+                        AssetImpactResult(impact, hazard_data=hazard_data)
                     )
             except Exception as e:
                 logger.exception(e)
                 assert isinstance(model, VulnerabilityModelBase)
-                results[ImpactKey(asset=asset, hazard_type=model.hazard_type)] = AssetImpactResult(EmptyImpactDistrib())
+                if (
+                    ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)
+                    not in results
+                ):
+                    results[ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)] = (
+                        AssetImpactResult(EmptyImpactDistrib())
+                    )
     return results
 
 

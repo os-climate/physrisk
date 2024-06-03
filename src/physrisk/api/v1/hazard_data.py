@@ -186,6 +186,12 @@ class HazardDataRequestItem(BaseModel):
 
 class HazardDataRequest(BaseHazardRequest):
     interpolation: str = "floor"
+    provider_max_requests: Dict[str, int] = Field(
+        {},
+        description="The maximum permitted number of \
+        requests to external providers. This setting is intended in particular for paid-for data. The key \
+        is the provider ID and the value is the maximum permitted requests.",
+    )
     items: List[HazardDataRequestItem]
 
 

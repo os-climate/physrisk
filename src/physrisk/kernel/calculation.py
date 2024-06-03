@@ -13,6 +13,7 @@ from physrisk.vulnerability_models.real_estate_models import (
     RealEstateRiverineInundationModel,
 )
 from physrisk.vulnerability_models.thermal_power_generation_models import (
+    Asset,
     ThermalPowerGenerationAirTemperatureModel,
     ThermalPowerGenerationCoastalInundationModel,
     ThermalPowerGenerationDroughtModel,
@@ -34,6 +35,14 @@ def get_default_hazard_model() -> HazardModel:
 def get_default_vulnerability_models() -> Dict[type, Sequence[VulnerabilityModelBase]]:
     """Get default exposure/vulnerability models for different asset types."""
     return {
+        Asset: [
+            # This is for a generic 'unknown' asset. To be replaced by a config-based model (when complete)
+            # but for now, treat like a real estate asset.
+            RealEstateCoastalInundationModel(),
+            RealEstateRiverineInundationModel(),
+            GenericTropicalCycloneModel(),
+            CoolingModel(),
+        ],
         PowerGeneratingAsset: [pgam.InundationModel()],
         RealEstateAsset: [
             RealEstateCoastalInundationModel(),

@@ -1,11 +1,11 @@
 import concurrent.futures
 from collections import defaultdict
-from typing import Dict, List, Mapping, MutableMapping, Optional, cast
+from typing import Dict, List, Mapping, MutableMapping, Optional, Type
 
 import numpy as np
 
 from physrisk.data.zarr_reader import ZarrReader
-from physrisk.kernel.hazards import Hazard, HazardKind
+from physrisk.kernel.hazards import Hazard, IndicatorData, indicator_data
 
 from ..kernel.hazard_model import (
     HazardDataFailedResponse,
@@ -15,7 +15,7 @@ from ..kernel.hazard_model import (
     HazardModel,
     HazardParameterDataResponse,
 )
-from .hazard_data_provider import AcuteHazardDataProvider, ChronicHazardDataProvider, HazardDataProvider, SourcePath
+from .hazard_data_provider import HazardDataProvider, SourcePath
 
 
 class PregeneratedHazardModel(HazardModel):
@@ -23,18 +23,9 @@ class PregeneratedHazardModel(HazardModel):
 
     def __init__(
         self,
-        hazard_data_providers: Dict[type, HazardDataProvider],
+        hazard_data_providers: Dict[Type[Hazard], HazardDataProvider],
     ):
-        self.acute_hazard_data_providers = dict(
-            (k, cast(AcuteHazardDataProvider, v))
-            for (k, v) in hazard_data_providers.items()
-            if Hazard.kind(k) == HazardKind.acute
-        )
-        self.chronic_hazard_data_providers = dict(
-            (k, cast(ChronicHazardDataProvider, v))
-            for (k, v) in hazard_data_providers.items()
-            if Hazard.kind(k) == HazardKind.chronic
-        )
+        self.hazard_data_providers = hazard_data_providers
 
     def get_hazard_events(  # noqa: C901
         self, requests: List[HazardDataRequest]
@@ -83,8 +74,8 @@ class PregeneratedHazardModel(HazardModel):
             )
             longitudes = [req.longitude for req in batch]
             latitudes = [req.latitude for req in batch]
-            if hazard_type.kind == HazardKind.acute:  # type: ignore
-                intensities, return_periods, units = self.acute_hazard_data_providers[hazard_type].get_intensity_curves(
+            if indicator_data(hazard_type, indicator_id) == IndicatorData.EVENT:
+                intensities, return_periods, units = self.hazard_data_providers[hazard_type].get_data(
                     longitudes,
                     latitudes,
                     indicator_id=indicator_id,
@@ -100,8 +91,8 @@ class PregeneratedHazardModel(HazardModel):
                     if len(valid_periods) == 0:
                         valid_periods, valid_intensities = np.array([100]), np.array([0])
                     responses[req] = HazardEventDataResponse(valid_periods, valid_intensities, units)
-            elif hazard_type.kind == HazardKind.chronic:  # type: ignore
-                parameters, defns, units = self.chronic_hazard_data_providers[hazard_type].get_parameters(
+            else:  # type: ignore
+                parameters, defns, units = self.hazard_data_providers[hazard_type].get_data(
                     longitudes, latitudes, indicator_id=indicator_id, scenario=scenario, year=year, hint=hint
                 )
 
@@ -119,7 +110,7 @@ class ZarrHazardModel(PregeneratedHazardModel):
     def __init__(
         self,
         *,
-        source_paths: Dict[type, SourcePath],
+        source_paths: Dict[Type[Hazard], SourcePath],
         reader: Optional[ZarrReader] = None,
         store=None,
         interpolation="floor",
@@ -128,15 +119,6 @@ class ZarrHazardModel(PregeneratedHazardModel):
         zarr_reader = ZarrReader(store=store) if reader is None else reader
 
         super().__init__(
-            dict(
-                (
-                    t,
-                    (
-                        AcuteHazardDataProvider(sp, zarr_reader=zarr_reader, interpolation=interpolation)
-                        if Hazard.kind(t) == HazardKind.acute
-                        else ChronicHazardDataProvider(sp, zarr_reader=zarr_reader, interpolation=interpolation)
-                    ),
-                )
-                for t, sp in source_paths.items()
-            )
+            { t: HazardDataProvider(sp, zarr_reader=zarr_reader, interpolation=interpolation) 
+             for t, sp in source_paths.items() }
         )

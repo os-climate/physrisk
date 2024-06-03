@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 from pydantic import BaseModel, Field
@@ -83,7 +83,7 @@ class IntensityCurve(BaseModel):
     return_periods: Optional[List[float]] = Field(
         [], description="[Deprecated] Return period in years in the case of an acute hazard."
     )
-    index_values: Optional[List[float]] = Field(
+    index_values: Optional[Union[List[float], List[str]]] = Field(
         [],
         description="Set of index values. \
             This is return period in years in the case of an acute hazard or \

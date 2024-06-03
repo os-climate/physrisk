@@ -1,32 +1,42 @@
 import inspect
 import sys
 from enum import Enum
-from typing import cast
+from typing import Dict, Type, cast
+
+
+class IndicatorData(Enum):
+    EVENT = 1
+    PARAMETERS = 2
 
 
 class HazardKind(Enum):
-    acute = (1,)
-    chronic = 2
-
-
-class InundationType(Enum):
-    riverine = (1,)
-    coastal = 2
+    ACUTE = 1
+    CHRONIC = 2
+    UNKNOWN = 3
 
 
 class Hazard:
-    @staticmethod
-    def kind(hazard_type):
-        return cast(HazardKind, hazard_type.kind)
+    kind = HazardKind.UNKNOWN
+    indicator_data: Dict[str, IndicatorData] = {}
+
+
+def hazard_kind(hazard_type: Type[Hazard]):
+    return hazard_type.kind
+    
+
+def indicator_data(hazard_type: Type[Hazard], indicator_id: str):
+    default = IndicatorData.EVENT if hazard_type.kind == HazardKind.ACUTE else IndicatorData.PARAMETERS
+    return hazard_type.indicator_data.get(indicator_id, default)
 
 
 class ChronicHeat(Hazard):
-    kind = HazardKind.chronic
+    kind = HazardKind.CHRONIC
     pass
 
 
 class Inundation(Hazard):
-    kind = HazardKind.acute
+    kind = HazardKind.ACUTE
+    indicator_data = { "flood_depth": IndicatorData.EVENT, "flood_sop": IndicatorData.PARAMETERS }
     pass
 
 
@@ -35,52 +45,49 @@ class AirTemperature(ChronicHeat):
 
 
 class CoastalInundation(Inundation):
-    kind = HazardKind.acute
     pass
 
 
 class ChronicWind(Hazard):
-    kind = HazardKind.chronic
+    kind = HazardKind.CHRONIC
     pass
 
 
 class CombinedInundation(Hazard):
-    kind = HazardKind.chronic
+    kind = HazardKind.CHRONIC
     pass
 
 
 class Drought(Hazard):
-    kind = HazardKind.chronic
+    kind = HazardKind.CHRONIC
     pass
 
 
 class Fire(Hazard):
-    kind = HazardKind.chronic
+    kind = HazardKind.CHRONIC
     pass
 
 
 class Hail(Hazard):
-    kind = HazardKind.chronic
+    kind = HazardKind.CHRONIC
     pass
 
 
 class PluvialInundation(Inundation):
-    kind = HazardKind.acute
     pass
 
 
 class Precipitation(Hazard):
-    kind = HazardKind.chronic
+    kind = HazardKind.CHRONIC
     pass
 
 
 class RiverineInundation(Inundation):
-    kind = HazardKind.acute
     pass
 
 
 class WaterRisk(Hazard):
-    kind = HazardKind.chronic
+    kind = HazardKind.CHRONIC
     pass
 
 
@@ -89,7 +96,7 @@ class WaterTemperature(ChronicHeat):
 
 
 class Wind(Hazard):
-    kind = HazardKind.acute
+    kind = HazardKind.ACUTE
     pass
 
 

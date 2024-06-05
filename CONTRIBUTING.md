@@ -42,6 +42,10 @@ is recommended:
 ```
 pre-commit install
 ```
+or
+```
+pre-commit run --all-files
+```
 
 To ensure compliance with static check tools, developers may wish to run black and isort against modified files.
 

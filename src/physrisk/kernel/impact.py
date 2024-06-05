@@ -25,7 +25,7 @@ class ImpactKey(NamedTuple):
     # these additional key items can be set to None, for example
     # if the calculation is for a given scenario and year
     # impact_type: Optional[str] = None # consider adding: whether damage or disruption
-    scenario: Optional[str] = None
+    scenario: str
     key_year: Optional[int] = None  # this is None for 'historical' scenario
 
     def __repr__(self) -> str:

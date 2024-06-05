@@ -2,7 +2,7 @@
 name = "physrisk-lib"
 # Could test changing the below to be sourced "dynamically"
 # dynamic = ['version']
-version = "0.33.0"
+version = "0.35.0"
 description = "OS-Climate Physical Risk Library"
 authors = [
     {name = "Joe Moorhouse",email = "5102656+joemoorhouse@users.noreply.github.com"},
@@ -83,6 +83,7 @@ lint = [
   "black",
   "pyproject-flake8",
   "flake8",
+  "flake8-nb",
   "mypy",
   "pre-commit",
   "tox"

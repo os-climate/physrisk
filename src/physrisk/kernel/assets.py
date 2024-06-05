@@ -67,8 +67,9 @@ class PowerGeneratingAsset(Asset):
         type: Optional[str] = None,
         location: Optional[str] = None,
         capacity: Optional[float] = None,
+        **kwargs,
     ):
-        super().__init__(latitude, longitude)
+        super().__init__(latitude, longitude, **kwargs)
 
         self.type: Optional[str] = type
         self.location: Optional[str] = location
@@ -90,8 +91,9 @@ class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
         type: Optional[str] = None,
         location: Optional[str] = None,
         capacity: Optional[float] = None,
+        **kwargs,
     ):
-        super().__init__(latitude, longitude, type=type, location=location, capacity=capacity)
+        super().__init__(latitude, longitude, type=type, location=location, capacity=capacity, **kwargs)
 
         self.turbine: Optional[TurbineKind] = None
         self.cooling: Optional[CoolingKind] = None
@@ -123,16 +125,16 @@ class RealEstateAsset(Asset):
 
 class ManufacturingAsset(Asset):
     def __init__(
-        self, latitude: float, longitude: float, *, location: Optional[str] = None, type: Optional[str] = None
+        self, latitude: float, longitude: float, *, location: Optional[str] = None, type: Optional[str] = None, **kwargs
     ):
-        super().__init__(latitude, longitude)
+        super().__init__(latitude, longitude, **kwargs)
         self.location = location
         self.type = type
 
 
 class IndustrialActivity(Asset):
-    def __init__(self, latitude: float, longitude: float, *, location: Optional[str] = None, type: str):
-        super().__init__(latitude, longitude)
+    def __init__(self, latitude: float, longitude: float, *, location: Optional[str] = None, type: str, **kwargs):
+        super().__init__(latitude, longitude, **kwargs)
         self.location = location
         self.type = type
 

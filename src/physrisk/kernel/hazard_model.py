@@ -79,7 +79,7 @@ class HazardEventDataResponse(HazardDataResponse):
         Args:
             return_periods: return periods in years.
             intensities: hazard event intensity for each return period, or set of hazard event intensities corresponding to different events. # noqa: E501
-            path: path to the hazard event data source.
+            path: path to the hazard indicator data source.
         """
 
         self.return_periods = return_periods
@@ -108,7 +108,7 @@ class HazardParameterDataResponse(HazardDataResponse):
         Args:
             parameters (np.ndarray): Chronic hazard parameter values.
             param_defns (np.ndarray): Chronic hazard parameter definitions.
-            path: path to the hazard event data source.
+            path: path to the hazard indicator data source.
         """
         self.parameters = parameters
         self.param_defns = param_defns

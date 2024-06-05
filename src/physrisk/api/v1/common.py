@@ -121,7 +121,7 @@ class HazardEventDistrib(BaseModel):
 
     intensity_bin_edges: np.ndarray = Field(default_factory=lambda: np.zeros(10), description="")
     probabilities: np.ndarray = Field(default_factory=lambda: np.zeros(10), description="")
-    path: List[str] = Field([], description="Paths to the hazard event data source.")
+    path: List[str] = Field([], description="Path to the hazard indicator data source.")
 
     class Config:
         arbitrary_types_allowed = True

@@ -119,7 +119,7 @@ def get_impact_distrib(
         fraction_loss_mean: mean of the impact distribution
         fraction_loss_std: standard deviation of the impact distribution
         hazard_type: Hazard Type.
-        hazard_paths: Path to the hazard event data source.
+        hazard_paths: Path to the hazard indicator data source.
         impact_type: Impact Type.
 
     Returns:

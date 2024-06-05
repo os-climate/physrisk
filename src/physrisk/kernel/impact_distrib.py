@@ -29,7 +29,7 @@ class ImpactDistrib:
             event_type: type of event
             impact_bins: non-decreasing impact bin bounds
             prob: probabilities with size [len(intensity_bins) - 1]
-            path: path to the hazard event data source
+            path: path to the hazard indicator data source
         """
         self.__hazard_type = hazard_type
         self.__impact_bins = np.array(impact_bins)

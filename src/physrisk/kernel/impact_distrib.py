@@ -45,6 +45,20 @@ class ImpactDistrib:
         bin_mids = (self.__impact_bins[:-1] + self.__impact_bins[1:]) / 2
         return np.sqrt(np.sum(self.__prob * (bin_mids - mean) * (bin_mids - mean)))
 
+    def above_mean_stddev_impact(self):
+        mean = self.mean_impact()
+        bin_mids = (self.__impact_bins[:-1] + self.__impact_bins[1:]) / 2
+        above_mean_bins = bin_mids[mean <= bin_mids]
+        if len(above_mean_bins) == 0:
+            return 0.0
+        if len(above_mean_bins) == len(self.__prob):
+            return self.stddev_impact()
+        above_mean_probs = self.__prob[-len(above_mean_bins) :] / np.sum(self.__prob[-len(above_mean_bins) :])
+        above_mean_mean = np.sum(above_mean_bins * above_mean_probs / 2)
+        return np.sqrt(
+            np.sum(above_mean_probs * (above_mean_bins - above_mean_mean) * (above_mean_bins - above_mean_mean))
+        )
+
     def to_exceedance_curve(self):
         return to_exceedance_curve(self.__impact_bins, self.__prob)
 

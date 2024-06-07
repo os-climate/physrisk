@@ -93,8 +93,6 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
 
         # use hazard data requests via:
 
-        hazard_paths = [cast(HazardParameterDataResponse, r).path for r in data_responses]
-
         # Allow for either a delta approach or a level estimate.
         delta_dd_above_mean: float = scenario_dd_above_mean.parameter - baseline_dd_above_mean.parameter * self.delta
         hours_worked = self.total_labour_hours
@@ -102,7 +100,7 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
         fraction_loss_std = (delta_dd_above_mean * self.time_lost_per_degree_day_se) / hours_worked
 
         return get_impact_distrib(
-            fraction_loss_mean, fraction_loss_std, ChronicHeat, hazard_paths, ImpactType.disruption
+            fraction_loss_mean, fraction_loss_std, ChronicHeat, [scenario_dd_above_mean.path], ImpactType.disruption
         )
 
 

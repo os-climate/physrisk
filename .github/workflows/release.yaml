@@ -34,7 +34,7 @@ jobs:
           version: 2.10.0
 
       - name: "Setup Python"
-        uses: actions/setup-python@v4.7.0
+        uses: actions/setup-python@v5.1.0
         with:
           python-version: ${{ env.python-version }}
 

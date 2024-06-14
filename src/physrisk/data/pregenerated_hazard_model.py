@@ -90,9 +90,9 @@ class PregeneratedHazardModel(HazardModel):
                     valid_periods, valid_intensities = return_periods[valid], intensities[i, :][valid]
                     if len(valid_periods) == 0:
                         valid_periods, valid_intensities = np.array([100]), np.array([0])
-                    responses[req] = HazardEventDataResponse(valid_periods, valid_intensities, units)
+                    responses[req] = HazardEventDataResponse(valid_periods, valid_intensities, units, path)
             else:  # type: ignore
-                parameters, defns, units = self.hazard_data_providers[hazard_type].get_data(
+                parameters, defns, units, path = self.hazard_data_providers[hazard_type].get_data(
                     longitudes, latitudes, indicator_id=indicator_id, scenario=scenario, year=year, hint=hint
                 )
 
@@ -119,6 +119,8 @@ class ZarrHazardModel(PregeneratedHazardModel):
         zarr_reader = ZarrReader(store=store) if reader is None else reader
 
         super().__init__(
-            { t: HazardDataProvider(sp, zarr_reader=zarr_reader, interpolation=interpolation) 
-             for t, sp in source_paths.items() }
+            {
+                t: HazardDataProvider(sp, zarr_reader=zarr_reader, interpolation=interpolation)
+                for t, sp in source_paths.items()
+            }
         )

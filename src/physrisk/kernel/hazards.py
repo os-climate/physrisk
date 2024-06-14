@@ -22,7 +22,7 @@ class Hazard:
 
 def hazard_kind(hazard_type: Type[Hazard]):
     return hazard_type.kind
-    
+
 
 def indicator_data(hazard_type: Type[Hazard], indicator_id: str):
     default = IndicatorData.EVENT if hazard_type.kind == HazardKind.ACUTE else IndicatorData.PARAMETERS
@@ -36,7 +36,7 @@ class ChronicHeat(Hazard):
 
 class Inundation(Hazard):
     kind = HazardKind.ACUTE
-    indicator_data = { "flood_depth": IndicatorData.EVENT, "flood_sop": IndicatorData.PARAMETERS }
+    indicator_data = {"flood_depth": IndicatorData.EVENT, "flood_sop": IndicatorData.PARAMETERS}
     pass
 
 

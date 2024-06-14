@@ -117,5 +117,3 @@ class HazardDataProvider(ABC):
                 self._interpolation,
             )  # type: ignore
         return values, indices, units, path
-
-

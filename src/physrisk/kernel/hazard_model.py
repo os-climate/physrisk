@@ -71,23 +71,33 @@ class HazardDataFailedResponse(HazardDataResponse):
 class HazardEventDataResponse(HazardDataResponse):
     """Response to HazardDataRequest for acute hazards."""
 
-    def __init__(self, return_periods: np.ndarray, intensities: np.ndarray, units: str = "default"):
+    def __init__(
+        self, return_periods: np.ndarray, intensities: np.ndarray, units: str = "default", path: str = "unknown"
+    ):
         """Create HazardEventDataResponse.
 
         Args:
             return_periods: return periods in years.
             intensities: hazard event intensity for each return period, or set of hazard event intensities corresponding to different events. # noqa: E501
+            path: path to the hazard indicator data source.
         """
 
         self.return_periods = return_periods
         self.intensities = intensities
         self.units = sys.intern(units)
+        self.path = sys.intern(path)
 
 
 class HazardParameterDataResponse(HazardDataResponse):
     """Response to HazardDataRequest."""
 
-    def __init__(self, parameters: np.ndarray, param_defns: np.ndarray = np.empty([]), units: str = "default"):
+    def __init__(
+        self,
+        parameters: np.ndarray,
+        param_defns: np.ndarray = np.empty([]),
+        units: str = "default",
+        path: str = "unknown",
+    ):
         """Create HazardParameterDataResponse. In general the chronic parameters are an array of values.
         For example, a chronic hazard may be the number of days per year with average temperature
         above :math:`x' degrees for :math:`x' in [25, 30, 35, 40]°C. In this case the param_defns would
@@ -98,10 +108,12 @@ class HazardParameterDataResponse(HazardDataResponse):
         Args:
             parameters (np.ndarray): Chronic hazard parameter values.
             param_defns (np.ndarray): Chronic hazard parameter definitions.
+            path: path to the hazard indicator data source.
         """
         self.parameters = parameters
         self.param_defns = param_defns
         self.units = sys.intern(units)
+        self.path = sys.intern(path)
 
     @property
     def parameter(self) -> float:

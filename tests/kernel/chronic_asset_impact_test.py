@@ -1,5 +1,5 @@
 import unittest
-from typing import Iterable, List, Union
+from typing import Iterable, List, Union, cast
 
 import numpy as np
 from scipy.stats import norm
@@ -99,11 +99,17 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
         fraction_loss_mean = (delta_dd_above_mean * self.time_lost_per_degree_day) / hours_worked
         fraction_loss_std = (delta_dd_above_mean * self.time_lost_per_degree_day_se) / hours_worked
 
-        return get_impact_distrib(fraction_loss_mean, fraction_loss_std, ChronicHeat, ImpactType.disruption)
+        return get_impact_distrib(
+            fraction_loss_mean, fraction_loss_std, ChronicHeat, [scenario_dd_above_mean.path], ImpactType.disruption
+        )
 
 
 def get_impact_distrib(
-    fraction_loss_mean: float, fraction_loss_std: float, hazard_type: type, impact_type: ImpactType
+    fraction_loss_mean: float,
+    fraction_loss_std: float,
+    hazard_type: type,
+    hazard_paths: List[str],
+    impact_type: ImpactType,
 ) -> ImpactDistrib:
     """Calculate impact (disruption) of asset based on the hazard data returned.
 
@@ -111,6 +117,7 @@ def get_impact_distrib(
         fraction_loss_mean: mean of the impact distribution
         fraction_loss_std: standard deviation of the impact distribution
         hazard_type: Hazard Type.
+        hazard_paths: Path to the hazard indicator data source.
         impact_type: Impact Type.
 
     Returns:
@@ -142,7 +149,7 @@ def get_impact_distrib(
     else:
         probs[0] = probs[0] + prob_differential
 
-    return ImpactDistrib(hazard_type, impact_bins, probs, impact_type)
+    return ImpactDistrib(hazard_type, impact_bins, probs, hazard_paths, impact_type)
 
 
 class TestChronicAssetImpact(unittest.TestCase):

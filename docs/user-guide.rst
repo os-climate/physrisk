@@ -24,17 +24,17 @@ The :code:`HazardModel` retrieves hazard indicators in a number of ways and can 
 1. Hazard indicator data is stored in `Zarr <https://zarr.readthedocs.io/en/stable/>`_ format (in an arbitrary Zarr store, although S3 is a popular choice).
 2. Hazard indicator data is retrieved via call to an external API. This is mainly used when combining commercial data to the public-domain.
 
-In case 1, hazard indicators are stored as three dimensional arrays. The array is ordered :math:`(z, y, x)` where :math:`y` is the spatial :math:`y` coordinate, :math:`x` is the spatial :math:`x` coordinate and :math:`z` is an *index* coordinate. The *index* takes on different meanings according to the type of data being stored.   
+In case 1, hazard indicators are stored as three dimensional arrays. The array is ordered :math:`(z, y, x)` where :math:`y` is the spatial :math:`y` coordinate, :math:`x` is the spatial :math:`x` coordinate and :math:`z` is an *index* coordinate. The *index* takes on different meanings according to the type of data being stored.
 
 Indicators can be either:
 
 * Acute (A): the data comprises a set of hazard intensities for different return periods. In this case *index* refers to the different return periods.
 * Parametric (P): the data comprises a set of parameters. Here *index* refers to the different parameters. The parameters may be single values, or *index* might refer to a set of thresholds. Parametric indicators are used for chronic hazards.
 
-As mentioned above, :code:`VulnerabilityModels` only specify the identifier of the hazard indicator that is required, as well as the climate scenario ID and the year of the future projection. This means that hazard indicator ID uniquely defines the data. For example, a vulnerability model requesting 'flood depth' could have data returned from a variety of data sets, depending on how the :code:`HazardModel` is configured. But  
+As mentioned above, :code:`VulnerabilityModels` only specify the identifier of the hazard indicator that is required, as well as the climate scenario ID and the year of the future projection. This means that hazard indicator ID uniquely defines the data. For example, a vulnerability model requesting 'flood depth' could have data returned from a variety of data sets, depending on how the :code:`HazardModel` is configured. But
 
 +-----------------------+-------------------------------+---------------------------------------+
-| Hazard class          | Indicator ID (type)           | Description                           | 
+| Hazard class          | Indicator ID (type)           | Description                           |
 +=======================+===============================+=======================================+
 | CoastalInundation,    | flood_depth (A)               | Flood depth (m) for available         |
 | PluvialInundation,    |                               | return periods. This is unprotected   |
@@ -55,5 +55,5 @@ As mentioned above, :code:`VulnerabilityModels` only specify the identifier of t
 |                       |                               | indices.                              |
 +-----------------------+-------------------------------+---------------------------------------+
 | Wind                  | max_speed                     | Maximum 1 minute sustained wind speed |
-|                       | (A)                           | for available return periods.         |    
+|                       | (A)                           | for available return periods.         |
 +-----------------------+-------------------------------+---------------------------------------+

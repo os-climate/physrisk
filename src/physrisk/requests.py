@@ -307,7 +307,8 @@ def _get_asset_exposures(
             AssetExposure(
                 asset_id="",
                 exposures=dict(
-                    (t.__name__, Exposure(category=c.name, value=v)) for (t, (c, v)) in r.hazard_categories.items()
+                    (t.__name__, Exposure(category=c.name, value=v, path=p))
+                    for (t, (c, v, p)) in r.hazard_categories.items()
                 ),
             )
             for (a, r) in results.items()
@@ -382,6 +383,7 @@ def compile_asset_impacts(impacts: Dict[ImpactKey, AssetImpactResult], assets: L
                     ),
                     hazard_distribution=Distribution(bin_edges=v.event.intensity_bin_edges, probabilities=v.event.prob),
                     vulnerability_distribution=vulnerability_distribution,
+                    hazard_path=v.impact.path,
                 )
         else:
             calc_details = None

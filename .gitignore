@@ -96,3 +96,14 @@ target/
 src/test/data/coords.json
 credentials.env
 .pdm-python
+
+# Latex
+methodology/PhysicalRiskMethodology.aux
+methodology/PhysicalRiskMethodology.blg
+methodology/PhysicalRiskMethodology.fdb_latexmk
+methodology/PhysicalRiskMethodology.fls
+methodology/PhysicalRiskMethodology.glo
+methodology/PhysicalRiskMethodology.glsdefs
+methodology/PhysicalRiskMethodology.ist
+methodology/PhysicalRiskMethodology.out
+methodology/PhysicalRiskMethodology.synctex.gz

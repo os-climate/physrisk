@@ -19,7 +19,7 @@ class InventoryReader:
     # environment variable names:
     __access_key = "OSC_S3_ACCESS_KEY"
     __secret_key = "OSC_S3_SECRET_KEY"
-    __S3_bucket = "OSC_S3_BUCKET"  # e.g. redhat-osc-physical-landing-647521352890
+    __S3_bucket = "OSC_S3_BUCKET"
 
     def __init__(
         self,
@@ -35,11 +35,11 @@ class InventoryReader:
             fs (Optional[AbstractFileSystem], optional): AbstractFileSystem. Defaults to None in which case S3FileSystem will be created. # noqa: E501
         """
         if fs is None:
-            access_key = get_env(self.__access_key, None)
-            secret_key = get_env(self.__secret_key, None)
+            access_key = get_env(self.__access_key, "")
+            secret_key = get_env(self.__secret_key, "")
             fs = s3fs.S3FileSystem(anon=False, key=access_key, secret=secret_key)
 
-        bucket = get_env(self.__S3_bucket, "redhat-osc-physical-landing-647521352890")
+        bucket = get_env(self.__S3_bucket, "physrisk-hazard-indicators")
         self._base_path = bucket if base_path is None else base_path
         self._fs = fs
 

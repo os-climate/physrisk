@@ -1,11 +1,12 @@
 import sys
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import Dict, List, Mapping, Optional, Protocol, Tuple
+from typing import Dict, List, Mapping, Optional, Protocol, Tuple, Type
 
 import numpy as np
 
 from physrisk.data.hazard_data_provider import HazardDataHint
+from physrisk.kernel.hazards import Hazard
 
 
 class HazardDataRequest:
@@ -16,7 +17,7 @@ class HazardDataRequest:
 
     def __init__(
         self,
-        hazard_type: type,
+        hazard_type: Type[Hazard],
         longitude: float,
         latitude: float,
         *,

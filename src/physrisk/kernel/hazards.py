@@ -1,7 +1,7 @@
 import inspect
 import sys
 from enum import Enum
-from typing import Dict, Type, cast
+from typing import Dict, Type
 
 
 class IndicatorData(Enum):

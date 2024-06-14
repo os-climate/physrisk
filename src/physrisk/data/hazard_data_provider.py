@@ -91,6 +91,7 @@ class HazardDataProvider(ABC):
             values (np.ndarray): Hazard indicator values.
             indices (np.ndarray): Index values.
             units (str). Units
+            path: Path to the hazard indicator data source.
         """
 
         path = self._get_source_path(indicator_id=indicator_id, scenario=scenario, year=year, hint=hint)
@@ -115,6 +116,6 @@ class HazardDataProvider(ABC):
                 ],
                 self._interpolation,
             )  # type: ignore
-        return values, indices, units
+        return values, indices, units, path
 
 

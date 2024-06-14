@@ -17,6 +17,7 @@ from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.exposure import JupterExposureMeasure, calculate_exposures
 from physrisk.kernel.hazards import all_hazards
+from physrisk.kernel.impact import AssetImpactResult, ImpactKey  # , ImpactKey
 from physrisk.kernel.impact_distrib import EmptyImpactDistrib
 from physrisk.kernel.risk import AssetLevelRiskModel, Measure, MeasureKey
 from physrisk.kernel.vulnerability_model import (
@@ -44,7 +45,9 @@ from .api.v1.impact_req_resp import (
     AssetLevelImpact,
     Assets,
     AssetSingleImpact,
-    ImpactKey,
+)
+from .api.v1.impact_req_resp import ImpactKey as APIImpactKey
+from .api.v1.impact_req_resp import (
     RiskMeasureKey,
     RiskMeasures,
     RiskMeasuresForAssets,
@@ -304,7 +307,8 @@ def _get_asset_exposures(
             AssetExposure(
                 asset_id="",
                 exposures=dict(
-                    (t.__name__, Exposure(category=c.name, value=v)) for (t, (c, v)) in r.hazard_categories.items()
+                    (t.__name__, Exposure(category=c.name, value=v, path=p))
+                    for (t, (c, v, p)) in r.hazard_categories.items()
                 ),
             )
             for (a, r) in results.items()
@@ -341,55 +345,68 @@ def _get_asset_impacts(
         impacts = risk_model.calculate_impacts(_assets, scenarios, years)
 
     if request.include_asset_level:
-        ordered_impacts: Dict[Asset, List[AssetSingleImpact]] = {}
-        for asset in _assets:
-            ordered_impacts[asset] = []
-        for k, v in impacts.items():
-            if request.include_calc_details:
-                if v.event is not None and v.vulnerability is not None:
-                    hazard_exceedance = v.event.to_exceedance_curve()
-
-                    vulnerability_distribution = VulnerabilityDistrib(
-                        intensity_bin_edges=v.vulnerability.intensity_bins,
-                        impact_bin_edges=v.vulnerability.impact_bins,
-                        prob_matrix=v.vulnerability.prob_matrix,
-                    )
-                    calc_details = AcuteHazardCalculationDetails(
-                        hazard_exceedance=ExceedanceCurve(
-                            values=hazard_exceedance.values, exceed_probabilities=hazard_exceedance.probs
-                        ),
-                        hazard_distribution=Distribution(
-                            bin_edges=v.event.intensity_bin_edges, probabilities=v.event.prob
-                        ),
-                        vulnerability_distribution=vulnerability_distribution,
-                    )
-            else:
-                calc_details = None
-
-            if isinstance(v.impact, EmptyImpactDistrib):
-                continue
-
-            impact_exceedance = v.impact.to_exceedance_curve()
-            key = ImpactKey(hazard_type=k.hazard_type.__name__, scenario_id=k.scenario, year=str(k.key_year))
-            hazard_impacts = AssetSingleImpact(
-                key=key,
-                impact_type=v.impact.impact_type.name,
-                impact_exceedance=ExceedanceCurve(
-                    values=impact_exceedance.values, exceed_probabilities=impact_exceedance.probs
-                ),
-                impact_distribution=Distribution(bin_edges=v.impact.impact_bins, probabilities=v.impact.prob),
-                impact_mean=v.impact.mean_impact(),
-                impact_std_deviation=v.impact.stddev_impact(),
-                calc_details=None if v.event is None else calc_details,
-            )
-            ordered_impacts[k.asset].append(hazard_impacts)
-
-        # note that this does rely on ordering of dictionary (post 3.6)
-        asset_impacts = [AssetLevelImpact(asset_id="", impacts=a) for a in ordered_impacts.values()]
+        asset_impacts = compile_asset_impacts(impacts, _assets, request.include_calc_details)
     else:
         asset_impacts = None
 
     return AssetImpactResponse(asset_impacts=asset_impacts, risk_measures=risk_measures)
+
+
+def compile_asset_impacts(impacts: Dict[ImpactKey, AssetImpactResult], assets: List[Asset], include_calc_details: bool):
+    """Convert (internal) AssetImpactResult objects to a list of AssetLevelImpact objects
+    ready for serialization.
+
+    Args:
+        impacts (Dict[ImpactKey, AssetImpactResult]): Impact results.
+        assets (List[Asset]): Assets: the list will be returned using this order.
+        include_calc_details (bool): Include calculation details.
+
+    Returns:
+        List[AssetLevelImpact]: AssetImpactResult objects for serialization.
+    """
+    ordered_impacts: Dict[Asset, List[AssetSingleImpact]] = {}
+    for asset in assets:
+        ordered_impacts[asset] = []
+    for k, v in impacts.items():
+        if include_calc_details:
+            if v.event is not None and v.vulnerability is not None:
+                hazard_exceedance = v.event.to_exceedance_curve()
+
+                vulnerability_distribution = VulnerabilityDistrib(
+                    intensity_bin_edges=v.vulnerability.intensity_bins,
+                    impact_bin_edges=v.vulnerability.impact_bins,
+                    prob_matrix=v.vulnerability.prob_matrix,
+                )
+                calc_details = AcuteHazardCalculationDetails(
+                    hazard_exceedance=ExceedanceCurve(
+                        values=hazard_exceedance.values, exceed_probabilities=hazard_exceedance.probs
+                    ),
+                    hazard_distribution=Distribution(bin_edges=v.event.intensity_bin_edges, probabilities=v.event.prob),
+                    vulnerability_distribution=vulnerability_distribution,
+                    hazard_path=v.impact.path,
+                )
+        else:
+            calc_details = None
+
+        if isinstance(v.impact, EmptyImpactDistrib):
+            continue
+
+        impact_exceedance = v.impact.to_exceedance_curve()
+        key = APIImpactKey(hazard_type=k.hazard_type.__name__, scenario_id=k.scenario, year=str(k.key_year))
+        hazard_impacts = AssetSingleImpact(
+            key=key,
+            impact_type=v.impact.impact_type.name,
+            impact_exceedance=ExceedanceCurve(
+                values=impact_exceedance.values, exceed_probabilities=impact_exceedance.probs
+            ),
+            impact_distribution=Distribution(bin_edges=v.impact.impact_bins, probabilities=v.impact.prob),
+            impact_mean=v.impact.mean_impact(),
+            impact_std_deviation=v.impact.stddev_impact(),
+            calc_details=None if v.event is None else calc_details,
+        )
+        ordered_impacts[k.asset].append(hazard_impacts)
+        # note that this does rely on ordering of dictionary (post 3.6)
+    return [AssetLevelImpact(asset_id="", impacts=a) for a in ordered_impacts.values()]
 
 
 def _create_risk_measures(

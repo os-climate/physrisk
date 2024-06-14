@@ -1,21 +1,26 @@
 ---
-name: "🐍📦 Test build and publish to Test PyPI"
+name: "🐍📦 Production build and release"
 
 # GitHub/PyPI trusted publisher documentation:
 # https://packaging.python.org/en/latest/guides/publishing-package-distribution-releases-using-github-actions-ci-cd-workflows/
 
 # yamllint disable-line rule:truthy
-on: push
+on:
+  workflow_dispatch:
+  push:
+    # Only invoked on release tag pushes
+    tags:
+      - v*.*.*
 
 env:
   python-version: "3.8"
 
 jobs:
   publish:
-    name: "🐍📦 Test build and publish"
+    name: "🐍📦 Build and publish"
     runs-on: ubuntu-latest
     environment:
-      name: testpypi
+      name: pypi
     permissions:
       # IMPORTANT: mandatory for trusted publishing
       id-token: write
@@ -24,31 +29,21 @@ jobs:
         uses: actions/checkout@v4
 
       - name: "Setup PDM for build commands"
-        uses: pdm-project/setup-pdm@v3
+        uses: pdm-project/setup-pdm@v4
         with:
           version: 2.10.0
 
       - name: "Setup Python"
-        uses: actions/setup-python@v4.7.0
+        uses: actions/setup-python@v5.1.0
         with:
           python-version: ${{ env.python-version }}
-
-      - name: "Update version and output Run ID"
-        run: |
-          value=`scripts/version.sh`
-          scripts/dev-versioning.sh "$value-dev${{ github.run_id }}"
-          echo "$value-dev${{ github.run_id }}"
-          echo ${{ github.run_id }}
-
-      - name: "Output Run Number"
-        run: echo ${{ github.run_number }}
 
       - name: "Build with PDM backend"
         run: |
           pdm build
 
       - name: "Sign packages with Sigstore"
-        uses: sigstore/gh-action-sigstore-python@v2.1.0
+        uses: sigstore/gh-action-sigstore-python@v2.1.1
         with:
           inputs: >-
             ./dist/*.tar.gz
@@ -61,9 +56,8 @@ jobs:
           fi
           rm dist/*.sigstore | true
 
-      - name: Publish distribution to Test PyPI
+      - name: "Publish package to PyPI"
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           verbose: true
-          repository-url: https://test.pypi.org/legacy/
-          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          password: ${{ secrets.PYPI_API_TOKEN }}

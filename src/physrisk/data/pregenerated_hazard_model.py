@@ -75,7 +75,7 @@ class PregeneratedHazardModel(HazardModel):
             longitudes = [req.longitude for req in batch]
             latitudes = [req.latitude for req in batch]
             if indicator_data(hazard_type, indicator_id) == IndicatorData.EVENT:
-                intensities, return_periods, units = self.hazard_data_providers[hazard_type].get_data(
+                intensities, return_periods, units, path = self.hazard_data_providers[hazard_type].get_data(
                     longitudes,
                     latitudes,
                     indicator_id=indicator_id,
@@ -98,7 +98,7 @@ class PregeneratedHazardModel(HazardModel):
 
                 for i, req in enumerate(batch):
                     valid = ~np.isnan(parameters[i, :])
-                    responses[req] = HazardParameterDataResponse(parameters[i, :][valid], defns[valid], units)
+                    responses[req] = HazardParameterDataResponse(parameters[i, :][valid], defns[valid], units, path)
         except Exception as err:
             # e.g. the requested data is unavailable
             for i, req in enumerate(batch):

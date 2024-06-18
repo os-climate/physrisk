@@ -13,7 +13,7 @@ from physrisk.api.v1.impact_req_resp import (
     ScoreBasedRiskMeasureDefinition,
 )
 from physrisk.kernel.hazard_model import HazardEventDataResponse, HazardParameterDataResponse
-from physrisk.kernel.hazards import Hazard, Wind
+from physrisk.kernel.hazards import Hazard, Wind, Hail, Drought, Fire, Precipitation, ChronicHeat
 from physrisk.kernel.impact import AssetImpactResult
 from physrisk.kernel.risk import Measure, RiskMeasureCalculator
 
@@ -68,15 +68,107 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
             HazardIndicatorBounds(category=Category.HIGH,   hazard_type=Wind, indicator_id="max_speed", indicator_return=100, units="km/h", lower=119, upper=178), # noqa
             HazardIndicatorBounds(category=Category.REDFLAG,hazard_type=Wind, indicator_id="max_speed", indicator_return=100, units="km/h", lower=178, upper=float("inf")) # noqa
         ]
+        self.hail_bounds = [
+            HazardIndicatorBounds(category=Category.LOW,    hazard_type=Hail, indicator_id="days/above/5cm", indicator_return=100, units="days/year", lower=float("-inf"), upper=1), # noqa
+            HazardIndicatorBounds(category=Category.MEDIUM, hazard_type=Hail, indicator_id="days/above/5cm", indicator_return=100, units="days/year", lower=1, upper=2), # noqa
+            HazardIndicatorBounds(category=Category.HIGH,   hazard_type=Hail, indicator_id="days/above/5cm", indicator_return=100, units="days/year", lower=2, upper=3), # noqa
+            HazardIndicatorBounds(category=Category.REDFLAG,hazard_type=Hail, indicator_id="days/above/5cm", indicator_return=100, units="days/year", lower=3, upper=float("inf")) # noqa
+        ]
+        self.drought_bounds = [
+            HazardIndicatorBounds(category=Category.LOW,    hazard_type=Drought, indicator_id="months/spei3m/below/-2", indicator_return=100, units="months/year", lower=float("-inf"), upper=0.25), # noqa
+            HazardIndicatorBounds(category=Category.MEDIUM, hazard_type=Drought, indicator_id="months/spei3m/below/-2", indicator_return=100, units="months/year", lower=0.25, upper=0.5), # noqa
+            HazardIndicatorBounds(category=Category.HIGH,   hazard_type=Drought, indicator_id="months/spei3m/below/-2", indicator_return=100, units="months/year", lower=0.5, upper=1), # noqa
+            HazardIndicatorBounds(category=Category.REDFLAG,hazard_type=Drought, indicator_id="months/spei3m/below/-2", indicator_return=100, units="months/year", lower=1, upper=float("inf")) # noqa
+        ]
+        self.fire_bounds = [
+            HazardIndicatorBounds(category=Category.LOW,    hazard_type=Fire, indicator_id="fire_probability", indicator_return=100, units="% probability/month", lower=float("-inf"), upper=20), # noqa
+            HazardIndicatorBounds(category=Category.MEDIUM, hazard_type=Fire, indicator_id="fire_probability", indicator_return=100, units="% probability/month", lower=20, upper=35), # noqa
+            HazardIndicatorBounds(category=Category.HIGH,   hazard_type=Fire, indicator_id="fire_probability", indicator_return=100, units="% probability/month", lower=35, upper=50), # noqa
+            HazardIndicatorBounds(category=Category.REDFLAG,hazard_type=Fire, indicator_id="fire_probability", indicator_return=100, units="% probability/month", lower=50, upper=float("inf")) # noqa
+        ]
+        self.precipitation_bounds = [
+            HazardIndicatorBounds(category=Category.LOW,    hazard_type=Precipitation, indicator_id="max/daily/water_equivalent", indicator_return=100, units="mm rainfall/day", lower=float("-inf"), upper=100), # noqa
+            HazardIndicatorBounds(category=Category.MEDIUM, hazard_type=Precipitation, indicator_id="max/daily/water_equivalent", indicator_return=100, units="mm rainfall/day", lower=100, upper=130), # noqa
+            HazardIndicatorBounds(category=Category.HIGH,   hazard_type=Precipitation, indicator_id="max/daily/water_equivalent", indicator_return=100, units="mm rainfall/day", lower=130, upper=160), # noqa
+            HazardIndicatorBounds(category=Category.REDFLAG,hazard_type=Precipitation, indicator_id="max/daily/water_equivalent", indicator_return=100, units="mm rainfall/day", lower=160, upper=float("inf")) # noqa
+        ]
+        self.chronicHeat_bounds = [
+            HazardIndicatorBounds(category=Category.LOW,    hazard_type=ChronicHeat, indicator_id="days/above/35c", indicator_return=100, units="days/year", lower=float("-inf"), upper=10), # noqa
+            HazardIndicatorBounds(category=Category.MEDIUM, hazard_type=ChronicHeat, indicator_id="days/above/35c", indicator_return=100, units="days/year", lower=10, upper=20), # noqa
+            HazardIndicatorBounds(category=Category.HIGH,   hazard_type=ChronicHeat, indicator_id="days/above/35c", indicator_return=100, units="days/year", lower=20, upper=30), # noqa
+            HazardIndicatorBounds(category=Category.REDFLAG,hazard_type=ChronicHeat, indicator_id="days/above/35c", indicator_return=100, units="days/year", lower=30, upper=float("inf")) # noqa
+        ]
         # fmt: on
         self._definition_lookup = {}
-        self._bounds_lookup = {Wind: self._bounds_to_lookup(self.wind_bounds)}
+        self._bounds_lookup = {
+            Wind: self._bounds_to_lookup(self.wind_bounds),
+            Hail: self._bounds_to_lookup(self.hail_bounds),
+            Drought: self._bounds_to_lookup(self.drought_bounds),
+            Fire: self._bounds_to_lookup(self.fire_bounds),
+            Precipitation: self._bounds_to_lookup(self.precipitation_bounds),
+            ChronicHeat: self._bounds_to_lookup(self.chronicHeat_bounds)
+        }
         self._definition_lookup[Wind] = ScoreBasedRiskMeasureDefinition(
             hazard_types=[Wind.__name__],
             values=self._definition_values(self.wind_bounds, self.wind_label_description),
             underlying_measures=[
                 RiskMeasureDefinition(
                     measure_id="measure_wind",
+                    label="1-in-100 year sustained wind speed.",
+                    description="1-in-100 year sustained wind speed.",
+                )
+            ],
+        )
+        self._definition_lookup[Hail] = ScoreBasedRiskMeasureDefinition(
+            hazard_types=[Hail.__name__],
+            values=self._definition_values(self.wind_bounds, self.wind_label_description),
+            underlying_measures=[
+                RiskMeasureDefinition(
+                    measure_id="measure_hail",
+                    label="1-in-100 year sustained wind speed.",
+                    description="1-in-100 year sustained wind speed.",
+                )
+            ],
+        )
+        self._definition_lookup[Drought] = ScoreBasedRiskMeasureDefinition(
+            hazard_types=[Drought.__name__],
+            values=self._definition_values(self.wind_bounds, self.wind_label_description),
+            underlying_measures=[
+                RiskMeasureDefinition(
+                    measure_id="measure_drought",
+                    label="1-in-100 year sustained wind speed.",
+                    description="1-in-100 year sustained wind speed.",
+                )
+            ],
+        )
+        self._definition_lookup[Fire] = ScoreBasedRiskMeasureDefinition(
+            hazard_types=[Fire.__name__],
+            values=self._definition_values(self.wind_bounds, self.wind_label_description),
+            underlying_measures=[
+                RiskMeasureDefinition(
+                    measure_id="measure_fire",
+                    label="1-in-100 year sustained wind speed.",
+                    description="1-in-100 year sustained wind speed.",
+                )
+            ],
+        )
+        self._definition_lookup[Precipitation] = ScoreBasedRiskMeasureDefinition(
+            hazard_types=[Precipitation.__name__],
+            values=self._definition_values(self.wind_bounds, self.wind_label_description),
+            underlying_measures=[
+                RiskMeasureDefinition(
+                    measure_id="measure_precipitation",
+                    label="1-in-100 year sustained wind speed.",
+                    description="1-in-100 year sustained wind speed.",
+                )
+            ],
+        )
+        self._definition_lookup[ChronicHeat] = ScoreBasedRiskMeasureDefinition(
+            hazard_types=[ChronicHeat.__name__],
+            values=self._definition_values(self.wind_bounds, self.wind_label_description),
+            underlying_measures=[
+                RiskMeasureDefinition(
+                    measure_id="measure_chronicHeat",
                     label="1-in-100 year sustained wind speed.",
                     description="1-in-100 year sustained wind speed.",
                 )

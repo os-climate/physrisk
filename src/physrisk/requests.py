@@ -19,7 +19,7 @@ from physrisk.kernel.exposure import JupterExposureMeasure, calculate_exposures
 from physrisk.kernel.hazards import all_hazards
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey  # , ImpactKey
 from physrisk.kernel.impact_distrib import EmptyImpactDistrib
-from physrisk.kernel.risk import AssetLevelRiskModel, Measure, MeasureKey
+from physrisk.kernel.risk import AssetLevelRiskModel, Measure, MeasureKey, RiskMeasureCalculator, RiskMeasuresFactory
 from physrisk.kernel.vulnerability_model import (
     DictBasedVulnerabilityModels,
     VulnerabilityModels,
@@ -74,9 +74,11 @@ class Requester:
         inventory_reader: InventoryReader,
         reader: ZarrReader,
         colormaps: Colormaps,
+        measures_factory: RiskMeasuresFactory,
     ):
         self.colormaps = colormaps
         self.hazard_model_factory = hazard_model_factory
+        self.measures_factory = measures_factory
         self.vulnerability_models_factory = vulnerability_models_factory
         self.inventory = inventory
         self.inventory_reader = inventory_reader
@@ -109,7 +111,10 @@ class Requester:
                 interpolation=request.calc_settings.hazard_interp, provider_max_requests=request.provider_max_requests
             )
             vulnerability_models = self.vulnerability_models_factory.vulnerability_models()
-            return dumps(_get_asset_impacts(request, hazard_model, vulnerability_models).model_dump())
+            measure_calculators = self.measures_factory.calculators(request.use_case_id)
+            return dumps(
+                _get_asset_impacts(request, hazard_model, vulnerability_models, measure_calculators).model_dump()
+            )
         elif request_id == "get_example_portfolios":
             return dumps(_get_example_portfolios())
         else:
@@ -320,6 +325,7 @@ def _get_asset_impacts(
     request: AssetImpactRequest,
     hazard_model: HazardModel,
     vulnerability_models: Optional[VulnerabilityModels] = None,
+    measure_calculators: Optional[Dict[Type[Asset], RiskMeasureCalculator]] = None,
     assets: Optional[List[Asset]] = None,
 ):
     vulnerability_models = (
@@ -330,8 +336,10 @@ def _get_asset_impacts(
     # we keep API definition of asset separate from internal Asset class; convert by reflection
     # based on asset_class:
     _assets = create_assets(request.assets, assets)
-    measure_calcs = calc.get_default_risk_measure_calculators()
-    risk_model = AssetLevelRiskModel(hazard_model, vulnerability_models, measure_calcs)
+    measure_calculators = (
+        calc.get_default_risk_measure_calculators() if measure_calculators is None else measure_calculators
+    )
+    risk_model = AssetLevelRiskModel(hazard_model, vulnerability_models, measure_calculators)
 
     scenarios = [request.scenario] if request.scenarios is None or len(request.scenarios) == 0 else request.scenarios
     years = [request.year] if request.years is None or len(request.years) == 0 else request.years

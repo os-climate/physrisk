@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Callable, Set, Type
+from typing import Callable, Optional, Set, Type
 
 from physrisk.api.v1.impact_req_resp import (
     Category,
@@ -9,7 +9,7 @@ from physrisk.api.v1.impact_req_resp import (
 )
 from physrisk.kernel.hazards import ChronicHeat, CoastalInundation, Hazard, RiverineInundation, Wind
 from physrisk.kernel.impact import AssetImpactResult
-from physrisk.kernel.impact_distrib import ImpactDistrib
+from physrisk.kernel.impact_distrib import EmptyImpactDistrib, ImpactDistrib
 from physrisk.kernel.risk import Measure, RiskMeasureCalculator
 
 
@@ -162,7 +162,9 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
 
     def calc_measure(
         self, hazard_type: Type[Hazard], base_impact_res: AssetImpactResult, impact_res: AssetImpactResult
-    ) -> Measure:
+    ) -> Optional[Measure]:
+        if isinstance(base_impact_res.impact, EmptyImpactDistrib) or isinstance(impact_res.impact, EmptyImpactDistrib):
+            return None
         if hazard_type == ChronicHeat:
             return self.calc_measure_cooling(hazard_type, base_impact_res.impact, impact_res.impact)
         else:

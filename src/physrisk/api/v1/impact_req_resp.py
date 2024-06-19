@@ -21,6 +21,7 @@ class AssetImpactRequest(BaseModel):
     include_asset_level: bool = Field(True, description="If true, include asset-level impacts.")
     include_measures: bool = Field(False, description="If true, include calculation of risk measures.")
     include_calc_details: bool = Field(True, description="If true, include impact calculation details.")
+    use_case_id: str = Field("", description="Identifier for 'use case' used in the risk measures calculation.")
     provider_max_requests: Dict[str, int] = Field(
         {},
         description="The maximum permitted number of requests \

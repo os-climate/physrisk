@@ -11,6 +11,7 @@ from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import Asset
+from physrisk.kernel.calculation import DefaultMeasuresFactory
 from physrisk.kernel.exposure import Category, JupterExposureMeasure, calculate_exposures
 from physrisk.kernel.hazards import ChronicHeat, CombinedInundation, Drought, Fire, Hail, Wind
 from physrisk.requests import Requester
@@ -30,6 +31,7 @@ class TestExposureMeasures(TestWithCredentials):
             inventory_reader=InventoryReader(fs=local.LocalFileSystem(), base_path=""),
             reader=ZarrReader(store=store),
             colormaps=inventory.colormaps(),
+            measures_factory=DefaultMeasuresFactory,
         )
         assets_api = physrisk.api.v1.common.Assets(
             items=[

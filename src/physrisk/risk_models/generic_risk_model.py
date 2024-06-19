@@ -115,6 +115,7 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
         # in general we want to use the impact distribution, but in certain circumstances we can use
         # the underlying hazard data some care is needed given that vulnerability models are interchangeable
         # (what if the vulnerability model used does not make use of the hazard indicator we require?)
+
         (lower_bounds, categories, bounds) = self._bounds_lookup[hazard_type]
         if isinstance(bounds[0], HazardIndicatorBounds):
             assert impact_res.hazard_data is not None
@@ -146,4 +147,4 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
         return self._definition_lookup.get(hazard_type, None)
 
     def supported_hazards(self) -> Set[type]:
-        return set([Wind])  # RiverineInundation, CoastalInundation,
+        return set([Wind])  # Fire, RiverineInundation, CoastalInundation,

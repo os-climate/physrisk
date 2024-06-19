@@ -60,8 +60,8 @@ class ZarrReader:
 
     @classmethod
     def create_s3_zarr_store(cls, get_env: Callable[[str, Optional[str]], str] = get_env):
-        access_key = get_env(cls.__access_key, None)
-        secret_key = get_env(cls.__secret_key, None)
+        access_key = get_env(cls.__access_key, "")
+        secret_key = get_env(cls.__secret_key, "")
         s3_bucket = get_env(cls.__S3_bucket, "physrisk-hazard-indicators")
         zarr_path = get_env(cls.__zarr_path, "hazard/hazard.zarr")
 

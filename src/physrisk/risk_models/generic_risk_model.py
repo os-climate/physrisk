@@ -262,4 +262,4 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
         return self._definition_lookup.get(hazard_type, None)
 
     def supported_hazards(self) -> Set[type]:
-        return set([Wind, Hail, Drought, Fire, Precipitation, ChronicHeat])  # RiverineInundation, CoastalInundation,
+        return set([Wind, Fire, Hail, ChronicHeat, Drought, Precipitation])  # RiverineInundation, CoastalInundation,

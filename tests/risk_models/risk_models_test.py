@@ -10,7 +10,7 @@ from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import Asset, RealEstateAsset
 from physrisk.kernel.calculation import get_default_vulnerability_models
-from physrisk.kernel.hazards import ChronicHeat, CoastalInundation, RiverineInundation, Wind
+from physrisk.kernel.hazards import ChronicHeat, CoastalInundation, RiverineInundation, Wind, Hail, Drought, Precipitation
 from physrisk.kernel.risk import AssetLevelRiskModel, MeasureKey
 from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels
 from physrisk.requests import _create_risk_measures
@@ -103,6 +103,18 @@ class TestRiskModels(TestWithCredentials):
 
         def sp_heat(scenario, year):
             return source_paths[ChronicHeat](indicator_id="mean_degree_days/above/index", scenario=scenario, year=year)
+
+        def sp_fire(scenario, year):
+            return source_paths[Fire](indicator_id="fire_probability", scenario=scenario, year=year)
+
+        def sp_hail(scenario, year):
+            return source_paths[Hail](indicator_id="days/above/5cm", scenario=scenario, year=year)
+
+        def sp_drought(scenario, year):
+            return source_paths[Drought](indicator_id="months/spei3m/below/-2", scenario=scenario, year=year)
+
+        def sp_precipitation(scenario, year):
+            return source_paths[Precipitation](indicator_id="months/spei3m/below/-2", scenario=scenario, year=year)
 
         mocker = ZarrStoreMocker()
         return_periods = inundation_return_periods()

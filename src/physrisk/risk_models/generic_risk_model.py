@@ -134,7 +134,6 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                       "is possible based on the mean distribution of several parameters across multiple"
                       "bias-corrected and downscaled Global Climate Models (GCMs).",
                   )
-
                 )
             ],
         )
@@ -189,10 +188,10 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                     measure_id="measure_precipitation",
                     label="1-in-100 year maximum daily total water equivalent precipitation (in mm).",
                     description=(
-                      "This model computes the maximum daily water equivalent precipitation (in mm) measured at the 100 year"
-                      "return period based on the mean of the precipitation distribution from multiple bias corrected and"
-                      "downscaled Global Climate Models (GCMs).",
-                  )
+                        "This model computes the maximum daily water equivalent precipitation (in mm) measured at the 100 year"
+                        "return period based on the mean of the precipitation distribution from multiple bias corrected and"
+                        "downscaled Global Climate Models (GCMs).",
+                    ),
                 )
             ],
         )
@@ -250,12 +249,12 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
 
     def fire_label_description(self, bounds: HazardIndicatorBounds):
         label = (
-          f"Max value, across all months, of the monthly probability of a wildfire between"
-          f"{bounds.lower} and {bounds.upper} {bounds.units}"
+            f"Max value, across all months, of the monthly probability of a wildfire between"
+            f"{bounds.lower} and {bounds.upper} {bounds.units}"
         )
         description = (
-          f"Max value, across all months, of the monthly probability of a wildfire between"
-          f"{bounds.lower} and {bounds.upper} {bounds.units}"
+            f"Max value, across all months, of the monthly probability of a wildfire between"
+            f"{bounds.lower} and {bounds.upper} {bounds.units}"
         )
         return label, description
 

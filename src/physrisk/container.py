@@ -58,6 +58,8 @@ class Container(containers.DeclarativeContainer):
 
     hazard_model_factory = providers.Factory(ZarrHazardModelFactory, reader=zarr_reader, source_paths=source_paths)
 
+    measures_factory = providers.Factory(calc.DefaultMeasuresFactory)
+
     vulnerability_models_factory = providers.Factory(DictBasedVulnerabilityModelsFactory)
 
     requester = providers.Singleton(
@@ -68,4 +70,5 @@ class Container(containers.DeclarativeContainer):
         inventory_reader=inventory_reader,
         reader=zarr_reader,
         colormaps=colormaps,
+        measures_factory=measures_factory,
     )

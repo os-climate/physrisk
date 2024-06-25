@@ -7,7 +7,6 @@ from physrisk.kernel.assets import Asset
 from physrisk.kernel.hazard_model import HazardModel
 from physrisk.kernel.hazards import Hazard, all_hazards
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey, calculate_impacts
-from physrisk.kernel.impact_distrib import EmptyImpactDistrib
 from physrisk.kernel.vulnerability_model import VulnerabilityModels
 
 # from asyncio import ALL_COMPLETED
@@ -87,11 +86,18 @@ class Measure:
 
 
 class RiskMeasureCalculator(Protocol):
-    def calc_measure(self, hazard_type: type, base_impact: AssetImpactResult, impact: AssetImpactResult) -> Measure: ...
+    def calc_measure(
+        self, hazard_type: Type[Hazard], base_impact: AssetImpactResult, impact: AssetImpactResult
+    ) -> Optional[Measure]: ...
 
-    def get_definition(self, hazard_type: type) -> ScoreBasedRiskMeasureDefinition: ...
+    def get_definition(self, hazard_type: Type[Hazard]) -> ScoreBasedRiskMeasureDefinition: ...
 
     def supported_hazards(self) -> Set[type]: ...
+
+
+class RiskMeasuresFactory(Protocol):
+    def calculators(self, use_case_id: str) -> Dict[Type[Asset], RiskMeasureCalculator]:
+        pass
 
 
 class AssetLevelRiskModel(RiskModel):
@@ -123,7 +129,10 @@ class AssetLevelRiskModel(RiskModel):
         # the identifiers of the score-based risk measures used for each asset, for each hazard type
         measure_ids_for_hazard: Dict[Type[Hazard], List[str]] = {}
         # one
-        calcs_by_asset = [self._measure_calculators.get(type(asset), None) for asset in assets]
+        calcs_by_asset = [
+            self._measure_calculators.get(type(asset), self._measure_calculators.get(Asset, None)) for asset in assets
+        ]
+        # match to specific asset and if no match then use the generic calculator assigned to Asset
         used_calcs = {c for c in calcs_by_asset if c is not None}
         # get all measures
         measure_id_lookup = {
@@ -167,9 +176,7 @@ class AssetLevelRiskModel(RiskModel):
                         prosp_impact = impacts.get(
                             ImpactKey(asset=asset, hazard_type=hazard_type, scenario=prosp_scen, key_year=year)
                         )
-                        if not isinstance(base_impact.impact, EmptyImpactDistrib) and not isinstance(
-                            prosp_impact.impact, EmptyImpactDistrib
-                        ):
-                            risk_ind = measure_calc.calc_measure(hazard_type, base_impact, prosp_impact)
+                        risk_ind = measure_calc.calc_measure(hazard_type, base_impact, prosp_impact)
+                        if risk_ind is not None:
                             measures[MeasureKey(asset, prosp_scen, year, hazard_type)] = risk_ind
         return impacts, measures

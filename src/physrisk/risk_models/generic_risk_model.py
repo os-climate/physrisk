@@ -115,9 +115,9 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                     measure_id="measure_wind",
                     label="1-in-100 year sustained wind speed.",
                     description=(
-                      "This wind speed model computes the maximum 1-minute sustained wind speed (in km/hr) experienced"
-                      "over a 100 year return period based on mean wind speed distributions from multiple"
-                      "Global Climate Models (GCMs).",
+                      "This wind speed model computes the maximum 1-minute sustained wind speed (in km/hr)"
+                      "experienced over a 100 year return period based on mean wind speed distributions from"
+                      "multiple Global Climate Models (GCMs).",
                   )
                 )
             ],
@@ -130,9 +130,9 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                     measure_id="measure_hail",
                     label="Number of days per year where large hail (>2 inches / 5 cm in diameter) is possible.",
                     description=(
-                      "This hail model computes the number of days per annum where hail exceeding 5 cm diameter is possible"
-                      "based on the mean distribution of several parameters across multiple bias-corrected and downscaled"
-                      "Global Climate Models (GCMs).",
+                      "This hail model computes the number of days per annum where hail exceeding 5 cm diameter"
+                      "is possible based on the mean distribution of several parameters across multiple"
+                      "bias-corrected and downscaled Global Climate Models (GCMs).",
                   )
 
                 )
@@ -144,15 +144,19 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
             underlying_measures=[
                 RiskMeasureDefinition(
                     measure_id="measure_drought",
-                    label="Months per year where the rolling 3-month average Standardized Precipitation Evapotranspiration Index is <2.",
+                    label=(
+                      "Months per year where the rolling 3-month average Standardized Precipitation Evapotranspiration"
+                      "Index is <2."
+                    ),
                     description=(
-                      "This drought model is based on the Standardized Precipitation-Evapotranspiration Index (SPEI). The SPEl is an"
-                      "extension of the Standardized Precipitation Index which also considers Potential Evapotranspiration (PET)"
-                      "in determining drought events. The SPEl is calculated from a log-logistic probability distribution function"
-                      "of climatic water balance (precipitation minus evapotranspiration) over a given time scale. The SPEI itself"
-                      "is a standardized variable with a mean value 0 and standard deviation 1. This drought model computes the number"
-                      "of months per annum where the 3-month rolling average\nof SPEI is below -2 based on the mean values of"
-                      "several parameters from bias-corrected and downscaled multiple Global Climate Models (GCMs).",
+                      "This drought model is based on the Standardized Precipitation-Evapotranspiration Index (SPEI)."
+                      "The SPEl is an extension of the Standardized Precipitation Index which also considers Potential"
+                      "Evapotranspiration (PET) in determining drought events. The SPEl is calculated from a log-logistic"
+                      "probability distribution function of climatic water balance (precipitation minus evapotranspiration)"
+                      "over a given time scale. The SPEI itself is a standardized variable with a mean value 0 and"
+                      "standard deviation 1. This drought model computes the number of months per annum where"
+                      "the 3-month rolling average\nof SPEI is below -2 based on the mean values of several"
+                      "parameters from bias-corrected and downscaled multiple Global Climate Models (GCMs).",
                   )
                 )
             ],
@@ -163,12 +167,16 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
             underlying_measures=[
                 RiskMeasureDefinition(
                     measure_id="measure_fire",
-                    label="The maximum value, across all months, of the monthly probability of a wildfire within 100km of the location.",
+                    label=(
+                      "The maximum value, across all months, of the monthly probability of a wildfire within 100km of the"
+                      "location."
+                    ),
                     description=(
-                        "This fire model computes the maximum monthly probability per annum of a wildfire within 100 km of a given location"
-                        "based on several parameters from multiple bias corrected and downscaled Global Climate Models (GCMs)."
-                        "For example, if the probability of occurrence of a wildfire is 5%% in July, 20%% in August, 10%% in September"
-                        "and 0%% for other months, the hazard indicator value is 20%.",
+                        "This fire model computes the maximum monthly probability per annum of a wildfire within 100 km of"
+                        "a given location based on several parameters from multiple bias corrected and downscaled"
+                        "Global Climate Models (GCMs)."
+                        "For example, if the probability of occurrence of a wildfire is 5%% in July, 20%% in August,"
+                        "10%% in September and 0%% for other months, the hazard indicator value is 20%.",
                     ),
                 )
             ],
@@ -196,8 +204,9 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                     measure_id="measure_chronicHeat",
                     label="Days per year with temperature > 35°C.",
                     description=(
-                        "This heat model computes the number of days exceeding 35°C per annum based on the mean of distribution fits"
-                        "to the bias-corrected and downscaled high temperature distribution across multiple Global Climate Models (GCMs).",
+                        "This heat model computes the number of days exceeding 35°C per annum based on the mean"
+                        "of distribution fits to the bias-corrected and downscaled high temperature distribution"
+                        "across multiple Global Climate Models (GCMs).",
                     ),
                 )
             ],
@@ -252,10 +261,12 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
 
     def precipitation_label_description(self, bounds: HazardIndicatorBounds):
         label = (
-            f"Max daily total water equivalent precipitation between {bounds.lower} and {bounds.upper} {bounds.units}"
+            f"Max daily total water equivalent precipitation between {bounds.lower} and"
+            f"{bounds.upper} {bounds.units}"
         )
         description = (
-            f"Max daily total water equivalent precipitation between {bounds.lower} and {bounds.upper} {bounds.units}"
+            f"Max daily total water equivalent precipitation between {bounds.lower} and"
+            f"{bounds.upper} {bounds.units}"
         )
         return label, description
 

@@ -134,6 +134,7 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                       "based on the mean distribution of several parameters across multiple bias-corrected and downscaled"
                       "Global Climate Models (GCMs).",
                   )
+
                 )
             ],
         )
@@ -164,11 +165,11 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                     measure_id="measure_fire",
                     label="The maximum value, across all months, of the monthly probability of a wildfire within 100km of the location.",
                     description=(
-                      "This fire model computes the maximum monthly probability per annum of a wildfire within 100 km of a given location"
-                      "based on several parameters from multiple bias corrected and downscaled Global Climate Models (GCMs)."
-                      "For example, if the probability of occurrence of a wildfire is 5%% in July, 20%% in August, 10%% in September"
-                      "and 0%% for other months, the hazard indicator value is 20%.",
-                  )
+                        "This fire model computes the maximum monthly probability per annum of a wildfire within 100 km of a given location"
+                        "based on several parameters from multiple bias corrected and downscaled Global Climate Models (GCMs)."
+                        "For example, if the probability of occurrence of a wildfire is 5%% in July, 20%% in August, 10%% in September"
+                        "and 0%% for other months, the hazard indicator value is 20%.",
+                    ),
                 )
             ],
         )
@@ -195,9 +196,9 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                     measure_id="measure_chronicHeat",
                     label="Days per year with temperature > 35°C.",
                     description=(
-                      "This heat model computes the number of days exceeding 35°C per annum based on the mean of distribution fits"
-                      "to the bias-corrected and downscaled high temperature distribution across multiple Global Climate Models (GCMs).",
-                  )
+                        "This heat model computes the number of days exceeding 35°C per annum based on the mean of distribution fits"
+                        "to the bias-corrected and downscaled high temperature distribution across multiple Global Climate Models (GCMs).",
+                    ),
                 )
             ],
         )

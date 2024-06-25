@@ -131,7 +131,7 @@ class TestRiskModels(TestWithCredentials):
             return source_paths[Drought](indicator_id="months/spei3m/below/-2", scenario=scenario, year=year)
 
         def sp_precipitation(scenario, year):
-            return source_paths[Precipitation](indicator_id="months/spei3m/below/-2", scenario=scenario, year=year)
+            return source_paths[Precipitation](indicator_id="max/daily/water_equivalent", scenario=scenario, year=year)
 
         mocker = ZarrStoreMocker()
         return_periods = inundation_return_periods()

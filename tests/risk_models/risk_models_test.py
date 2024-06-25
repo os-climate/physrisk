@@ -180,6 +180,49 @@ class TestRiskModels(TestWithCredentials):
             [0],
             [0.2],
         )
+        mocker.add_curves_global(
+            sp_hail("historical", -1),
+            TestData.longitudes,
+            TestData.latitudes,
+            [0],
+            [2.15],
+        )
+        mocker.add_curves_global(
+            sp_hail("rcp8p5", 2050),
+            TestData.longitudes,
+            TestData.latitudes,
+            [0],
+            [4],
+        )
+        mocker.add_curves_global(
+            sp_drought("historical", -1),
+            TestData.longitudes,
+            TestData.latitudes,
+            [0],
+            [3],
+        )
+        mocker.add_curves_global(
+            sp_drought("rcp8p5", 2050),
+            TestData.longitudes,
+            TestData.latitudes,
+            [0],
+            [9],
+        )
+        mocker.add_curves_global(
+            sp_precipitation("historical", -1),
+            TestData.longitudes,
+            TestData.latitudes,
+            [0],
+            [10],
+        )
+        mocker.add_curves_global(
+            sp_precipitation("rcp8p5", 2050),
+            TestData.longitudes,
+            TestData.latitudes,
+            [0],
+            [70],
+        )
+
 
         return ZarrHazardModel(source_paths=get_default_source_paths(), store=mocker.store)
 

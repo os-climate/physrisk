@@ -105,7 +105,7 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
             Drought: self._bounds_to_lookup(self.drought_bounds),
             Fire: self._bounds_to_lookup(self.fire_bounds),
             Precipitation: self._bounds_to_lookup(self.precipitation_bounds),
-            ChronicHeat: self._bounds_to_lookup(self.chronicHeat_bounds)
+            ChronicHeat: self._bounds_to_lookup(self.chronicHeat_bounds),
         }
         self._definition_lookup[Wind] = ScoreBasedRiskMeasureDefinition(
             hazard_types=[Wind.__name__],
@@ -216,8 +216,12 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
         return label, description
 
     def precipitation_label_description(self, bounds: HazardIndicatorBounds):
-        label = f"Max daily total water equivalent precipitation between {bounds.lower} and {bounds.upper} {bounds.units}"
-        description = f"Max daily total water equivalent precipitation between {bounds.lower} and {bounds.upper} {bounds.units}"
+        label = (
+            f"Max daily total water equivalent precipitation between {bounds.lower} and {bounds.upper} {bounds.units}"
+        )
+        description = (
+            f"Max daily total water equivalent precipitation between {bounds.lower} and {bounds.upper} {bounds.units}"
+        )
         return label, description
 
     def chronicHeat_label_description(self, bounds: HazardIndicatorBounds):

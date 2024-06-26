@@ -115,10 +115,10 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                     measure_id="measure_wind",
                     label="1-in-100 year sustained wind speed.",
                     description=(
-                      "This wind speed model computes the maximum 1-minute sustained wind speed (in km/hr)"
-                      "experienced over a 100 year return period based on mean wind speed distributions from"
-                      "multiple Global Climate Models (GCMs).",
-                  )
+                        "This wind speed model computes the maximum 1-minute sustained wind speed (in km/hr)"
+                        "experienced over a 100 year return period based on mean wind speed distributions from"
+                        "multiple Global Climate Models (GCMs).",
+                    ),
                 )
             ],
         )
@@ -130,10 +130,10 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                     measure_id="measure_hail",
                     label="Number of days per year where large hail (>2 inches / 5 cm in diameter) is possible.",
                     description=(
-                      "This hail model computes the number of days per annum where hail exceeding 5 cm diameter"
-                      "is possible based on the mean distribution of several parameters across multiple"
-                      "bias-corrected and downscaled Global Climate Models (GCMs).",
-                  )
+                        "This hail model computes the number of days per annum where hail exceeding 5 cm diameter"
+                        "is possible based on the mean distribution of several parameters across multiple"
+                        "bias-corrected and downscaled Global Climate Models (GCMs).",
+                    ),
                 )
             ],
         )

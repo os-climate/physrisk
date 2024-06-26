@@ -20,12 +20,12 @@ from physrisk.kernel.hazard_model import HazardModelFactory
 from physrisk.kernel.hazards import (
     ChronicHeat,
     CoastalInundation,
-    Fire,
-    RiverineInundation,
-    Wind,
-    Hail,
     Drought,
+    Fire,
+    Hail,
     Precipitation,
+    RiverineInundation,
+    Wind
 )
 from physrisk.kernel.risk import AssetLevelRiskModel, MeasureKey
 from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels

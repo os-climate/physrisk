@@ -2,7 +2,7 @@ from typing import Dict, Sequence, Type
 
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.hazard_models.core_hazards import get_default_source_paths
-from physrisk.kernel.hazards import Fire, ChronicHeat, Hail, Drought, Precipitation
+from physrisk.kernel.hazards import ChronicHeat, Drought, Fire, Hail, Precipitation
 from physrisk.kernel.impact_distrib import ImpactType
 from physrisk.kernel.risk import RiskMeasureCalculator, RiskMeasuresFactory
 from physrisk.risk_models.generic_risk_model import GenericScoreBasedRiskMeasures

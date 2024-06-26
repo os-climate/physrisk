@@ -13,7 +13,7 @@ from physrisk.api.v1.impact_req_resp import (
     ScoreBasedRiskMeasureDefinition,
 )
 from physrisk.kernel.hazard_model import HazardEventDataResponse, HazardParameterDataResponse
-from physrisk.kernel.hazards import Hazard, Wind, Hail, Drought, Fire, Precipitation, ChronicHeat
+from physrisk.kernel.hazards import ChronicHeat, Drought, Fire, Hail, Hazard, Precipitation, Wind
 from physrisk.kernel.impact import AssetImpactResult
 from physrisk.kernel.risk import Measure, RiskMeasureCalculator
 

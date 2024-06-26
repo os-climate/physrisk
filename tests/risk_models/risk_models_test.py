@@ -76,7 +76,7 @@ class TestRiskModels(TestWithCredentials):
         assert measure_0 == measure_0_2
 
         helper = RiskMeasuresHelper(risk_measures)
-        asset_scores, measures, definitions = helper.get_measure("ChronicHeat", scenarios[0], years[0])
+        asset_scores, measures, definitions = helper.get_measure("CoastalInundation", scenarios[0], years[0])
         label, description = helper.get_score_details(asset_scores[0], definitions[0])
         assert asset_scores[0] == 4
 
@@ -119,7 +119,7 @@ class TestRiskModels(TestWithCredentials):
             return source_paths[Wind](indicator_id="max_speed", scenario=scenario, year=year)
 
         def sp_heat(scenario, year):
-            return source_paths[ChronicHeat](indicator_id="mean_degree_days/above/index", scenario=scenario, year=year)
+            return source_paths[ChronicHeat](indicator_id="days/above/35c", scenario=scenario, year=year)
 
         def sp_fire(scenario, year):
             return source_paths[Fire](indicator_id="fire_probability", scenario=scenario, year=year)

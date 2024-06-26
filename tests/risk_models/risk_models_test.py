@@ -16,7 +16,6 @@ from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import Asset, RealEstateAsset
 from physrisk.kernel.calculation import get_default_vulnerability_models
 from physrisk.kernel.hazard_model import HazardModelFactory
-
 from physrisk.kernel.hazards import (
     ChronicHeat,
     CoastalInundation,

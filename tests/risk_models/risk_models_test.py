@@ -25,7 +25,7 @@ from physrisk.kernel.hazards import (
     Hail,
     Precipitation,
     RiverineInundation,
-    Wind
+    Wind,
 )
 from physrisk.kernel.risk import AssetLevelRiskModel, MeasureKey
 from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels

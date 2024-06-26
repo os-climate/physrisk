@@ -144,20 +144,20 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 RiskMeasureDefinition(
                     measure_id="measure_drought",
                     label=(
-                      "Months per year where the rolling 3-month average Standardized Precipitation "
-                      "Evapotranspiration Index is <2."
+                        "Months per year where the rolling 3-month average Standardized Precipitation "
+                        "Evapotranspiration Index is <2."
                     ),
                     description=(
-                      "This drought model is based on the Standardized Precipitation-Evapotranspiration Index "
-                      "(SPEI). The SPEl is an extension of the Standardized Precipitation Index which also "
-                      "considers Potential Evapotranspiration (PET) in determining drought events. The SPEl is "
-                      "calculated from a log-logistic probability distribution function of climatic water balance "
-                      "(precipitation minus evapotranspiration) over a given time scale. The SPEI itself is "
-                      "a standardized variable with a mean value 0 and standard deviation 1. This drought model "
-                      "computes the number of months per annum where the 3-month rolling average\nof SPEI is "
-                      "below -2 based on the mean values of several parameters from bias-corrected and downscaled "
-                      "multiple Global Climate Models (GCMs)."
-                  )
+                        "This drought model is based on the Standardized Precipitation-Evapotranspiration Index "
+                        "(SPEI). The SPEl is an extension of the Standardized Precipitation Index which also "
+                        "considers Potential Evapotranspiration (PET) in determining drought events. The SPEl is "
+                        "calculated from a log-logistic probability distribution function of climatic water balance "
+                        "(precipitation minus evapotranspiration) over a given time scale. The SPEI itself is "
+                        "a standardized variable with a mean value 0 and standard deviation 1. This drought model "
+                        "computes the number of months per annum where the 3-month rolling average\nof SPEI is "
+                        "below -2 based on the mean values of several parameters from bias-corrected and downscaled "
+                        "multiple Global Climate Models (GCMs)."
+                    ),
                 )
             ],
         )
@@ -168,8 +168,8 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 RiskMeasureDefinition(
                     measure_id="measure_fire",
                     label=(
-                      "The maximum value, across all months, of the monthly probability of a wildfire within "
-                      "100km of the location."
+                        "The maximum value, across all months, of the monthly probability of a wildfire within "
+                        "100km of the location."
                     ),
                     description=(
                         "This fire model computes the maximum monthly probability per annum of a wildfire "

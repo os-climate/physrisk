@@ -144,18 +144,19 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 RiskMeasureDefinition(
                     measure_id="measure_drought",
                     label=(
-                      "Months per year where the rolling 3-month average Standardized Precipitation Evapotranspiration"
-                      "Index is <2."
+                      "Months per year where the rolling 3-month average Standardized Precipitation"
+                      "Evapotranspiration Index is <2."
                     ),
                     description=(
-                      "This drought model is based on the Standardized Precipitation-Evapotranspiration Index (SPEI)."
-                      "The SPEl is an extension of the Standardized Precipitation Index which also considers Potential"
-                      "Evapotranspiration (PET) in determining drought events. The SPEl is calculated from a log-logistic"
-                      "probability distribution function of climatic water balance (precipitation minus evapotranspiration)"
-                      "over a given time scale. The SPEI itself is a standardized variable with a mean value 0 and"
-                      "standard deviation 1. This drought model computes the number of months per annum where"
-                      "the 3-month rolling average\nof SPEI is below -2 based on the mean values of several"
-                      "parameters from bias-corrected and downscaled multiple Global Climate Models (GCMs).",
+                      "This drought model is based on the Standardized Precipitation-Evapotranspiration Index"
+                      "(SPEI). The SPEl is an extension of the Standardized Precipitation Index which also"
+                      "considers Potential Evapotranspiration (PET) in determining drought events. The SPEl is"
+                      "calculated from a log-logistic probability distribution function of climatic water balance"
+                      "(precipitation minus evapotranspiration) over a given time scale. The SPEI itself is"
+                      "a standardized variable with a mean value 0 and standard deviation 1. This drought model"
+                      "computes the number of months per annum where the 3-month rolling average\nof SPEI is"
+                      "below -2 based on the mean values of several parameters from bias-corrected and downscaled"
+                      "multiple Global Climate Models (GCMs).",
                   )
                 )
             ],
@@ -167,15 +168,16 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 RiskMeasureDefinition(
                     measure_id="measure_fire",
                     label=(
-                      "The maximum value, across all months, of the monthly probability of a wildfire within 100km of the"
-                      "location."
+                      "The maximum value, across all months, of the monthly probability of a wildfire within"
+                      "100km of the location."
                     ),
                     description=(
-                        "This fire model computes the maximum monthly probability per annum of a wildfire within 100 km of"
-                        "a given location based on several parameters from multiple bias corrected and downscaled"
-                        "Global Climate Models (GCMs)."
-                        "For example, if the probability of occurrence of a wildfire is 5%% in July, 20%% in August,"
-                        "10%% in September and 0%% for other months, the hazard indicator value is 20%.",
+                        "This fire model computes the maximum monthly probability per annum of a wildfire"
+                        "within 100 km of a given location based on several parameters from multiple bias"
+                        "corrected and downscaled Global Climate Models (GCMs)."
+                        "For example, if the probability of occurrence of a wildfire is 5%% in July, 20%%"
+                        "in August, 10%% in September and 0%% for other months, the hazard indicator value is"
+                        "20%.",
                     ),
                 )
             ],
@@ -188,9 +190,9 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                     measure_id="measure_precipitation",
                     label="1-in-100 year maximum daily total water equivalent precipitation (in mm).",
                     description=(
-                        "This model computes the maximum daily water equivalent precipitation (in mm) measured at the 100 year"
-                        "return period based on the mean of the precipitation distribution from multiple bias corrected and"
-                        "downscaled Global Climate Models (GCMs).",
+                        "This model computes the maximum daily water equivalent precipitation (in mm) measured"
+                        "at the 100 year return period based on the mean of the precipitation distribution"
+                        "from multiple bias corrected and downscaled Global Climate Models (GCMs).",
                     ),
                 )
             ],
@@ -203,9 +205,9 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                     measure_id="measure_chronicHeat",
                     label="Days per year with temperature > 35°C.",
                     description=(
-                        "This heat model computes the number of days exceeding 35°C per annum based on the mean"
-                        "of distribution fits to the bias-corrected and downscaled high temperature distribution"
-                        "across multiple Global Climate Models (GCMs).",
+                        "This heat model computes the number of days exceeding 35°C per annum based on"
+                        "the mean of distribution fits to the bias-corrected and downscaled high temperature"
+                        "distribution across multiple Global Climate Models (GCMs).",
                     ),
                 )
             ],

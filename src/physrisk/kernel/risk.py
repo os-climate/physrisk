@@ -36,7 +36,7 @@ class RiskModel:
     ):
         # ensure "historical" is present, e.g. needed for risk measures
         scenarios = set(["historical"] + list(prosp_scens)) if include_histo else prosp_scens
-        impact_results: Dict[ImpactKey, AssetImpactResult] = {}
+        impact_results: Dict[ImpactKey, List[AssetImpactResult]] = {}
 
         # in case of multiple calculation, run on separate threads
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
@@ -170,13 +170,18 @@ class AssetLevelRiskModel(RiskModel):
             for prosp_scen in prosp_scens:
                 for year in years:
                     for hazard_type in measure_calc.supported_hazards():
-                        base_impact = impacts.get(
+                        base_impacts = impacts.get(
                             ImpactKey(asset=asset, hazard_type=hazard_type, scenario="historical", key_year=None)
                         )
-                        prosp_impact = impacts.get(
+                        prosp_impacts = impacts.get(
                             ImpactKey(asset=asset, hazard_type=hazard_type, scenario=prosp_scen, key_year=year)
                         )
-                        risk_ind = measure_calc.calc_measure(hazard_type, base_impact, prosp_impact)
-                        if risk_ind is not None:
-                            measures[MeasureKey(asset, prosp_scen, year, hazard_type)] = risk_ind
+                        risk_inds = [
+                            measure_calc.calc_measure(hazard_type, base_impact, prosp_impact)
+                            for base_impact, prosp_impact in zip(base_impacts, prosp_impacts)
+                        ]
+                        risk_ind = [risk_ind for risk_ind in risk_inds if risk_ind is not None]
+                        if 0 < len(risk_ind):
+                            # TODO: Aggregate  measures instead of picking the first value.
+                            measures[MeasureKey(asset, prosp_scen, year, hazard_type)] = risk_ind[0]
         return impacts, measures

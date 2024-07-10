@@ -59,25 +59,26 @@ class LossModel:
 
         rg = np.random.Generator(np.random.MT19937(seed=111))
 
-        for impact_key, result in results.items():
-            # look up keys for results
-            impact = result.impact
-            keys = aggregator.get_aggregation_keys(impact_key.asset, impact)
-            # transform units of impact into currency for aggregation
+        for impact_key, impact_values in results.items():
+            for result in impact_values:
+                # look up keys for results
+                impact = result.impact
+                keys = aggregator.get_aggregation_keys(impact_key.asset, impact)
+                # transform units of impact into currency for aggregation
 
-            # Monte-Carlo approach: note that if correlations of distributions are simple and model is otherwise linear
-            # then calculation by closed-form expression is preferred
-            impact_samples = self.uncorrelated_samples(impact, sims, rg)
+                # Monte-Carlo approach: note that if correlations of distributions are simple and
+                # model is otherwise linear then calculation by closed-form expression is preferred
+                impact_samples = self.uncorrelated_samples(impact, sims, rg)
 
-            if impact.impact_type == ImpactType.damage:
-                loss = financial_model.damage_to_loss(impact_key.asset, impact_samples, currency)
-            else:  # impact.impact_type == ImpactType.disruption:
-                loss = financial_model.disruption_to_loss(impact_key.asset, impact_samples, year, currency)
+                if impact.impact_type == ImpactType.damage:
+                    loss = financial_model.damage_to_loss(impact_key.asset, impact_samples, currency)
+                else:  # impact.impact_type == ImpactType.disruption:
+                    loss = financial_model.disruption_to_loss(impact_key.asset, impact_samples, year, currency)
 
-            for key in keys:
-                if key not in aggregation_pools:
-                    aggregation_pools[key] = np.zeros(sims)
-                aggregation_pools[key] += loss  # type: ignore
+                for key in keys:
+                    if key not in aggregation_pools:
+                        aggregation_pools[key] = np.zeros(sims)
+                    aggregation_pools[key] += loss  # type: ignore
 
         measures = {}
         percentiles = [0, 10, 20, 40, 60, 80, 90, 95, 97.5, 99, 99.5, 99.9]

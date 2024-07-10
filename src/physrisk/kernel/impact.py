@@ -6,7 +6,7 @@ from typing import Dict, Iterable, List, NamedTuple, Optional, Tuple, Union
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.hazard_event_distrib import HazardEventDistrib
 from physrisk.kernel.hazard_model import HazardDataFailedResponse, HazardDataRequest, HazardDataResponse, HazardModel
-from physrisk.kernel.impact_distrib import EmptyImpactDistrib, ImpactDistrib
+from physrisk.kernel.impact_distrib import ImpactDistrib
 from physrisk.kernel.vulnerability_distrib import VulnerabilityDistrib
 from physrisk.kernel.vulnerability_model import (
     DataRequester,
@@ -51,7 +51,7 @@ def calculate_impacts(  # noqa: C901
     *,
     scenario: str,
     year: int,
-) -> Dict[ImpactKey, AssetImpactResult]:
+) -> Dict[ImpactKey, List[AssetImpactResult]]:
     """Calculate asset level impacts."""
 
     model_assets: Dict[DataRequester, List[Asset]] = defaultdict(
@@ -63,7 +63,7 @@ def calculate_impacts(  # noqa: C901
         mappings = vulnerability_models.vuln_model_for_asset_of_type(asset_type)
         for mapping in mappings:
             model_assets[mapping].append(asset)
-    results = {}
+    results: Dict[ImpactKey, List[AssetImpactResult]] = {}
 
     asset_requests, responses = _request_consolidated(hazard_model, model_assets, scenario, year)
 
@@ -77,37 +77,24 @@ def calculate_impacts(  # noqa: C901
         for asset in assets:
             requests = asset_requests[(model, asset)]
             hazard_data = [responses[req] for req in get_iterable(requests)]
+            assert isinstance(model, VulnerabilityModelBase)
+            if ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year) not in results:
+                results[ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)] = []
             if any(isinstance(hd, HazardDataFailedResponse) for hd in hazard_data):
-                assert isinstance(model, VulnerabilityModelBase)
-                if (
-                    ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)
-                    not in results
-                ):
-                    results[ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)] = (
-                        AssetImpactResult(EmptyImpactDistrib())
-                    )
                 continue
             try:
                 if isinstance(model, VulnerabilityModelAcuteBase):
                     impact, vul, event = model.get_impact_details(asset, hazard_data)
-                    results[ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)] = (
-                        AssetImpactResult(impact, vulnerability=vul, event=event, hazard_data=hazard_data)
-                    )
+                    results[
+                        ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)
+                    ].append(AssetImpactResult(impact, vulnerability=vul, event=event, hazard_data=hazard_data))
                 elif isinstance(model, VulnerabilityModelBase):
                     impact = model.get_impact(asset, hazard_data)
-                    results[ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)] = (
-                        AssetImpactResult(impact, hazard_data=hazard_data)
-                    )
+                    results[
+                        ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)
+                    ].append(AssetImpactResult(impact, hazard_data=hazard_data))
             except Exception as e:
                 logger.exception(e)
-                assert isinstance(model, VulnerabilityModelBase)
-                if (
-                    ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)
-                    not in results
-                ):
-                    results[ImpactKey(asset=asset, hazard_type=model.hazard_type, scenario=scenario, key_year=year)] = (
-                        AssetImpactResult(EmptyImpactDistrib())
-                    )
     return results
 
 

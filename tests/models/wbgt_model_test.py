@@ -194,7 +194,7 @@ class TestChronicAssetImpact(unittest.TestCase):
 
         results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
 
-        value_test = list(results.values())[0].impact.prob
+        value_test = list(results.values())[0][0].impact.prob
 
         value_exp = np.array(
             [

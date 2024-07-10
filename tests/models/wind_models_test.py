@@ -48,6 +48,6 @@ def test_wind_real_estate_model():
     centres = (edges[1:] + edges[:-1]) / 2
     mean_check = np.sum(probs * centres)
 
-    impact_distrib = results[(assets[0], Wind, scenario, year)].impact
+    impact_distrib = results[(assets[0], Wind, scenario, year)][0].impact
     mean_impact = impact_distrib.mean_impact()
     np.testing.assert_allclose(mean_impact, mean_check)

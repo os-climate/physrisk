@@ -90,7 +90,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         assets = [assets[i] for i in [0, 100, 200, 300, 400, 500, 600, 700, 800, 900]]
         detailed_results = calculate_impacts(assets, scenario="ssp585", year=2030)
         keys = list(detailed_results.keys())
-        means = np.array([detailed_results[key].impact.mean_impact() for key in detailed_results.keys()])
+        means = np.array([detailed_results[key][0].impact.mean_impact() for key in detailed_results.keys()])
         interesting = [k for (k, m) in zip(keys, means) if m > 0]
         assets_out = self.api_assets(item[0] for item in interesting[0:10])
         with open(os.path.join(cache_folder, "assets_example_industrial_activity_small.json"), "w") as f:
@@ -104,7 +104,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
         ]
         detailed_results = calculate_impacts(assets, scenario="ssp585", year=2030)
         keys = list(detailed_results.keys())
-        means = np.array([detailed_results[key].impact.mean_impact() for key in detailed_results.keys()])
+        means = np.array([detailed_results[key][0].impact.mean_impact() for key in detailed_results.keys()])
         interesting = [k for (k, m) in zip(keys, means) if m > 0]
         assets_out = self.api_assets(item[0] for item in interesting[0:10])
         with open(os.path.join(cache_folder, "assets_example_real_estate_small.json"), "w") as f:
@@ -160,7 +160,9 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
                 "latitude": result.asset.latitude,
                 "longitude": result.asset.longitude,
                 "impact_mean": (
-                    None if isinstance(results[key].impact, EmptyImpactDistrib) else results[key].impact.mean_impact()
+                    None
+                    if isinstance(results[key][0].impact, EmptyImpactDistrib)
+                    else results[key].impact.mean_impact()
                 ),
                 "hazard_type": key.hazard_type.__name__,
             }

@@ -419,7 +419,7 @@ def compile_asset_impacts(
             )
             ordered_impacts[k.asset].append(hazard_impacts)
         # note that this does rely on ordering of dictionary (post 3.6)
-    return [AssetLevelImpact(asset_id="", impacts=a) for a in ordered_impacts.values()]
+    return [AssetLevelImpact(asset_id=k.id if k.id is not None else "", impacts=v) for k, v in ordered_impacts.items()]
 
 
 def _create_risk_measures(

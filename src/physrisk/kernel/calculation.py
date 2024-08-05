@@ -2,7 +2,7 @@ from typing import Dict, Sequence, Type
 
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.hazard_models.core_hazards import get_default_source_paths
-from physrisk.kernel.hazards import Fire
+from physrisk.kernel.hazards import ChronicHeat, Drought, Fire, Hail, Precipitation
 from physrisk.kernel.impact_distrib import ImpactType
 from physrisk.kernel.risk import RiskMeasureCalculator, RiskMeasuresFactory
 from physrisk.risk_models.generic_risk_model import GenericScoreBasedRiskMeasures
@@ -46,9 +46,10 @@ def get_default_vulnerability_models() -> Dict[type, Sequence[VulnerabilityModel
             RealEstateRiverineInundationModel(),
             GenericTropicalCycloneModel(),
             PlaceholderVulnerabilityModel("fire_probability", Fire, ImpactType.damage),
-            # PlaceholderVulnerabilityModel("days/above/35c", ChronicHeat, ImpactType.damage),
-            # PlaceholderVulnerabilityModel("days/above/5cm", Hail, ImpactType.damage),
-            # PlaceholderVulnerabilityModel("months/spei3m/below/-2", Drought, ImpactType.damage),
+            PlaceholderVulnerabilityModel("days/above/35c", ChronicHeat, ImpactType.damage),
+            PlaceholderVulnerabilityModel("days/above/5cm", Hail, ImpactType.damage),
+            PlaceholderVulnerabilityModel("months/spei3m/below/-2", Drought, ImpactType.damage),
+            PlaceholderVulnerabilityModel("max/daily/water_equivalent", Precipitation, ImpactType.damage),
         ],
         PowerGeneratingAsset: [pgam.InundationModel()],
         RealEstateAsset: [

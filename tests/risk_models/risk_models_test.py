@@ -16,7 +16,16 @@ from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import Asset, RealEstateAsset
 from physrisk.kernel.calculation import get_default_vulnerability_models
 from physrisk.kernel.hazard_model import HazardModelFactory
-from physrisk.kernel.hazards import ChronicHeat, CoastalInundation, Fire, RiverineInundation, Wind
+from physrisk.kernel.hazards import (
+    ChronicHeat,
+    CoastalInundation,
+    Drought,
+    Fire,
+    Hail,
+    Precipitation,
+    RiverineInundation,
+    Wind,
+)
 from physrisk.kernel.risk import AssetLevelRiskModel, MeasureKey
 from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels
 from physrisk.requests import _create_risk_measures
@@ -66,7 +75,7 @@ class TestRiskModels(TestWithCredentials):
         assert measure_0 == measure_0_2
 
         helper = RiskMeasuresHelper(risk_measures)
-        asset_scores, measures, definitions = helper.get_measure("ChronicHeat", scenarios[0], years[0])
+        asset_scores, measures, definitions = helper.get_measure("CoastalInundation", scenarios[0], years[0])
         label, description = helper.get_score_details(asset_scores[0], definitions[0])
         assert asset_scores[0] == 4
 
@@ -109,10 +118,19 @@ class TestRiskModels(TestWithCredentials):
             return source_paths[Wind](indicator_id="max_speed", scenario=scenario, year=year)
 
         def sp_heat(scenario, year):
-            return source_paths[ChronicHeat](indicator_id="mean_degree_days/above/index", scenario=scenario, year=year)
+            return source_paths[ChronicHeat](indicator_id="days/above/35c", scenario=scenario, year=year)
 
         def sp_fire(scenario, year):
             return source_paths[Fire](indicator_id="fire_probability", scenario=scenario, year=year)
+
+        def sp_hail(scenario, year):
+            return source_paths[Hail](indicator_id="days/above/5cm", scenario=scenario, year=year)
+
+        def sp_drought(scenario, year):
+            return source_paths[Drought](indicator_id="months/spei3m/below/-2", scenario=scenario, year=year)
+
+        def sp_precipitation(scenario, year):
+            return source_paths[Precipitation](indicator_id="max/daily/water_equivalent", scenario=scenario, year=year)
 
         mocker = ZarrStoreMocker()
         return_periods = inundation_return_periods()
@@ -170,6 +188,48 @@ class TestRiskModels(TestWithCredentials):
             TestData.latitudes,
             [0],
             [0.2],
+        )
+        mocker.add_curves_global(
+            sp_hail("historical", -1),
+            TestData.longitudes,
+            TestData.latitudes,
+            [0],
+            [2.15],
+        )
+        mocker.add_curves_global(
+            sp_hail("rcp8p5", 2050),
+            TestData.longitudes,
+            TestData.latitudes,
+            [0],
+            [4],
+        )
+        mocker.add_curves_global(
+            sp_drought("historical", -1),
+            TestData.longitudes,
+            TestData.latitudes,
+            [0],
+            [3],
+        )
+        mocker.add_curves_global(
+            sp_drought("rcp8p5", 2050),
+            TestData.longitudes,
+            TestData.latitudes,
+            [0],
+            [9],
+        )
+        mocker.add_curves_global(
+            sp_precipitation("historical", -1),
+            TestData.longitudes,
+            TestData.latitudes,
+            [0],
+            [10],
+        )
+        mocker.add_curves_global(
+            sp_precipitation("rcp8p5", 2050),
+            TestData.longitudes,
+            TestData.latitudes,
+            [0],
+            [70],
         )
 
         return ZarrHazardModel(source_paths=get_default_source_paths(), store=mocker.store)

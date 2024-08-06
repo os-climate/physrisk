@@ -95,7 +95,9 @@ def process_bin_edges_for_graph(bin_edges, range_fraction=0.05):
         if j >= len(bin_edges):
             delta = r * range_fraction / (j - i - 1)
         else:
-            delta = min(r * range_fraction, 0.25 * (bin_edges[j] - bin_edges[i])) / (j - i - 1)
+            delta = min(r * range_fraction, 0.25 * (bin_edges[j] - bin_edges[i])) / (
+                j - i - 1
+            )
         offset = delta
         for k in range(i + 1, j):
             new_edges[k] = new_edges[k] + offset
@@ -119,7 +121,11 @@ class ExceedanceCurve:
 
     __slots__ = ["probs", "values"]
 
-    def __init__(self, probs: Union[List[float], np.ndarray], values: Union[List[float], np.ndarray]):
+    def __init__(
+        self,
+        probs: Union[List[float], np.ndarray],
+        values: Union[List[float], np.ndarray],
+    ):
         """Create a new asset event distribution.
         Args:
             probs: exceedance probabilities (must be sorted and decreasing).
@@ -163,11 +169,17 @@ class ExceedanceCurve:
         value_bins = self.values[:]
         probs = self.probs[:-1] - self.probs[1:]  # type: ignore
         if include_last or len(self.values) == 1:
-            value_bins = np.append(value_bins, value_bins[-1])  # last bin has zero width
+            value_bins = np.append(
+                value_bins, value_bins[-1]
+            )  # last bin has zero width
             probs = np.append(probs, self.probs[-1])
         return value_bins, probs
 
     def get_samples(self, uniforms):
         """Return value, v, for each probability p in uniforms such that p is the probability that the random variable
         < v."""
-        return np.where(uniforms > (1.0 - self.probs[0]), np.interp(uniforms, 1.0 - self.probs, self.values), 0.0)
+        return np.where(
+            uniforms > (1.0 - self.probs[0]),
+            np.interp(uniforms, 1.0 - self.probs, self.values),
+            0.0,
+        )

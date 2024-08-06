@@ -12,7 +12,11 @@ from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_source_paths
-from physrisk.kernel.assets import PowerGeneratingAsset, RealEstateAsset, ThermalPowerGeneratingAsset
+from physrisk.kernel.assets import (
+    PowerGeneratingAsset,
+    RealEstateAsset,
+    ThermalPowerGeneratingAsset,
+)
 from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels
 from physrisk.vulnerability_models.power_generating_asset_models import InundationModel
 from physrisk.vulnerability_models.real_estate_models import (
@@ -115,14 +119,21 @@ class TestImpactRequests(TestWithCredentials):
 
         request = requests.AssetImpactRequest(**request_dict)  # type: ignore
 
-        curve = np.array([0.0596, 0.333, 0.505, 0.715, 0.864, 1.003, 1.149, 1.163, 1.163])
-        store = mock_hazard_model_store_inundation(TestData.longitudes, TestData.latitudes, curve)
+        curve = np.array(
+            [0.0596, 0.333, 0.505, 0.715, 0.864, 1.003, 1.149, 1.163, 1.163]
+        )
+        store = mock_hazard_model_store_inundation(
+            TestData.longitudes, TestData.latitudes, curve
+        )
 
         source_paths = get_default_source_paths(EmbeddedInventory())
         vulnerability_models = DictBasedVulnerabilityModels(
             {
                 PowerGeneratingAsset: [InundationModel()],
-                RealEstateAsset: [RealEstateCoastalInundationModel(), RealEstateRiverineInundationModel()],
+                RealEstateAsset: [
+                    RealEstateCoastalInundationModel(),
+                    RealEstateRiverineInundationModel(),
+                ],
             }
         )
 
@@ -132,7 +143,9 @@ class TestImpactRequests(TestWithCredentials):
             vulnerability_models=vulnerability_models,
         )
 
-        self.assertEqual(response.asset_impacts[0].impacts[0].hazard_type, "CoastalInundation")
+        self.assertEqual(
+            response.asset_impacts[0].impacts[0].hazard_type, "CoastalInundation"
+        )
 
     def test_risk_model_impact_request(self):
         """Tests the risk model functionality of the impact request."""
@@ -167,14 +180,21 @@ class TestImpactRequests(TestWithCredentials):
 
         request = requests.AssetImpactRequest(**request_dict)  # type: ignore
 
-        curve = np.array([0.0596, 0.333, 0.505, 0.715, 0.864, 1.003, 1.149, 1.163, 1.163])
-        store = mock_hazard_model_store_inundation(TestData.longitudes, TestData.latitudes, curve)
+        curve = np.array(
+            [0.0596, 0.333, 0.505, 0.715, 0.864, 1.003, 1.149, 1.163, 1.163]
+        )
+        store = mock_hazard_model_store_inundation(
+            TestData.longitudes, TestData.latitudes, curve
+        )
 
         source_paths = get_default_source_paths(EmbeddedInventory())
         vulnerability_models = DictBasedVulnerabilityModels(
             {
                 PowerGeneratingAsset: [InundationModel()],
-                RealEstateAsset: [RealEstateCoastalInundationModel(), RealEstateRiverineInundationModel()],
+                RealEstateAsset: [
+                    RealEstateCoastalInundationModel(),
+                    RealEstateRiverineInundationModel(),
+                ],
             }
         )
 
@@ -184,10 +204,11 @@ class TestImpactRequests(TestWithCredentials):
             vulnerability_models=vulnerability_models,
         )
 
-        self.assertEqual(response.asset_impacts[0].impacts[0].hazard_type, "CoastalInundation")
+        self.assertEqual(
+            response.asset_impacts[0].impacts[0].hazard_type, "CoastalInundation"
+        )
 
     def test_thermal_power_generation(self):
-
         latitudes = np.array([32.6017])
         longitudes = np.array([-87.7811])
 
@@ -501,7 +522,23 @@ class TestImpactRequests(TestWithCredentials):
         )
 
         # Add mock water temperature data:
-        return_periods = [5, 7.5, 10, 12.5, 15, 17.5, 20, 22.5, 25, 27.5, 30, 32.5, 35, 37.5, 40]
+        return_periods = [
+            5,
+            7.5,
+            10,
+            12.5,
+            15,
+            17.5,
+            20,
+            22.5,
+            25,
+            27.5,
+            30,
+            32.5,
+            35,
+            37.5,
+            40,
+        ]
         shape, t = shape_transform_21600_43200(return_periods=return_periods)
         add_curves(
             root,
@@ -537,7 +574,25 @@ class TestImpactRequests(TestWithCredentials):
             latitudes,
             "chronic_heat/nluu/v2/weeks_water_temp_above_GFDL_rcp8p5_2050",
             shape,
-            np.array([51.85, 51.5, 50.25, 46.75, 41.95, 35.35, 29.4, 24.55, 20.15, 13.85, 6.75, 3.5, 1.3, 0.25, 0.1]),
+            np.array(
+                [
+                    51.85,
+                    51.5,
+                    50.25,
+                    46.75,
+                    41.95,
+                    35.35,
+                    29.4,
+                    24.55,
+                    20.15,
+                    13.85,
+                    6.75,
+                    3.5,
+                    1.3,
+                    0.25,
+                    0.1,
+                ]
+            ),
             return_periods,
             t,
         )
@@ -577,7 +632,20 @@ class TestImpactRequests(TestWithCredentials):
             "chronic_heat/osc/v2/days_wbgt_above_ACCESS-CM2_historical_2005",
             shape,
             np.array(
-                [361.95273, 342.51804, 278.8146, 213.5123, 157.4511, 101.78238, 12.6897545, 0.0, 0.0, 0.0, 0.0, 0.0]
+                [
+                    361.95273,
+                    342.51804,
+                    278.8146,
+                    213.5123,
+                    157.4511,
+                    101.78238,
+                    12.6897545,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                ]
             ),
             return_periods,
             t,
@@ -604,49 +672,95 @@ class TestImpactRequests(TestWithCredentials):
         )
 
         # Air Temperature
-        self.assertAlmostEqual(response.asset_impacts[0].impacts[0].impact_mean, 0.0075618606988512764)
-        self.assertAlmostEqual(response.asset_impacts[1].impacts[0].impact_mean, 0.0075618606988512764)
-        self.assertAlmostEqual(response.asset_impacts[2].impacts[0].impact_mean, 0.0025192163596997963)
-        self.assertAlmostEqual(response.asset_impacts[3].impacts[0].impact_mean, 0.0025192163596997963)
+        self.assertAlmostEqual(
+            response.asset_impacts[0].impacts[0].impact_mean, 0.0075618606988512764
+        )
+        self.assertAlmostEqual(
+            response.asset_impacts[1].impacts[0].impact_mean, 0.0075618606988512764
+        )
+        self.assertAlmostEqual(
+            response.asset_impacts[2].impacts[0].impact_mean, 0.0025192163596997963
+        )
+        self.assertAlmostEqual(
+            response.asset_impacts[3].impacts[0].impact_mean, 0.0025192163596997963
+        )
         self.assertAlmostEqual(response.asset_impacts[4].impacts[0].impact_mean, 0.0)
         self.assertAlmostEqual(response.asset_impacts[5].impacts[0].impact_mean, 0.0)
 
         # Drought
-        self.assertAlmostEqual(response.asset_impacts[0].impacts[1].impact_mean, 0.0008230079663917424)
+        self.assertAlmostEqual(
+            response.asset_impacts[0].impacts[1].impact_mean, 0.0008230079663917424
+        )
         self.assertAlmostEqual(response.asset_impacts[1].impacts[1].impact_mean, 0.0)
-        self.assertAlmostEqual(response.asset_impacts[2].impacts[1].impact_mean, 0.0008230079663917424)
+        self.assertAlmostEqual(
+            response.asset_impacts[2].impacts[1].impact_mean, 0.0008230079663917424
+        )
         self.assertAlmostEqual(response.asset_impacts[3].impacts[1].impact_mean, 0.0)
-        self.assertAlmostEqual(response.asset_impacts[4].impacts[1].impact_mean, 0.0008230079663917424)
-        self.assertAlmostEqual(response.asset_impacts[5].impacts[1].impact_mean, 0.0008230079663917424)
+        self.assertAlmostEqual(
+            response.asset_impacts[4].impacts[1].impact_mean, 0.0008230079663917424
+        )
+        self.assertAlmostEqual(
+            response.asset_impacts[5].impacts[1].impact_mean, 0.0008230079663917424
+        )
 
         # Riverine Inundation
-        self.assertAlmostEqual(response.asset_impacts[0].impacts[2].impact_mean, 0.0046864436945997625)
-        self.assertAlmostEqual(response.asset_impacts[1].impacts[2].impact_mean, 0.0046864436945997625)
-        self.assertAlmostEqual(response.asset_impacts[2].impacts[2].impact_mean, 0.0046864436945997625)
-        self.assertAlmostEqual(response.asset_impacts[3].impacts[2].impact_mean, 0.0046864436945997625)
-        self.assertAlmostEqual(response.asset_impacts[4].impacts[2].impact_mean, 0.0046864436945997625)
-        self.assertAlmostEqual(response.asset_impacts[5].impacts[2].impact_mean, 0.0046864436945997625)
+        self.assertAlmostEqual(
+            response.asset_impacts[0].impacts[2].impact_mean, 0.0046864436945997625
+        )
+        self.assertAlmostEqual(
+            response.asset_impacts[1].impacts[2].impact_mean, 0.0046864436945997625
+        )
+        self.assertAlmostEqual(
+            response.asset_impacts[2].impacts[2].impact_mean, 0.0046864436945997625
+        )
+        self.assertAlmostEqual(
+            response.asset_impacts[3].impacts[2].impact_mean, 0.0046864436945997625
+        )
+        self.assertAlmostEqual(
+            response.asset_impacts[4].impacts[2].impact_mean, 0.0046864436945997625
+        )
+        self.assertAlmostEqual(
+            response.asset_impacts[5].impacts[2].impact_mean, 0.0046864436945997625
+        )
 
         # Water Stress
-        self.assertAlmostEqual(response.asset_impacts[0].impacts[3].impact_mean, 0.010181435900296947)
+        self.assertAlmostEqual(
+            response.asset_impacts[0].impacts[3].impact_mean, 0.010181435900296947
+        )
         self.assertAlmostEqual(response.asset_impacts[1].impacts[3].impact_mean, 0.0)
-        self.assertAlmostEqual(response.asset_impacts[2].impacts[3].impact_mean, 0.010181435900296947)
+        self.assertAlmostEqual(
+            response.asset_impacts[2].impacts[3].impact_mean, 0.010181435900296947
+        )
         self.assertAlmostEqual(response.asset_impacts[3].impacts[3].impact_mean, 0.0)
-        self.assertAlmostEqual(response.asset_impacts[4].impacts[3].impact_mean, 0.010181435900296947)
-        self.assertAlmostEqual(response.asset_impacts[5].impacts[3].impact_mean, 0.010181435900296947)
+        self.assertAlmostEqual(
+            response.asset_impacts[4].impacts[3].impact_mean, 0.010181435900296947
+        )
+        self.assertAlmostEqual(
+            response.asset_impacts[5].impacts[3].impact_mean, 0.010181435900296947
+        )
 
         # Water Temperature
-        self.assertAlmostEqual(response.asset_impacts[0].impacts[4].impact_mean, 0.1448076958069578)
+        self.assertAlmostEqual(
+            response.asset_impacts[0].impacts[4].impact_mean, 0.1448076958069578
+        )
         self.assertAlmostEqual(response.asset_impacts[1].impacts[4].impact_mean, 0.0)
-        self.assertAlmostEqual(response.asset_impacts[2].impacts[4].impact_mean, 0.1448076958069578)
+        self.assertAlmostEqual(
+            response.asset_impacts[2].impacts[4].impact_mean, 0.1448076958069578
+        )
         self.assertAlmostEqual(response.asset_impacts[3].impacts[4].impact_mean, 0.0)
-        self.assertAlmostEqual(response.asset_impacts[4].impacts[4].impact_mean, 0.1448076958069578)
-        self.assertAlmostEqual(response.asset_impacts[5].impacts[4].impact_mean, 0.005896707722257193)
+        self.assertAlmostEqual(
+            response.asset_impacts[4].impacts[4].impact_mean, 0.1448076958069578
+        )
+        self.assertAlmostEqual(
+            response.asset_impacts[5].impacts[4].impact_mean, 0.005896707722257193
+        )
 
         vulnerability_models = DictBasedVulnerabilityModels(
             {
                 ThermalPowerGeneratingAsset: [
-                    ThermalPowerGenerationDroughtModel(impact_based_on_a_single_point=True),
+                    ThermalPowerGenerationDroughtModel(
+                        impact_based_on_a_single_point=True
+                    ),
                 ]
             }
         )
@@ -659,12 +773,20 @@ class TestImpactRequests(TestWithCredentials):
         )
 
         # Drought (Jupiter)
-        self.assertAlmostEqual(response.asset_impacts[0].impacts[0].impact_mean, 0.0005859470850072303)
+        self.assertAlmostEqual(
+            response.asset_impacts[0].impacts[0].impact_mean, 0.0005859470850072303
+        )
         self.assertAlmostEqual(response.asset_impacts[1].impacts[0].impact_mean, 0.0)
-        self.assertAlmostEqual(response.asset_impacts[2].impacts[0].impact_mean, 0.0005859470850072303)
+        self.assertAlmostEqual(
+            response.asset_impacts[2].impacts[0].impact_mean, 0.0005859470850072303
+        )
         self.assertAlmostEqual(response.asset_impacts[3].impacts[0].impact_mean, 0.0)
-        self.assertAlmostEqual(response.asset_impacts[4].impacts[0].impact_mean, 0.0005859470850072303)
-        self.assertAlmostEqual(response.asset_impacts[5].impacts[0].impact_mean, 0.0005859470850072303)
+        self.assertAlmostEqual(
+            response.asset_impacts[4].impacts[0].impact_mean, 0.0005859470850072303
+        )
+        self.assertAlmostEqual(
+            response.asset_impacts[5].impacts[0].impact_mean, 0.0005859470850072303
+        )
 
     @unittest.skip("example, not test")
     def test_example_portfolios(self):
@@ -679,7 +801,9 @@ class TestImpactRequests(TestWithCredentials):
             }
             container = Container()
             requester = container.requester()
-            response = requester.get(request_id="get_asset_impact", request_dict=request_dict)
+            response = requester.get(
+                request_id="get_asset_impact", request_dict=request_dict
+            )
             with open("out.json", "w") as f:
                 f.write(response)
             assert response is not None
@@ -709,10 +833,21 @@ class TestImpactRequests(TestWithCredentials):
         }
         container = Container()
         requester = container.requester()
-        response = requester.get(request_id="get_asset_impact", request_dict=request_dict)
+        response = requester.get(
+            request_id="get_asset_impact", request_dict=request_dict
+        )
         risk_measures_dict = json.loads(response)["risk_measures"]
-        helper = RiskMeasuresHelper(TypeAdapter(RiskMeasures).validate_python(risk_measures_dict))
-        for hazard_type in ["RiverineInundation", "CoastalInundation", "ChronicHeat", "Wind"]:
-            scores, measure_values, measure_defns = helper.get_measure(hazard_type, "ssp585", 2050)
+        helper = RiskMeasuresHelper(
+            TypeAdapter(RiskMeasures).validate_python(risk_measures_dict)
+        )
+        for hazard_type in [
+            "RiverineInundation",
+            "CoastalInundation",
+            "ChronicHeat",
+            "Wind",
+        ]:
+            scores, measure_values, measure_defns = helper.get_measure(
+                hazard_type, "ssp585", 2050
+            )
             label, description = helper.get_score_details(scores[0], measure_defns[0])
             print(label)

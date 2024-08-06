@@ -25,7 +25,11 @@ def hazard_kind(hazard_type: Type[Hazard]):
 
 
 def indicator_data(hazard_type: Type[Hazard], indicator_id: str):
-    default = IndicatorData.EVENT if hazard_type.kind == HazardKind.ACUTE else IndicatorData.PARAMETERS
+    default = (
+        IndicatorData.EVENT
+        if hazard_type.kind == HazardKind.ACUTE
+        else IndicatorData.PARAMETERS
+    )
     return hazard_type.indicator_data.get(indicator_id, default)
 
 
@@ -36,7 +40,10 @@ class ChronicHeat(Hazard):
 
 class Inundation(Hazard):
     kind = HazardKind.ACUTE
-    indicator_data = {"flood_depth": IndicatorData.EVENT, "flood_sop": IndicatorData.PARAMETERS}
+    indicator_data = {
+        "flood_depth": IndicatorData.EVENT,
+        "flood_sop": IndicatorData.PARAMETERS,
+    }
     pass
 
 
@@ -107,7 +114,9 @@ class Subsidence(Hazard):
 
 def all_hazards():
     return [
-        obj for _, obj in inspect.getmembers(sys.modules[__name__]) if inspect.isclass(obj) and issubclass(obj, Hazard)
+        obj
+        for _, obj in inspect.getmembers(sys.modules[__name__])
+        if inspect.isclass(obj) and issubclass(obj, Hazard)
     ]
 
 

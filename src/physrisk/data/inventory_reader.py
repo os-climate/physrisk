@@ -48,7 +48,9 @@ class InventoryReader:
         if not self._fs.exists(self._full_path(path)):
             return []
         json_str = self.read_json(path)
-        models = TypeAdapter(HazardModels).validate_python(json.loads(json_str)).resources
+        models = (
+            TypeAdapter(HazardModels).validate_python(json.loads(json_str)).resources
+        )
         return models
 
     def read_description_markdown(self, paths: List[str]) -> Dict[str, str]:

@@ -60,7 +60,11 @@ python_module_index = False
 autosummary_generate = True
 
 # Docstrings of private methods
-autodoc_default_options = {"members": True, "undoc-members": True, "private-members": False}
+autodoc_default_options = {
+    "members": True,
+    "undoc-members": True,
+    "private-members": False,
+}
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

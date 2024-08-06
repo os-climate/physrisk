@@ -8,7 +8,12 @@ import numpy as np
 
 import physrisk.data.static.example_portfolios
 from physrisk.api.v1.common import Distribution, ExceedanceCurve, VulnerabilityDistrib
-from physrisk.api.v1.exposure_req_resp import AssetExposure, AssetExposureRequest, AssetExposureResponse, Exposure
+from physrisk.api.v1.exposure_req_resp import (
+    AssetExposure,
+    AssetExposureRequest,
+    AssetExposureResponse,
+    Exposure,
+)
 from physrisk.api.v1.hazard_image import HazardImageRequest
 from physrisk.data.hazard_data_provider import HazardDataHint
 from physrisk.data.inventory import expand
@@ -19,7 +24,13 @@ from physrisk.kernel.exposure import JupterExposureMeasure, calculate_exposures
 from physrisk.kernel.hazards import all_hazards
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey  # , ImpactKey
 from physrisk.kernel.impact_distrib import EmptyImpactDistrib
-from physrisk.kernel.risk import AssetLevelRiskModel, Measure, MeasureKey, RiskMeasureCalculator, RiskMeasuresFactory
+from physrisk.kernel.risk import (
+    AssetLevelRiskModel,
+    Measure,
+    MeasureKey,
+    RiskMeasureCalculator,
+    RiskMeasuresFactory,
+)
 from physrisk.kernel.vulnerability_model import (
     DictBasedVulnerabilityModels,
     VulnerabilityModels,
@@ -60,7 +71,11 @@ from .kernel import Asset, Hazard
 from .kernel import calculation as calc
 from .kernel.hazard_model import HazardDataRequest as hmHazardDataRequest
 from .kernel.hazard_model import HazardEventDataResponse as hmHazardEventDataResponse
-from .kernel.hazard_model import HazardModel, HazardModelFactory, HazardParameterDataResponse
+from .kernel.hazard_model import (
+    HazardModel,
+    HazardModelFactory,
+    HazardParameterDataResponse,
+)
 
 Colormaps = Dict[str, Any]
 
@@ -90,30 +105,47 @@ class Requester:
         if request_id == "get_hazard_data":
             request = HazardDataRequest(**request_dict)
             hazard_model = self.hazard_model_factory.hazard_model(
-                interpolation=request.interpolation, provider_max_requests=request.provider_max_requests
+                interpolation=request.interpolation,
+                provider_max_requests=request.provider_max_requests,
             )
-            return json.dumps(_get_hazard_data(request, hazard_model=hazard_model).model_dump())  # , allow_nan=False)
+            return json.dumps(
+                _get_hazard_data(request, hazard_model=hazard_model).model_dump()
+            )  # , allow_nan=False)
         elif request_id == "get_hazard_data_availability":
             request = HazardAvailabilityRequest(**request_dict)
-            return json.dumps(_get_hazard_data_availability(request, self.inventory, self.colormaps).model_dump())
+            return json.dumps(
+                _get_hazard_data_availability(
+                    request, self.inventory, self.colormaps
+                ).model_dump()
+            )
         elif request_id == "get_hazard_data_description":
             request = HazardDescriptionRequest(**request_dict)
             return json.dumps(_get_hazard_data_description(request).dict())
         elif request_id == "get_asset_exposure":
             request = AssetExposureRequest(**request_dict)
             hazard_model = self.hazard_model_factory.hazard_model(
-                interpolation=request.calc_settings.hazard_interp, provider_max_requests=request.provider_max_requests
+                interpolation=request.calc_settings.hazard_interp,
+                provider_max_requests=request.provider_max_requests,
             )
-            return json.dumps(_get_asset_exposures(request, hazard_model).model_dump(exclude_none=True))
+            return json.dumps(
+                _get_asset_exposures(request, hazard_model).model_dump(
+                    exclude_none=True
+                )
+            )
         elif request_id == "get_asset_impact":
             request = AssetImpactRequest(**request_dict)
             hazard_model = self.hazard_model_factory.hazard_model(
-                interpolation=request.calc_settings.hazard_interp, provider_max_requests=request.provider_max_requests
+                interpolation=request.calc_settings.hazard_interp,
+                provider_max_requests=request.provider_max_requests,
             )
-            vulnerability_models = self.vulnerability_models_factory.vulnerability_models()
+            vulnerability_models = (
+                self.vulnerability_models_factory.vulnerability_models()
+            )
             measure_calculators = self.measures_factory.calculators(request.use_case_id)
             return dumps(
-                _get_asset_impacts(request, hazard_model, vulnerability_models, measure_calculators).model_dump()
+                _get_asset_impacts(
+                    request, hazard_model, vulnerability_models, measure_calculators
+                ).model_dump()
             )
         elif request_id == "get_example_portfolios":
             return dumps(_get_example_portfolios())
@@ -124,7 +156,9 @@ class Requester:
         inventory = self.inventory
         zarr_reader = self.zarr_reader
         request = HazardImageRequest(**request_dict)
-        if not _read_permitted(request.group_ids, inventory.resources[request.resource]):
+        if not _read_permitted(
+            request.group_ids, inventory.resources[request.resource]
+        ):
             raise PermissionError()
         model = inventory.resources[request.resource]
         len(PosixPath(model.map.path).parts)
@@ -133,14 +167,24 @@ class Requester:
             if len(PosixPath(model.map.path).parts) == 1
             else model.map.path
         ).format(scenario=request.scenario_id, year=request.year)
-        colormap = request.colormap if request.colormap is not None else model.map.colormap.name
+        colormap = (
+            request.colormap
+            if request.colormap is not None
+            else model.map.colormap.name
+        )
         creator = ImageCreator(zarr_reader)  # store=ImageCreator.test_store(path))
         return creator.convert(
-            path, colormap=colormap, tile=request.tile, min_value=request.min_value, max_value=request.max_value
+            path,
+            colormap=colormap,
+            tile=request.tile,
+            min_value=request.min_value,
+            max_value=request.max_value,
         )
 
 
-def _create_inventory(reader: Optional[InventoryReader] = None, sources: Optional[List[str]] = None):
+def _create_inventory(
+    reader: Optional[InventoryReader] = None, sources: Optional[List[str]] = None
+):
     resources: List[HazardResource] = []
     colormaps: Dict[str, Dict[str, Any]] = {}
     request_sources = ["embedded"] if sources is None else [s.lower() for s in sources]
@@ -185,14 +229,18 @@ def _read_permitted(group_ids: List[str], resource: HazardResource):
     return ("osc" in group_ids) or resource.group_id == "public"
 
 
-def _get_hazard_data_availability(request: HazardAvailabilityRequest, inventory: Inventory, colormaps: dict):
+def _get_hazard_data_availability(
+    request: HazardAvailabilityRequest, inventory: Inventory, colormaps: dict
+):
     response = HazardAvailabilityResponse(
         models=list(inventory.resources.values()), colormaps=colormaps
     )  # type: ignore
     return response
 
 
-def _get_hazard_data_description(request: HazardDescriptionRequest, reader: InventoryReader):
+def _get_hazard_data_description(
+    request: HazardDescriptionRequest, reader: InventoryReader
+):
     descriptions = reader.read_description_markdown(request.paths)
     return HazardDescriptionResponse(descriptions=descriptions)
 
@@ -207,21 +255,33 @@ def _get_hazard_data(request: HazardDataRequest, hazard_model: HazardModel):
     # get hazard event types:
     event_types = Hazard.__subclasses__()
     event_dict = dict((et.__name__, et) for et in event_types)
-    event_dict.update((est.__name__, est) for et in event_types for est in et.__subclasses__())
+    event_dict.update(
+        (est.__name__, est) for et in event_types for est in et.__subclasses__()
+    )
 
     # flatten list to let event processor decide how to group
     item_requests = []
     all_requests = []
     for item in request.items:
         hazard_type = (
-            item.hazard_type if item.hazard_type is not None else item.event_type if item.event_type is not None else ""
+            item.hazard_type
+            if item.hazard_type is not None
+            else item.event_type
+            if item.event_type is not None
+            else ""
         )
         event_type = event_dict[hazard_type]
         hint = None if item.path is None else HazardDataHint(path=item.path)
 
         data_requests = [
             hmHazardDataRequest(
-                event_type, lon, lat, indicator_id=item.indicator_id, scenario=item.scenario, year=item.year, hint=hint
+                event_type,
+                lon,
+                lat,
+                indicator_id=item.indicator_id,
+                scenario=item.scenario,
+                year=item.year,
+                hint=hint,
             )
             for (lon, lat) in zip(item.longitudes, item.latitudes)
         ]
@@ -255,7 +315,12 @@ def _get_hazard_data(request: HazardDataRequest, hazard_model: HazardModel):
                         return_periods=[],
                     )
                     if isinstance(resp, HazardParameterDataResponse)
-                    else IntensityCurve(intensities=[], index_values=[], index_name="", return_periods=[])
+                    else IntensityCurve(
+                        intensities=[],
+                        index_values=[],
+                        index_name="",
+                        return_periods=[],
+                    )
                 )
             )
             for resp in resps
@@ -278,7 +343,9 @@ def create_assets(api_assets: Assets, assets: Optional[List[Asset]] = None):  # 
     """Create list of Asset objects from the Assets API object:"""
     if assets is not None:
         if len(api_assets.items) != 0:
-            raise ValueError("Cannot provide asset items in the request while specifying an explicit asset list")
+            raise ValueError(
+                "Cannot provide asset items in the request while specifying an explicit asset list"
+            )
         return assets
     else:
         module = import_module("physrisk.kernel.assets")
@@ -302,11 +369,15 @@ def create_assets(api_assets: Assets, assets: Optional[List[Asset]] = None):  # 
 
 
 def _get_asset_exposures(
-    request: AssetExposureRequest, hazard_model: HazardModel, assets: Optional[List[Asset]] = None
+    request: AssetExposureRequest,
+    hazard_model: HazardModel,
+    assets: Optional[List[Asset]] = None,
 ):
     _assets = create_assets(request.assets, assets)
     measure = JupterExposureMeasure()
-    results = calculate_exposures(_assets, hazard_model, measure, scenario="ssp585", year=2030)
+    results = calculate_exposures(
+        _assets, hazard_model, measure, scenario="ssp585", year=2030
+    )
     return AssetExposureResponse(
         items=[
             AssetExposure(
@@ -337,23 +408,43 @@ def _get_asset_impacts(
     # based on asset_class:
     _assets = create_assets(request.assets, assets)
     measure_calculators = (
-        calc.get_default_risk_measure_calculators() if measure_calculators is None else measure_calculators
+        calc.get_default_risk_measure_calculators()
+        if measure_calculators is None
+        else measure_calculators
     )
-    risk_model = AssetLevelRiskModel(hazard_model, vulnerability_models, measure_calculators)
+    risk_model = AssetLevelRiskModel(
+        hazard_model, vulnerability_models, measure_calculators
+    )
 
-    scenarios = [request.scenario] if request.scenarios is None or len(request.scenarios) == 0 else request.scenarios
-    years = [request.year] if request.years is None or len(request.years) == 0 else request.years
+    scenarios = (
+        [request.scenario]
+        if request.scenarios is None or len(request.scenarios) == 0
+        else request.scenarios
+    )
+    years = (
+        [request.year]
+        if request.years is None or len(request.years) == 0
+        else request.years
+    )
     risk_measures = None
     if request.include_measures:
-        impacts, measures = risk_model.calculate_risk_measures(_assets, scenarios, years)
-        measure_ids_for_asset, definitions = risk_model.populate_measure_definitions(_assets)
+        impacts, measures = risk_model.calculate_risk_measures(
+            _assets, scenarios, years
+        )
+        measure_ids_for_asset, definitions = risk_model.populate_measure_definitions(
+            _assets
+        )
         # create object for API:
-        risk_measures = _create_risk_measures(measures, measure_ids_for_asset, definitions, _assets, scenarios, years)
+        risk_measures = _create_risk_measures(
+            measures, measure_ids_for_asset, definitions, _assets, scenarios, years
+        )
     elif request.include_asset_level:
         impacts = risk_model.calculate_impacts(_assets, scenarios, years)
 
     if request.include_asset_level:
-        asset_impacts = compile_asset_impacts(impacts, _assets, request.include_calc_details)
+        asset_impacts = compile_asset_impacts(
+            impacts, _assets, request.include_calc_details
+        )
     else:
         asset_impacts = None
 
@@ -361,7 +452,9 @@ def _get_asset_impacts(
 
 
 def compile_asset_impacts(
-    impacts: Dict[ImpactKey, List[AssetImpactResult]], assets: List[Asset], include_calc_details: bool
+    impacts: Dict[ImpactKey, List[AssetImpactResult]],
+    assets: List[Asset],
+    include_calc_details: bool,
 ):
     """Convert (internal) list of AssetImpactResult objects to a list of AssetLevelImpact
     objects ready for serialization.
@@ -390,10 +483,12 @@ def compile_asset_impacts(
                     )
                     calc_details = AcuteHazardCalculationDetails(
                         hazard_exceedance=ExceedanceCurve(
-                            values=hazard_exceedance.values, exceed_probabilities=hazard_exceedance.probs
+                            values=hazard_exceedance.values,
+                            exceed_probabilities=hazard_exceedance.probs,
                         ),
                         hazard_distribution=Distribution(
-                            bin_edges=v.event.intensity_bin_edges, probabilities=v.event.prob
+                            bin_edges=v.event.intensity_bin_edges,
+                            probabilities=v.event.prob,
                         ),
                         vulnerability_distribution=vulnerability_distribution,
                         hazard_path=v.impact.path,
@@ -405,21 +500,31 @@ def compile_asset_impacts(
                 continue
 
             impact_exceedance = v.impact.to_exceedance_curve()
-            key = APIImpactKey(hazard_type=k.hazard_type.__name__, scenario_id=k.scenario, year=str(k.key_year))
+            key = APIImpactKey(
+                hazard_type=k.hazard_type.__name__,
+                scenario_id=k.scenario,
+                year=str(k.key_year),
+            )
             hazard_impacts = AssetSingleImpact(
                 key=key,
                 impact_type=v.impact.impact_type.name,
                 impact_exceedance=ExceedanceCurve(
-                    values=impact_exceedance.values, exceed_probabilities=impact_exceedance.probs
+                    values=impact_exceedance.values,
+                    exceed_probabilities=impact_exceedance.probs,
                 ),
-                impact_distribution=Distribution(bin_edges=v.impact.impact_bins, probabilities=v.impact.prob),
+                impact_distribution=Distribution(
+                    bin_edges=v.impact.impact_bins, probabilities=v.impact.prob
+                ),
                 impact_mean=v.impact.mean_impact(),
                 impact_std_deviation=v.impact.stddev_impact(),
                 calc_details=None if v.event is None else calc_details,
             )
             ordered_impacts[k.asset].append(hazard_impacts)
         # note that this does rely on ordering of dictionary (post 3.6)
-    return [AssetLevelImpact(asset_id=k.id if k.id is not None else "", impacts=v) for k, v in ordered_impacts.items()]
+    return [
+        AssetLevelImpact(asset_id=k.id if k.id is not None else "", impacts=v)
+        for k, v in ordered_impacts.items()
+    ]
 
 
 def _create_risk_measures(
@@ -454,24 +559,39 @@ def _create_risk_measures(
             for year in years:
                 # we calculate and tag results for each scenario, year and hazard
                 score_key = RiskMeasureKey(
-                    hazard_type=hazard_type.__name__, scenario_id=scenario_id, year=str(year), measure_id=measure_set_id
+                    hazard_type=hazard_type.__name__,
+                    scenario_id=scenario_id,
+                    year=str(year),
+                    measure_id=measure_set_id,
                 )
                 scores = [-1] * len(assets)
                 # measures_0 = [float("nan")] * len(assets)
                 measures_0 = [nan_value] * len(assets)
                 for i, asset in enumerate(assets):
                     # look up result using the MeasureKey:
-                    measure_key = MeasureKey(asset=asset, prosp_scen=scenario_id, year=year, hazard_type=hazard_type)
+                    measure_key = MeasureKey(
+                        asset=asset,
+                        prosp_scen=scenario_id,
+                        year=year,
+                        hazard_type=hazard_type,
+                    )
                     measure = measures.get(measure_key, None)
                     if measure is not None:
                         scores[i] = measure.score
                         measures_0[i] = measure.measure_0
                 measures_for_assets.append(
-                    RiskMeasuresForAssets(key=score_key, scores=scores, measures_0=measures_0, measures_1=None)
+                    RiskMeasuresForAssets(
+                        key=score_key,
+                        scores=scores,
+                        measures_0=measures_0,
+                        measures_1=None,
+                    )
                 )
     score_based_measure_set_defn = ScoreBasedRiskMeasureSetDefinition(
         measure_set_id=measure_set_id,
-        asset_measure_ids_for_hazard={k.__name__: v for k, v in measure_ids_for_asset.items()},
+        asset_measure_ids_for_hazard={
+            k.__name__: v for k, v in measure_ids_for_asset.items()
+        },
         score_definitions={v: k for (k, v) in definitions.items()},
     )
     return RiskMeasures(
@@ -488,7 +608,9 @@ def _get_example_portfolios() -> List[Assets]:
     for file in importlib.resources.contents(physrisk.data.static.example_portfolios):
         if not str(file).endswith(".json"):
             continue
-        with importlib.resources.open_text(physrisk.data.static.example_portfolios, file) as f:
+        with importlib.resources.open_text(
+            physrisk.data.static.example_portfolios, file
+        ) as f:
             portfolio = Assets(**json.load(f))
             portfolios.append(portfolio)
     return portfolios

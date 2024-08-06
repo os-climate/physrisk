@@ -1,4 +1,4 @@
-""" Test asset impact calculations."""
+"""Test asset impact calculations."""
 
 import unittest
 
@@ -24,10 +24,22 @@ class TestAssetImpact(unittest.TestCase):
         """Testing the generation of an asset when only an impact curve (e.g. damage curve is available)"""
 
         # exceedance curve
-        return_periods = np.array([2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0])
+        return_periods = np.array(
+            [2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0]
+        )
         exceed_probs = 1.0 / return_periods
         depths = np.array(
-            [0.059601218, 0.33267087, 0.50511575, 0.71471703, 0.8641244, 1.0032823, 1.1491022, 1.1634114, 1.1634114]
+            [
+                0.059601218,
+                0.33267087,
+                0.50511575,
+                0.71471703,
+                0.8641244,
+                1.0032823,
+                1.1491022,
+                1.1634114,
+                1.1634114,
+            ]
         )
         curve = ExceedanceCurve(exceed_probs, depths)
 
@@ -52,9 +64,21 @@ class TestAssetImpact(unittest.TestCase):
         self.assertAlmostEqual(mean, 4.8453897)
 
     def test_protection_level(self):
-        return_periods = np.array([2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0])
+        return_periods = np.array(
+            [2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0]
+        )
         base_depth = np.array(
-            [0.0, 0.22372675, 0.3654859, 0.5393629, 0.6642473, 0.78564394, 0.9406518, 1.0539534, 1.1634114]
+            [
+                0.0,
+                0.22372675,
+                0.3654859,
+                0.5393629,
+                0.6642473,
+                0.78564394,
+                0.9406518,
+                1.0539534,
+                1.1634114,
+            ]
         )
         # future_depth = np.array(
         #     [0.059601218, 0.33267087, 0.50511575, 0.71471703, 0.8641244, 1.0032823, 1.1491022, 1.1634114, 1.1634114]
@@ -63,16 +87,30 @@ class TestAssetImpact(unittest.TestCase):
         exceed_probs = 1.0 / return_periods
 
         protection_return_period = 250.0  # protection level of 250 years
-        protection_depth = np.interp(1.0 / protection_return_period, exceed_probs[::-1], base_depth[::-1])
+        protection_depth = np.interp(
+            1.0 / protection_return_period, exceed_probs[::-1], base_depth[::-1]
+        )
 
         self.assertAlmostEqual(protection_depth, 0.9406518)  # type: ignore
 
     def test_single_asset_impact(self):
         # exceedance curve
-        return_periods = np.array([2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0])
+        return_periods = np.array(
+            [2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0]
+        )
         exceed_probs = 1.0 / return_periods
         depths = np.array(
-            [0.059601218, 0.33267087, 0.50511575, 0.71471703, 0.8641244, 1.0032823, 1.1491022, 1.1634114, 1.1634114]
+            [
+                0.059601218,
+                0.33267087,
+                0.50511575,
+                0.71471703,
+                0.8641244,
+                1.0032823,
+                1.1491022,
+                1.1634114,
+                1.1634114,
+            ]
         )
         curve = ExceedanceCurve(exceed_probs, depths)
 
@@ -94,7 +132,9 @@ class TestAssetImpact(unittest.TestCase):
             type(RiverineInundation), depth_bins, impact_bins, np.diag(probs_w_cutoff)
         )  # np.eye(n_bins, n_bins))
         hazard_paths = ["unknown"]
-        event = HazardEventDistrib(type(RiverineInundation), depth_bins, probs, hazard_paths)  # type: ignore
+        event = HazardEventDistrib(
+            type(RiverineInundation), depth_bins, probs, hazard_paths
+        )  # type: ignore
 
         impact_prob = vul.prob_matrix.T @ event.prob
         impact = ImpactDistrib(vul.event_type, vul.impact_bins, impact_prob, event.path)
@@ -110,9 +150,15 @@ class TestAssetImpact(unittest.TestCase):
 
         start = time.time()
 
-        assets = [RealEstateAsset(latitude=0, longitude=0, location="", type="") for _ in range(10000)]
+        assets = [
+            RealEstateAsset(latitude=0, longitude=0, location="", type="")
+            for _ in range(10000)
+        ]
 
-        vulnerability_models = [RealEstateCoastalInundationModel(), RealEstateRiverineInundationModel()]
+        vulnerability_models = [
+            RealEstateCoastalInundationModel(),
+            RealEstateRiverineInundationModel(),
+        ]
 
         time_assets = time.time() - start
         print(f"Time for asset generation {time_assets}s ")
@@ -124,7 +170,14 @@ class TestAssetImpact(unittest.TestCase):
         for v in vulnerability_models:
             for a in assets:
                 asset_requests[(v, a)] = [
-                    HazardDataRequest(RiverineInundation, 0, 0, indicator_id="", scenario="", year=2030)
+                    HazardDataRequest(
+                        RiverineInundation,
+                        0,
+                        0,
+                        indicator_id="",
+                        scenario="",
+                        year=2030,
+                    )
                 ]
 
         time_requests = time.time() - start

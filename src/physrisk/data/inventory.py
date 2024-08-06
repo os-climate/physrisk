@@ -2,11 +2,10 @@
 import hashlib
 import importlib.resources
 import json
-import logging
 from collections import defaultdict
 from typing import DefaultDict, Dict, Iterable, List, Tuple
 
-from pydantic import TypeAdapter, parse_obj_as
+from pydantic import TypeAdapter
 
 import physrisk.data.colormap_provider as colormap_provider
 import physrisk.data.static.hazard
@@ -27,10 +26,14 @@ class Inventory:
             hazard_resources (Iterable[HazardResource]): list of resources
         """
         self.resources: Dict[str, HazardResource] = {}
-        self.resources_by_type_id: DefaultDict[Tuple[str, str], List[HazardResource]] = defaultdict(list)
+        self.resources_by_type_id: DefaultDict[
+            Tuple[str, str], List[HazardResource]
+        ] = defaultdict(list)
         for resource in hazard_resources:
             self.resources[resource.key()] = resource
-            self.resources_by_type_id[(resource.hazard_type, resource.indicator_id)].append(resource)
+            self.resources_by_type_id[
+                (resource.hazard_type, resource.indicator_id)
+            ].append(resource)
 
     def json_ordered(self):
         sorted_resources = sorted(self.resources_by_type_id.items())
@@ -49,7 +52,9 @@ class EmbeddedInventory(Inventory):
     """
 
     def __init__(self):
-        with importlib.resources.open_text(physrisk.data.static.hazard, "inventory.json") as f:
+        with importlib.resources.open_text(
+            physrisk.data.static.hazard, "inventory.json"
+        ) as f:
             models = TypeAdapter(HazardModels).validate_python(json.load(f)).resources
             expanded_models = expand(models)
             super().__init__(expanded_models)
@@ -95,7 +100,9 @@ def expand(resources: List[HazardResource]) -> List[HazardResource]:
                 scenario.periods = []
                 for year in scenario.years:
                     name_format = model.map.path
-                    path = name_format.format(scenario=scenario.id, year=year, return_period=1000)
+                    path = name_format.format(
+                        scenario=scenario.id, year=year, return_period=1000
+                    )
                     id = alphanumeric(path)[0:6]
                     scenario.periods.append(Period(year=year, map_id=id))
                 # if a period was specified explicitly, we check that hash is the same: a build-in check

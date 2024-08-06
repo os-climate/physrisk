@@ -73,7 +73,11 @@ class HazardEventDataResponse(HazardDataResponse):
     """Response to HazardDataRequest for acute hazards."""
 
     def __init__(
-        self, return_periods: np.ndarray, intensities: np.ndarray, units: str = "default", path: str = "unknown"
+        self,
+        return_periods: np.ndarray,
+        intensities: np.ndarray,
+        units: str = "default",
+        path: str = "unknown",
     ):
         """Create HazardEventDataResponse.
 
@@ -127,7 +131,9 @@ class HazardParameterDataResponse(HazardDataResponse):
 
 
 class HazardModelFactory(Protocol):
-    def hazard_model(self, interpolation: str = "floor", provider_max_requests: Dict[str, int] = {}):
+    def hazard_model(
+        self, interpolation: str = "floor", provider_max_requests: Dict[str, int] = {}
+    ):
         """Create a HazardModel instance based on a number of options.
 
         Args:
@@ -144,7 +150,9 @@ class HazardModel(ABC):
     EventDataResponses."""
 
     @abstractmethod
-    def get_hazard_events(self, requests: List[HazardDataRequest]) -> Mapping[HazardDataRequest, HazardDataResponse]:
+    def get_hazard_events(
+        self, requests: List[HazardDataRequest]
+    ) -> Mapping[HazardDataRequest, HazardDataResponse]:
         """Process the hazard data requests and return responses."""
         ...
 
@@ -161,7 +169,9 @@ class CompositeHazardModel(HazardModel):
     def __init__(self, hazard_models: Dict[type, HazardModel]):
         self.hazard_models = hazard_models
 
-    def get_hazard_events(self, requests: List[HazardDataRequest]) -> Mapping[HazardDataRequest, HazardDataResponse]:
+    def get_hazard_events(
+        self, requests: List[HazardDataRequest]
+    ) -> Mapping[HazardDataRequest, HazardDataResponse]:
         requests_by_event_type = defaultdict(list)
 
         for request in requests:

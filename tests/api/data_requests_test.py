@@ -40,13 +40,20 @@ class TestDataRequests(TestWithCredentials):
         # test that validation passes:
         container = Container()
         requester = container.requester
-        _ = requester.get(request_id="get_hazard_data_description", request_dict={"paths": ["test_path.md"]})
+        _ = requester.get(
+            request_id="get_hazard_data_description",
+            request_dict={"paths": ["test_path.md"]},
+        )
 
     def test_generic_source_path(self):
         inventory = EmbeddedInventory()
         source_paths = get_default_source_paths(inventory)
-        result_heat = source_paths[ChronicHeat](indicator_id="mean_degree_days/above/32c", scenario="rcp8p5", year=2050)
-        result_flood = source_paths[RiverineInundation](indicator_id="flood_depth", scenario="rcp8p5", year=2050)
+        result_heat = source_paths[ChronicHeat](
+            indicator_id="mean_degree_days/above/32c", scenario="rcp8p5", year=2050
+        )
+        result_flood = source_paths[RiverineInundation](
+            indicator_id="flood_depth", scenario="rcp8p5", year=2050
+        )
         result_flood_hist = source_paths[RiverineInundation](
             indicator_id="flood_depth", scenario="historical", year=2080
         )
@@ -54,13 +61,24 @@ class TestDataRequests(TestWithCredentials):
             indicator_id="mean_degree_days/above/32c",
             scenario="rcp8p5",
             year=2050,
-            hint=HazardDataHint(path="chronic_heat/osc/v2/mean_degree_days_v2_above_32c_CMCC-ESM2_{scenario}_{year}"),
+            hint=HazardDataHint(
+                path="chronic_heat/osc/v2/mean_degree_days_v2_above_32c_CMCC-ESM2_{scenario}_{year}"
+            ),
         )
 
-        assert result_heat == "chronic_heat/osc/v2/mean_degree_days_v2_above_32c_ACCESS-CM2_rcp8p5_2050"
+        assert (
+            result_heat
+            == "chronic_heat/osc/v2/mean_degree_days_v2_above_32c_ACCESS-CM2_rcp8p5_2050"
+        )
         assert result_flood == "inundation/wri/v2/inunriver_rcp8p5_MIROC-ESM-CHEM_2050"
-        assert result_flood_hist == "inundation/wri/v2/inunriver_historical_000000000WATCH_1980"
-        assert result_heat_hint == "chronic_heat/osc/v2/mean_degree_days_v2_above_32c_CMCC-ESM2_rcp8p5_2050"
+        assert (
+            result_flood_hist
+            == "inundation/wri/v2/inunriver_historical_000000000WATCH_1980"
+        )
+        assert (
+            result_heat_hint
+            == "chronic_heat/osc/v2/mean_degree_days_v2_above_32c_CMCC-ESM2_rcp8p5_2050"
+        )
 
     def test_zarr_reading(self):
         request_dict = {
@@ -68,7 +86,9 @@ class TestDataRequests(TestWithCredentials):
                 {
                     "request_item_id": "test_inundation",
                     "event_type": "RiverineInundation",
-                    "longitudes": TestData.longitudes[0:3],  # coords['longitudes'][0:100],
+                    "longitudes": TestData.longitudes[
+                        0:3
+                    ],  # coords['longitudes'][0:100],
                     "latitudes": TestData.latitudes[0:3],  # coords['latitudes'][0:100],
                     "year": 2080,
                     "scenario": "rcp8p5",
@@ -84,14 +104,22 @@ class TestDataRequests(TestWithCredentials):
 
         result = requests._get_hazard_data(
             request,
-            ZarrHazardModel(source_paths=get_default_source_paths(EmbeddedInventory()), reader=ZarrReader(store=store)),
+            ZarrHazardModel(
+                source_paths=get_default_source_paths(EmbeddedInventory()),
+                reader=ZarrReader(store=store),
+            ),
         )
 
-        numpy.testing.assert_array_almost_equal_nulp(result.items[0].intensity_curve_set[0].intensities, np.zeros((9)))
         numpy.testing.assert_array_almost_equal_nulp(
-            result.items[0].intensity_curve_set[1].intensities, np.linspace(0.1, 1.0, 9, dtype="f4")
+            result.items[0].intensity_curve_set[0].intensities, np.zeros((9))
         )
-        numpy.testing.assert_array_almost_equal_nulp(result.items[0].intensity_curve_set[2].intensities, np.zeros((9)))
+        numpy.testing.assert_array_almost_equal_nulp(
+            result.items[0].intensity_curve_set[1].intensities,
+            np.linspace(0.1, 1.0, 9, dtype="f4"),
+        )
+        numpy.testing.assert_array_almost_equal_nulp(
+            result.items[0].intensity_curve_set[2].intensities, np.zeros((9))
+        )
 
     def test_zarr_reading_chronic(self):
         request_dict = {
@@ -100,7 +128,9 @@ class TestDataRequests(TestWithCredentials):
                 {
                     "request_item_id": "test_inundation",
                     "event_type": "ChronicHeat",
-                    "longitudes": TestData.longitudes[0:3],  # coords['longitudes'][0:100],
+                    "longitudes": TestData.longitudes[
+                        0:3
+                    ],  # coords['longitudes'][0:100],
                     "latitudes": TestData.latitudes[0:3],  # coords['latitudes'][0:100],
                     "year": 2050,
                     "scenario": "ssp585",
@@ -115,9 +145,12 @@ class TestDataRequests(TestWithCredentials):
 
         source_paths = get_default_source_paths(EmbeddedInventory())
         result = requests._get_hazard_data(
-            request, ZarrHazardModel(source_paths=source_paths, reader=ZarrReader(store))
+            request,
+            ZarrHazardModel(source_paths=source_paths, reader=ZarrReader(store)),
         )
-        numpy.testing.assert_array_almost_equal_nulp(result.items[0].intensity_curve_set[0].intensities[0], 600.0)
+        numpy.testing.assert_array_almost_equal_nulp(
+            result.items[0].intensity_curve_set[0].intensities[0], 600.0
+        )
 
         # request_with_hint = request.copy()
         # request_with_hint.items[0].path = "chronic_heat/osc/v2/mean_degree_days_v2_above_32c_CMCC-ESM2_rcp8p5_2050"
@@ -166,13 +199,21 @@ class TestDataRequests(TestWithCredentials):
             ],
         }
 
-        response_floor = requester.get(request_id="get_hazard_data", request_dict=request1)
+        response_floor = requester.get(
+            request_id="get_hazard_data", request_dict=request1
+        )
         request1["interpolation"] = "linear"  # type: ignore
-        response_linear = requester.get(request_id="get_hazard_data", request_dict=request1)
+        response_linear = requester.get(
+            request_id="get_hazard_data", request_dict=request1
+        )
         print(response_linear)
 
-        floor = json.loads(response_floor)["items"][0]["intensity_curve_set"][5]["intensities"]
-        linear = json.loads(response_linear)["items"][0]["intensity_curve_set"][5]["intensities"]
+        floor = json.loads(response_floor)["items"][0]["intensity_curve_set"][5][
+            "intensities"
+        ]
+        linear = json.loads(response_linear)["items"][0]["intensity_curve_set"][5][
+            "intensities"
+        ]
 
         print(floor)
         print(linear)

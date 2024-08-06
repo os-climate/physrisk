@@ -1,14 +1,22 @@
 import unittest
 
-from physrisk.data.static.world import World, get_countries_and_continents, get_countries_json
+from physrisk.data.static.world import (
+    World,
+    get_countries_and_continents,
+    get_countries_json,
+)
 
 from ..data.hazard_model_store_test import TestData
 
 
 class TestStaticDate(unittest.TestCase):
-    @unittest.skip("example that requires geopandas (consider adding for running tests only)")
+    @unittest.skip(
+        "example that requires geopandas (consider adding for running tests only)"
+    )
     def test_get_countries_and_continents(self):
-        countries, continents = get_countries_and_continents(TestData.longitudes, TestData.latitudes)
+        countries, continents = get_countries_and_continents(
+            TestData.longitudes, TestData.latitudes
+        )
         self.assertEqual(countries[0:3], ["Afghanistan", "Afghanistan", "Albania"])
 
     @unittest.skip("not really a test; just showing how world.json was generated")

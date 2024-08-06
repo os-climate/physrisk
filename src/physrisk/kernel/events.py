@@ -6,14 +6,18 @@ from numba.experimental import jitclass
 
 
 # @njit(cache=True)
-def calculate_cumulative_probs(bins_lower: np.ndarray, bins_upper: np.ndarray, probs: np.ndarray):
+def calculate_cumulative_probs(
+    bins_lower: np.ndarray, bins_upper: np.ndarray, probs: np.ndarray
+):
     # note: in some circumstances we could exclude the two extreme points and rely on flat extrapolation
     # this implementation retains points for clarity, sacrificing some performance
     assert bins_lower.size == bins_upper.size
     assert probs.shape[1] == bins_lower.size
     nb_bins = bins_lower.size  # aka M: number of bins
     n = probs.shape[0]
-    nb_points = bins_lower.size * 2 - np.count_nonzero(bins_lower[1:] == bins_upper[:-1])
+    nb_points = bins_lower.size * 2 - np.count_nonzero(
+        bins_lower[1:] == bins_upper[:-1]
+    )
     cum_prob = np.zeros(n)
     values = np.zeros(nb_points)
     cum_probs = np.zeros(shape=(n, nb_points))
@@ -40,7 +44,9 @@ def calculate_cumulative_probs(bins_lower: np.ndarray, bins_upper: np.ndarray, p
 
 
 @njit(cache=True)
-def sample_from_cumulative_probs(values: np.ndarray, cum_probs: np.ndarray, uniforms: np.ndarray):
+def sample_from_cumulative_probs(
+    values: np.ndarray, cum_probs: np.ndarray, uniforms: np.ndarray
+):
     n = cum_probs.shape[0]
     nb_samples = uniforms.shape[1]
     assert uniforms.shape[0] == n
@@ -57,7 +63,9 @@ class MultivariateDistribution(Protocol):
 class EmpiricalMultivariateDistribution(MultivariateDistribution):
     """Stores an N dimensional empirical probability density function."""
 
-    def __init__(self, bins_lower: np.ndarray, bins_upper: np.ndarray, probs: np.ndarray):
+    def __init__(
+        self, bins_lower: np.ndarray, bins_upper: np.ndarray, probs: np.ndarray
+    ):
         """N marginal probability distributions are each represented as a set of bins of
         uniform probability density.
 
@@ -69,11 +77,17 @@ class EmpiricalMultivariateDistribution(MultivariateDistribution):
         Raises:
             ValueError: _description_
         """
-        if bins_lower.ndim > 1 or bins_upper.ndim > 1 or bins_lower.size != bins_upper.size:
+        if (
+            bins_lower.ndim > 1
+            or bins_upper.ndim > 1
+            or bins_lower.size != bins_upper.size
+        ):
             raise ValueError("bin upper and lower bounds must be 1-D and same size.")
         if probs.ndim != 2 or probs.shape[1] != bins_upper.size:
             raise ValueError("probabilities must be (N, M).")
-        if np.any(bins_lower[1:] < bins_lower[:-1]) or np.any(bins_upper[1:] < bins_upper[:-1]):
+        if np.any(bins_lower[1:] < bins_lower[:-1]) or np.any(
+            bins_upper[1:] < bins_upper[:-1]
+        ):
             raise ValueError("bins must be non-decreasing.")
         if np.any(bins_upper[1:] < bins_lower[:-1]):
             raise ValueError("bins may not overlap.")
@@ -91,13 +105,19 @@ class EmpiricalMultivariateDistribution(MultivariateDistribution):
             cum_probs (np.ndarray): Cumulative probabilities (N, P), P being number of samples.
             axis (int): Specifies the axis of the N events.
         """
-        values_dist, cum_probs_dist = calculate_cumulative_probs(self.bins_lower, self.bins_upper, self.probs)
+        values_dist, cum_probs_dist = calculate_cumulative_probs(
+            self.bins_lower, self.bins_upper, self.probs
+        )
         return sample_from_cumulative_probs(values_dist, cum_probs_dist, cum_probs)
 
 
-def event_samples(impacts_bins: np.ndarray, probs: List[np.ndarray], nb_events: int, nb_samples: int):
+def event_samples(
+    impacts_bins: np.ndarray, probs: List[np.ndarray], nb_events: int, nb_samples: int
+):
     if any([p.size != 1 and p.size != nb_events for p in probs]):
-        raise ValueError(f"probabilities must be scalar or vector or length {nb_events}.")
+        raise ValueError(
+            f"probabilities must be scalar or vector or length {nb_events}."
+        )
 
     return event_samples_numba(impacts_bins, probs, nb_events, nb_samples)
 
@@ -117,7 +137,9 @@ def find(elements: np.ndarray, value):
 
 
 @njit(cache=True)
-def event_samples_numba(impacts_bins: np.ndarray, probs: List[np.ndarray], nb_events: int, nb_samples: int):
+def event_samples_numba(
+    impacts_bins: np.ndarray, probs: List[np.ndarray], nb_events: int, nb_samples: int
+):
     samples = np.zeros(shape=(nb_samples, nb_events))
     np.random.seed(111)
     cum_probs = np.zeros(len(probs))

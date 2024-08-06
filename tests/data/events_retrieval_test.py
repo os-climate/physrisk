@@ -9,7 +9,11 @@ import zarr
 from fsspec.implementations.memory import MemoryFileSystem
 from shapely import Polygon
 
-from physrisk.api.v1.hazard_data import HazardAvailabilityRequest, HazardResource, Scenario
+from physrisk.api.v1.hazard_data import (
+    HazardAvailabilityRequest,
+    HazardResource,
+    Scenario,
+)
 from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
@@ -20,7 +24,10 @@ from physrisk.requests import _get_hazard_data_availability
 
 # from pathlib import PurePosixPath
 from ..base_test import TestWithCredentials
-from ..data.hazard_model_store_test import ZarrStoreMocker, mock_hazard_model_store_inundation
+from ..data.hazard_model_store_test import (
+    ZarrStoreMocker,
+    mock_hazard_model_store_inundation,
+)
 
 
 class TestEventRetrieval(TestWithCredentials):
@@ -30,14 +37,19 @@ class TestEventRetrieval(TestWithCredentials):
         embedded = EmbeddedInventory()
         resources1 = embedded.to_resources()
         inventory = Inventory(resources1).json_ordered()
-        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "inventory.json"), "w") as f:
+        with open(
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), "inventory.json"),
+            "w",
+        ) as f:
             f.write(inventory)
 
     def test_hazard_data_availability_summary(self):
         # check validation passes calling in service-like way
         inventory = EmbeddedInventory()
         response = _get_hazard_data_availability(
-            HazardAvailabilityRequest(sources=["embedded"]), inventory, inventory.colormaps()
+            HazardAvailabilityRequest(sources=["embedded"]),
+            inventory,
+            inventory.colormaps(),
         )  # , "hazard_test"])
         assert len(response.models) > 0  # rely on Pydantic validation for test
 
@@ -91,8 +103,12 @@ class TestEventRetrieval(TestWithCredentials):
 
         image_coords_surr = np.stack(
             [
-                np.concatenate([np.floor(x), np.floor(x) + 1, np.floor(x), np.floor(x) + 1]),
-                np.concatenate([np.floor(y), np.floor(y), np.floor(y) + 1, np.floor(y) + 1]),
+                np.concatenate(
+                    [np.floor(x), np.floor(x) + 1, np.floor(x), np.floor(x) + 1]
+                ),
+                np.concatenate(
+                    [np.floor(y), np.floor(y), np.floor(y) + 1, np.floor(y) + 1]
+                ),
             ]
         )
         values_surr = ZarrReader._linear_interp_frac_coordinates(
@@ -152,7 +168,17 @@ class TestEventRetrieval(TestWithCredentials):
         lons_ = np.array([3.92783])
         lats_ = np.array([50.882394])
         curve = np.array(
-            [0.00, 0.06997928, 0.2679602, 0.51508933, 0.69842442, 0.88040525, 1.11911115, 1.29562478, 1.47200677]
+            [
+                0.00,
+                0.06997928,
+                0.2679602,
+                0.51508933,
+                0.69842442,
+                0.88040525,
+                1.11911115,
+                1.29562478,
+                1.47200677,
+            ]
         )
         set_id = r"inundation/wri/v2\\inunriver_rcp8p5_MIROC-ESM-CHEM_2080"
         interpolation = "linear"
@@ -164,17 +190,44 @@ class TestEventRetrieval(TestWithCredentials):
         lons_ = np.array([3.92916667, 3.925] + list(lons_))
         lats_ = np.array([50.87916667, 50.88333333] + list(lats_))
         curves_max_candidate, _ = zarrreader_.get_max_curves_on_grid(
-            set_id, lons_, lats_, interpolation=interpolation, delta_km=delta_km, n_grid=n_grid
+            set_id,
+            lons_,
+            lats_,
+            interpolation=interpolation,
+            delta_km=delta_km,
+            n_grid=n_grid,
         )
 
         curves_max_expected = np.array(
             [
                 curve,
-                [0.0, 0.02272942, 0.08703404, 0.16730212, 0.22684974, 0.28595751, 0.3634897, 0.42082168, 0.47811095],
-                [0.0, 0.0432026, 0.16542863, 0.31799695, 0.43118118, 0.54352937, 0.69089751, 0.7998704, 0.90876211],
+                [
+                    0.0,
+                    0.02272942,
+                    0.08703404,
+                    0.16730212,
+                    0.22684974,
+                    0.28595751,
+                    0.3634897,
+                    0.42082168,
+                    0.47811095,
+                ],
+                [
+                    0.0,
+                    0.0432026,
+                    0.16542863,
+                    0.31799695,
+                    0.43118118,
+                    0.54352937,
+                    0.69089751,
+                    0.7998704,
+                    0.90876211,
+                ],
             ]
         )
-        numpy.testing.assert_allclose(curves_max_candidate, curves_max_expected, rtol=1e-6)
+        numpy.testing.assert_allclose(
+            curves_max_candidate, curves_max_expected, rtol=1e-6
+        )
 
     def test_zarr_geomax(self):
         longitudes = np.array([3.926])
@@ -199,11 +252,19 @@ class TestEventRetrieval(TestWithCredentials):
         zarr_reader = ZarrReader(store)
         curves_max_expected = np.array([[0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4]])
 
-        curves_max_candidate, _, _ = zarr_reader.get_max_curves(set_id, shapes, interpolation="floor")
-        numpy.testing.assert_allclose(curves_max_candidate, curves_max_expected, rtol=1e-6)
+        curves_max_candidate, _, _ = zarr_reader.get_max_curves(
+            set_id, shapes, interpolation="floor"
+        )
+        numpy.testing.assert_allclose(
+            curves_max_candidate, curves_max_expected, rtol=1e-6
+        )
 
-        curves_max_candidate, _, _ = zarr_reader.get_max_curves(set_id, shapes, interpolation="linear")
-        numpy.testing.assert_allclose(curves_max_candidate, curves_max_expected / 4, rtol=1e-6)
+        curves_max_candidate, _, _ = zarr_reader.get_max_curves(
+            set_id, shapes, interpolation="linear"
+        )
+        numpy.testing.assert_allclose(
+            curves_max_candidate, curves_max_expected / 4, rtol=1e-6
+        )
 
     def test_reproject(self):
         """Test adding data in a non-ESPG-4326 coordinate reference system. Check that attribute
@@ -222,9 +283,22 @@ class TestEventRetrieval(TestWithCredentials):
             [1.0, 2.0, 3.0],
         )
 
-        source_paths = {RiverineInundation: lambda indicator_id, scenario, year, hint: "test"}
+        source_paths = {
+            RiverineInundation: lambda indicator_id, scenario, year, hint: "test"
+        }
         hazard_model = ZarrHazardModel(source_paths=source_paths, store=mocker.store)
         response = hazard_model.get_hazard_events(
-            [HazardDataRequest(RiverineInundation, lons[0], lats[0], indicator_id="", scenario="", year=2050)]
+            [
+                HazardDataRequest(
+                    RiverineInundation,
+                    lons[0],
+                    lats[0],
+                    indicator_id="",
+                    scenario="",
+                    year=2050,
+                )
+            ]
         )
-        numpy.testing.assert_equal(next(iter(response.values())).intensities, [1.0, 2.0, 3.0])
+        numpy.testing.assert_equal(
+            next(iter(response.values())).intensities, [1.0, 2.0, 3.0]
+        )

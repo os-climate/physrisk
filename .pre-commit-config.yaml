@@ -3,7 +3,6 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.6.0
     hooks:
-      - id: trailing-whitespace
       - id: check-merge-conflict
       - id: end-of-file-fixer
       - id: name-tests-test
@@ -15,28 +14,32 @@ repos:
       - id: check-yaml
       - id: check-symlinks
       - id: detect-private-key
-      - id: check-ast
-      - id: debug-statements
 
   - repo: https://github.com/Lucas-C/pre-commit-hooks
     rev: v1.5.5
     hooks:
       - id: remove-tabs
 
-  - repo: https://github.com/psf/black
-    rev: '24.4.2'
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.5.7
     hooks:
-      - id: black
-      - id: black-jupyter
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix, --config=pyproject.toml]
+      - id: ruff-format
 
-  - repo: https://github.com/s-weigand/flake8-nb
-    rev: v0.5.3
+  - repo: local
     hooks:
-      - id: flake8-nb
-        additional_dependencies:
-          - pep8-naming
-        # Ignore all format-related checks as Black takes care of those.
-        args:
-          - --ignore=E2, W5, F401, E401, E704
-          - --select=E, W, F, N
-          - --max-line-length=120
+      - id: mypy-cache
+        name: "create mypy cache"
+        language: system
+        pass_filenames: false
+        entry: bash -c 'if [ ! -d .mypy_cache ];
+          then /bin/mkdir .mypy_cache; fi; exit 0'
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: "v1.11.1"
+    hooks:
+      - id: mypy
+        verbose: true
+        args: ["--show-error-codes", "--install-types", "--non-interactive"]
+        additional_dependencies: ["pytest", "types-requests"]

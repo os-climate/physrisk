@@ -55,13 +55,16 @@ class PregeneratedHazardModel(HazardModel):
         # can change max_workers=1 for debugging
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
             futures = [
-                executor.submit(self._get_hazard_events_batch, batches[key], responses) for key in batches.keys()
+                executor.submit(self._get_hazard_events_batch, batches[key], responses)
+                for key in batches.keys()
             ]
             concurrent.futures.wait(futures)
         return responses
 
     def _get_hazard_events_batch(
-        self, batch: List[HazardDataRequest], responses: MutableMapping[HazardDataRequest, HazardDataResponse]
+        self,
+        batch: List[HazardDataRequest],
+        responses: MutableMapping[HazardDataRequest, HazardDataResponse],
     ):
         try:
             hazard_type, indicator_id, scenario, year, hint, buffer = (
@@ -75,7 +78,9 @@ class PregeneratedHazardModel(HazardModel):
             longitudes = [req.longitude for req in batch]
             latitudes = [req.latitude for req in batch]
             if indicator_data(hazard_type, indicator_id) == IndicatorData.EVENT:
-                intensities, return_periods, units, path = self.hazard_data_providers[hazard_type].get_data(
+                intensities, return_periods, units, path = self.hazard_data_providers[
+                    hazard_type
+                ].get_data(
                     longitudes,
                     latitudes,
                     indicator_id=indicator_id,
@@ -87,21 +92,38 @@ class PregeneratedHazardModel(HazardModel):
 
                 for i, req in enumerate(batch):
                     valid = ~np.isnan(intensities[i, :])
-                    valid_periods, valid_intensities = return_periods[valid], intensities[i, :][valid]
+                    valid_periods, valid_intensities = (
+                        return_periods[valid],
+                        intensities[i, :][valid],
+                    )
                     if len(valid_periods) == 0:
-                        valid_periods, valid_intensities = np.array([100]), np.array([0])
-                    responses[req] = HazardEventDataResponse(valid_periods, valid_intensities, units, path)
+                        valid_periods, valid_intensities = (
+                            np.array([100]),
+                            np.array([0]),
+                        )
+                    responses[req] = HazardEventDataResponse(
+                        valid_periods, valid_intensities, units, path
+                    )
             else:  # type: ignore
-                parameters, defns, units, path = self.hazard_data_providers[hazard_type].get_data(
-                    longitudes, latitudes, indicator_id=indicator_id, scenario=scenario, year=year, hint=hint
+                parameters, defns, units, path = self.hazard_data_providers[
+                    hazard_type
+                ].get_data(
+                    longitudes,
+                    latitudes,
+                    indicator_id=indicator_id,
+                    scenario=scenario,
+                    year=year,
+                    hint=hint,
                 )
 
                 for i, req in enumerate(batch):
                     valid = ~np.isnan(parameters[i, :])
-                    responses[req] = HazardParameterDataResponse(parameters[i, :][valid], defns[valid], units, path)
+                    responses[req] = HazardParameterDataResponse(
+                        parameters[i, :][valid], defns[valid], units, path
+                    )
         except Exception as err:
             # e.g. the requested data is unavailable
-            for i, req in enumerate(batch):
+            for _i, req in enumerate(batch):
                 responses[req] = HazardDataFailedResponse(err)
         return
 
@@ -120,7 +142,9 @@ class ZarrHazardModel(PregeneratedHazardModel):
 
         super().__init__(
             {
-                t: HazardDataProvider(sp, zarr_reader=zarr_reader, interpolation=interpolation)
+                t: HazardDataProvider(
+                    sp, zarr_reader=zarr_reader, interpolation=interpolation
+                )
                 for t, sp in source_paths.items()
             }
         )

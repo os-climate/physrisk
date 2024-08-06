@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional, Union
 
 import numpy as np
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TypedArray(np.ndarray):
@@ -23,25 +23,33 @@ class Array(np.ndarray, metaclass=ArrayMeta):
     pass
 
 
-class Asset(BaseModel, extra="allow"):
-    """Defines an asset. An asset is identified first by its asset_class and then by its type within the class.
+class Asset(BaseModel):
+    """Defines an asset.
+
+    An asset is identified first by its asset_class and then by its type within the class.
     An asset's value may be impacted through damage or through disruption
     disruption being reduction of an asset's ability to generate cashflows
     (or equivalent value, e.g. by reducing expenses or increasing sales).
     """
+
+    model_config = ConfigDict(extra="allow")
 
     asset_class: str = Field(
         description="name of asset class; corresponds to physrisk class names, e.g. PowerGeneratingAsset"
     )
     latitude: float = Field(description="Latitude in degrees")
     longitude: float = Field(description="Longitude in degrees")
-    type: Optional[str] = Field(None, description="Type of the asset <level_1>/<level_2>/<level_3>")
+    type: Optional[str] = Field(
+        None, description="Type of the asset <level_1>/<level_2>/<level_3>"
+    )
     location: Optional[str] = Field(
-        None, description="Location (e.g. Africa, Asia, Europe, Global, Oceania, North America, South America)"
+        None,
+        description="Location (e.g. Africa, Asia, Europe, Global, Oceania, North America, South America)",
     )
     capacity: Optional[float] = Field(None, description="Power generation capacity")
     attributes: Optional[Dict[str, str]] = Field(
-        None, description="Bespoke attributes (e.g. number of storeys, structure type, occupancy type)"
+        None,
+        description="Bespoke attributes (e.g. number of storeys, structure type, occupancy type)",
     )
 
 
@@ -81,7 +89,8 @@ class IntensityCurve(BaseModel):
 
     intensities: List[float] = Field([], description="Hazard indicator intensities.")
     return_periods: Optional[List[float]] = Field(
-        [], description="[Deprecated] Return period in years in the case of an acute hazard."
+        [],
+        description="[Deprecated] Return period in years in the case of an acute hazard.",
     )
     index_values: Optional[Union[List[float], List[str]]] = Field(
         [],
@@ -99,37 +108,40 @@ class IntensityCurve(BaseModel):
 class ExceedanceCurve(BaseModel):
     """General exceedance curve (e.g. hazazrd, impact)."""
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     values: np.ndarray = Field(default_factory=lambda: np.zeros(10), description="")
-    exceed_probabilities: np.ndarray = Field(default_factory=lambda: np.zeros(10), description="")
-
-    class Config:
-        arbitrary_types_allowed = True
+    exceed_probabilities: np.ndarray = Field(
+        default_factory=lambda: np.zeros(10), description=""
+    )
 
 
 class Distribution(BaseModel):
     """General exceedance curve (e.g. hazazrd, impact)."""
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     bin_edges: np.ndarray = Field(default_factory=lambda: np.zeros(11), description="")
-    probabilities: np.ndarray = Field(default_factory=lambda: np.zeros(10), description="")
-
-    class Config:
-        arbitrary_types_allowed = True
+    probabilities: np.ndarray = Field(
+        default_factory=lambda: np.zeros(10), description=""
+    )
 
 
 class HazardEventDistrib(BaseModel):
     """Intensity curve of an acute hazard."""
 
-    intensity_bin_edges: np.ndarray = Field(default_factory=lambda: np.zeros(10), description="")
-    probabilities: np.ndarray = Field(default_factory=lambda: np.zeros(10), description="")
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    intensity_bin_edges: np.ndarray = Field(
+        default_factory=lambda: np.zeros(10), description=""
+    )
+    probabilities: np.ndarray = Field(
+        default_factory=lambda: np.zeros(10), description=""
+    )
     path: List[str] = Field([], description="Path to the hazard indicator data source.")
-
-    class Config:
-        arbitrary_types_allowed = True
 
 
 class VulnerabilityCurve(BaseModel):
     """Defines a damage or disruption curve."""
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     asset_type: str = Field(...)
     location: str = Field(...)
     event_type: str = Field(description="hazard event type, e.g. RiverineInundation")
@@ -139,10 +151,9 @@ class VulnerabilityCurve(BaseModel):
     intensity: List[float] = Field(...)
     intensity_units: str = Field(description="units of the intensity")
     impact_mean: List[float] = Field(description="mean impact (damage or disruption)")
-    impact_std: List[float] = Field(description="standard deviation of impact (damage or disruption)")
-
-    class Config:
-        arbitrary_types_allowed = True
+    impact_std: List[float] = Field(
+        description="standard deviation of impact (damage or disruption)"
+    )
 
 
 class VulnerabilityCurves(BaseModel):
@@ -154,9 +165,13 @@ class VulnerabilityCurves(BaseModel):
 class VulnerabilityDistrib(BaseModel):
     """Defines a vulnerability matrix."""
 
-    intensity_bin_edges: np.ndarray = Field(default_factory=lambda: np.zeros(10), description="")
-    impact_bin_edges: np.ndarray = Field(default_factory=lambda: np.zeros(10), description="")
-    prob_matrix: np.ndarray = Field(default_factory=lambda: np.zeros(10), description="")
-
-    class Config:
-        arbitrary_types_allowed = True
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    intensity_bin_edges: np.ndarray = Field(
+        default_factory=lambda: np.zeros(10), description=""
+    )
+    impact_bin_edges: np.ndarray = Field(
+        default_factory=lambda: np.zeros(10), description=""
+    )
+    prob_matrix: np.ndarray = Field(
+        default_factory=lambda: np.zeros(10), description=""
+    )

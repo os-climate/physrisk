@@ -7,7 +7,13 @@ from physrisk.api.v1.impact_req_resp import (
     RiskScoreValue,
     ScoreBasedRiskMeasureDefinition,
 )
-from physrisk.kernel.hazards import ChronicHeat, CoastalInundation, Hazard, RiverineInundation, Wind
+from physrisk.kernel.hazards import (
+    ChronicHeat,
+    CoastalInundation,
+    Hazard,
+    RiverineInundation,
+    Wind,
+)
 from physrisk.kernel.impact import AssetImpactResult
 from physrisk.kernel.impact_distrib import EmptyImpactDistrib, ImpactDistrib
 from physrisk.kernel.risk import Measure, RiskMeasureCalculator
@@ -24,7 +30,9 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
 
     def __init__(self):
         self.model_summary = {"*Toy* model for real estate risk assessment."}
-        self.return_period = 100.0  # criteria based on 1 in 100-year flood or cyclone events
+        self.return_period = (
+            100.0  # criteria based on 1 in 100-year flood or cyclone events
+        )
         self.measure_thresholds_acute = {
             Threshold.ABS_HIGH: 0.1,  # fraction
             Threshold.ABS_LOW: 0.03,  # fraction
@@ -47,7 +55,11 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
 
     def _definition_acute(self):
         definition = ScoreBasedRiskMeasureDefinition(
-            hazard_types=[RiverineInundation.__name__, CoastalInundation.__name__, Wind.__name__],
+            hazard_types=[
+                RiverineInundation.__name__,
+                CoastalInundation.__name__,
+                Wind.__name__,
+            ],
             values=self._definition_values(self._acute_description),
             underlying_measures=[
                 RiskMeasureDefinition(
@@ -101,7 +113,9 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
                 label="No material impact.",
                 description=description(Category.LOW),
             ),
-            RiskScoreValue(value=Category.NODATA, label="No data.", description="No data."),
+            RiskScoreValue(
+                value=Category.NODATA, label="No data.", description="No data."
+            ),
         ]
 
     def _acute_description(self, category: Category):
@@ -161,16 +175,27 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
         return description
 
     def calc_measure(
-        self, hazard_type: Type[Hazard], base_impact_res: AssetImpactResult, impact_res: AssetImpactResult
+        self,
+        hazard_type: Type[Hazard],
+        base_impact_res: AssetImpactResult,
+        impact_res: AssetImpactResult,
     ) -> Optional[Measure]:
-        if isinstance(base_impact_res.impact, EmptyImpactDistrib) or isinstance(impact_res.impact, EmptyImpactDistrib):
+        if isinstance(base_impact_res.impact, EmptyImpactDistrib) or isinstance(
+            impact_res.impact, EmptyImpactDistrib
+        ):
             return None
         if hazard_type == ChronicHeat:
-            return self.calc_measure_cooling(hazard_type, base_impact_res.impact, impact_res.impact)
+            return self.calc_measure_cooling(
+                hazard_type, base_impact_res.impact, impact_res.impact
+            )
         else:
-            return self.calc_measure_acute(hazard_type, base_impact_res.impact, impact_res.impact)
+            return self.calc_measure_acute(
+                hazard_type, base_impact_res.impact, impact_res.impact
+            )
 
-    def calc_measure_acute(self, hazard_type: type, base_impact: ImpactDistrib, impact: ImpactDistrib) -> Measure:
+    def calc_measure_acute(
+        self, hazard_type: type, base_impact: ImpactDistrib, impact: ImpactDistrib
+    ) -> Measure:
         return_period = 100.0  # criterion based on 1 in 100-year flood events
         histo_loss = base_impact.to_exceedance_curve().get_value(1.0 / return_period)
         future_loss = impact.to_exceedance_curve().get_value(1.0 / return_period)
@@ -193,9 +218,15 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
             score = Category.MEDIUM
         else:
             score = Category.LOW
-        return Measure(score=score, measure_0=future_loss, definition=self.get_definition(hazard_type))
+        return Measure(
+            score=score,
+            measure_0=future_loss,
+            definition=self.get_definition(hazard_type),
+        )
 
-    def calc_measure_cooling(self, hazard_type: type, base_impact: ImpactDistrib, impact: ImpactDistrib) -> Measure:
+    def calc_measure_cooling(
+        self, hazard_type: type, base_impact: ImpactDistrib, impact: ImpactDistrib
+    ) -> Measure:
         histo_cooling = base_impact.mean_impact()
         future_cooling = impact.mean_impact()
         cooling_change = (future_cooling - histo_cooling) / histo_cooling
@@ -217,7 +248,11 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
             score = Category.MEDIUM
         else:
             score = Category.LOW
-        return Measure(score=score, measure_0=future_cooling, definition=self.get_definition(hazard_type))
+        return Measure(
+            score=score,
+            measure_0=future_cooling,
+            definition=self.get_definition(hazard_type),
+        )
 
     def get_definition(self, hazard_type: type):
         return self._definition_lookup.get(hazard_type, None)

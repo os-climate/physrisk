@@ -26,7 +26,13 @@ from physrisk.vulnerability_models.thermal_power_generation_models import (
     ThermalPowerGenerationWaterTemperatureModel,
 )
 
-from .assets import IndustrialActivity, PowerGeneratingAsset, RealEstateAsset, TestAsset, ThermalPowerGeneratingAsset
+from .assets import (
+    IndustrialActivity,
+    PowerGeneratingAsset,
+    RealEstateAsset,
+    TestAsset,
+    ThermalPowerGeneratingAsset,
+)
 from .hazard_model import HazardModel
 from .vulnerability_model import VulnerabilityModelBase
 
@@ -46,10 +52,16 @@ def get_default_vulnerability_models() -> Dict[type, Sequence[VulnerabilityModel
             RealEstateRiverineInundationModel(),
             GenericTropicalCycloneModel(),
             PlaceholderVulnerabilityModel("fire_probability", Fire, ImpactType.damage),
-            PlaceholderVulnerabilityModel("days/above/35c", ChronicHeat, ImpactType.damage),
+            PlaceholderVulnerabilityModel(
+                "days/above/35c", ChronicHeat, ImpactType.damage
+            ),
             PlaceholderVulnerabilityModel("days/above/5cm", Hail, ImpactType.damage),
-            PlaceholderVulnerabilityModel("months/spei3m/below/-2", Drought, ImpactType.damage),
-            PlaceholderVulnerabilityModel("max/daily/water_equivalent", Precipitation, ImpactType.damage),
+            PlaceholderVulnerabilityModel(
+                "months/spei3m/below/-2", Drought, ImpactType.damage
+            ),
+            PlaceholderVulnerabilityModel(
+                "max/daily/water_equivalent", Precipitation, ImpactType.damage
+            ),
         ],
         PowerGeneratingAsset: [pgam.InundationModel()],
         RealEstateAsset: [

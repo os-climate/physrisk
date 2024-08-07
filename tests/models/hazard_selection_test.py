@@ -28,13 +28,13 @@ def test_tudelft_selection():
         source_paths[RiverineInundation](
             indicator_id="flood_depth", scenario="rcp8p5", year=2050
         )
-        == "inundation/river_tudelft/v2/flood_depth_unprot_rcp8p5_2050"
+        == "inundation/river_tudelft/v1/flood_depth_rcp8p5_2050"
     )
     assert (
         source_paths[RiverineInundation](
             indicator_id="flood_depth", scenario="historical", year=-1
         )
-        == "inundation/river_tudelft/v2/flood_depth_unprot_historical_1985"
+        == "inundation/river_tudelft/v1/flood_depth_historical_1971"
     )
 
 

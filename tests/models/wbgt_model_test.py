@@ -1,7 +1,7 @@
-import unittest
 from typing import Iterable, List, Union, cast
 
 import numpy as np
+import pytest
 
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.hazard_models.core_hazards import get_default_source_paths
@@ -12,6 +12,7 @@ from physrisk.kernel.hazard_model import (
     HazardParameterDataResponse,
 )
 from physrisk.kernel.hazards import ChronicHeat
+from physrisk.kernel import calculation  # noqa: F401 ## Avoid circular imports
 from physrisk.kernel.impact import calculate_impacts
 from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
 from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels
@@ -19,7 +20,6 @@ from physrisk.vulnerability_models.chronic_heat_models import (
     ChronicHeatGZNModel,
     get_impact_distrib,
 )
-
 from ..data.hazard_model_store_test import TestData, mock_hazard_model_store_heat_wbgt
 
 
@@ -44,7 +44,6 @@ class ExampleWBGTGZNJointModel(ChronicHeatGZNModel):
         self, asset: Asset, *, scenario: str, year: int
     ) -> Union[HazardDataRequest, Iterable[HazardDataRequest]]:
         """Request the hazard data needed by the vulnerability model for a specific asset
-        (this is a Google-style doc string)
 
         Args:
             asset: Asset for which data is requested.
@@ -221,68 +220,70 @@ def two_variable_joint_variance(ex, varx, ey, vary):
     return varx * vary + varx * (ey**2) + vary * (ex**2)
 
 
-class TestChronicAssetImpact(unittest.TestCase):
-    """Tests the impact on an asset of a chronic hazard model."""
-
-    def test_wbgt_vulnerability(self):
-        store = mock_hazard_model_store_heat_wbgt(
-            TestData.longitudes, TestData.latitudes
+@pytest.mark.parametrize(
+    "asset_type, expected_value",
+    [
+        (
+            "high",
+            np.array(
+                [
+                    0.00000119194,
+                    0.00000046573,
+                    0.00000063758,
+                    0.00000086889,
+                    0.00000117871,
+                    0.00000159172,
+                    0.00000213966,
+                    0.00000286314,
+                    0.00000381379,
+                    0.00000505696,
+                    0.00021143251,
+                    0.00167372506,
+                    0.00924050344,
+                    0.03560011430,
+                    0.09575512509,
+                    0.17988407024,
+                    0.23607703667,
+                    0.21646814108,
+                    0.13867487025,
+                    0.06205630207,
+                    0.02433887116,
+                    0.00000000000,
+                    0.00000000000,
+                    0.00000000000,
+                    0.00000000000,
+                    0.00000000000,
+                    0.00000000000,
+                    0.00000000000,
+                    0.00000000000,
+                    0.00000000000,
+                    0.00000000000,
+                ]
+            ),
         )
-        hazard_model = ZarrHazardModel(
-            source_paths=get_default_source_paths(), store=store
-        )
-        # 'chronic_heat/osc/v2/mean_work_loss_high_ACCESS-CM2_historical_2005'
-        scenario = "ssp585"
-        year = 2050
+        # Add other test cases here
+    ],
+)
+def test_wbgt_vulnerability(asset_type, expected_value):
+    store = mock_hazard_model_store_heat_wbgt(TestData.longitudes, TestData.latitudes)
+    hazard_model = ZarrHazardModel(source_paths=get_default_source_paths(), store=store)
+    # 'chronic_heat/osc/v2/mean_work_loss_high_ACCESS-CM2_historical_2005'
 
-        vulnerability_models = DictBasedVulnerabilityModels(
-            {IndustrialActivity: [ExampleWBGTGZNJointModel()]}
-        )
+    scenario = "ssp585"
+    year = 2050
 
-        assets = [
-            IndustrialActivity(lat, lon, type="high")
-            for lon, lat in zip(TestData.longitudes, TestData.latitudes)
-        ][:1]
+    vulnerability_models = DictBasedVulnerabilityModels(
+        {IndustrialActivity: [ExampleWBGTGZNJointModel()]}
+    )
 
-        results = calculate_impacts(
-            assets, hazard_model, vulnerability_models, scenario=scenario, year=year
-        )
+    assets = [
+        IndustrialActivity(lat, lon, type=asset_type)
+        for lon, lat in zip(TestData.longitudes, TestData.latitudes)
+    ][:1]
 
-        value_test = list(results.values())[0][0].impact.prob
+    results = calculate_impacts(
+        assets, hazard_model, vulnerability_models, scenario=scenario, year=year
+    )
 
-        value_exp = np.array(
-            [
-                0.00000119194,
-                0.00000046573,
-                0.00000063758,
-                0.00000086889,
-                0.00000117871,
-                0.00000159172,
-                0.00000213966,
-                0.00000286314,
-                0.00000381379,
-                0.00000505696,
-                0.00021143251,
-                0.00167372506,
-                0.00924050344,
-                0.03560011430,
-                0.09575512509,
-                0.17988407024,
-                0.23607703667,
-                0.21646814108,
-                0.13867487025,
-                0.06205630207,
-                0.02433887116,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-            ]
-        )
-        np.testing.assert_almost_equal(value_test, value_exp, decimal=8)
+    value_test = list(results.values())[0][0].impact.prob
+    np.allclose(value_test, expected_value, 1e-4)

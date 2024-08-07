@@ -2991,7 +2991,7 @@
         {
             "hazard_type": "RiverineInundation",
             "group_id": "",
-            "path": "inundation/river_tudelft/v2/flood_depth_unprot_{scenario}_{year}",
+            "path": "inundation/river_tudelft/v1/flood_depth_{scenario}_{year}",
             "indicator_id": "flood_depth",
             "indicator_model_id": "tudelft",
             "indicator_model_gcm": "CLMcom-CCLM4-8-17-EC-EARTH",
@@ -3009,7 +3009,7 @@
                     "nodata_index": 0,
                     "units": "metres"
                 },
-                "path": "maps/inundation/river_tudelft/v2/flood_depth_unprot_{scenario}_{year}_map",
+                "path": "maps/inundation/river_tudelft/v1/flood_depth_{scenario}_{year}_map",
                 "bounds": [],
                 "bbox": [],
                 "index_values": null,
@@ -3019,21 +3019,21 @@
                 {
                     "id": "historical",
                     "years": [
-                        1985
+                        1971
                     ]
                 },
                 {
-                    "id": "rcp4p5",
+                    "id": "rcp45",
                     "years": [
-                        2035,
-                        2085
+                        2050,
+                        2070
                     ]
                 },
                 {
-                    "id": "rcp8p5",
+                    "id": "rcp85",
                     "years": [
-                        2035,
-                        2085
+                        2050,
+                        2070
                     ]
                 }
             ],
@@ -3070,65 +3070,525 @@
                 {
                     "id": "historical",
                     "years": [
-                        1985
+                        1971
                     ]
                 },
                 {
                     "id": "rcp4p5",
                     "years": [
-                        2035,
-                        2085
+                        2050,
+                        2070
                     ]
                 },
                 {
                     "id": "rcp8p5",
                     "years": [
-                        2035,
-                        2085
+                        2050,
+                        2070
                     ]
                 }
             ],
             "units": "years"
         },
         {
-          "hazard_type": "Subsidence",
-          "group_id": "",
-          "path": "subsidence/csm/v1/land_subsidence_rate_{scenario}_{year}",
-          "indicator_id": "land_subsidence_rate",
-          "indicator_model_id": null,
-          "indicator_model_gcm": "historical",
-          "params": {},
-          "display_name": "Land subsidence rate (Davydzenka et Al (2024))",
-          "display_groups": [],
-          "description": "Land subsidence refers to gradual settlement or rapid sinking of the ground that can occur as a result of natural factors (e.g., volcanic or seismic activity, collapse of subsurface cavities, compaction of loose fine-grained deposits) or anthropogenic activities (e.g., excessive groundwater (GW) abstraction, mining, subsurface energy extraction). It is a destructive phenomenon occurring around the globe causing damage to infrastructure, increased flood risks, and reduction of aquifer storage. However, prediction and quantification of land subsidence rates globally using physics-based methods presents a major challenge. Capitalizing on the robustness of modern deep learning methods and taking advantage of the increasingly available data sets of environmental parameters, the study [here](https://doi.org/10.1029/2023GL104497) introduces the first map of land subsidence rates on a global scale with a spatial resolution of 30 \u00c3\u2014 30 arc seconds (approx. 1 km at the equator).\n\nDavydzenka, T., Tahmasebi, P., & Shokri, N. (2023). [Data](https://doi.org/10.5281/zenodo.10223637) for \"Unveiling the Global Extent of Land Subsidence: The sinking crisis\".",
-          "map": {
-            "colormap": {
-              "min_index": 1,
-              "min_value": 0.0,
-              "max_index": 255,
-              "max_value": 100.0,
-              "name": "heating",
-              "nodata_index": 0,
-              "units": "millimetres/year"
+            "hazard_type": "Subsidence",
+            "group_id": "",
+            "path": "subsidence/csm/v1/land_subsidence_rate_{scenario}_{year}",
+            "indicator_id": "land_subsidence_rate",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "historical",
+            "params": {},
+            "display_name": "Land subsidence rate (Davydzenka et Al (2024))",
+            "display_groups": [],
+            "description": "Land subsidence refers to gradual settlement or rapid sinking of the ground that can occur as a result of natural factors (e.g., volcanic or seismic activity, collapse of subsurface cavities, compaction of loose fine-grained deposits) or anthropogenic activities (e.g., excessive groundwater (GW) abstraction, mining, subsurface energy extraction). It is a destructive phenomenon occurring around the globe causing damage to infrastructure, increased flood risks, and reduction of aquifer storage. However, prediction and quantification of land subsidence rates globally using physics-based methods presents a major challenge. Capitalizing on the robustness of modern deep learning methods and taking advantage of the increasingly available data sets of environmental parameters, the study [here](https://doi.org/10.1029/2023GL104497) introduces the first map of land subsidence rates on a global scale with a spatial resolution of 30 \u00c3\u2014 30 arc seconds (approx. 1 km at the equator).\n\nDavydzenka, T., Tahmasebi, P., & Shokri, N. (2023). [Data](https://doi.org/10.5281/zenodo.10223637) for \"Unveiling the Global Extent of Land Subsidence: The sinking crisis\".",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 100.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "millimetres/year"
+                },
+                "path": "maps/subsidence/csm/v1/land_subsidence_rate_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -60.0
+                    ],
+                    [
+                        -180.0,
+                        -60.0
+                    ]
+                ],
+                "bbox": [
+                    -180.0,
+                    -60.0,
+                    180.0,
+                    85.0
+                ],
+                "index_values": null,
+                "source": "map_array_pyramid"
             },
-            "path": "maps/subsidence/csm/v1/land_subsidence_rate_{scenario}_{year}_map",
-            "bounds": [
-              [-180.0, 85.0],
-              [180.0, 85.0],
-              [180.0, -60.0],
-              [-180.0, -60.0]
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        2021
+                    ]
+                }
             ],
-            "bbox": [-180.0, -60.0, 180.0, 85.0],
-            "index_values": null,
-            "source": "map_array_pyramid"
-          },
-          "scenarios": [
-            {
-              "id": "historical",
-              "years": [2021]
-            }
-          ],
-          "units": "millimetres/year"
+            "units": "millimetres/year"
+        },
+        {
+            "hazard_type": "CoastalInundation",
+            "group_id": "coastal_tudelft",
+            "path": "inundation/coastal_tudelft/v1/flood_depth_{scenario}_{year}",
+            "indicator_id": "flood_depth",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "historical",
+            "params": {},
+            "display_name": "Coastal Flood Depth (tudelft)",
+            "display_groups": [],
+            "description": "\n                GIS-compatible files containing data related to the probability of \n                river floods occurring in Europe under present and future climate. \n                Includes gridded (GeoTIFF) datasets of river flood extents (in two \n                variants, with or without flood protection) and water depths.\n                Additionally includes extreme river discharge estimates in ESRI \n                Shapefile format. Based upon CLMcom-CCLM4-8-17-EC-EARTH regional \n                climate simulation (EURO-CORDEX).\n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 5.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "meters"
+                },
+                "path": "flood_depth_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1971
+                    ]
+                },
+                {
+                    "id": "rcp45",
+                    "years": [
+                        2050,
+                        2070
+                    ]
+                },
+                {
+                    "id": "rcp85",
+                    "years": [
+                        2050,
+                        2070
+                    ]
+                }
+            ],
+            "units": "none"
+        },
+        {
+            "hazard_type": "ChronicWind",
+            "group_id": "wind_tudelft",
+            "path": "wind/wind_tudelft/v1/wind25_{scenario}_{year}",
+            "indicator_id": "wind25",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "historical",
+            "params": {},
+            "display_name": "Wind gust speed greater than 25 m/s",
+            "display_groups": [],
+            "description": "\n                NetCDF files containing gridded annual probability of severe convective\n                windstorms (wind gusts > 25 m/s) and of extremely severe convective\n                windstorms (wind gusts > 32 m/s) for present day and the future climate.\n                The fields are multi model means of 15 regional climate model simulations (CORDEX).\n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 1.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "prob"
+                },
+                "path": "wind25_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -45.0,
+                        73.0
+                    ],
+                    [
+                        65.5,
+                        73.0
+                    ],
+                    [
+                        65.5,
+                        21.5
+                    ],
+                    [
+                        -45.0,
+                        -21.5
+                    ]
+                ],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1971
+                    ]
+                },
+                {
+                    "id": "rcp45",
+                    "years": [
+                        2050,
+                        2100
+                    ]
+                },
+                {
+                    "id": "rcp85",
+                    "years": [
+                        2050,
+                        2100
+                    ]
+                }
+            ],
+            "units": "none"
+        },
+        {
+            "hazard_type": "ChronicWind",
+            "group_id": "wind_tudelft",
+            "path": "wind/wind_tudelft/v1/wind32_{scenario}_{year}",
+            "indicator_id": "wind32",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "historical",
+            "params": {},
+            "display_name": "Wind gust speed greater than 32 m/s",
+            "display_groups": [],
+            "description": "\n                NetCDF files containing gridded annual probability of severe convective\n                windstorms (wind gusts > 25 m/s) and of extremely severe convective\n                windstorms (wind gusts > 32 m/s) for present day and the future climate.\n                The fields are multi model means of 15 regional climate model simulations (CORDEX).\n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 1.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "prob"
+                },
+                "path": "wind32_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -45.0,
+                        73.0
+                    ],
+                    [
+                        65.5,
+                        73.0
+                    ],
+                    [
+                        65.5,
+                        21.5
+                    ],
+                    [
+                        -45.0,
+                        -21.5
+                    ]
+                ],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1971
+                    ]
+                },
+                {
+                    "id": "rcp45",
+                    "years": [
+                        2050,
+                        2100
+                    ]
+                },
+                {
+                    "id": "rcp85",
+                    "years": [
+                        2050,
+                        2100
+                    ]
+                }
+            ],
+            "units": "none"
+        },
+        {
+            "hazard_type": "Fire",
+            "group_id": "fire_tudelft",
+            "path": "fire/fire_tudelft/v1/fwi20_{scenario}_{year}",
+            "indicator_id": "fwi20",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "historical",
+            "params": {},
+            "display_name": "FWI under 20",
+            "display_groups": [],
+            "description": "\n                NetCDF files containing daily probabilities of high forest fire danger in \n                Europe under present and projected future climates. Includes gridded (NetCDF) \n                datasets of high forest fire danger probabilities for the present climate \n                (1981-2010) based on the ERA-Interim reanalysis and for the projected \n                climates under the RCP4.5 and RCP8.5 scenarios (periods 1971-2000, 2021-2050 \n                and 2071-2100). \n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 100.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "prob"
+                },
+                "path": "fwi20_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -45.0,
+                        73.0
+                    ],
+                    [
+                        65.5,
+                        73.0
+                    ],
+                    [
+                        65.5,
+                        21.5
+                    ],
+                    [
+                        -45.0,
+                        -21.5
+                    ]
+                ],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1971
+                    ]
+                },
+                {
+                    "id": "rcp45",
+                    "years": [
+                        2050,
+                        2100
+                    ]
+                },
+                {
+                    "id": "rcp85",
+                    "years": [
+                        2050,
+                        2100
+                    ]
+                }
+            ],
+            "units": "none"
+        },
+        {
+            "hazard_type": "Fire",
+            "group_id": "fire_tudelft",
+            "path": "fire/fire_tudelft/v1/fwi45_{scenario}_{year}",
+            "indicator_id": "fwi45",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "historical",
+            "params": {},
+            "display_name": "FWI under 45",
+            "display_groups": [],
+            "description": "\n                NetCDF files containing daily probabilities of high forest fire danger in \n                Europe under present and projected future climates. Includes gridded (NetCDF) \n                datasets of high forest fire danger probabilities for the present climate \n                (1981-2010) based on the ERA-Interim reanalysis and for the projected \n                climates under the RCP4.5 and RCP8.5 scenarios (periods 1971-2000, 2021-2050 \n                and 2071-2100). \n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 100.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "prob"
+                },
+                "path": "fwi45_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -45.0,
+                        73.0
+                    ],
+                    [
+                        65.5,
+                        73.0
+                    ],
+                    [
+                        65.5,
+                        21.5
+                    ],
+                    [
+                        -45.0,
+                        -21.5
+                    ]
+                ],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1971
+                    ]
+                },
+                {
+                    "id": "rcp45",
+                    "years": [
+                        2050,
+                        2100
+                    ]
+                },
+                {
+                    "id": "rcp85",
+                    "years": [
+                        2050,
+                        2100
+                    ]
+                }
+            ],
+            "units": "none"
+        },
+        {
+            "hazard_type": "Landslide",
+            "group_id": "landslide_jrc",
+            "path": "drought/landslide_jrc/v1/susceptability_{scenario}_{year}",
+            "indicator_id": "susceptability",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "historical",
+            "params": {},
+            "display_name": "Landslide Susceptability",
+            "display_groups": [],
+            "description": "\n                The spatial dataset (GIS map) shows landslide susceptibility levels at European scale, \n                derived from heuristic-statistical modelling of main landslide conditioning factors \n                using also landslide location data. It covers all EU member states except Malta, in \n                addition to Albania, Andorra, Bosnia and Herzegovina, Croatia, FYR Macedonia, Iceland, \n                Kosovo, Liechtenstein, Montenegro, Norway, San Marino, Serbia, and Switzerland.\n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 5.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "meters"
+                },
+                "path": "susceptability_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1980
+                    ]
+                }
+            ],
+            "units": "none"
+        },
+        {
+            "hazard_type": "Subsidence",
+            "group_id": "subsidence_jrc",
+            "path": "drought/subsidence_jrc/v1/susceptability_{scenario}_{year}",
+            "indicator_id": "susceptability",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "historical",
+            "params": {},
+            "display_name": "Subsidence Susceptability",
+            "display_groups": [],
+            "description": "\n                A number of layers for soil properties have been created based on data from the European\n                Soil Database in combination with data from the Harmonized World Soil Database (HWSD) \n                and Soil-Terrain Database (SOTER). The available layers include: Total available water \n                content, Depth available to roots, Clay content, Silt content, Sand content, Organic \n                carbon, Bulk Density, Coarse fragments.\n                ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 5.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "index"
+                },
+                "path": "susceptability_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -85.0
+                    ],
+                    [
+                        -180.0,
+                        -85.0
+                    ]
+                ],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1980
+                    ]
+                }
+            ],
+            "units": "none"
         }
     ]
 }

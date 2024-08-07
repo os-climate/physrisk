@@ -2,18 +2,14 @@ from typing import Dict, MutableMapping, Optional
 
 from dependency_injector import containers, providers
 
+from physrisk.kernel import calculation as calc
 from physrisk.data.hazard_data_provider import SourcePath
 from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
-from physrisk.kernel import calculation as calc
 from physrisk.kernel.hazard_model import HazardModelFactory
-from physrisk.kernel.vulnerability_model import (
-    DictBasedVulnerabilityModels,
-    VulnerabilityModels,
-    VulnerabilityModelsFactory,
-)
+from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModelsFactory
 from physrisk.requests import Requester, _create_inventory, create_source_paths
 
 
@@ -39,11 +35,6 @@ class ZarrHazardModelFactory(HazardModelFactory):
             reader=self.reader,
             interpolation=interpolation,
         )
-
-
-class DictBasedVulnerabilityModelsFactory(VulnerabilityModelsFactory):
-    def vulnerability_models(self) -> VulnerabilityModels:
-        return DictBasedVulnerabilityModels(calc.get_default_vulnerability_models())
 
 
 class Container(containers.DeclarativeContainer):

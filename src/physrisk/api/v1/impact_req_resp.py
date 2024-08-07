@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Dict, List, NamedTuple, Optional, Sequence
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
 from physrisk.api.v1.common import (
     Assets,
@@ -37,8 +37,10 @@ class AssetImpactRequest(BaseModel):
         True, description="If true, include impact calculation details."
     )
     use_case_id: str = Field(
-        "",
-        description="Identifier for 'use case' used in the risk measures calculation.",
+        "DEFAULT",
+        description=(
+            "Identifier for 'use case' used in vulnerability models and risk measures calculations."
+        ),
     )
     provider_max_requests: Dict[str, int] = Field(
         {},
@@ -70,6 +72,8 @@ class Category(int, Enum):
     HIGH = 3
     REDFLAG = 4
 
+    NORISK = -1
+
 
 class RiskMeasureDefinition(BaseModel):
     measure_id: str = Field(None, description="Identifier for the risk measure.")
@@ -95,7 +99,7 @@ class RiskScoreValue(BaseModel):
     )
 
 
-class ScoreBasedRiskMeasureDefinition(BaseModel, frozen=True):
+class ScoreBasedRiskMeasureDefinition(BaseModel):
     hazard_types: List[str] = Field(
         [], description="Defines the hazards that the measure is used for."
     )
@@ -111,7 +115,7 @@ class ScoreBasedRiskMeasureDefinition(BaseModel, frozen=True):
     #    [], description="The identifiers of the underlying risk measures from which the scores are inferred."
     # )
 
-    # should be sufficient to pass frozen=True, but does not seem to work (pydantic docs says feature in beta)
+    # It is not enough to pass frozen=True, since not all attributes are hashable
     def __hash__(self):
         return id(self)
 
@@ -166,6 +170,7 @@ class ImpactKey(BaseModel):
 class AssetSingleImpact(BaseModel):
     """Impact at level of single asset and single type of hazard."""
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     key: ImpactKey
 
     @computed_field  # deprecated: use key instead
@@ -190,9 +195,6 @@ class AssetSingleImpact(BaseModel):
         None,
         description="""Details of impact calculation for acute hazard calculations.""",
     )
-
-    class Config:
-        arbitrary_types_allowed = True
 
 
 class AssetLevelImpact(BaseModel):

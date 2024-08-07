@@ -112,6 +112,11 @@ class Subsidence(Hazard):
     pass
 
 
+class Landslide(Hazard):
+    kind = HazardKind.CHRONIC
+    pass
+
+
 def all_hazards():
     return [
         obj

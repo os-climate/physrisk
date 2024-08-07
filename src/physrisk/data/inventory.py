@@ -9,9 +9,8 @@ from pydantic import TypeAdapter
 
 import physrisk.data.colormap_provider as colormap_provider
 import physrisk.data.static.hazard
+from physrisk.api.v1.hazard_data import HazardResource, Period
 from physrisk.data.inventory_reader import HazardModels
-
-from ..api.v1.hazard_data import HazardResource, Period
 
 # from physrisk.kernel.hazards import ChronicHeat
 

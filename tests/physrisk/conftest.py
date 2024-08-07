@@ -9,9 +9,9 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from deepdiff import DeepDiff
+#from deepdiff import DeepDiff
 
-from esg_physrisk.hazard_models.hazard_cache import H3BasedCache, LMDBStore, MemoryStore, Store, to_json
+from physrisk.hazard_models.hazard_cache import H3BasedCache, LMDBStore, MemoryStore, Store, to_json
 
 
 class NumpyArrayEncoder(json.JSONEncoder):
@@ -91,10 +91,10 @@ def hazard_dir():
     return hazard.absolute()
 
 
-def assert_expected(result: str, func_name: str, update_expected: bool):
-    result_dict, expected_dict = get_result_expected(result, func_name, update_expected)
-    diffs = DeepDiff(expected_dict, result_dict)
-    assert len(diffs.affected_paths) == 0
+# def assert_expected(result: str, func_name: str, update_expected: bool):
+#     result_dict, expected_dict = get_result_expected(result, func_name, update_expected)
+#     diffs = DeepDiff(expected_dict, result_dict)
+#     assert len(diffs.affected_paths) == 0
 
 
 def get_result_expected(result: str, func_name: str, update_expected: bool):

@@ -22,14 +22,14 @@ from physrisk.kernel.assets import (
     ThermalPowerGeneratingAsset,
 )
 
-from esg_physrisk.vulnerability_models.config_based_model import (
+from physrisk.vulnerability_models.config_based_model import (
     ConfigBasedVulnerabilityModelAcute,
     ImpactCurveKey,
     PiecewiseLinearImpactCurve,
     config_items_from_csv,
     config_items_to_csv,
 )
-from esg_physrisk.vulnerability_models.vulnerability import VulnerabilityConfigItem, VulnerabilityModelsFactory
+from physrisk.vulnerability_models.vulnerability import VulnerabilityConfigItem, VulnerabilityModelsFactory
 
 from ..conftest import working_dir
 

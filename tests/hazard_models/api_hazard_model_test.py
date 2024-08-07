@@ -5,13 +5,12 @@ import pytest
 from physrisk.kernel.hazard_model import HazardDataRequest
 from physrisk.kernel.hazards import PluvialInundation, RiverineInundation
 
-from esg_physrisk.data.geocode import Geocoder
-from esg_physrisk.hazard_models.credentials_provider import EnvCredentialsProvider
-from esg_physrisk.hazard_models.hazard_cache import H3BasedCache, LMDBStore, MemoryStore
-from esg_physrisk.hazard_models.jba_hazard_model import JBAHazardModel
-from esg_physrisk.hazard_models.jupiter_hazard_model import JupiterHazardModel
+from physrisk.data.geocode import Geocoder
+from physrisk.hazard_models.credentials_provider import EnvCredentialsProvider
+from physrisk.hazard_models.hazard_cache import H3BasedCache, LMDBStore, MemoryStore
+from physrisk.hazard_models.jba_hazard_model import JBAHazardModel
 
-from .conftest import cache_store_tests, hazard_dir, load_credentials
+from tests.conftest import cache_store_tests, hazard_dir, load_credentials
 
 
 def lats_lons():
@@ -131,28 +130,6 @@ def test_continent_from_country_code():
 
 
 @pytest.mark.skip("Exclude until cache populated")
-def test_jupiter_hazard_model(load_credentials, hazard_dir, update_inputs):
-    latitudes = [27.1771173]  # [43.1852562]
-    longitudes = [-80.2323209]  # [-0.0070556]
-
-    store = LMDBStore(str((Path(hazard_dir) / "temp" / "hazard_cache_jupiter.db").absolute()))
-    # cache = H3BasedCache(MemoryStore()) # in order to test this 'live', use the MemoryStore and enable API calls
-    cache = H3BasedCache(store)
-    credentials = EnvCredentialsProvider(disable_api_calls=False)
-    model = JupiterHazardModel(cache, credentials)
-    requests_riv = [
-        HazardDataRequest(
-            hazard_type=RiverineInundation,
-            longitude=lon,
-            latitude=lat,
-            indicator_id="flood_depth",
-            scenario="historical",
-            # scenario="rcp8p5",
-            year=2050,
-        )
-        for lat, lon in zip(latitudes, longitudes)
-    ]
-    response = model.get_hazard_events(requests_riv)
 
 
 def test_jba_hazard_model(load_credentials, hazard_dir, update_inputs):

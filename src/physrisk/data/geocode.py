@@ -4,13 +4,13 @@ from typing import Sequence, Union
 import geopandas as gpd
 import pandas as pd
 
-import esg_physrisk.data.ne_110m_admin_0_countries
+import physrisk.data.ne_110m_admin_0_countries
 
 
 class Geocoder:
     def __init__(self):
         with importlib.resources.path(
-            esg_physrisk.data.ne_110m_admin_0_countries, "ne_110m_admin_0_countries.shp"
+            physrisk.data.ne_110m_admin_0_countries, "ne_110m_admin_0_countries.shp"
         ) as p:
             world_orig = gpd.read_file(p)
             self.crs = world_orig.crs
@@ -25,7 +25,7 @@ class Geocoder:
 
     @staticmethod
     def get_continent_and_country_from_code_iso_3166(country_codes: Sequence[Union[str, int]]) -> pd.DataFrame:
-        with importlib.resources.path(esg_physrisk.data.ne_110m_admin_0_countries, "country_codes.tsv") as path:
+        with importlib.resources.path(physrisk.data.ne_110m_admin_0_countries, "country_codes.tsv") as path:
             df = pd.read_csv(path, sep="\t")
             numeric_codes = [int(country_code) for country_code in country_codes if str(country_code).isdecimal()]
             alpha2_codes = [

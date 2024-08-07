@@ -8,9 +8,9 @@ from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse, 
 from physrisk.kernel.hazard_model import HazardModelFactory as HazardModelFactoryPhysrisk
 from physrisk.kernel.hazards import PluvialInundation, RiverineInundation
 
-from esg_physrisk.hazard_models.credentials_provider import CredentialsProvider
-from esg_physrisk.hazard_models.hazard_cache import H3BasedCache
-from esg_physrisk.hazard_models.jba_hazard_model import JBAHazardModel
+from physrisk.hazard_models.credentials_provider import CredentialsProvider
+from physrisk.hazard_models.hazard_cache import H3BasedCache
+from physrisk.hazard_models.jba_hazard_model import JBAHazardModel
 
 
 class HazardModelFactory(HazardModelFactoryPhysrisk):

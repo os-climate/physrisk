@@ -18,9 +18,9 @@ from physrisk.kernel.hazard_model import (
 )
 from physrisk.kernel.hazards import PluvialInundation, RiverineInundation
 
-from esg_physrisk.data.geocode import Geocoder
-from esg_physrisk.hazard_models.credentials_provider import CredentialsProvider, EnvCredentialsProvider
-from esg_physrisk.hazard_models.hazard_cache import H3BasedCache
+from physrisk.data.geocode import Geocoder
+from physrisk.hazard_models.credentials_provider import CredentialsProvider, EnvCredentialsProvider
+from physrisk.hazard_models.hazard_cache import H3BasedCache
 
 logger = logging.getLogger(__name__)
 
@@ -300,7 +300,7 @@ class JBAHazardModel(HazardModel):
                     raise ValueError("unexpected hazard type")
                 if req.indicator_id == "flood_sop":
                     sop = response["stats"]["FLRF_U"].get("sop", 0)
-                    resp = HazardParameterDataResponse([sop, sop])  # min and max: in this case just a single value
+                    resp: HazardDataResponse = HazardParameterDataResponse(np.array([sop, sop]))  # min and max: in this case just a single value
                 elif req.indicator_id == "flood_depth":
                     return_periods: List[float] = []
                     intens: List[float] = []

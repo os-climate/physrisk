@@ -37,8 +37,10 @@ class AssetImpactRequest(BaseModel):
         True, description="If true, include impact calculation details."
     )
     use_case_id: str = Field(
-        "",
-        description="Identifier for 'use case' used in the risk measures calculation.",
+        "DEFAULT",
+        description=(
+            "Identifier for 'use case' used in vulnerability models and risk measures calculations."
+        ),
     )
     provider_max_requests: Dict[str, int] = Field(
         {},
@@ -69,6 +71,8 @@ class Category(int, Enum):
     MEDIUM = 2
     HIGH = 3
     REDFLAG = 4
+
+    NORISK = -1
 
 
 class RiskMeasureDefinition(BaseModel):

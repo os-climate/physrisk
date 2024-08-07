@@ -32,12 +32,13 @@ from physrisk.kernel.risk import (
     RiskMeasuresFactory,
 )
 from physrisk.kernel.vulnerability_model import (
-    DictBasedVulnerabilityModels,
     VulnerabilityModels,
     VulnerabilityModelsFactory,
+    DictBasedVulnerabilityModelsFactory,
 )
 
-from .api.v1.hazard_data import (
+
+from physrisk.api.v1.hazard_data import (
     HazardAvailabilityRequest,
     HazardAvailabilityResponse,
     HazardDataRequest,
@@ -49,7 +50,7 @@ from .api.v1.hazard_data import (
     IntensityCurve,
     Scenario,
 )
-from .api.v1.impact_req_resp import (
+from physrisk.api.v1.impact_req_resp import (
     AcuteHazardCalculationDetails,
     AssetImpactRequest,
     AssetImpactResponse,
@@ -57,21 +58,24 @@ from .api.v1.impact_req_resp import (
     Assets,
     AssetSingleImpact,
 )
-from .api.v1.impact_req_resp import ImpactKey as APIImpactKey
-from .api.v1.impact_req_resp import (
+from physrisk.api.v1.impact_req_resp import ImpactKey as APIImpactKey
+from physrisk.api.v1.impact_req_resp import (
     RiskMeasureKey,
     RiskMeasures,
     RiskMeasuresForAssets,
     ScoreBasedRiskMeasureDefinition,
     ScoreBasedRiskMeasureSetDefinition,
 )
-from .data.image_creator import ImageCreator
-from .data.inventory import EmbeddedInventory, Inventory
-from .kernel import Asset, Hazard
-from .kernel import calculation as calc
-from .kernel.hazard_model import HazardDataRequest as hmHazardDataRequest
-from .kernel.hazard_model import HazardEventDataResponse as hmHazardEventDataResponse
-from .kernel.hazard_model import (
+from physrisk.data.image_creator import ImageCreator
+from physrisk.data.inventory import EmbeddedInventory, Inventory
+from physrisk.kernel.assets import Asset
+from physrisk.kernel.hazards import Hazard
+from physrisk.kernel import calculation as calc
+from physrisk.kernel.hazard_model import HazardDataRequest as hmHazardDataRequest
+from physrisk.kernel.hazard_model import (
+    HazardEventDataResponse as hmHazardEventDataResponse,
+)
+from physrisk.kernel.hazard_model import (
     HazardModel,
     HazardModelFactory,
     HazardParameterDataResponse,
@@ -399,21 +403,23 @@ def _get_asset_impacts(
     measure_calculators: Optional[Dict[Type[Asset], RiskMeasureCalculator]] = None,
     assets: Optional[List[Asset]] = None,
 ):
-    vulnerability_models = (
-        DictBasedVulnerabilityModels(calc.get_default_vulnerability_models())
-        if vulnerability_models is None
-        else vulnerability_models
-    )
+    if vulnerability_models is None:
+        factory = DictBasedVulnerabilityModelsFactory(request.use_case_id)
+        vulnerability_models = factory.vulnerability_models()
     # we keep API definition of asset separate from internal Asset class; convert by reflection
     # based on asset_class:
     _assets = create_assets(request.assets, assets)
-    measure_calculators = (
-        calc.get_default_risk_measure_calculators()
-        if measure_calculators is None
-        else measure_calculators
-    )
+    if measure_calculators is None:
+        factory_mc = calc.DefaultMeasuresFactory()
+        measure_calcs = factory_mc.calculators(request.use_case_id)
+    else:
+        measure_calcs = measure_calculators
+
     risk_model = AssetLevelRiskModel(
-        hazard_model, vulnerability_models, measure_calculators
+        hazard_model,
+        vulnerability_models=vulnerability_models,
+        measure_calculators=measure_calcs,
+        use_case_id=request.use_case_id,
     )
 
     scenarios = (

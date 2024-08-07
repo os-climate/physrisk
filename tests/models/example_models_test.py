@@ -1,5 +1,3 @@
-import unittest
-
 import numpy as np
 from scipy import stats
 
@@ -8,6 +6,7 @@ from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import Asset, RealEstateAsset
 from physrisk.kernel.hazard_model import HazardEventDataResponse
 from physrisk.kernel.hazards import Inundation, RiverineInundation
+from physrisk.kernel import calculation  # noqa: F401 ## Avoid circular imports
 from physrisk.kernel.impact import calculate_impacts
 from physrisk.kernel.impact_distrib import ImpactType
 from physrisk.kernel.vulnerability_matrix_provider import VulnMatrixProvider
@@ -18,10 +17,7 @@ from physrisk.kernel.vulnerability_model import (
 from physrisk.vulnerability_models.example_models import (
     ExampleCdfBasedVulnerabilityModel,
 )
-from tests.data.hazard_model_store_test import (
-    TestData,
-    mock_hazard_model_store_inundation,
-)
+from ..data.hazard_model_store_test import TestData, mock_hazard_model_store_inundation
 
 
 class ExampleRealEstateInundationModel(VulnerabilityModel):
@@ -75,76 +71,87 @@ def beta_distrib(mean, std):
     return lambda x, a=a, b=b: stats.beta.cdf(x, a, b)
 
 
-class TestExampleModels(unittest.TestCase):
-    def test_pdf_based_vulnerability_model(self):
-        model = ExampleCdfBasedVulnerabilityModel(
-            indicator_id="", hazard_type=Inundation
-        )
+def test_cdf_based_vulnerability_model():
+    model = ExampleCdfBasedVulnerabilityModel(indicator_id="", hazard_type=Inundation)
 
-        latitude, longitude = 45.268405, 19.885738
-        asset = Asset(latitude, longitude)
+    latitude, longitude = 45.268405, 19.885738
+    asset = Asset(latitude, longitude)
 
-        return_periods = np.array(
-            [2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0]
-        )
-        intensities = np.array(
-            [
-                0.059601218,
-                0.33267087,
-                0.50511575,
-                0.71471703,
-                0.8641244,
-                1.0032823,
-                1.1491022,
-                1.1634114,
-                1.1634114,
-            ]
-        )
-
-        mock_response = HazardEventDataResponse(return_periods, intensities)
-
-        vul, event = model.get_distributions(asset, [mock_response])
-
-    def test_user_supplied_model(self):
-        curve = np.array(
-            [
-                0.059601218,
-                0.33267087,
-                0.50511575,
-                0.71471703,
-                0.8641244,
-                1.0032823,
-                1.1491022,
-                1.1634114,
-                1.1634114,
-            ]
-        )
-        store = mock_hazard_model_store_inundation(
-            TestData.longitudes, TestData.latitudes, curve
-        )
-        hazard_model = ZarrHazardModel(
-            source_paths=get_default_source_paths(), store=store
-        )
-
-        scenario = "rcp8p5"
-        year = 2080
-
-        vulnerability_models = DictBasedVulnerabilityModels(
-            {RealEstateAsset: [ExampleRealEstateInundationModel()]}
-        )
-
-        assets = [
-            RealEstateAsset(lat, lon, location="Asia", type="Building/Industrial")
-            for lon, lat in zip(TestData.longitudes, TestData.latitudes)
+    return_periods = np.array([2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0])
+    intensities = np.array(
+        [
+            0.059601218,
+            0.33267087,
+            0.50511575,
+            0.71471703,
+            0.8641244,
+            1.0032823,
+            1.1491022,
+            1.1634114,
+            1.1634114,
         ]
+    )
 
-        results = calculate_impacts(
-            assets, hazard_model, vulnerability_models, scenario=scenario, year=year
-        )
+    mock_response = HazardEventDataResponse(return_periods, intensities)
 
-        self.assertAlmostEqual(
-            results[assets[0], RiverineInundation, scenario, year][0]
-            .impact.to_exceedance_curve()
-            .probs[0],
-            0.499,
-        )
+    vul, event = model.get_distributions(asset, [mock_response])
+
+    value_exp = np.array(
+        [
+            0.05960122,
+            0.33267087,
+            0.50511575,
+            0.71471703,
+            0.8641244,
+            1.0032823,
+            1.1491022,
+            1.1634114,
+            1.1634114,
+        ]
+    )
+
+    value_diff = np.sum(np.abs(vul.intensity_bins - value_exp))
+    assert np.isclose(value_diff, 0.0, atol=1.0e-7)
+
+
+def test_user_supplied_model():
+    curve = np.array(
+        [
+            0.059601218,
+            0.33267087,
+            0.50511575,
+            0.71471703,
+            0.8641244,
+            1.0032823,
+            1.1491022,
+            1.1634114,
+            1.1634114,
+        ]
+    )
+    store = mock_hazard_model_store_inundation(
+        TestData.longitudes, TestData.latitudes, curve
+    )
+    hazard_model = ZarrHazardModel(source_paths=get_default_source_paths(), store=store)
+
+    scenario = "rcp8p5"
+    year = 2080
+
+    vulnerability_models = DictBasedVulnerabilityModels(
+        {RealEstateAsset: [ExampleRealEstateInundationModel()]}
+    )
+
+    assets = [
+        RealEstateAsset(lat, lon, location="Asia", type="Building/Industrial")
+        for lon, lat in zip(TestData.longitudes, TestData.latitudes)
+    ]
+
+    results = calculate_impacts(
+        assets, hazard_model, vulnerability_models, scenario=scenario, year=year
+    )
+
+    assert np.isclose(
+        results[assets[0], RiverineInundation, scenario, year][0]
+        .impact.to_exceedance_curve()
+        .probs[0],
+        0.499,
+    )

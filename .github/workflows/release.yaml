@@ -54,7 +54,7 @@ jobs:
           if [ -f dist/buildvars.txt ]; then
             rm dist/buildvars.txt
           fi
-          rm dist/*.sigstore | true
+          rm dist/*.sigstore* | true
 
       - name: "Publish package to PyPI"
         uses: pypa/gh-action-pypi-publish@release/v1

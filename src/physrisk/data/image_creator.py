@@ -50,7 +50,9 @@ class ImageCreator:
             bytes: Image data.
         """
         try:
-            image = self._to_image(path, colormap, tile=tile, min_value=min_value, max_value=max_value)
+            image = self._to_image(
+                path, colormap, tile=tile, min_value=min_value, max_value=max_value
+            )
         except Exception as e:
             logger.exception(e)
             image = Image.fromarray(np.array([[0]]), mode="RGBA")
@@ -95,14 +97,18 @@ class ImageCreator:
         tile_size = 512
         # data = self.reader.all_data(tile_path)
         if len(data.shape) == 3:
-            index = len(self.reader.get_index_values(data)) - 1 if index is None else index
+            index = (
+                len(self.reader.get_index_values(data)) - 1 if index is None else index
+            )
             if tile is None:
                 # return whole array
                 data = data[index, :, :]  # .squeeze(axis=0)
             else:
                 # (from zarr 2.16.0 we can also use block indexing)
                 data = data[
-                    index, tile_size * tile.y : tile_size * (tile.y + 1), tile_size * tile.x : tile_size * (tile.x + 1)
+                    index,
+                    tile_size * tile.y : tile_size * (tile.y + 1),
+                    tile_size * tile.x : tile_size * (tile.x + 1),
                 ]
 
         if any(dim > 4000 for dim in data.shape):
@@ -164,7 +170,11 @@ class ImageCreator:
         if nodata_lower:
             mask_nodata = data <= nodata_lower
         if nodata_upper:
-            mask_nodata = (mask_nodata | (data >= nodata_upper)) if mask_nodata is not None else (data >= nodata_upper)
+            mask_nodata = (
+                (mask_nodata | (data >= nodata_upper))
+                if mask_nodata is not None
+                else (data >= nodata_upper)
+            )
 
         if min_value is None:
             min_value = np.nanmin(data)
@@ -189,17 +199,27 @@ class ImageCreator:
         result[mask_le_min] = 1
         del mask_ge_max, mask_le_min
 
-        final = red[result] + (green[result] << 8) + (blue[result] << 16) + (a[result] << 24)
+        final = (
+            red[result]
+            + (green[result] << 8)
+            + (blue[result] << 16)
+            + (a[result] << 24)
+        )
         return final
 
     @staticmethod
     def test_store(path: str):
         store = zarr.storage.MemoryStore(root="hazard.zarr")
         root = zarr.open(store=store, mode="w")
-        x, y = np.meshgrid((np.arange(1000) - 500.0) / 500.0, (np.arange(1000) - 500.0) / 500.0)
+        x, y = np.meshgrid(
+            (np.arange(1000) - 500.0) / 500.0, (np.arange(1000) - 500.0) / 500.0
+        )
         im = np.exp(-(x**2 + y**2))
         z = root.create_dataset(  # type: ignore
-            path, shape=(1, im.shape[0], im.shape[1]), chunks=(1, im.shape[0], im.shape[1]), dtype="f4"
+            path,
+            shape=(1, im.shape[0], im.shape[1]),
+            chunks=(1, im.shape[0], im.shape[1]),
+            dtype="f4",
         )
         z[0, :, :] = im
         return store

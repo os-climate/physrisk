@@ -24,13 +24,18 @@ def get_countries_json():
 
     countries = [
         Country(continent=continent, country=country, country_iso_a3=code)
-        for (continent, country, code) in zip(world["continent"], world["name"], world["iso_a3"])
+        for (continent, country, code) in zip(
+            world["continent"], world["name"], world["iso_a3"]
+        )
     ]
 
     return json.dumps(Countries(items=countries).dict(), sort_keys=True, indent=4)
 
 
-def get_countries_and_continents(longitudes: Union[List[float], np.ndarray], latitudes: Union[List[float], np.ndarray]):
+def get_countries_and_continents(
+    longitudes: Union[List[float], np.ndarray],
+    latitudes: Union[List[float], np.ndarray],
+):
     """Only for use when on-boarding; look up country and continent (e.g. for use in vulnerability models) by
     latitude and longitude."""
 
@@ -42,7 +47,9 @@ def get_countries_and_continents(longitudes: Union[List[float], np.ndarray], lat
 
     # consider using map here https://gadm.org/download_world.html
     world = gpd.read_file(gpd.datasets.get_path("naturalearth_lowres"))  # type: ignore
-    gdf = gpd.GeoDataFrame(crs=world.crs, geometry=gpd.points_from_xy(longitudes, latitudes))
+    gdf = gpd.GeoDataFrame(
+        crs=world.crs, geometry=gpd.points_from_xy(longitudes, latitudes)
+    )
     result = gpd.sjoin(gdf, world, how="left")
 
     return list(result["name"]), list(result["continent"])

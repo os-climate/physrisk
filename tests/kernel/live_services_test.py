@@ -10,7 +10,13 @@ def test_live_exposure():
     request = {
         "assets": {
             "items": [
-                {"asset_class": "Asset", "type": None, "location": None, "latitude": 34.556, "longitude": 69.4787}
+                {
+                    "asset_class": "Asset",
+                    "type": None,
+                    "location": None,
+                    "latitude": 34.556,
+                    "longitude": 69.4787,
+                }
             ]
         },
         "calc_settings": {"hazard_interp": "floor"},

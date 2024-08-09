@@ -1,17 +1,25 @@
-import unittest
-from typing import Iterable, List, Union, cast
+from typing import Iterable, List, Union
 
 import numpy as np
+import pytest
 from scipy.stats import norm
 
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import Asset, IndustrialActivity
-from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse, HazardParameterDataResponse
+from physrisk.kernel.hazard_model import (
+    HazardDataRequest,
+    HazardDataResponse,
+    HazardParameterDataResponse,
+)
 from physrisk.kernel.hazards import ChronicHeat
+from physrisk.kernel import calculation  # noqa: F401 ## Avoid circular imports
 from physrisk.kernel.impact import calculate_impacts
 from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
-from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels, VulnerabilityModelBase
+from physrisk.kernel.vulnerability_model import (
+    DictBasedVulnerabilityModels,
+    VulnerabilityModelBase,
+)
 from physrisk.vulnerability_models.chronic_heat_models import ChronicHeatGZNModel
 
 from ..data.hazard_model_store_test import TestData, mock_hazard_model_store_heat
@@ -24,14 +32,24 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
     https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html
     """
 
-    def __init__(self, indicator_id: str = "mean_degree_days_above_32c", delta: bool = True):
+    def __init__(
+        self, indicator_id: str = "mean_degree_days_above_32c", delta: bool = True
+    ):
         super().__init__(
-            indicator_id=indicator_id, hazard_type=ChronicHeat, impact_type=ImpactType.disruption
+            indicator_id=indicator_id,
+            hazard_type=ChronicHeat,
+            impact_type=ImpactType.disruption,
         )  # opportunity to give a model hint, but blank here
 
-        self.time_lost_per_degree_day = 4.671  # This comes from the paper converted to celsius
-        self.time_lost_per_degree_day_se = 2.2302  # This comes from the paper converted to celsius
-        self.total_labour_hours = 107460  # OECD Average hours worked within the USA in one year.
+        self.time_lost_per_degree_day = (
+            4.671  # This comes from the paper converted to celsius
+        )
+        self.time_lost_per_degree_day_se = (
+            2.2302  # This comes from the paper converted to celsius
+        )
+        self.total_labour_hours = (
+            107460  # OECD Average hours worked within the USA in one year.
+        )
         self.delta = delta
 
     def get_data_requests(
@@ -71,7 +89,9 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
             ),
         ]
 
-    def get_impact(self, asset: Asset, data_responses: List[HazardDataResponse]) -> ImpactDistrib:
+    def get_impact(
+        self, asset: Asset, data_responses: List[HazardDataResponse]
+    ) -> ImpactDistrib:
         """Calcaulate impact (disruption) of asset based on the hazard data returned.
 
         Args:
@@ -81,26 +101,34 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
         Returns:
             Probability distribution of impacts.
         """
-        assert isinstance(asset, IndustrialActivity)
         baseline_dd_above_mean, scenario_dd_above_mean = data_responses
-
-        # check expected type; can maybe do this more nicely
+        assert isinstance(asset, IndustrialActivity)
         assert isinstance(baseline_dd_above_mean, HazardParameterDataResponse)
         assert isinstance(scenario_dd_above_mean, HazardParameterDataResponse)
-        # Ensuring that the values are greater than zero. Should be by defition.
         assert scenario_dd_above_mean.parameter >= 0
         assert baseline_dd_above_mean.parameter >= 0
 
         # use hazard data requests via:
 
         # Allow for either a delta approach or a level estimate.
-        delta_dd_above_mean: float = scenario_dd_above_mean.parameter - baseline_dd_above_mean.parameter * self.delta
+        delta_dd_above_mean: float = (
+            scenario_dd_above_mean.parameter
+            - baseline_dd_above_mean.parameter * self.delta
+        )
         hours_worked = self.total_labour_hours
-        fraction_loss_mean = (delta_dd_above_mean * self.time_lost_per_degree_day) / hours_worked
-        fraction_loss_std = (delta_dd_above_mean * self.time_lost_per_degree_day_se) / hours_worked
+        fraction_loss_mean = (
+            delta_dd_above_mean * self.time_lost_per_degree_day / hours_worked
+        )
+        fraction_loss_std = (
+            delta_dd_above_mean * self.time_lost_per_degree_day_se / hours_worked
+        )
 
         return get_impact_distrib(
-            fraction_loss_mean, fraction_loss_std, ChronicHeat, [scenario_dd_above_mean.path], ImpactType.disruption
+            fraction_loss_mean,
+            fraction_loss_std,
+            ChronicHeat,
+            [scenario_dd_above_mean.path],
+            ImpactType.disruption,
         )
 
 
@@ -133,9 +161,11 @@ def get_impact_distrib(
         ]
     )
 
-    probs_cumulative = np.vectorize(lambda x: norm.cdf(x, loc=fraction_loss_mean, scale=max(1e-12, fraction_loss_std)))(
-        impact_bins
-    )
+    probs_cumulative = np.vectorize(
+        lambda x: norm.cdf(
+            x, loc=fraction_loss_mean, scale=max(1e-12, fraction_loss_std)
+        )
+    )(impact_bins)
     probs_cumulative[-1] = np.maximum(probs_cumulative[-1], 1.0)
     probs = np.diff(probs_cumulative)
 
@@ -152,64 +182,69 @@ def get_impact_distrib(
     return ImpactDistrib(hazard_type, impact_bins, probs, hazard_paths, impact_type)
 
 
-class TestChronicAssetImpact(unittest.TestCase):
-    """Tests the impact on an asset of a chronic hazard model."""
+@pytest.fixture
+def setup_hazard_model():
+    store = mock_hazard_model_store_heat(TestData.longitudes, TestData.latitudes)
+    hazard_model = ZarrHazardModel(source_paths=get_default_source_paths(), store=store)
+    return hazard_model
 
-    def test_chronic_vulnerability_model(self):
-        """Testing the generation of an asset when only an impact curve (e.g. damage curve is available)"""
 
-        store = mock_hazard_model_store_heat(TestData.longitudes, TestData.latitudes)
-        hazard_model = ZarrHazardModel(source_paths=get_default_source_paths(), store=store)
-        # to run a live calculation, we omit the store parameter
+def test_chronic_vulnerability_model(setup_hazard_model):
+    """Testing the generation of an asset when only an impact curve (e.g. damage curve is available)"""
 
-        scenario = "ssp585"
-        year = 2050
+    hazard_model = setup_hazard_model
+    scenario = "ssp585"
+    year = 2050
 
-        vulnerability_models = DictBasedVulnerabilityModels({IndustrialActivity: [ChronicHeatGZNModel()]})
+    vulnerability_models = DictBasedVulnerabilityModels(
+        {IndustrialActivity: [ChronicHeatGZNModel()]}
+    )
 
-        assets = [
-            IndustrialActivity(lat, lon, type="Construction")
-            for lon, lat in zip(TestData.longitudes, TestData.latitudes)
-        ][:1]
+    assets = [
+        IndustrialActivity(lat, lon, type="Construction")
+        for lon, lat in zip(TestData.longitudes, TestData.latitudes)
+    ][:1]
 
-        results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
+    results = calculate_impacts(
+        assets, hazard_model, vulnerability_models, scenario=scenario, year=year
+    )
 
-        value_test = list(results.values())[0][0].impact.mean_impact()
-        value_test = list(results.values())[0][0].impact.prob
-        value_exp = np.array(
-            [
-                0.02656777935,
-                0.01152965908,
-                0.01531928095,
-                0.01983722513,
-                0.02503479879,
-                0.03079129430,
-                0.03690901485,
-                0.04311790414,
-                0.04909118572,
-                0.05447159590,
-                0.51810304973,
-                0.16109092806,
-                0.00807680527,
-                0.00005941883,
-                0.00000005990,
-                0.00000000001,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-            ]
-        )
-        value_diff = np.sum(np.abs(value_test - value_exp))
-        self.assertAlmostEqual(value_diff, 0.0, places=8)
+    value_test = list(results.values())[0][0].impact.mean_impact()
+    value_test = list(results.values())[0][0].impact.prob
+    value_exp = np.array(
+        [
+            0.02656777935,
+            0.01152965908,
+            0.01531928095,
+            0.01983722513,
+            0.02503479879,
+            0.03079129430,
+            0.03690901485,
+            0.04311790414,
+            0.04909118572,
+            0.05447159590,
+            0.51810304973,
+            0.16109092806,
+            0.00807680527,
+            0.00005941883,
+            0.00000005990,
+            0.00000000001,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+        ]
+    )
+    value_diff = np.sum(np.abs(value_test - value_exp))
+    assert np.isclose(value_diff, 0.0, atol=1.0e-7)

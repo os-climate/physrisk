@@ -45,7 +45,9 @@ class ZarrReader:
         if store is None:
             # if no store is provided, attempt to connect to an S3 bucket
             if get_env is None:
-                raise TypeError("if no store specified, get_env is required to provide credentials")
+                raise TypeError(
+                    "if no store specified, get_env is required to provide credentials"
+                )
 
             store = ZarrReader.create_s3_zarr_store(get_env)
 
@@ -54,12 +56,16 @@ class ZarrReader:
         pass
 
     def all_data(self, set_id: str):
-        path = self._path_provider(set_id) if self._path_provider is not None else set_id
+        path = (
+            self._path_provider(set_id) if self._path_provider is not None else set_id
+        )
         z = self._root[path]  # e.g. inundation/wri/v2/<filename>
         return z
 
     @classmethod
-    def create_s3_zarr_store(cls, get_env: Callable[[str, Optional[str]], str] = get_env):
+    def create_s3_zarr_store(
+        cls, get_env: Callable[[str, Optional[str]], str] = get_env
+    ):
         access_key = get_env(cls.__access_key, "")
         secret_key = get_env(cls.__secret_key, "")
         s3_bucket = get_env(cls.__S3_bucket, "physrisk-hazard-indicators")
@@ -90,7 +96,9 @@ class ZarrReader:
         # assume that calls to this are large, not chatty
         if len(longitudes) != len(latitudes):
             raise ValueError("length of longitudes and latitudes not equal")
-        path = self._path_provider(set_id) if self._path_provider is not None else set_id
+        path = (
+            self._path_provider(set_id) if self._path_provider is not None else set_id
+        )
         z = self._root[path]  # e.g. inundation/wri/v2/<filename>
 
         # OSC-specific attributes contain transform and return periods
@@ -102,7 +110,11 @@ class ZarrReader:
         # in the case of acute risks, index_values will contain the return periods
         index_values = self.get_index_values(z)
         image_coords = self._get_coordinates(
-            longitudes, latitudes, crs, transform, pixel_is_area=interpolation != "floor"
+            longitudes,
+            latitudes,
+            crs,
+            transform,
+            pixel_is_area=interpolation != "floor",
         )
 
         if interpolation == "floor":
@@ -113,14 +125,22 @@ class ZarrReader:
             ix = np.repeat(image_coords[0, :], len(index_values))
 
             data = z.get_coordinate_selection((iz, iy, ix))  # type: ignore
-            return data.reshape([len(longitudes), len(index_values)]), np.array(index_values), units
+            return (
+                data.reshape([len(longitudes), len(index_values)]),
+                np.array(index_values),
+                units,
+            )
 
         elif interpolation in ["linear", "max", "min"]:
-            res = ZarrReader._linear_interp_frac_coordinates(z, image_coords, index_values, interpolation=interpolation)
+            res = ZarrReader._linear_interp_frac_coordinates(
+                z, image_coords, index_values, interpolation=interpolation
+            )
             return res, np.array(index_values), units
 
         else:
-            raise ValueError("interpolation must have value 'floor', 'linear', 'max' or 'min")
+            raise ValueError(
+                "interpolation must have value 'floor', 'linear', 'max' or 'min"
+            )
 
     def get_index_values(self, z: zarr.Array):
         index_values = z.attrs.get("index_values", [0])
@@ -142,7 +162,9 @@ class ZarrReader:
             return_periods: return periods in years.
             units: units.
         """
-        path = self._path_provider(set_id) if self._path_provider is not None else set_id
+        path = (
+            self._path_provider(set_id) if self._path_provider is not None else set_id
+        )
         z = self._root[path]  # e.g. inundation/wri/v2/<filename>
 
         # in the case of acute risks, index_values will contain the return periods
@@ -153,32 +175,52 @@ class ZarrReader:
         units: str = z.attrs.get("units", "default")
 
         matrix = np.array(~transform).reshape(3, 3).transpose()[:, :-1].reshape(6)
-        transformed_shapes = [affinity.affine_transform(shape, matrix) for shape in shapes]
+        transformed_shapes = [
+            affinity.affine_transform(shape, matrix) for shape in shapes
+        ]
 
         pixel_offset = 0.5 if interpolation != "floor" else 0.0
         multipoints = [
             MultiPoint(
                 [
                     (x - pixel_offset, y - pixel_offset)
-                    for x in range(int(np.floor(shape.bounds[0])), int(np.ceil(shape.bounds[2])) + 1)
-                    for y in range(int(np.floor(shape.bounds[1])), int(np.ceil(shape.bounds[3])) + 1)
+                    for x in range(
+                        int(np.floor(shape.bounds[0])),
+                        int(np.ceil(shape.bounds[2])) + 1,
+                    )
+                    for y in range(
+                        int(np.floor(shape.bounds[1])),
+                        int(np.ceil(shape.bounds[3])) + 1,
+                    )
                 ]
             ).intersection(shape)
             for shape in transformed_shapes
         ]
         multipoints = [
             (
-                Point(0.5 * (shape.bounds[0] + shape.bounds[2]), 0.5 * (shape.bounds[1] + shape.bounds[3]))
+                Point(
+                    0.5 * (shape.bounds[0] + shape.bounds[2]),
+                    0.5 * (shape.bounds[1] + shape.bounds[3]),
+                )
                 if multipoint.is_empty
                 else multipoint
             )
             for shape, multipoint in zip(transformed_shapes, multipoints)
         ]
-        multipoints = [MultiPoint([(point.x, point.y)]) if isinstance(point, Point) else point for point in multipoints]
+        multipoints = [
+            MultiPoint([(point.x, point.y)]) if isinstance(point, Point) else point
+            for point in multipoints
+        ]
 
         if interpolation == "floor":
             image_coords = np.floor(
-                np.array([[point.x, point.y] for multipoint in multipoints for point in multipoint.geoms]).transpose()
+                np.array(
+                    [
+                        [point.x, point.y]
+                        for multipoint in multipoints
+                        for point in multipoint.geoms
+                    ]
+                ).transpose()
             ).astype(int)
             image_coords[0, :] %= z.shape[2]
 
@@ -196,10 +238,16 @@ class ZarrReader:
                     if isinstance(transformed_shape, Point)
                     else MultiPoint(transformed_shape.exterior.coords)
                 )
-                for transformed_shape, multipoint in zip(transformed_shapes, multipoints)
+                for transformed_shape, multipoint in zip(
+                    transformed_shapes, multipoints
+                )
             ]
             image_coords = np.array(
-                [[point.x, point.y] for multipoint in multipoints for point in multipoint.geoms]
+                [
+                    [point.x, point.y]
+                    for multipoint in multipoints
+                    for point in multipoint.geoms
+                ]
             ).transpose()
 
             curves = ZarrReader._linear_interp_frac_coordinates(
@@ -207,9 +255,13 @@ class ZarrReader:
             )
 
         else:
-            raise ValueError("interpolation must have value 'floor', 'linear', 'max' or 'min")
+            raise ValueError(
+                "interpolation must have value 'floor', 'linear', 'max' or 'min"
+            )
 
-        numbers_of_points_per_shape = [len(multipoint.geoms) for multipoint in multipoints]
+        numbers_of_points_per_shape = [
+            len(multipoint.geoms) for multipoint in multipoints
+        ]
         numbers_of_points_per_shape_cumulated = np.cumsum(numbers_of_points_per_shape)
         curves_max = np.array(
             [
@@ -222,7 +274,15 @@ class ZarrReader:
 
         return curves_max, np.array(index_values), units
 
-    def get_max_curves_on_grid(self, set_id, longitudes, latitudes, interpolation="floor", delta_km=1.0, n_grid=5):
+    def get_max_curves_on_grid(
+        self,
+        set_id,
+        longitudes,
+        latitudes,
+        interpolation="floor",
+        delta_km=1.0,
+        n_grid=5,
+    ):
         """Get maximal intensity curve for a grid around a given latitude and longitude coordinate pair.
             It is almost equivalent to:
                 self.get_max_curves
@@ -265,7 +325,8 @@ class ZarrReader:
             np.array(latitudes).reshape(n_data, 1, 1), (len(latitudes), n_grid, n_grid)
         )
         lons_grid_baseline = np.broadcast_to(
-            np.array(longitudes).reshape(n_data, 1, 1), (len(longitudes), n_grid, n_grid)
+            np.array(longitudes).reshape(n_data, 1, 1),
+            (len(longitudes), n_grid, n_grid),
         )
         lats_grid_offsets = delta_deg * grid.reshape((1, n_grid, 1))
         lons_grid_offsets = (
@@ -276,24 +337,37 @@ class ZarrReader:
         lats_grid = lats_grid_baseline + lats_grid_offsets
         lons_grid = lons_grid_baseline + lons_grid_offsets
         curves, return_periods, _ = self.get_curves(
-            set_id, lons_grid.reshape(-1), lats_grid.reshape(-1), interpolation=interpolation
+            set_id,
+            lons_grid.reshape(-1),
+            lats_grid.reshape(-1),
+            interpolation=interpolation,
         )
-        curves_max = np.nanmax(curves.reshape((n_data, n_grid * n_grid, len(return_periods))), axis=1)
+        curves_max = np.nanmax(
+            curves.reshape((n_data, n_grid * n_grid, len(return_periods))), axis=1
+        )
         return curves_max, return_periods
 
     @staticmethod
-    def _linear_interp_frac_coordinates(z, image_coords, return_periods, interpolation="linear"):
+    def _linear_interp_frac_coordinates(
+        z, image_coords, return_periods, interpolation="linear"
+    ):
         """Return linear interpolated data from fractional row and column coordinates."""
         icx = np.floor(image_coords[0, :]).astype(int)[..., None]
         # note periodic boundary condition
         ix = np.concatenate(
-            [icx % z.shape[2], icx % z.shape[2], (icx + 1) % z.shape[2], (icx + 1) % z.shape[2]], axis=1
-        )[..., None].repeat(
-            len(return_periods), axis=2
-        )  # points, 4, return_periods
+            [
+                icx % z.shape[2],
+                icx % z.shape[2],
+                (icx + 1) % z.shape[2],
+                (icx + 1) % z.shape[2],
+            ],
+            axis=1,
+        )[..., None].repeat(len(return_periods), axis=2)  # points, 4, return_periods
 
         icy = np.floor(image_coords[1, :]).astype(int)[..., None]
-        iy = np.concatenate([icy, icy + 1, icy, icy + 1], axis=1)[..., None].repeat(len(return_periods), axis=2)
+        iy = np.concatenate([icy, icy + 1, icy, icy + 1], axis=1)[..., None].repeat(
+            len(return_periods), axis=2
+        )
 
         iz = (
             np.arange(len(return_periods), dtype=int)[None, ...]
@@ -324,7 +398,10 @@ class ZarrReader:
             data = np.nan_to_num(data, 0)
             w_good = w * mask
             w_good_sum = np.transpose(
-                np.sum(w_good, axis=1).reshape(tuple([1]) + np.sum(w_good, axis=1).shape), axes=(1, 0, 2)
+                np.sum(w_good, axis=1).reshape(
+                    tuple([1]) + np.sum(w_good, axis=1).shape
+                ),
+                axes=(1, 0, 2),
             )
             w_used = np.divide(w_good, np.where(w_good_sum == 0.0, np.nan, w_good_sum))
             return np.nan_to_num(np.sum(w_used * data, axis=1), nan=nan_output_value)
@@ -332,7 +409,9 @@ class ZarrReader:
         elif interpolation == "max":
             data = np.where(np.isnan(data), -np.inf, data)
             return np.nan_to_num(
-                np.maximum.reduce([data[:, 0, :], data[:, 1, :], data[:, 2, :], data[:, 3, :]]),
+                np.maximum.reduce(
+                    [data[:, 0, :], data[:, 1, :], data[:, 2, :], data[:, 3, :]]
+                ),
                 nan=nan_output_value,
                 neginf=nan_output_value,
             )
@@ -340,7 +419,9 @@ class ZarrReader:
         elif interpolation == "min":
             data = np.where(np.isnan(data), np.inf, data)
             return np.nan_to_num(
-                np.minimum.reduce([data[:, 0, :], data[:, 1, :], data[:, 2, :], data[:, 3, :]]),
+                np.minimum.reduce(
+                    [data[:, 0, :], data[:, 1, :], data[:, 2, :], data[:, 3, :]]
+                ),
                 nan=nan_output_value,
                 posinf=nan_output_value,
             )
@@ -349,7 +430,9 @@ class ZarrReader:
             raise ValueError("interpolation must have value 'linear', 'max' or 'min")
 
     @staticmethod
-    def _get_coordinates(longitudes, latitudes, crs: str, transform: Affine, pixel_is_area: bool):
+    def _get_coordinates(
+        longitudes, latitudes, crs: str, transform: Affine, pixel_is_area: bool
+    ):
         if crs.lower() != "epsg:4236":
             transproj = Transformer.from_crs("epsg:4326", crs, always_xy=True)
             x, y = transproj.transform(longitudes, latitudes)

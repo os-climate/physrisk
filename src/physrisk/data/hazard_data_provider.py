@@ -31,7 +31,12 @@ class SourcePath(Protocol):
     """
 
     def __call__(
-        self, *, indicator_id: str, scenario: str, year: int, hint: Optional[HazardDataHint] = None
+        self,
+        *,
+        indicator_id: str,
+        scenario: str,
+        year: int,
+        hint: Optional[HazardDataHint] = None,
     ) -> str: ...
 
 
@@ -56,7 +61,9 @@ class HazardDataProvider(ABC):
             ValueError: If interpolation not in permitted list.
         """
         self._get_source_path = get_source_path
-        self._reader = zarr_reader if zarr_reader is not None else ZarrReader(store=store)
+        self._reader = (
+            zarr_reader if zarr_reader is not None else ZarrReader(store=store)
+        )
         if interpolation not in ["floor", "linear", "max", "min"]:
             raise ValueError("interpolation must be 'floor', 'linear', 'max' or 'min'")
         self._interpolation = interpolation
@@ -94,14 +101,18 @@ class HazardDataProvider(ABC):
             path: Path to the hazard indicator data source.
         """
 
-        path = self._get_source_path(indicator_id=indicator_id, scenario=scenario, year=year, hint=hint)
+        path = self._get_source_path(
+            indicator_id=indicator_id, scenario=scenario, year=year, hint=hint
+        )
         if buffer is None:
             values, indices, units = self._reader.get_curves(
                 path, longitudes, latitudes, self._interpolation
             )  # type: ignore
         else:
             if buffer < 0 or 1000 < buffer:
-                raise Exception("The buffer must be an integer between 0 and 1000 metres.")
+                raise Exception(
+                    "The buffer must be an integer between 0 and 1000 metres."
+                )
             values, indices, units = self._reader.get_max_curves(
                 path,
                 [
@@ -109,7 +120,9 @@ class HazardDataProvider(ABC):
                         Point(longitude, latitude)
                         if buffer == 0
                         else Point(longitude, latitude).buffer(
-                            ZarrReader._get_equivalent_buffer_in_arc_degrees(latitude, buffer)
+                            ZarrReader._get_equivalent_buffer_in_arc_degrees(
+                                latitude, buffer
+                            )
                         )
                     )
                     for longitude, latitude in zip(longitudes, latitudes)

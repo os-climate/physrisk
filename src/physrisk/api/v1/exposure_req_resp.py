@@ -11,7 +11,8 @@ class AssetExposureRequest(BaseModel):
 
     assets: Assets
     calc_settings: CalcSettings = Field(
-        default_factory=CalcSettings, description="Interpolation method."  # type:ignore
+        default_factory=CalcSettings,  # type:ignore
+        description="Interpolation method.",
     )
     scenario: str = Field("rcp8p5", description="Name of scenario ('rcp8p5')")
     year: int = Field(
@@ -29,7 +30,9 @@ class AssetExposureRequest(BaseModel):
 class Exposure(BaseModel):
     category: str
     value: Optional[float]
-    path: str = Field("unknown", description="Path to the hazard indicator data source.")
+    path: str = Field(
+        "unknown", description="Path to the hazard indicator data source."
+    )
 
 
 class AssetExposure(BaseModel):
@@ -40,7 +43,9 @@ class AssetExposure(BaseModel):
         description="""Asset identifier; will appear if provided in the request
         otherwise order of assets in response is identical to order of assets in request.""",
     )
-    exposures: Dict[str, Exposure] = Field({}, description="Category (value) for each hazard type (key).")
+    exposures: Dict[str, Exposure] = Field(
+        {}, description="Category (value) for each hazard type (key)."
+    )
 
 
 class AssetExposureResponse(BaseModel):

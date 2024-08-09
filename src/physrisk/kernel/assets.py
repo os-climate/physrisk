@@ -4,7 +4,7 @@ from typing import Optional
 
 
 # 'primary_fuel' entries in Global Power Plant Database v1.3.0 (World Resources Institute)
-# https://wri-dataportal-prod.s3.amazonaws.com/manual/global_power_plant_database_v_1_3
+# https://datasets.wri.org/dataset/globalpowerplantdatabase
 class FuelKind(Enum):
     Biomass = 1
     Coal = 2
@@ -40,7 +40,9 @@ class TurbineKind(Enum):
 
 
 class Asset:
-    def __init__(self, latitude: float, longitude: float, id: Optional[str] = None, **kwargs):
+    def __init__(
+        self, latitude: float, longitude: float, id: Optional[str] = None, **kwargs
+    ):
         self.latitude = latitude
         self.longitude = longitude
         self.id = id
@@ -93,7 +95,14 @@ class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
         capacity: Optional[float] = None,
         **kwargs,
     ):
-        super().__init__(latitude, longitude, type=type, location=location, capacity=capacity, **kwargs)
+        super().__init__(
+            latitude,
+            longitude,
+            type=type,
+            location=location,
+            capacity=capacity,
+            **kwargs,
+        )
 
         self.turbine: Optional[TurbineKind] = None
         self.cooling: Optional[CoolingKind] = None
@@ -117,7 +126,9 @@ class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
 
 
 class RealEstateAsset(Asset):
-    def __init__(self, latitude: float, longitude: float, *, location: str, type: str, **kwargs):
+    def __init__(
+        self, latitude: float, longitude: float, *, location: str, type: str, **kwargs
+    ):
         super().__init__(latitude, longitude, **kwargs)
         self.location = location
         self.type = type
@@ -125,7 +136,13 @@ class RealEstateAsset(Asset):
 
 class ManufacturingAsset(Asset):
     def __init__(
-        self, latitude: float, longitude: float, *, location: Optional[str] = None, type: Optional[str] = None, **kwargs
+        self,
+        latitude: float,
+        longitude: float,
+        *,
+        location: Optional[str] = None,
+        type: Optional[str] = None,
+        **kwargs,
     ):
         super().__init__(latitude, longitude, **kwargs)
         self.location = location
@@ -133,7 +150,15 @@ class ManufacturingAsset(Asset):
 
 
 class IndustrialActivity(Asset):
-    def __init__(self, latitude: float, longitude: float, *, location: Optional[str] = None, type: str, **kwargs):
+    def __init__(
+        self,
+        latitude: float,
+        longitude: float,
+        *,
+        location: Optional[str] = None,
+        type: str,
+        **kwargs,
+    ):
         super().__init__(latitude, longitude, **kwargs)
         self.location = location
         self.type = type

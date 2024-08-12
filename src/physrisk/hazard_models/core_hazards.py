@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Dict, Iterable, NamedTuple, Optional, Protocol
 
 from physrisk.api.v1.hazard_data import HazardResource
@@ -163,8 +164,15 @@ class InventorySourcePaths:
         return candidates.first()
 
 
+class CoreFloodModels(Enum):
+    WRI = 1
+    TUDelft = 2
+
+
 class CoreInventorySourcePaths(InventorySourcePaths):
-    def __init__(self, inventory: Inventory):
+    def __init__(
+        self, inventory: Inventory, flood_model: CoreFloodModels = CoreFloodModels.WRI
+    ):
         super().__init__(inventory)
         for indicator_id in [
             "mean_work_loss/low",
@@ -176,7 +184,11 @@ class CoreInventorySourcePaths(InventorySourcePaths):
             ChronicHeat, "mean/degree/days/above/32c", self._select_chronic_heat
         )
         self.add_selector(
-            RiverineInundation, "flood_depth", self._select_riverine_inundation
+            RiverineInundation,
+            "flood_depth",
+            self._select_riverine_inundation
+            if flood_model == CoreFloodModels.WRI
+            else self._select_riverine_inundation_tudelft,
         )
         self.add_selector(
             CoastalInundation, "flood_depth", self._select_coastal_inundation
@@ -222,6 +234,15 @@ class CoreInventorySourcePaths(InventorySourcePaths):
             if scenario == "historical"
             else candidates.with_model_gcm("MIROC-ESM-CHEM").first()
         )
+
+    @staticmethod
+    def _select_riverine_inundation_tudelft(
+        candidates: ResourceSubset,
+        scenario: str,
+        year: int,
+        hint: Optional[HazardDataHint] = None,
+    ):
+        return candidates.with_model_id("tudelft").first()
 
     @staticmethod
     def _select_wind(

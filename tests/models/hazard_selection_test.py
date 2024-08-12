@@ -4,24 +4,43 @@ import numpy as np
 from physrisk.data.hazard_data_provider import HazardDataHint
 from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
-from physrisk.hazard_models.core_hazards import CoreFloodModels, CoreInventorySourcePaths, ResourceSubset
+from physrisk.hazard_models.core_hazards import (
+    CoreFloodModels,
+    CoreInventorySourcePaths,
+    ResourceSubset,
+)
 from physrisk.kernel.hazard_model import HazardDataRequest, HazardEventDataResponse
 from physrisk.kernel.hazards import RiverineInundation
 
-from tests.data.hazard_model_store_test import TestData, ZarrStoreMocker, inundation_return_periods
+from tests.data.hazard_model_store_test import (
+    TestData,
+    ZarrStoreMocker,
+    inundation_return_periods,
+)
+
 
 def test_tudelft_selection():
     inventory: Inventory = EmbeddedInventory()
-    source_paths = CoreInventorySourcePaths(inventory, flood_model=CoreFloodModels.TUDelft).source_paths()
-    assert (source_paths[RiverineInundation](indicator_id="flood_depth", scenario="rcp8p5", year=2050)
-            == "inundation/river_tudelft/v2/flood_depth_unprot_rcp8p5_2050")
-    assert (source_paths[RiverineInundation](indicator_id="flood_depth", scenario="historical", year=-1)
-            == "inundation/river_tudelft/v2/flood_depth_unprot_historical_1985")
+    source_paths = CoreInventorySourcePaths(
+        inventory, flood_model=CoreFloodModels.TUDelft
+    ).source_paths()
+    assert (
+        source_paths[RiverineInundation](
+            indicator_id="flood_depth", scenario="rcp8p5", year=2050
+        )
+        == "inundation/river_tudelft/v2/flood_depth_unprot_rcp8p5_2050"
+    )
+    assert (
+        source_paths[RiverineInundation](
+            indicator_id="flood_depth", scenario="historical", year=-1
+        )
+        == "inundation/river_tudelft/v2/flood_depth_unprot_historical_1985"
+    )
 
 
 def test_customize_hazard_selection():
     inventory: Inventory = EmbeddedInventory()
-    
+
     source_path_selectors = CoreInventorySourcePaths(inventory)
 
     def select_riverine_inundation_tudelft(
@@ -33,11 +52,11 @@ def test_customize_hazard_selection():
         return candidates.with_model_id("tudelft").first()
 
     # we can add selectors programmatically
-    # test_tudelft_selection shows an example of using the options in CoreInventorySourcePaths 
+    # test_tudelft_selection shows an example of using the options in CoreInventorySourcePaths
     source_path_selectors.add_selector(
-            RiverineInundation, "flood_depth", select_riverine_inundation_tudelft
-        )
-    
+        RiverineInundation, "flood_depth", select_riverine_inundation_tudelft
+    )
+
     custom_source_paths = source_path_selectors.source_paths()
 
     def sp_riverine(scenario, year):
@@ -60,20 +79,17 @@ def test_customize_hazard_selection():
             flood_histo_curve,
         )
 
-    hazard_model = ZarrHazardModel(
-        source_paths=custom_source_paths, store=mocker.store
-    )
+    hazard_model = ZarrHazardModel(source_paths=custom_source_paths, store=mocker.store)
 
-    req = HazardDataRequest(RiverineInundation,
-                            TestData.longitudes[0],
-                            TestData.latitudes[0],
-                            indicator_id="flood_depth",
-                            scenario="historical",
-                            year = -1)
+    req = HazardDataRequest(
+        RiverineInundation,
+        TestData.longitudes[0],
+        TestData.latitudes[0],
+        indicator_id="flood_depth",
+        scenario="historical",
+        year=-1,
+    )
     responses = hazard_model.get_hazard_events([req])
     resp = responses[req]
     assert isinstance(resp, HazardEventDataResponse)
     np.testing.assert_almost_equal(resp.intensities, flood_histo_curve)
-
-
-        

@@ -10,13 +10,15 @@ class Colormap(BaseModel):
     """Provides details of colormap."""
 
     min_index: Optional[int] = Field(
-        1, description="Value of colormap minimum. Constant min for a group of maps can facilitate comparison."
+        1,
+        description="Value of colormap minimum. Constant min for a group of maps can facilitate comparison.",
     )
     min_value: float = Field(
         description="Value of colormap minimum. Constant min for a group of maps can facilitate comparison."
     )
     max_index: Optional[int] = Field(
-        255, description="Value of colormap maximum. Constant max for a group of maps can facilitate comparison."
+        255,
+        description="Value of colormap maximum. Constant max for a group of maps can facilitate comparison.",
     )
     max_value: float = Field(
         description="Value of colormap maximum. Constant max for a group of maps can facilitate comparison."
@@ -51,7 +53,9 @@ class Period(BaseModel):
     """Provides information about a period, which currently corresponds to a year, belonging to a scenario."""
 
     year: int
-    map_id: str = Field(description="If present, identifier to be used for looking up map tiles from server.")
+    map_id: str = Field(
+        description="If present, identifier to be used for looking up map tiles from server."
+    )
 
 
 class Scenario(BaseModel):
@@ -70,7 +74,10 @@ class HazardResource(BaseModel):
     """Provides information about a set of hazard indicators, including available scenarios and years."""
 
     hazard_type: str = Field(description="Type of hazard.")
-    group_id: Optional[str] = Field("public", description="Identifier of the resource group (used for authentication).")
+    group_id: Optional[str] = Field(
+        "public",
+        description="Identifier of the resource group (used for authentication).",
+    )
     path: str = Field(description="Full path to the indicator array.")
     indicator_id: str = Field(
         description="Identifier of the hazard indicator (i.e. the modelled quantity), e.g. 'flood_depth'."
@@ -83,14 +90,23 @@ class HazardResource(BaseModel):
     indicator_model_gcm: str = Field(
         description="Identifier of general circulation model(s) used in the derivation of the indicator."
     )
-    params: Dict[str, List[str]] = Field({}, description="Parameters used to expand wild-carded fields.")
+    params: Dict[str, List[str]] = Field(
+        {}, description="Parameters used to expand wild-carded fields."
+    )
     display_name: str = Field(description="Text used to display indicator.")
-    display_groups: List[str] = Field([], description="Text used to group the (expanded) indicators for display.")
+    display_groups: List[str] = Field(
+        [], description="Text used to group the (expanded) indicators for display."
+    )
     description: str = Field(
         description="Brief description in mark down of the indicator and model that generated the indicator."
     )
-    map: Optional[MapInfo] = Field(None, description="Optional information used for display of the indicator in a map.")
-    scenarios: List[Scenario] = Field(description="Climate change scenarios for which the indicator is available.")
+    map: Optional[MapInfo] = Field(
+        None,
+        description="Optional information used for display of the indicator in a map.",
+    )
+    scenarios: List[Scenario] = Field(
+        description="Climate change scenarios for which the indicator is available."
+    )
     units: str = Field(description="Units of the hazard indicator.")
 
     def expand(self):
@@ -122,7 +138,9 @@ def expand_resource(
                     deep=True,
                     update={
                         "indicator_id": expand(item.indicator_id, key, param),
-                        "indicator_model_gcm": expand(item.indicator_model_gcm, key, param),
+                        "indicator_model_gcm": expand(
+                            item.indicator_model_gcm, key, param
+                        ),
                         "display_name": expand(item.display_name, key, param),
                         "path": expand(item.path, key, param),
                         "map": (
@@ -132,7 +150,13 @@ def expand_resource(
                                 item.map.model_copy(
                                     deep=True,
                                     update={
-                                        "path": expand(item.map.path if item.map.path is not None else "", key, param)
+                                        "path": expand(
+                                            item.map.path
+                                            if item.map.path is not None
+                                            else "",
+                                            key,
+                                            param,
+                                        )
                                     },
                                 )
                             )
@@ -154,7 +178,8 @@ class InventorySource(Flag):
 class HazardAvailabilityRequest(BaseModel):
     types: Optional[List[str]] = []  # e.g. ["RiverineInundation"]
     sources: Optional[List[str]] = Field(
-        None, description="Sources of inventory, can be 'embedded', 'hazard' or 'hazard_test'."
+        None,
+        description="Sources of inventory, can be 'embedded', 'hazard' or 'hazard_test'.",
     )
 
 
@@ -168,7 +193,9 @@ class HazardDescriptionRequest(BaseModel):
 
 
 class HazardDescriptionResponse(BaseModel):
-    descriptions: Dict[str, str] = Field(description="For each path (key), the description markdown (value).")
+    descriptions: Dict[str, str] = Field(
+        description="For each path (key), the description markdown (value)."
+    )
 
 
 class HazardDataRequestItem(BaseModel):
@@ -176,7 +203,9 @@ class HazardDataRequestItem(BaseModel):
     latitudes: List[float]
     request_item_id: str
     hazard_type: Optional[str] = None  # e.g. RiverineInundation
-    event_type: Optional[str] = None  # e.g. RiverineInundation; deprecated: use hazard_type
+    event_type: Optional[str] = (
+        None  # e.g. RiverineInundation; deprecated: use hazard_type
+    )
     indicator_id: str
     indicator_model_gcm: Optional[str] = ""
     path: Optional[str] = None

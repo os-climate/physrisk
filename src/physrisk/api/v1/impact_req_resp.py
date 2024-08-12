@@ -1,14 +1,22 @@
 from enum import Enum
 from typing import Dict, List, NamedTuple, Optional, Sequence
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field
 
-from physrisk.api.v1.common import Assets, Distribution, ExceedanceCurve, VulnerabilityDistrib
+from physrisk.api.v1.common import (
+    Assets,
+    Distribution,
+    ExceedanceCurve,
+    VulnerabilityDistrib,
+)
 from physrisk.api.v1.hazard_data import Scenario
 
 
 class CalcSettings(BaseModel):
-    hazard_interp: str = Field("floor", description="Method used for interpolation of hazards: 'floor' or 'bilinear'.")
+    hazard_interp: str = Field(
+        "floor",
+        description="Method used for interpolation of hazards: 'floor' or 'bilinear'.",
+    )
 
 
 class AssetImpactRequest(BaseModel):
@@ -16,19 +24,31 @@ class AssetImpactRequest(BaseModel):
 
     assets: Assets
     calc_settings: CalcSettings = Field(
-        default_factory=CalcSettings, description="Interpolation method."  # type:ignore
+        default_factory=CalcSettings,  # type:ignore
+        description="Interpolation method.",
     )
-    include_asset_level: bool = Field(True, description="If true, include asset-level impacts.")
-    include_measures: bool = Field(False, description="If true, include calculation of risk measures.")
-    include_calc_details: bool = Field(True, description="If true, include impact calculation details.")
-    use_case_id: str = Field("", description="Identifier for 'use case' used in the risk measures calculation.")
+    include_asset_level: bool = Field(
+        True, description="If true, include asset-level impacts."
+    )
+    include_measures: bool = Field(
+        False, description="If true, include calculation of risk measures."
+    )
+    include_calc_details: bool = Field(
+        True, description="If true, include impact calculation details."
+    )
+    use_case_id: str = Field(
+        "",
+        description="Identifier for 'use case' used in the risk measures calculation.",
+    )
     provider_max_requests: Dict[str, int] = Field(
         {},
         description="The maximum permitted number of requests \
         to external providers. This setting is intended in particular for paid-for data. The key is the provider \
         ID and the value is the maximum permitted requests.",
     )
-    scenarios: Optional[Sequence[str]] = Field([], description="Name of scenarios ('rcp8p5')")
+    scenarios: Optional[Sequence[str]] = Field(
+        [], description="Name of scenarios ('rcp8p5')"
+    )
     years: Optional[Sequence[int]] = Field(
         [],
         description="""Projection year (2030, 2050, 2080). Any year before 2030,
@@ -61,9 +81,12 @@ class RiskMeasureDefinition(BaseModel):
 
 
 class RiskScoreValue(BaseModel):
-    value: Category = Field("", description="Value of the score: red, amber, green, nodata.")
+    value: Category = Field(
+        "", description="Value of the score: red, amber, green, nodata."
+    )
     label: str = Field(
-        "", description="Short description of value, e.g. material increase in loss for 1-in-100 year event."
+        "",
+        description="Short description of value, e.g. material increase in loss for 1-in-100 year event.",
     )
     description: str = Field(
         "",
@@ -72,18 +95,23 @@ class RiskScoreValue(BaseModel):
     )
 
 
-class ScoreBasedRiskMeasureDefinition(BaseModel, frozen=True):
-    hazard_types: List[str] = Field([], description="Defines the hazards that the measure is used for.")
-    values: List[RiskScoreValue] = Field([], description="Defines the set of values that the score can take.")
+class ScoreBasedRiskMeasureDefinition(BaseModel):
+    hazard_types: List[str] = Field(
+        [], description="Defines the hazards that the measure is used for."
+    )
+    values: List[RiskScoreValue] = Field(
+        [], description="Defines the set of values that the score can take."
+    )
     underlying_measures: List[RiskMeasureDefinition] = Field(
-        [], description="Defines the underlying risk measures from which the scores are inferred."
+        [],
+        description="Defines the underlying risk measures from which the scores are inferred.",
     )
     # for now underlying measures defined directly rather than by referencing an ID via:
     # underlying_measure_ids: List[str] = Field(
     #    [], description="The identifiers of the underlying risk measures from which the scores are inferred."
     # )
 
-    # should be sufficient to pass frozen=True, but does not seem to work (pydantic docs says feature in beta)
+    # It is not enough to pass frozen=True, since not all attributes are hashable
     def __hash__(self):
         return id(self)
 
@@ -124,7 +152,9 @@ class AcuteHazardCalculationDetails(BaseModel):
     hazard_exceedance: ExceedanceCurve
     hazard_distribution: Distribution
     vulnerability_distribution: VulnerabilityDistrib
-    hazard_path: List[str] = Field("unknown", description="Path to the hazard indicator data source.")
+    hazard_path: List[str] = Field(
+        "unknown", description="Path to the hazard indicator data source."
+    )
 
 
 class ImpactKey(BaseModel):
@@ -136,6 +166,7 @@ class ImpactKey(BaseModel):
 class AssetSingleImpact(BaseModel):
     """Impact at level of single asset and single type of hazard."""
 
+    model_config = ConfigDict(arbitrary_types_allowed=True)
     key: ImpactKey
 
     @computed_field  # deprecated: use key instead
@@ -161,9 +192,6 @@ class AssetSingleImpact(BaseModel):
         description="""Details of impact calculation for acute hazard calculations.""",
     )
 
-    class Config:
-        arbitrary_types_allowed = True
-
 
 class AssetLevelImpact(BaseModel):
     """Impact at asset level. Each asset can have impacts for multiple hazard types."""
@@ -173,7 +201,9 @@ class AssetLevelImpact(BaseModel):
         description="""Asset identifier; will appear if provided in the request
         otherwise order of assets in response is identical to order of assets in request.""",
     )
-    impacts: List[AssetSingleImpact] = Field([], description="Impacts for each hazard type.")
+    impacts: List[AssetSingleImpact] = Field(
+        [], description="Impacts for each hazard type."
+    )
 
 
 class AssetImpactResponse(BaseModel):
@@ -196,12 +226,18 @@ class RiskMeasuresHelper:
 
     def _key(self, key: RiskMeasureKey):
         return self.Key(
-            hazard_type=key.hazard_type, scenario_id=key.scenario_id, year=key.year, measure_id=key.measure_id
+            hazard_type=key.hazard_type,
+            scenario_id=key.scenario_id,
+            year=key.year,
+            measure_id=key.measure_id,
         )
 
     def get_measure(self, hazard_type: str, scenario: str, year: int):
         measure_key = self.Key(
-            hazard_type=hazard_type, scenario_id=scenario, year=str(year), measure_id=self.measure_set_id
+            hazard_type=hazard_type,
+            scenario_id=scenario,
+            year=str(year),
+            measure_id=self.measure_set_id,
         )
         measure = self.measures[measure_key]
         asset_scores, asset_measures = (
@@ -212,11 +248,14 @@ class RiskMeasuresHelper:
         measure_ids = self.measure_definition.asset_measure_ids_for_hazard[hazard_type]
         # measure definitions for each asset
         measure_definitions = [
-            self.measure_definition.score_definitions[mid] if mid != "na" else None for mid in measure_ids
+            self.measure_definition.score_definitions[mid] if mid != "na" else None
+            for mid in measure_ids
         ]
         return asset_scores, asset_measures, measure_definitions
 
-    def get_score_details(self, score: int, definition: ScoreBasedRiskMeasureDefinition):
+    def get_score_details(
+        self, score: int, definition: ScoreBasedRiskMeasureDefinition
+    ):
         rs_value = next(v for v in definition.values if v.value == score)
         return rs_value.label, rs_value.description
 

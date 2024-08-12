@@ -6,12 +6,19 @@ import numpy as np
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import Asset, IndustrialActivity
-from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse, HazardParameterDataResponse
+from physrisk.kernel.hazard_model import (
+    HazardDataRequest,
+    HazardDataResponse,
+    HazardParameterDataResponse,
+)
 from physrisk.kernel.hazards import ChronicHeat
 from physrisk.kernel.impact import calculate_impacts
 from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
 from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels
-from physrisk.vulnerability_models.chronic_heat_models import ChronicHeatGZNModel, get_impact_distrib
+from physrisk.vulnerability_models.chronic_heat_models import (
+    ChronicHeatGZNModel,
+    get_impact_distrib,
+)
 
 from ..data.hazard_model_store_test import TestData, mock_hazard_model_store_heat_wbgt
 
@@ -22,10 +29,16 @@ class ExampleWBGTGZNJointModel(ChronicHeatGZNModel):
     results based on applying both GZN and WBGT"""
 
     def __init__(self, indicator_id: str = "mean_work_loss_high"):
-        super().__init__(indicator_id, ChronicHeat)  # opportunity to give a model hint, but blank here
+        super().__init__(
+            indicator_id, ChronicHeat
+        )  # opportunity to give a model hint, but blank here
 
     def work_type_mapping(self):
-        return {"low": ["low", "medium"], "medium": ["medium", "low", "high"], "high": ["high", "medium"]}
+        return {
+            "low": ["low", "medium"],
+            "medium": ["medium", "low", "high"],
+            "high": ["high", "medium"],
+        }
 
     def get_data_requests(
         self, asset: Asset, *, scenario: str, year: int
@@ -92,57 +105,83 @@ class ExampleWBGTGZNJointModel(ChronicHeatGZNModel):
             ),
         ] + wbgt_data_requests
 
-    def get_impact(self, asset: Asset, data_responses: List[HazardDataResponse]) -> ImpactDistrib:
+    def get_impact(
+        self, asset: Asset, data_responses: List[HazardDataResponse]
+    ) -> ImpactDistrib:
         """
         Function to return the impact distribution of the wbgt model.
         """
 
         assert isinstance(asset, IndustrialActivity)
-        wbgt_responses = [cast(HazardParameterDataResponse, r) for r in data_responses[2:]]
+        wbgt_responses = [
+            cast(HazardParameterDataResponse, r) for r in data_responses[2:]
+        ]
 
-        hazard_paths = [cast(HazardParameterDataResponse, r).path for r in data_responses]
+        hazard_paths = [
+            cast(HazardParameterDataResponse, r).path for r in data_responses
+        ]
 
         baseline_dd_above_mean = cast(HazardParameterDataResponse, data_responses[0])
         scenario_dd_above_mean = cast(HazardParameterDataResponse, data_responses[1])
 
         hours_worked = self.total_labour_hours
-        fraction_loss_mean_base_gzn = (baseline_dd_above_mean.parameter * self.time_lost_per_degree_day) / hours_worked
+        fraction_loss_mean_base_gzn = (
+            baseline_dd_above_mean.parameter * self.time_lost_per_degree_day
+        ) / hours_worked
 
         fraction_loss_mean_scenario_gzn = (
             scenario_dd_above_mean.parameter * self.time_lost_per_degree_day
         ) / hours_worked
 
-        fraction_loss_std_base = (baseline_dd_above_mean.parameter * self.time_lost_per_degree_day_se) / hours_worked
+        fraction_loss_std_base = (
+            baseline_dd_above_mean.parameter * self.time_lost_per_degree_day_se
+        ) / hours_worked
 
         fraction_loss_std_scenario = (
             scenario_dd_above_mean.parameter * self.time_lost_per_degree_day_se
         ) / hours_worked
 
-        baseline_work_ability = (1 - fraction_loss_mean_base_gzn) * (1 - wbgt_responses[0].parameter)
-        scenario_work_ability = (1 - fraction_loss_mean_scenario_gzn) * (1 - wbgt_responses[1].parameter)
+        baseline_work_ability = (1 - fraction_loss_mean_base_gzn) * (
+            1 - wbgt_responses[0].parameter
+        )
+        scenario_work_ability = (1 - fraction_loss_mean_scenario_gzn) * (
+            1 - wbgt_responses[1].parameter
+        )
 
         # Getting the parameters required for the uniform distribution.
         if asset.type in ["low", "high"]:
             a_historical = (
-                wbgt_responses[0].parameter - abs((wbgt_responses[2].parameter - wbgt_responses[0].parameter)) / 2
+                wbgt_responses[0].parameter
+                - abs((wbgt_responses[2].parameter - wbgt_responses[0].parameter)) / 2
             )
             b_historical = (
-                wbgt_responses[0].parameter + abs((wbgt_responses[2].parameter - wbgt_responses[0].parameter)) / 2
+                wbgt_responses[0].parameter
+                + abs((wbgt_responses[2].parameter - wbgt_responses[0].parameter)) / 2
             )
             a_scenario = (
-                wbgt_responses[1].parameter - abs((wbgt_responses[3].parameter - wbgt_responses[1].parameter)) / 2
+                wbgt_responses[1].parameter
+                - abs((wbgt_responses[3].parameter - wbgt_responses[1].parameter)) / 2
             )
             b_scenario = (
-                wbgt_responses[1].parameter + abs((wbgt_responses[3].parameter - wbgt_responses[1].parameter)) / 2
+                wbgt_responses[1].parameter
+                + abs((wbgt_responses[3].parameter - wbgt_responses[1].parameter)) / 2
             )
         elif asset.type == "medium":
-            a_historical = wbgt_responses[0].parameter - (wbgt_responses[2].parameter - wbgt_responses[0].parameter) / 2
-            b_historical = wbgt_responses[0].parameter + (wbgt_responses[4].parameter - wbgt_responses[0].parameter) / 2
+            a_historical = (
+                wbgt_responses[0].parameter
+                - (wbgt_responses[2].parameter - wbgt_responses[0].parameter) / 2
+            )
+            b_historical = (
+                wbgt_responses[0].parameter
+                + (wbgt_responses[4].parameter - wbgt_responses[0].parameter) / 2
+            )
             a_scenario = (
-                wbgt_responses[1].parameter - abs((wbgt_responses[3].parameter - wbgt_responses[1].parameter)) / 2
+                wbgt_responses[1].parameter
+                - abs((wbgt_responses[3].parameter - wbgt_responses[1].parameter)) / 2
             )
             b_scenario = (
-                wbgt_responses[1].parameter + abs((wbgt_responses[5].parameter - wbgt_responses[1].parameter)) / 2
+                wbgt_responses[1].parameter
+                + abs((wbgt_responses[5].parameter - wbgt_responses[1].parameter)) / 2
             )
 
         # Estimation of the variance
@@ -166,7 +205,13 @@ class ExampleWBGTGZNJointModel(ChronicHeatGZNModel):
 
         total_work_loss_delta: float = baseline_work_ability - scenario_work_ability
 
-        return get_impact_distrib(total_work_loss_delta, std_delta, ChronicHeat, hazard_paths, ImpactType.disruption)
+        return get_impact_distrib(
+            total_work_loss_delta,
+            std_delta,
+            ChronicHeat,
+            hazard_paths,
+            ImpactType.disruption,
+        )
 
 
 def two_variable_joint_variance(ex, varx, ey, vary):
@@ -180,19 +225,28 @@ class TestChronicAssetImpact(unittest.TestCase):
     """Tests the impact on an asset of a chronic hazard model."""
 
     def test_wbgt_vulnerability(self):
-        store = mock_hazard_model_store_heat_wbgt(TestData.longitudes, TestData.latitudes)
-        hazard_model = ZarrHazardModel(source_paths=get_default_source_paths(), store=store)
+        store = mock_hazard_model_store_heat_wbgt(
+            TestData.longitudes, TestData.latitudes
+        )
+        hazard_model = ZarrHazardModel(
+            source_paths=get_default_source_paths(), store=store
+        )
         # 'chronic_heat/osc/v2/mean_work_loss_high_ACCESS-CM2_historical_2005'
         scenario = "ssp585"
         year = 2050
 
-        vulnerability_models = DictBasedVulnerabilityModels({IndustrialActivity: [ExampleWBGTGZNJointModel()]})
+        vulnerability_models = DictBasedVulnerabilityModels(
+            {IndustrialActivity: [ExampleWBGTGZNJointModel()]}
+        )
 
         assets = [
-            IndustrialActivity(lat, lon, type="high") for lon, lat in zip(TestData.longitudes, TestData.latitudes)
+            IndustrialActivity(lat, lon, type="high")
+            for lon, lat in zip(TestData.longitudes, TestData.latitudes)
         ][:1]
 
-        results = calculate_impacts(assets, hazard_model, vulnerability_models, scenario=scenario, year=year)
+        results = calculate_impacts(
+            assets, hazard_model, vulnerability_models, scenario=scenario, year=year
+        )
 
         value_test = list(results.values())[0][0].impact.prob
 

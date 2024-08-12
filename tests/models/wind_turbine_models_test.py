@@ -15,7 +15,9 @@ TAsset = typing.TypeVar("TAsset", contravariant=True)
 
 
 class SupportsEventImpact(typing.Protocol[TAsset]):
-    def get_impact(self, asset: TAsset, event_data: HazardEventDataResponse) -> MultivariateDistribution:
+    def get_impact(
+        self, asset: TAsset, event_data: HazardEventDataResponse
+    ) -> MultivariateDistribution:
         pass
 
 
@@ -95,9 +97,15 @@ class TestWindTurbineModels:
         bins_upper = np.array([2.0, 3.0, 5.0, 5.5, 6.0])
         probs = np.array([[0.1, 0.2, 0.3, 0.2, 0.2], [0.1, 0.1, 0.1, 0.1, 0.6]])
         values, cum_probs = calculate_cumulative_probs(bins_lower, bins_upper, probs)
-        np.testing.assert_almost_equal(values, [2.0, 2.0, 3.0, 3.0, 4.0, 5.0, 5.5, 6.0, 6.0])
-        np.testing.assert_almost_equal(cum_probs[0, :], [0, 0.1, 0.1, 0.3, 0.3, 0.6, 0.8, 0.8, 1.0])
-        np.testing.assert_almost_equal(cum_probs[1, :], [0, 0.1, 0.1, 0.2, 0.2, 0.3, 0.4, 0.4, 1.0])
+        np.testing.assert_almost_equal(
+            values, [2.0, 2.0, 3.0, 3.0, 4.0, 5.0, 5.5, 6.0, 6.0]
+        )
+        np.testing.assert_almost_equal(
+            cum_probs[0, :], [0, 0.1, 0.1, 0.3, 0.3, 0.6, 0.8, 0.8, 1.0]
+        )
+        np.testing.assert_almost_equal(
+            cum_probs[1, :], [0, 0.1, 0.1, 0.2, 0.2, 0.3, 0.4, 0.4, 1.0]
+        )
 
     def test_sampling(self):
         """Test sampling from probability distributions comprising two lumped probabilities."""
@@ -127,7 +135,7 @@ class TestWindTurbineModels:
         gen = np.random.Generator(np.random.MT19937(111))
         uniforms = gen.random(size=(nb_events, nb_samples))
         samples = pdf.inv_cumulative_marginal_probs(uniforms)
-        for i in range(1000):
+        for _i in range(1000):
             uniforms = gen.random(size=(nb_events, nb_samples))
             samples = pdf.inv_cumulative_marginal_probs(uniforms)
         print(samples)
@@ -144,8 +152,12 @@ class TestWindTurbineModels:
         rng = np.random.Generator(np.random.MT19937(111))
         asset1, asset2 = WindTurbine(), WindTurbine()
         nb_events = 20
-        response_asset1 = HazardEventDataResponse(np.array([1.0]), np.array(rng.weibull(a=4, size=[1, nb_events])))
-        response_asset2 = HazardEventDataResponse(np.array([1.0]), np.array(rng.weibull(a=4, size=[1, nb_events])))
+        response_asset1 = HazardEventDataResponse(
+            np.array([1.0]), np.array(rng.weibull(a=4, size=[1, nb_events]))
+        )
+        response_asset2 = HazardEventDataResponse(
+            np.array([1.0]), np.array(rng.weibull(a=4, size=[1, nb_events]))
+        )
 
         turbine_model = WindTurbineModel()
 
@@ -160,5 +172,9 @@ class TestWindTurbineModels:
 
         # we can then combine samples and calculate measures...
         # for now just sanity-check that we get the approx. 0.3 of total loss in events from placeholder.
-        np.testing.assert_almost_equal(np.count_nonzero(samples_asset1 == 1.0) / samples_asset1.size, 0.31)
-        np.testing.assert_almost_equal(np.count_nonzero(samples_asset2 == 1.0) / samples_asset2.size, 0.31)
+        np.testing.assert_almost_equal(
+            np.count_nonzero(samples_asset1 == 1.0) / samples_asset1.size, 0.31
+        )
+        np.testing.assert_almost_equal(
+            np.count_nonzero(samples_asset2 == 1.0) / samples_asset2.size, 0.31
+        )

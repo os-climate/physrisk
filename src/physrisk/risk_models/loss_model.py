@@ -6,11 +6,17 @@ import numpy as np
 from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
 
 from ..kernel.assets import Asset
-from ..kernel.calculation import get_default_hazard_model, get_default_vulnerability_models
+from ..kernel.calculation import (
+    get_default_hazard_model,
+    get_default_vulnerability_models,
+)
 from ..kernel.financial_model import FinancialModelBase
 from ..kernel.hazard_model import HazardModel
 from ..kernel.impact import calculate_impacts
-from ..kernel.vulnerability_model import DictBasedVulnerabilityModels, VulnerabilityModels
+from ..kernel.vulnerability_model import (
+    DictBasedVulnerabilityModels,
+    VulnerabilityModels,
+)
 
 
 class Aggregator(ABC):
@@ -29,7 +35,9 @@ class LossModel:
         hazard_model: Optional[HazardModel] = None,
         vulnerability_models: Optional[VulnerabilityModels] = None,
     ):
-        self.hazard_model = get_default_hazard_model() if hazard_model is None else hazard_model
+        self.hazard_model = (
+            get_default_hazard_model() if hazard_model is None else hazard_model
+        )
         self.vulnerability_models = (
             DictBasedVulnerabilityModels(get_default_vulnerability_models())
             if vulnerability_models is None
@@ -54,7 +62,13 @@ class LossModel:
 
         aggregation_pools: Dict[str, np.ndarray] = {}
 
-        results = calculate_impacts(assets, self.hazard_model, self.vulnerability_models, scenario=scenario, year=year)
+        results = calculate_impacts(
+            assets,
+            self.hazard_model,
+            self.vulnerability_models,
+            scenario=scenario,
+            year=year,
+        )
         # the impacts in the results are either fractional damage or a fractional disruption
 
         rg = np.random.Generator(np.random.MT19937(seed=111))
@@ -71,9 +85,13 @@ class LossModel:
                 impact_samples = self.uncorrelated_samples(impact, sims, rg)
 
                 if impact.impact_type == ImpactType.damage:
-                    loss = financial_model.damage_to_loss(impact_key.asset, impact_samples, currency)
+                    loss = financial_model.damage_to_loss(
+                        impact_key.asset, impact_samples, currency
+                    )
                 else:  # impact.impact_type == ImpactType.disruption:
-                    loss = financial_model.disruption_to_loss(impact_key.asset, impact_samples, year, currency)
+                    loss = financial_model.disruption_to_loss(
+                        impact_key.asset, impact_samples, year, currency
+                    )
 
                 for key in keys:
                     if key not in aggregation_pools:
@@ -91,5 +109,7 @@ class LossModel:
 
         return measures
 
-    def uncorrelated_samples(self, impact: ImpactDistrib, samples: int, generator: np.random.Generator) -> np.ndarray:
+    def uncorrelated_samples(
+        self, impact: ImpactDistrib, samples: int, generator: np.random.Generator
+    ) -> np.ndarray:
         return impact.to_exceedance_curve().get_samples(generator.uniform(size=samples))

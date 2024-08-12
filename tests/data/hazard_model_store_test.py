@@ -49,11 +49,26 @@ class ZarrStoreMocker:
         units: str = "default",
     ):
         crs = "epsg:4326"
-        crs, shape, trans = self._crs_shape_transform_global(return_periods=return_periods, width=width, height=height)
-        self._add_curves(array_path, longitudes, latitudes, crs, shape, trans, return_periods, intensities, units=units)
+        crs, shape, trans = self._crs_shape_transform_global(
+            return_periods=return_periods, width=width, height=height
+        )
+        self._add_curves(
+            array_path,
+            longitudes,
+            latitudes,
+            crs,
+            shape,
+            trans,
+            return_periods,
+            intensities,
+            units=units,
+        )
 
     def _crs_shape_transform_global(
-        self, width: int = 43200, height: int = 21600, return_periods: Union[List[float], npt.NDArray] = [0.0]
+        self,
+        width: int = 43200,
+        height: int = 21600,
+        return_periods: Union[List[float], npt.NDArray] = [0.0],
     ):
         return self._crs_shape_transform(width, height, return_periods)
 
@@ -70,7 +85,10 @@ class ZarrStoreMocker:
         units: str = "default",
     ):
         z = self._root.create_dataset(  # type: ignore
-            array_path, shape=(shape[0], shape[1], shape[2]), chunks=(shape[0], 1000, 1000), dtype="f4"
+            array_path,
+            shape=(shape[0], shape[1], shape[2]),
+            chunks=(shape[0], 1000, 1000),
+            dtype="f4",
         )
         z.attrs["transform_mat3x3"] = trans
         z.attrs["index_values"] = return_periods
@@ -96,13 +114,20 @@ class ZarrStoreMocker:
         for j in range(len(x)):
             z[:, image_coords[1, j], image_coords[0, j]] = intensities
 
-    def _crs_shape_transform(self, width: int, height: int, return_periods: Union[List[float], npt.NDArray] = [0.0]):
+    def _crs_shape_transform(
+        self,
+        width: int,
+        height: int,
+        return_periods: Union[List[float], npt.NDArray] = [0.0],
+    ):
         t = [360.0 / width, 0.0, -180.0, 0.0, -180.0 / height, 90.0, 0.0, 0.0, 1.0]
         return "epsg:4326", (len(return_periods), height, width), t
 
 
 def shape_transform_21600_43200(
-    width: int = 43200, height: int = 21600, return_periods: Union[List[float], npt.NDArray] = [0.0]
+    width: int = 43200,
+    height: int = 21600,
+    return_periods: Union[List[float], npt.NDArray] = [0.0],
 ):
     t = [360.0 / width, 0.0, -180.0, 0.0, -180.0 / height, 90.0, 0.0, 0.0, 1.0]
     return (len(return_periods), height, width), t
@@ -124,7 +149,10 @@ def add_curves(
     trans: List[float],
 ):
     z = root.create_dataset(  # type: ignore
-        array_path, shape=(shape[0], shape[1], shape[2]), chunks=(shape[0], 1000, 1000), dtype="f4"
+        array_path,
+        shape=(shape[0], shape[1], shape[2]),
+        chunks=(shape[0], 1000, 1000),
+        dtype="f4",
     )
     z.attrs["transform_mat3x3"] = trans
     z.attrs["index_values"] = return_periods
@@ -146,13 +174,28 @@ def get_mock_hazard_model_store_single_curve():
     is applied at all locations."""
 
     return_periods = inundation_return_periods()
-    t = [0.008333333333333333, 0.0, -180.0, 0.0, -0.008333333333333333, 90.0, 0.0, 0.0, 1.0]
+    t = [
+        0.008333333333333333,
+        0.0,
+        -180.0,
+        0.0,
+        -0.008333333333333333,
+        90.0,
+        0.0,
+        0.0,
+        1.0,
+    ]
     shape = (len(return_periods), 21600, 43200)
     store = zarr.storage.MemoryStore(root="hazard.zarr")
     root = zarr.open(store=store, mode="w")
-    array_path = get_source_path_wri_riverine_inundation(model="MIROC-ESM-CHEM", scenario="rcp8p5", year=2080)
+    array_path = get_source_path_wri_riverine_inundation(
+        model="MIROC-ESM-CHEM", scenario="rcp8p5", year=2080
+    )
     z = root.create_dataset(  # type: ignore
-        array_path, shape=(shape[0], shape[1], shape[2]), chunks=(shape[0], 1000, 1000), dtype="f4"
+        array_path,
+        shape=(shape[0], shape[1], shape[2]),
+        chunks=(shape[0], 1000, 1000),
+        dtype="f4",
     )
     z.attrs["transform_mat3x3"] = t
     z.attrs["index_values"] = return_periods
@@ -173,15 +216,21 @@ def get_mock_hazard_model_store_single_curve():
 
 
 def mock_hazard_model_store_heat(longitudes, latitudes):
-    return mock_hazard_model_store_for_parameter_sets(longitudes, latitudes, degree_day_heat_parameter_set())
+    return mock_hazard_model_store_for_parameter_sets(
+        longitudes, latitudes, degree_day_heat_parameter_set()
+    )
 
 
 def mock_hazard_model_store_heat_wbgt(longitudes, latitudes):
-    return mock_hazard_model_store_for_parameter_sets(longitudes, latitudes, wbgt_gzn_joint_parameter_set())
+    return mock_hazard_model_store_for_parameter_sets(
+        longitudes, latitudes, wbgt_gzn_joint_parameter_set()
+    )
 
 
 def mock_hazard_model_store_inundation(longitudes, latitudes, curve):
-    return mock_hazard_model_store_single_curve_for_paths(longitudes, latitudes, curve, inundation_paths)
+    return mock_hazard_model_store_single_curve_for_paths(
+        longitudes, latitudes, curve, inundation_paths
+    )
 
 
 def mock_hazard_model_store_for_parameter_sets(longitudes, latitudes, path_parameters):
@@ -191,12 +240,24 @@ def mock_hazard_model_store_for_parameter_sets(longitudes, latitudes, path_param
     return_periods = None
     shape = (1, 21600, 43200)
 
-    t = [0.008333333333333333, 0.0, -180.0, 0.0, -0.008333333333333333, 90.0, 0.0, 0.0, 1.0]
+    t = [
+        0.008333333333333333,
+        0.0,
+        -180.0,
+        0.0,
+        -0.008333333333333333,
+        90.0,
+        0.0,
+        0.0,
+        1.0,
+    ]
     store = zarr.storage.MemoryStore(root="hazard.zarr")
     root = zarr.open(store=store, mode="w")
 
     for path, parameter in path_parameters.items():
-        add_curves(root, longitudes, latitudes, path, shape, parameter, return_periods, t)
+        add_curves(
+            root, longitudes, latitudes, path, shape, parameter, return_periods, t
+        )
 
     return store
 
@@ -205,9 +266,15 @@ def mock_hazard_model_store_single_curve_for_paths(longitudes, latitudes, curve,
     """Create a MemoryStore for creation of Zarr hazard model to be used with unit tests,
     with the specified longitudes and latitudes set to the curve supplied."""
 
-    return_periods = [0.0] if len(curve) == 1 else [2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0]
+    return_periods = (
+        [0.0]
+        if len(curve) == 1
+        else [2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0]
+    )
     if len(curve) != len(return_periods):
-        raise ValueError(f"curve must be single value or of length {len(return_periods)}")
+        raise ValueError(
+            f"curve must be single value or of length {len(return_periods)}"
+        )
 
     shape, t = shape_transform_21600_43200(return_periods=return_periods)
     store, root = zarr_memory_store()
@@ -222,11 +289,23 @@ def inundation_return_periods():
     return [2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0]
 
 
-def mock_hazard_model_store_path_curves(longitudes, latitudes, path_curves: Dict[str, np.ndarray]):
+def mock_hazard_model_store_path_curves(
+    longitudes, latitudes, path_curves: Dict[str, np.ndarray]
+):
     """Create a MemoryStore for creation of Zarr hazard model to be used with unit tests,
     with the specified longitudes and latitudes set to the curve supplied."""
 
-    t = [0.008333333333333333, 0.0, -180.0, 0.0, -0.008333333333333333, 90.0, 0.0, 0.0, 1.0]
+    t = [
+        0.008333333333333333,
+        0.0,
+        -180.0,
+        0.0,
+        -0.008333333333333333,
+        90.0,
+        0.0,
+        0.0,
+        1.0,
+    ]
     store = zarr.storage.MemoryStore(root="hazard.zarr")
     root = zarr.open(store=store, mode="w")
 
@@ -237,7 +316,9 @@ def mock_hazard_model_store_path_curves(longitudes, latitudes, path_curves: Dict
         else:
             return_periods = [2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 250.0, 500.0, 1000.0]
             if len(curve) != len(return_periods):
-                raise ValueError(f"curve must be single value or of length {len(return_periods)}")
+                raise ValueError(
+                    f"curve must be single value or of length {len(return_periods)}"
+                )
             shape = (len(return_periods), 21600, 43200)
 
         add_curves(root, longitudes, latitudes, path, shape, curve, return_periods, t)
@@ -254,7 +335,9 @@ def degree_day_heat_parameter_set():
         ("mean_degree_days/above/32c/ACCESS-CM2", "ssp585", 2050),
         ("mean_degree_days/below/32c/ACCESS-CM2", "ssp585", 2050),
     ]:
-        paths.append(get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year))
+        paths.append(
+            get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year)
+        )
     parameters = [300, 300, 600, -200]
     return dict(zip(paths, parameters))
 
@@ -268,28 +351,43 @@ def wbgt_gzn_joint_parameter_set():
         ("mean_degree_days/above/32c/ACCESS-CM2", "ssp585", 2050),
         ("mean_degree_days/below/32c/ACCESS-CM2", "ssp585", 2050),
     ]:
-        paths.append(get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year))
+        paths.append(
+            get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year)
+        )
     for model, scenario, year in [
         ("mean_work_loss/high/ACCESS-CM2", "historical", 2005),  # 2005
         ("mean_work_loss/medium/ACCESS-CM2", "historical", 2005),
         ("mean_work_loss/high/ACCESS-CM2", "ssp585", 2050),
         ("mean_work_loss/medium/ACCESS-CM2", "ssp585", 2050),
     ]:
-        paths.append(get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year))
+        paths.append(
+            get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year)
+        )
     parameters = [300, 300, 600, -200, 0.05, 0.003, 0.11, 0.013]
     return dict(zip(paths, parameters))
 
 
 def inundation_paths():
     paths = []
-    for model, scenario, year in [("MIROC-ESM-CHEM", "rcp8p5", 2080), ("000000000WATCH", "historical", 1980)]:
-        paths.append(get_source_path_wri_riverine_inundation(model=model, scenario=scenario, year=year))
+    for model, scenario, year in [
+        ("MIROC-ESM-CHEM", "rcp8p5", 2080),
+        ("000000000WATCH", "historical", 1980),
+    ]:
+        paths.append(
+            get_source_path_wri_riverine_inundation(
+                model=model, scenario=scenario, year=year
+            )
+        )
     for model, scenario, year in [
         ("wtsub/95", "rcp8p5", "2080"),
         ("wtsub", "historical", "hist"),
         ("nosub", "historical", "hist"),
     ]:
-        paths.append(get_source_path_wri_coastal_inundation(model=model, scenario=scenario, year=year))
+        paths.append(
+            get_source_path_wri_coastal_inundation(
+                model=model, scenario=scenario, year=year
+            )
+        )
     return paths
 
 
@@ -308,16 +406,22 @@ def get_source_path_wri_coastal_inundation(*, model: str, scenario: str, year: s
     model_components = model.split("/")
     sub = model_components[0]
     if sub not in _subsidence_set:
-        raise ValueError("expected model input of the form {subsidence/percentile}, e.g. wtsub/95, nosub/5, wtsub/50")
+        raise ValueError(
+            "expected model input of the form {subsidence/percentile}, e.g. wtsub/95, nosub/5, wtsub/50"
+        )
     perc = "95" if len(model_components) == 1 else model_components[1]
     return os.path.join(
-        _wri_inundation_prefix(), f"inun{type}_{cmip6_scenario_to_rcp(scenario)}_{sub}_{year}_{_percentiles_map[perc]}"
+        _wri_inundation_prefix(),
+        f"inun{type}_{cmip6_scenario_to_rcp(scenario)}_{sub}_{year}_{_percentiles_map[perc]}",
     )
 
 
 def get_source_path_wri_riverine_inundation(*, model: str, scenario: str, year: int):
     type = "river"
-    return os.path.join(_wri_inundation_prefix(), f"inun{type}_{cmip6_scenario_to_rcp(scenario)}_{model}_{year}")
+    return os.path.join(
+        _wri_inundation_prefix(),
+        f"inun{type}_{cmip6_scenario_to_rcp(scenario)}_{model}_{year}",
+    )
 
 
 def _osc_chronic_heat_prefix():
@@ -331,12 +435,20 @@ def get_source_path_osc_chronic_heat(*, model: str, scenario: str, year: int):
         assert levels[0] in ["above", "below"]  # above or below
         assert levels[1] in ["18c", "32c"]  # threshold temperature
         assert levels[2] in ["ACCESS-CM2"]  # gcms
-        return _osc_chronic_heat_prefix() + "/" + f"{type}_v2_{levels[0]}_{levels[1]}_{levels[2]}_{scenario}_{year}"
+        return (
+            _osc_chronic_heat_prefix()
+            + "/"
+            + f"{type}_v2_{levels[0]}_{levels[1]}_{levels[2]}_{scenario}_{year}"
+        )
 
     elif type == "mean_work_loss":
         assert levels[0] in ["low", "medium", "high"]  # work intensity
         assert levels[1] in ["ACCESS-CM2"]  # gcms
-        return _osc_chronic_heat_prefix() + "/" + f"{type}_{levels[0]}_{levels[1]}_{scenario}_{year}"
+        return (
+            _osc_chronic_heat_prefix()
+            + "/"
+            + f"{type}_{levels[0]}_{levels[1]}_{scenario}_{year}"
+        )
 
     else:
         raise ValueError("valid types are {valid_types}")

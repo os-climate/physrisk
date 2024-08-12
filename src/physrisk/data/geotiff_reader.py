@@ -37,7 +37,13 @@ def dataset_read_bounded(dataset, longitudes, latitudes, window_half_width=0.01)
     offsets = [[0, 0], [-hw, -hw], [-hw, hw], [hw, hw], [hw, -hw]]
     points = []
     for offset in offsets:
-        points = chain(points, [[lon + offset[0], lat + offset[1]] for (lon, lat) in zip(longitudes, latitudes)])
+        points = chain(
+            points,
+            [
+                [lon + offset[0], lat + offset[1]]
+                for (lon, lat) in zip(longitudes, latitudes)
+            ],
+        )
 
     samples = np.array(list(rasterio.sample.sample_gen(dataset, points)))
     samples.resize([len(offsets), len(longitudes)])

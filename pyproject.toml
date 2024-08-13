@@ -97,6 +97,10 @@ complete = { call = "tasks.complete:main", help = "Create autocomplete files for
 [tool.pytest.ini_options]
 testpaths = "tests"
 addopts = "-v"
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)s] %(message)s (%(filename)s:%(lineno)s)"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 #addopts = "--cov --cov-report html --cov-report term-missing --cov-fail-under 95"
 
 [tool.mypy]

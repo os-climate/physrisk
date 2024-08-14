@@ -105,6 +105,7 @@ def calculate_impacts(  # noqa: C901
                     )
                 ] = []
             if any(isinstance(hd, HazardDataFailedResponse) for hd in hazard_data):
+                # TODO log this!
                 continue
             try:
                 if isinstance(model, VulnerabilityModelAcuteBase):

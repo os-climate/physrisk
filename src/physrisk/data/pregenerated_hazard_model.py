@@ -123,6 +123,7 @@ class PregeneratedHazardModel(HazardModel):
                     )
         except Exception as err:
             # e.g. the requested data is unavailable
+            # TODO log this!
             for _i, req in enumerate(batch):
                 responses[req] = HazardDataFailedResponse(err)
         return

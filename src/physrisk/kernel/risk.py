@@ -128,9 +128,11 @@ class RiskMeasureCalculator(Protocol):
 
     def supported_hazards(self) -> Set[type]: ...
 
-    def aggregate_risk_measures(self, measures: Dict[MeasureKey, Measure]) -> Dict[MeasureKey, Measure]:
+    def aggregate_risk_measures(
+        self, measures: Dict[MeasureKey, Measure]
+    ) -> Dict[MeasureKey, Measure]:
         return measures
-        
+
 
 class RiskMeasuresFactory(Protocol):
     def calculators(self, use_case_id: str) -> Dict[Type[Asset], RiskMeasureCalculator]:
@@ -251,8 +253,12 @@ class AssetLevelRiskModel(RiskModel):
                         ]
                         if 0 < len(risk_ind):
                             # TODO: Aggregate  measures instead of picking the first value.
-                            measures[MeasureKey(asset, prosp_scen, year, hazard_type)] = risk_ind[0]
+                            measures[
+                                MeasureKey(asset, prosp_scen, year, hazard_type)
+                            ] = risk_ind[0]
                         else:
-                            measures[MeasureKey(asset, prosp_scen, year, hazard_type)] = None
+                            measures[
+                                MeasureKey(asset, prosp_scen, year, hazard_type)
+                            ] = None
             aggregated_measures.update(measure_calc.aggregate_risk_measures(measures))
         return impacts, aggregated_measures

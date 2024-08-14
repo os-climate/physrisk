@@ -6,7 +6,12 @@ import numpy as np
 from dependency_injector import providers
 
 from physrisk import requests
-from physrisk.api.v1.impact_req_resp import AssetImpactResponse, Category, RiskMeasureKey, RiskMeasuresHelper
+from physrisk.api.v1.impact_req_resp import (
+    AssetImpactResponse,
+    Category,
+    RiskMeasureKey,
+    RiskMeasuresHelper,
+)
 from physrisk.container import Container
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.hazard_models.core_hazards import get_default_source_paths
@@ -30,7 +35,12 @@ from physrisk.requests import _create_risk_measures
 from physrisk.risk_models.generic_risk_model import GenericScoreBasedRiskMeasures
 from physrisk.risk_models.risk_models import RealEstateToyRiskMeasures
 from physrisk.vulnerability_models.example_models import PlaceholderVulnerabilityModel
-from physrisk.vulnerability_models.real_estate_models import GenericTropicalCycloneModel, RealEstateCoastalInundationModel, RealEstatePluvialInundationModel, RealEstateRiverineInundationModel
+from physrisk.vulnerability_models.real_estate_models import (
+    GenericTropicalCycloneModel,
+    RealEstateCoastalInundationModel,
+    RealEstatePluvialInundationModel,
+    RealEstateRiverineInundationModel,
+)
 from tests.api.container_test import TestContainer
 
 from ..base_test import TestWithCredentials
@@ -342,8 +352,10 @@ class TestRiskModels(TestWithCredentials):
         scenarios = ["rcp8p5"]
         years = [2050]
 
-        assets = [Asset(TestData.latitudes[0], TestData.longitudes[0]) for i in range(2)]
-        #assets = [RealEstateAsset(TestData.latitudes[0], TestData.longitudes[0], location="Asia", type="Buildings/Industrial") for i in range(2)]
+        assets = [
+            Asset(TestData.latitudes[0], TestData.longitudes[0]) for i in range(2)
+        ]
+        # assets = [RealEstateAsset(TestData.latitudes[0], TestData.longitudes[0], location="Asia", type="Buildings/Industrial") for i in range(2)]
         hazard_model = self._create_hazard_model(scenarios, years)
 
         model_set = [
@@ -352,23 +364,25 @@ class TestRiskModels(TestWithCredentials):
             RealEstatePluvialInundationModel(),
             GenericTropicalCycloneModel(),
             PlaceholderVulnerabilityModel("fire_probability", Fire, ImpactType.damage),
-            PlaceholderVulnerabilityModel("days/above/35c", ChronicHeat, ImpactType.damage),
+            PlaceholderVulnerabilityModel(
+                "days/above/35c", ChronicHeat, ImpactType.damage
+            ),
             PlaceholderVulnerabilityModel("days/above/5cm", Hail, ImpactType.damage),
-            PlaceholderVulnerabilityModel("months/spei3m/below/-2", Drought, ImpactType.damage),
-            PlaceholderVulnerabilityModel("max/daily/water_equivalent", Precipitation, ImpactType.damage),
+            PlaceholderVulnerabilityModel(
+                "months/spei3m/below/-2", Drought, ImpactType.damage
+            ),
+            PlaceholderVulnerabilityModel(
+                "max/daily/water_equivalent", Precipitation, ImpactType.damage
+            ),
         ]
 
-        vulnerability_models = {
-            Asset: model_set,
-            RealEstateAsset: model_set
-        }
+        vulnerability_models = {Asset: model_set, RealEstateAsset: model_set}
 
         generic_measures = GenericScoreBasedRiskMeasures()
         model = AssetLevelRiskModel(
             hazard_model,
             DictBasedVulnerabilityModels(vulnerability_models),
-            {Asset: generic_measures,
-             RealEstateAsset: generic_measures},
+            {Asset: generic_measures, RealEstateAsset: generic_measures},
         )
         measure_ids_for_asset, definitions = model.populate_measure_definitions(assets)
         _, measures = model.calculate_risk_measures(
@@ -378,4 +392,7 @@ class TestRiskModels(TestWithCredentials):
             measures[MeasureKey(assets[0], scenarios[0], years[0], Wind)].measure_0,
             214.01549835205077,
         )
-        np.testing.assert_equal(measures[MeasureKey(assets[0], scenarios[0], years[0], Drought)].score, Category.HIGH)
+        np.testing.assert_equal(
+            measures[MeasureKey(assets[0], scenarios[0], years[0], Drought)].score,
+            Category.HIGH,
+        )

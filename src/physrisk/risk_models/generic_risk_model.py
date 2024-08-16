@@ -1,7 +1,7 @@
 import math
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, Dict, Sequence, Set, Tuple, Type
+from typing import Any, Callable, Dict, List, Sequence, Set, Tuple, Type
 
 import numpy as np
 from pint import UnitRegistry
@@ -57,9 +57,9 @@ class HazardIndicatorBounds:
     indicator_id: str
     units: str
     indicator_return: float
-    categories: Sequence[Category]
-    lower: Sequence[float]
-    upper: Sequence[float]
+    categories: List[Category]
+    lower: List[float]
+    upper: List[float]
 
 
 class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):

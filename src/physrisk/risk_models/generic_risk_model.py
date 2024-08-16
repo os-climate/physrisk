@@ -12,6 +12,7 @@ from physrisk.api.v1.impact_req_resp import (
     RiskScoreValue,
     ScoreBasedRiskMeasureDefinition,
 )
+from physrisk.kernel.assets import Asset
 from physrisk.kernel.hazard_model import (
     HazardEventDataResponse,
     HazardParameterDataResponse,
@@ -262,7 +263,9 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
     def _definition_values(
         self,
         bounds: HazardIndicatorBounds,
-        label_description: Callable[[HazardIndicatorBounds], Tuple[str, str]],
+        label_description: Callable[
+            [HazardIndicatorBounds, float, float], Tuple[str, str]
+        ],
     ):
         risk_score_values = []
         for category, lower, upper in zip(
@@ -492,16 +495,22 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
         )
 
     def aggregate_risk_measures(
-        self, measures: Dict[MeasureKey, Measure]
+        self,
+        measures: Dict[MeasureKey, Measure],
+        assets: Sequence[Asset],
+        prosp_scens: Sequence[str],
+        years: Sequence[int],
     ) -> Dict[MeasureKey, Measure]:
         aggregate_measures = {}
-        for key, value in measures.items():
-            if key.hazard_type == PluvialInundation and (
-                value is None or value.score == Category.NODATA
-            ):
-                aggregate_measures[key] = measures[
-                    MeasureKey(key.asset, key.prosp_scen, key.year, Precipitation)
-                ]
-            else:
-                aggregate_measures[key] = value
+        aggregate_measures.update(measures)
+        for asset in assets:
+            for scenario in prosp_scens:
+                for year in years:
+                    # if the Precipitation measures exists but the corresponding PluvialInundation
+                    # is not present, proxy PluvialInundation to Precipitation
+                    from_key = MeasureKey(asset, scenario, year, PluvialInundation)
+                    if from_key not in measures:
+                        to_key = MeasureKey(asset, scenario, year, Precipitation)
+                        if to_key in measures:
+                            aggregate_measures[from_key] = measures[to_key]
         return aggregate_measures

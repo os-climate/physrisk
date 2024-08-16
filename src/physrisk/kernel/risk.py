@@ -120,7 +120,19 @@ class RiskMeasureCalculator(Protocol):
         hazard_type: Type[Hazard],
         base_impact: AssetImpactResult,
         impact: AssetImpactResult,
-    ) -> Optional[Measure]: ...
+    ) -> Optional[Measure]:
+        """Calculate the Measure (score-based risk measure) for the hazard,
+        given the base (i.e. historical) and future asset-level impact.
+
+        Args:
+            hazard_type (Type[Hazard]): Hazard type.
+            base_impact (AssetImpactResult): Historical asset-level impact.
+            impact (AssetImpactResult): Future asset-level impact.
+
+        Returns:
+            Optional[Measure]: Score-based risk measure.
+        """
+        ...
 
     def get_definition(
         self, hazard_type: Type[Hazard]
@@ -129,8 +141,24 @@ class RiskMeasureCalculator(Protocol):
     def supported_hazards(self) -> Set[type]: ...
 
     def aggregate_risk_measures(
-        self, measures: Dict[MeasureKey, Measure]
+        self,
+        measures: Dict[MeasureKey, Measure],
+        assets: Sequence[Asset],
+        prosp_scens: Sequence[str],
+        years: Sequence[int],
     ) -> Dict[MeasureKey, Measure]:
+        """The RiskMeasureCalculator can aggregate child hazards into parent hazards
+        or proxy one hazard to another. If no aggregation or proxying is needed, the measures
+        input is returned unchanged.
+
+        Args:
+            measures (Dict[MeasureKey, Measure]): Score-based risk measures.
+            prosp_scens (Sequence[str]): Requested prospective scenarios.
+            years (Sequence[int]): Requested prospective years.
+
+        Returns:
+            Dict[MeasureKey, Measure]: Aggregated or proxied score-based risk measures.
+        """
         return measures
 
 
@@ -251,14 +279,14 @@ class AssetLevelRiskModel(RiskModel):
                         risk_ind = [
                             risk_ind for risk_ind in risk_inds if risk_ind is not None
                         ]
-                        if 0 < len(risk_ind):
+                        if len(risk_ind) > 0:
                             # TODO: Aggregate  measures instead of picking the first value.
                             measures[
                                 MeasureKey(asset, prosp_scen, year, hazard_type)
                             ] = risk_ind[0]
-                        else:
-                            measures[
-                                MeasureKey(asset, prosp_scen, year, hazard_type)
-                            ] = None
-            aggregated_measures.update(measure_calc.aggregate_risk_measures(measures))
+            aggregated_measures.update(
+                measure_calc.aggregate_risk_measures(
+                    measures, assets, prosp_scens, years
+                )
+            )
         return impacts, aggregated_measures

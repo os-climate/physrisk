@@ -1,5 +1,6 @@
 import concurrent.futures
 from collections import defaultdict
+import logging
 from typing import Dict, List, Mapping, MutableMapping, Optional, Type
 
 import numpy as np
@@ -16,6 +17,8 @@ from ..kernel.hazard_model import (
     HazardParameterDataResponse,
 )
 from .hazard_data_provider import HazardDataProvider, SourcePath
+
+logger = logging.getLogger(__name__)
 
 
 class PregeneratedHazardModel(HazardModel):
@@ -66,6 +69,7 @@ class PregeneratedHazardModel(HazardModel):
         batch: List[HazardDataRequest],
         responses: MutableMapping[HazardDataRequest, HazardDataResponse],
     ):
+        failures = []
         try:
             hazard_type, indicator_id, scenario, year, hint, buffer = (
                 batch[0].hazard_type,
@@ -77,17 +81,24 @@ class PregeneratedHazardModel(HazardModel):
             )
             longitudes = [req.longitude for req in batch]
             latitudes = [req.latitude for req in batch]
+
+            try:
+                hazard_data_provider = self.hazard_data_providers[hazard_type]
+            except Exception:
+                raise Exception(
+                    f"no hazard data provider for hazard type {hazard_type.__name__}."
+                )
             if indicator_data(hazard_type, indicator_id) == IndicatorData.EVENT:
-                intensities, return_periods, units, path = self.hazard_data_providers[
-                    hazard_type
-                ].get_data(
-                    longitudes,
-                    latitudes,
-                    indicator_id=indicator_id,
-                    scenario=scenario,
-                    year=year,
-                    hint=hint,
-                    buffer=buffer,
+                intensities, return_periods, units, path = (
+                    hazard_data_provider.get_data(
+                        longitudes,
+                        latitudes,
+                        indicator_id=indicator_id,
+                        scenario=scenario,
+                        year=year,
+                        hint=hint,
+                        buffer=buffer,
+                    )
                 )
 
                 for i, req in enumerate(batch):
@@ -105,9 +116,7 @@ class PregeneratedHazardModel(HazardModel):
                         valid_periods, valid_intensities, units, path
                     )
             else:  # type: ignore
-                parameters, defns, units, path = self.hazard_data_providers[
-                    hazard_type
-                ].get_data(
+                parameters, defns, units, path = hazard_data_provider.get_data(
                     longitudes,
                     latitudes,
                     indicator_id=indicator_id,
@@ -123,9 +132,19 @@ class PregeneratedHazardModel(HazardModel):
                     )
         except Exception as err:
             # e.g. the requested data is unavailable
-            # TODO log this!
             for _i, req in enumerate(batch):
-                responses[req] = HazardDataFailedResponse(err)
+                failed_response = HazardDataFailedResponse(err)
+                responses[req] = failed_response
+                failures.append(failed_response)
+
+        if any(failures):
+            logger.error(
+                f"{len(failures)} errors in batch (hazard_type={hazard_type.__name__}, indicator_id={indicator_id}, "
+                f"scenario={scenario}, year={year}): (logs limited to first 3)"
+            )
+            errors = (str(i.error) for i in failures)
+            for _ in range(3):
+                logger.error(next(errors))
         return
 
 

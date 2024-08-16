@@ -78,15 +78,18 @@ def calculate_impacts(  # noqa: C901
 
     logging.info("Calculating impacts")
     for model, assets in model_assets.items():
+        assert isinstance(model, VulnerabilityModelBase)
         logging.info(
-            "Applying vulnerability model {0} to {1} assets of type {2}".format(
-                type(model).__name__, len(assets), type(assets[0]).__name__
+            "Applying vulnerability model {0} for hazard {1} to {2} assets of type {3}".format(
+                type(model).__name__,
+                model.hazard_type.__name__,
+                len(assets),
+                type(assets[0]).__name__,
             )
         )
         for asset in assets:
             requests = asset_requests[(model, asset)]
             hazard_data = [responses[req] for req in get_iterable(requests)]
-            assert isinstance(model, VulnerabilityModelBase)
             if (
                 ImpactKey(
                     asset=asset,
@@ -105,7 +108,7 @@ def calculate_impacts(  # noqa: C901
                     )
                 ] = []
             if any(isinstance(hd, HazardDataFailedResponse) for hd in hazard_data):
-                # TODO log this!
+                # the failed responses should have been logged already
                 continue
             try:
                 if isinstance(model, VulnerabilityModelAcuteBase):

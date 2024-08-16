@@ -1,13 +1,13 @@
 import os
 from pathlib import PurePosixPath
-from typing import Callable, MutableMapping, Optional
+from typing import Any, Callable, MutableMapping, Optional, Sequence, Union
 
 import numpy as np
 import s3fs
 import zarr
 from affine import Affine
 from pyproj import Transformer
-from shapely import MultiPoint, Point, affinity
+from shapely import MultiPoint, Point, affinity, Polygon
 
 
 def get_env(key: str, default: Optional[str] = None) -> str:
@@ -80,7 +80,13 @@ class ZarrReader:
         )
         return store
 
-    def get_curves(self, set_id, longitudes, latitudes, interpolation="floor"):
+    def get_curves(
+        self,
+        set_id: str,
+        longitudes: Union[np.ndarray, Sequence[float]],
+        latitudes: Union[np.ndarray, Sequence[float]],
+        interpolation="floor",
+    ):
         """Get intensity curve for each latitude and longitude coordinate pair.
 
         Args:
@@ -148,7 +154,9 @@ class ZarrReader:
             index_values = [0]
         return index_values
 
-    def get_max_curves(self, set_id, shapes, interpolation="floor"):
+    def get_max_curves(
+        self, set_id: str, shapes: Sequence[Polygon], interpolation: str = "floor"
+    ):
         """Get maximal intensity curve for a given geometry.
 
         Args:

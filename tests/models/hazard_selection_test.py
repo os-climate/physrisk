@@ -20,7 +20,7 @@ from tests.data.hazard_model_store_test import (
 
 
 def test_tudelft_selection():
-    inventory: Inventory = EmbeddedInventory()
+    inventory = EmbeddedInventory()
     source_paths = CoreInventorySourcePaths(
         inventory, flood_model=CoreFloodModels.TUDelft
     ).source_paths()
@@ -39,7 +39,7 @@ def test_tudelft_selection():
 
 
 def test_customize_hazard_selection():
-    inventory: Inventory = EmbeddedInventory()
+    inventory = EmbeddedInventory()
 
     source_path_selectors = CoreInventorySourcePaths(inventory)
 

@@ -152,9 +152,8 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 RiskMeasureDefinition(
                     measure_id="measure_wind",
                     label="1-in-100 year 1 minute sustained wind speed score.",
-                    description=(
-                        "Score based on 1-in-100 year 1 minute sustained wind speed (in km/hr)."
-                    ),
+                    description=("1-in-100 year 1 minute sustained wind speed."),
+                    units="km/hr",
                 )
             ],
         )
@@ -166,9 +165,9 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
             underlying_measures=[
                 RiskMeasureDefinition(
                     measure_id="measure_hail",
-                    label="Score based on number of days per year where large hail (>2 inches / 5 cm in diameter) is possible.",
+                    label="Number of days per year where large hail (>2 inches / 5 cm in diameter) is possible.",
                     description=(
-                        "Score based on number of days per year where large hail (>2 inches / 5 cm in diameter) is possible."
+                        "Number of days per year where large hail (>2 inches / 5 cm in diameter) is possible."
                     ),
                 )
             ],
@@ -182,11 +181,11 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 RiskMeasureDefinition(
                     measure_id="measure_drought",
                     label=(
-                        "Score based on months per year where the rolling 3-month average Standardized Precipitation "
+                        "Months per year where the rolling 3-month average Standardized Precipitation "
                         "Evapotranspiration Index is <2."
                     ),
                     description=(
-                        "Score based on months per year where the rolling 3-month average Standardized Precipitation "
+                        "Months per year where the rolling 3-month average Standardized Precipitation "
                         "Evapotranspiration Index is <2."
                     ),
                 )
@@ -200,12 +199,9 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
             underlying_measures=[
                 RiskMeasureDefinition(
                     measure_id="measure_fire",
-                    label=(
-                        "Score based on the maximum value, across all months, of the monthly probability of a wildfire within "
-                        "100km of the location."
-                    ),
+                    label=("Wildfire probability."),
                     description=(
-                        "Score based on the maximum value, across all months, of the monthly probability of a wildfire within "
+                        "Maximum value, across all months, of the monthly probability of a wildfire within "
                         "100km of the location."
                     ),
                 )
@@ -219,10 +215,11 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
             underlying_measures=[
                 RiskMeasureDefinition(
                     measure_id="measure_precipitation",
-                    label="Score based on 1-in-100 year maximum daily total water equivalent precipitation (in mm).",
+                    label="1-in-100 year maximum daily total water equivalent precipitation.",
                     description=(
-                        "Score based on 1-in-100 year maximum daily total water equivalent precipitation (in mm)."
+                        "1-in-100 year maximum daily total water equivalent precipitation."
                     ),
+                    units="mm",
                 )
             ],
         )
@@ -234,10 +231,9 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
             underlying_measures=[
                 RiskMeasureDefinition(
                     measure_id="measure_chronicHeat",
-                    label="Score based on days per year with temperature > 35°C.",
-                    description=(
-                        "Score based on days per year with temperature > 35°C."
-                    ),
+                    label="Days per year with temperature > 35°C.",
+                    description=("Days per year with temperature > 35°C."),
+                    units="days/year",
                 )
             ],
         )

@@ -73,7 +73,7 @@ class TestDataRequests(TestWithCredentials):
         assert result_flood == "inundation/wri/v2/inunriver_rcp8p5_MIROC-ESM-CHEM_2050"
         assert (
             result_flood_hist
-            == "inundation/wri/v2/inunriver_historical_000000000WATCH_1980"
+            == "inundation/wri/v2/inunriver_rcp4p5_MIROC-ESM-CHEM_2030"
         )
         assert (
             result_heat_hint

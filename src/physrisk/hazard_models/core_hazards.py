@@ -142,12 +142,10 @@ class InventorySourcePaths:
                 if scenarios is None:
                     scenarios = next(
                         s
-                        for s in sorted(
-                            resource.scenarios, key=lambda s: next(y for y in s.years)
-                        )
+                        for s in sorted(resource.scenarios, key=lambda s: min(s.years))
                     )
                 proxy_scenario = scenarios.id
-                year = next(s for s in scenarios.years)
+                year = min(scenarios.years)
             return resource.path.format(
                 id=indicator_id, scenario=proxy_scenario, year=year
             )
@@ -216,11 +214,7 @@ class CoreInventorySourcePaths(InventorySourcePaths):
         year: int,
         hint: Optional[HazardDataHint] = None,
     ):
-        return (
-            candidates.with_model_id("nosub").first()
-            if scenario == "historical"
-            else candidates.with_model_id("wtsub/95").first()
-        )
+        return candidates.with_model_id("wtsub/95").first()
 
     @staticmethod
     def _select_riverine_inundation(
@@ -229,11 +223,7 @@ class CoreInventorySourcePaths(InventorySourcePaths):
         year: int,
         hint: Optional[HazardDataHint] = None,
     ):
-        return (
-            candidates.with_model_gcm("historical").first()
-            if scenario == "historical"
-            else candidates.with_model_gcm("MIROC-ESM-CHEM").first()
-        )
+        return candidates.with_model_gcm("MIROC-ESM-CHEM").first()
 
     @staticmethod
     def _select_riverine_inundation_tudelft(

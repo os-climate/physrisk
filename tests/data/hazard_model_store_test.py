@@ -370,8 +370,8 @@ def wbgt_gzn_joint_parameter_set():
 def inundation_paths():
     paths = []
     for model, scenario, year in [
+        ("MIROC-ESM-CHEM", "rcp4p5", 2030),
         ("MIROC-ESM-CHEM", "rcp8p5", 2080),
-        ("000000000WATCH", "historical", 1980),
     ]:
         paths.append(
             get_source_path_wri_riverine_inundation(
@@ -380,6 +380,7 @@ def inundation_paths():
         )
     for model, scenario, year in [
         ("wtsub/95", "rcp8p5", "2080"),
+        ("wtsub/95", "rcp4p5", "2030"),
         ("wtsub", "historical", "hist"),
         ("nosub", "historical", "hist"),
     ]:

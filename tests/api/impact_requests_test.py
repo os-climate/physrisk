@@ -267,7 +267,7 @@ class TestImpactRequests(TestWithCredentials):
             root,
             longitudes,
             latitudes,
-            "inundation/wri/v2/inunriver_rcp8p5_MIROC-ESM-CHEM_2030",
+            "inundation/wri/v2/inunriver_rcp4p5_MIROC-ESM-CHEM_2030",
             shape,
             np.array(
                 [

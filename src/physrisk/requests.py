@@ -599,7 +599,9 @@ def _create_risk_measures(
         score_based_measure_set_defn=score_based_measure_set_defn,
         measures_definitions=None,
         scenarios=[Scenario(id=scenario, years=list(years)) for scenario in scenarios],
-        asset_ids=[f"asset_{i}" for i, _ in enumerate(assets)],
+        asset_ids=[
+            f"asset_{i}" if a.id is None else a.id for i, a in enumerate(assets)
+        ],
     )
 
 

@@ -108,6 +108,7 @@ class TestRiskModels(TestWithCredentials):
                 TestData.longitudes[0],
                 location="Asia",
                 type="Buildings/Industrial",
+                id=f"unique_asset_{i}",
             )
             for i in range(2)
         ]
@@ -353,7 +354,8 @@ class TestRiskModels(TestWithCredentials):
         years = [2050]
 
         assets = [
-            Asset(TestData.latitudes[0], TestData.longitudes[0]) for i in range(2)
+            Asset(TestData.latitudes[0], TestData.longitudes[0], id=f"unique_id_{i}")
+            for i in range(2)
         ]
         # assets = [RealEstateAsset(TestData.latitudes[0], TestData.longitudes[0], location="Asia", type="Buildings/Industrial") for i in range(2)]
         hazard_model = self._create_hazard_model(scenarios, years)

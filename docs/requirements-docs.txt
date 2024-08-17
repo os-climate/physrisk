@@ -1,6 +1,6 @@
 sphinx==5.3.0
 sphinxcontrib-details-directive
-numpydoc==1.0.0
+numpydoc==1.8.0
 sphinx-copybutton==0.5.0
 myst-nb==0.16.0
 pydata-sphinx-theme==0.15.3

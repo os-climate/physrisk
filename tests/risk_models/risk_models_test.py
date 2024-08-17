@@ -5,8 +5,10 @@ from typing import Dict, Sequence
 import numpy as np
 from dependency_injector import providers
 
+from physrisk import requests
 from physrisk.api.v1.impact_req_resp import (
     AssetImpactResponse,
+    Category,
     RiskMeasureKey,
     RiskMeasuresHelper,
 )
@@ -26,11 +28,20 @@ from physrisk.kernel.hazards import (
     RiverineInundation,
     Wind,
 )
+from physrisk.kernel.impact_distrib import ImpactType
 from physrisk.kernel.risk import AssetLevelRiskModel, MeasureKey
 from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels
 from physrisk.requests import _create_risk_measures
 from physrisk.risk_models.generic_risk_model import GenericScoreBasedRiskMeasures
 from physrisk.risk_models.risk_models import RealEstateToyRiskMeasures
+from physrisk.vulnerability_models.example_models import PlaceholderVulnerabilityModel
+from physrisk.vulnerability_models.real_estate_models import (
+    GenericTropicalCycloneModel,
+    RealEstateCoastalInundationModel,
+    RealEstatePluvialInundationModel,
+    RealEstateRiverineInundationModel,
+)
+from tests.api.container_test import TestContainer
 
 from ..base_test import TestWithCredentials
 from ..data.hazard_model_store_test import (
@@ -97,6 +108,7 @@ class TestRiskModels(TestWithCredentials):
                 TestData.longitudes[0],
                 location="Asia",
                 type="Buildings/Industrial",
+                id=f"unique_asset_{i}",
             )
             for i in range(2)
         ]
@@ -261,7 +273,7 @@ class TestRiskModels(TestWithCredentials):
             TestData.longitudes,
             TestData.latitudes,
             [0],
-            [9],
+            [0.8],
         )
         mocker.add_curves_global(
             sp_precipitation("historical", -1),
@@ -342,14 +354,37 @@ class TestRiskModels(TestWithCredentials):
         years = [2050]
 
         assets = [
-            Asset(TestData.latitudes[0], TestData.longitudes[0]) for i in range(2)
+            Asset(TestData.latitudes[0], TestData.longitudes[0], id=f"unique_id_{i}")
+            for i in range(2)
         ]
+        # assets = [RealEstateAsset(TestData.latitudes[0], TestData.longitudes[0], location="Asia", type="Buildings/Industrial") for i in range(2)]
         hazard_model = self._create_hazard_model(scenarios, years)
 
+        model_set = [
+            RealEstateCoastalInundationModel(),
+            RealEstateRiverineInundationModel(),
+            RealEstatePluvialInundationModel(),
+            GenericTropicalCycloneModel(),
+            PlaceholderVulnerabilityModel("fire_probability", Fire, ImpactType.damage),
+            PlaceholderVulnerabilityModel(
+                "days/above/35c", ChronicHeat, ImpactType.damage
+            ),
+            PlaceholderVulnerabilityModel("days/above/5cm", Hail, ImpactType.damage),
+            PlaceholderVulnerabilityModel(
+                "months/spei3m/below/-2", Drought, ImpactType.damage
+            ),
+            PlaceholderVulnerabilityModel(
+                "max/daily/water_equivalent", Precipitation, ImpactType.damage
+            ),
+        ]
+
+        vulnerability_models = {Asset: model_set, RealEstateAsset: model_set}
+
+        generic_measures = GenericScoreBasedRiskMeasures()
         model = AssetLevelRiskModel(
             hazard_model,
-            DictBasedVulnerabilityModels(get_default_vulnerability_models()),
-            {Asset: GenericScoreBasedRiskMeasures()},
+            DictBasedVulnerabilityModels(vulnerability_models),
+            {Asset: generic_measures, RealEstateAsset: generic_measures},
         )
         measure_ids_for_asset, definitions = model.populate_measure_definitions(assets)
         _, measures = model.calculate_risk_measures(
@@ -358,4 +393,8 @@ class TestRiskModels(TestWithCredentials):
         np.testing.assert_approx_equal(
             measures[MeasureKey(assets[0], scenarios[0], years[0], Wind)].measure_0,
             214.01549835205077,
+        )
+        np.testing.assert_equal(
+            measures[MeasureKey(assets[0], scenarios[0], years[0], Drought)].score,
+            Category.HIGH,
         )

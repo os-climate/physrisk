@@ -136,6 +136,11 @@ class InventorySourcePaths:
                 else scenario
             )
             if scenario == "historical":
+                # there are some cases where there is no historical scenario or -
+                # more commonly - we do not want to use. We have seen cases where there is
+                # an apparent inconsistency.
+                # in such cases we allow for a proxy whereby the earliest year of the scenario with
+                # lowest net flux in the identifier is used.
                 scenarios = next(
                     iter(s for s in resource.scenarios if s.id == "historical"), None
                 )
@@ -223,6 +228,8 @@ class CoreInventorySourcePaths(InventorySourcePaths):
         year: int,
         hint: Optional[HazardDataHint] = None,
     ):
+        # we use this GCM, even for the historical scenario, where the earliest year is used.
+        # because of noted discontinuities between baseline and GCM data sets.
         return candidates.with_model_gcm("MIROC-ESM-CHEM").first()
 
     @staticmethod

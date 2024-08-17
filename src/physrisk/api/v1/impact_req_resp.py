@@ -74,10 +74,13 @@ class Category(int, Enum):
 class RiskMeasureDefinition(BaseModel):
     measure_id: str = Field(None, description="Identifier for the risk measure.")
     label: str = Field(
-        "<short description of the measure, e.g. fractional loss for 1-in-100 year event.",
-        description="Value of the score.",
+        "<short description of the measure, e.g. fractional loss for 1-in-100 year event>",
+        description="Short label for the measure quantity.",
     )
     description: str
+    units: str = Field(
+        "", description="Units; if no units an empty string is expected."
+    )
 
 
 class RiskScoreValue(BaseModel):

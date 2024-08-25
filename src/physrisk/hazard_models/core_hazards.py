@@ -10,6 +10,11 @@ from physrisk.kernel.hazards import (
     CoastalInundation,
     RiverineInundation,
     Wind,
+    ChronicWind,
+    Fire,
+    WaterRisk,
+    Landslide,
+    Subsidence,
 )
 
 
@@ -194,9 +199,19 @@ class CoreInventorySourcePaths(InventorySourcePaths):
             else self._select_riverine_inundation_tudelft,
         )
         self.add_selector(
-            CoastalInundation, "flood_depth", self._select_coastal_inundation
+            CoastalInundation,
+            "flood_depth",
+            self._select_coastal_inundation
+            if flood_model == CoreFloodModels.WRI
+            else self._select_coastal_inundation_tudelft,
         )
         self.add_selector(Wind, "max_speed", self._select_wind)
+
+        self.add_selector(ChronicWind, "wind25", self._select_chronicwind)
+        self.add_selector(Fire, "fwi20", self._select_fire)
+        self.add_selector(WaterRisk, "water_stress", self._select_water_stress)
+        self.add_selector(Landslide, "susceptability", self._select_landslide)
+        self.add_selector(Subsidence, "susceptability", self._select_subsidence)
 
     def resources_with(self, *, hazard_type: type, indicator_id: str):
         return ResourceSubset(
@@ -242,6 +257,15 @@ class CoreInventorySourcePaths(InventorySourcePaths):
         return candidates.with_model_id("tudelft").first()
 
     @staticmethod
+    def _select_coastal_inundation_tudelft(
+        candidates: ResourceSubset,
+        scenario: str,
+        year: int,
+        hint: Optional[HazardDataHint] = None,
+    ):
+        return candidates.with_group_id("coastal_tudelft").first()
+
+    @staticmethod
     def _select_wind(
         candidates: ResourceSubset,
         scenario: str,
@@ -249,6 +273,51 @@ class CoreInventorySourcePaths(InventorySourcePaths):
         hint: Optional[HazardDataHint] = None,
     ):
         return candidates.prefer_group_id("iris_osc").first()
+
+    @staticmethod
+    def _select_chronicwind(
+        candidates: ResourceSubset,
+        scenario: str,
+        year: int,
+        hint: Optional[HazardDataHint] = None,
+    ):
+        return candidates.with_group_id("wind_tudelft").first()
+
+    @staticmethod
+    def _select_fire(
+        candidates: ResourceSubset,
+        scenario: str,
+        year: int,
+        hint: Optional[HazardDataHint] = None,
+    ):
+        return candidates.with_group_id("fire_tudelft").first()
+
+    @staticmethod
+    def _select_water_stress(
+        candidates: ResourceSubset,
+        scenario: str,
+        year: int,
+        hint: Optional[HazardDataHint] = None,
+    ):
+        return candidates.first()
+
+    @staticmethod
+    def _select_landslide(
+        candidates: ResourceSubset,
+        scenario: str,
+        year: int,
+        hint: Optional[HazardDataHint] = None,
+    ):
+        return candidates.with_group_id("landslide_jrc").first()
+
+    @staticmethod
+    def _select_subsidence(
+        candidates: ResourceSubset,
+        scenario: str,
+        year: int,
+        hint: Optional[HazardDataHint] = None,
+    ):
+        return candidates.with_group_id("subsidence_jrc").first()
 
 
 def cmip6_scenario_to_rcp(scenario: str):
@@ -267,7 +336,18 @@ def cmip6_scenario_to_rcp(scenario: str):
     elif scenario == "ssp585":
         return "rcp8p5"
     else:
-        if scenario not in ["rcp2p6", "rcp4p5", "rcp6p0", "rcp8p5", "historical"]:
+        if scenario not in [
+            "rcp2p6",
+            "rcp4p5",
+            "rcp6p0",
+            "rcp8p5",
+            "historical",
+            # Added while the data is in the dev bucket with the old naming.
+            "rcp26",
+            "rcp45",
+            "rcp60",
+            "rcp85",
+        ]:
             raise ValueError(f"unexpected scenario {scenario}")
         return scenario
 

@@ -3,18 +3,15 @@ from typing import Dict, List, Optional, Sequence
 
 import numpy as np
 
-from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
+from ..kernel.impact_distrib import ImpactDistrib, ImpactType
 
 from ..kernel.assets import Asset
-from ..kernel.calculation import (
-    get_default_hazard_model,
-    get_default_vulnerability_models,
-)
+from ..kernel.calculation import get_default_hazard_model
 from ..kernel.financial_model import FinancialModelBase
 from ..kernel.hazard_model import HazardModel
 from ..kernel.impact import calculate_impacts
 from ..kernel.vulnerability_model import (
-    DictBasedVulnerabilityModels,
+    DictBasedVulnerabilityModelsFactory,
     VulnerabilityModels,
 )
 
@@ -34,15 +31,16 @@ class LossModel:
         self,
         hazard_model: Optional[HazardModel] = None,
         vulnerability_models: Optional[VulnerabilityModels] = None,
+        use_case_id: str = "DEFAULT",
     ):
         self.hazard_model = (
             get_default_hazard_model() if hazard_model is None else hazard_model
         )
-        self.vulnerability_models = (
-            DictBasedVulnerabilityModels(get_default_vulnerability_models())
-            if vulnerability_models is None
-            else vulnerability_models
-        )
+        if vulnerability_models is None:
+            factory = DictBasedVulnerabilityModelsFactory(use_case_id)
+            self.vulnerability_models = factory.vulnerability_models()
+        else:
+            self.vulnerability_models = vulnerability_models
 
     """Calculates the financial impact on a list of assets."""
 

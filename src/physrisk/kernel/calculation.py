@@ -1,4 +1,5 @@
-from typing import Dict, Sequence, Type
+from typing import Dict, Optional, Sequence, Type
+
 
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.hazard_models.core_hazards import get_default_source_paths
@@ -6,7 +7,10 @@ from physrisk.kernel.hazards import ChronicHeat, Drought, Fire, Hail, Precipitat
 from physrisk.kernel.impact_distrib import ImpactType
 from physrisk.kernel.risk import RiskMeasureCalculator, RiskMeasuresFactory
 from physrisk.risk_models.generic_risk_model import GenericScoreBasedRiskMeasures
-from physrisk.risk_models.risk_models import RealEstateToyRiskMeasures
+from physrisk.risk_models.risk_models import (
+    RealEstateToyRiskMeasures,
+    ThermalPowerPlantsRiskMeasures,
+)
 from physrisk.vulnerability_models import power_generating_asset_models as pgam
 from physrisk.vulnerability_models.chronic_heat_models import ChronicHeatGZNModel
 from physrisk.vulnerability_models.example_models import PlaceholderVulnerabilityModel
@@ -16,6 +20,7 @@ from physrisk.vulnerability_models.real_estate_models import (
     RealEstateCoastalInundationModel,
     RealEstateRiverineInundationModel,
 )
+
 from physrisk.vulnerability_models.thermal_power_generation_models import (
     Asset,
     ThermalPowerGenerationAirTemperatureModel,
@@ -24,17 +29,22 @@ from physrisk.vulnerability_models.thermal_power_generation_models import (
     ThermalPowerGenerationRiverineInundationModel,
     ThermalPowerGenerationWaterStressModel,
     ThermalPowerGenerationWaterTemperatureModel,
+    ThermalPowerGenerationSevereConvectiveWindstormModel,
+    ThermalPowerGenerationHighFireModel,
+    ThermalPowerGenerationAqueductWaterRiskModel,
+    ThermalPowerGenerationLandslideModel,
+    ThermalPowerGenerationSubsidenceModel,
 )
 
-from .assets import (
+from physrisk.kernel.assets import (
     IndustrialActivity,
     PowerGeneratingAsset,
     RealEstateAsset,
     TestAsset,
     ThermalPowerGeneratingAsset,
 )
-from .hazard_model import HazardModel
-from .vulnerability_model import VulnerabilityModelBase
+from physrisk.kernel.hazard_model import HazardModel
+from physrisk.kernel.vulnerability_model import VulnerabilityModelBase
 
 
 def get_default_hazard_model() -> HazardModel:
@@ -83,13 +93,60 @@ def get_default_vulnerability_models() -> Dict[type, Sequence[VulnerabilityModel
     }
 
 
-def get_default_risk_measure_calculators() -> Dict[Type[Asset], RiskMeasureCalculator]:
+def get_stress_test_vulnerability_models() -> (
+    Dict[type, Sequence[VulnerabilityModelBase]]
+):
+    """Get exposure/vulnerability models for different asset types.
+
+    This set uses the data used in the stress test article from the ECB.
+    """
+    return {
+        PowerGeneratingAsset: [pgam.InundationModel()],
+        RealEstateAsset: [
+            RealEstateCoastalInundationModel(),
+            RealEstateRiverineInundationModel(),
+            GenericTropicalCycloneModel(),
+            CoolingModel(),
+        ],
+        IndustrialActivity: [ChronicHeatGZNModel()],
+        ThermalPowerGeneratingAsset: [
+            ThermalPowerGenerationCoastalInundationModel(),
+            ThermalPowerGenerationRiverineInundationModel(),
+            ThermalPowerGenerationSevereConvectiveWindstormModel(),
+            ThermalPowerGenerationHighFireModel(),
+            ThermalPowerGenerationAqueductWaterRiskModel(),
+            ThermalPowerGenerationLandslideModel(),
+            ThermalPowerGenerationSubsidenceModel(),
+        ],
+        TestAsset: [pgam.TemperatureModel()],
+    }
+
+
+def get_default_risk_measure_calculators() -> Dict[type, RiskMeasureCalculator]:
     """For asset-level risk measure, define the measure calculators to use."""
     return {RealEstateAsset: RealEstateToyRiskMeasures()}
 
 
+def get_stress_test_risk_measure_calculators() -> Dict[type, RiskMeasureCalculator]:
+    """For asset-level stress test risk measure, define the measure calculators to use."""
+    return {ThermalPowerGeneratingAsset: ThermalPowerPlantsRiskMeasures()}
+
+
+def get_generic_risk_measure_calculators() -> Dict[type, RiskMeasureCalculator]:
+    """For asset-level generic risk measure, define the measure calculators to use."""
+    return {Asset: GenericScoreBasedRiskMeasures()}
+
+
 class DefaultMeasuresFactory(RiskMeasuresFactory):
-    def calculators(self, use_case_id: str) -> Dict[Type[Asset], RiskMeasureCalculator]:
-        if use_case_id == "generic":
-            return {Asset: GenericScoreBasedRiskMeasures()}
-        return get_default_risk_measure_calculators()
+    """Factory class for selecting appropriate risk measure calculators based on the use case."""
+
+    def calculators(
+        self, use_case_id: str = ""
+    ) -> Dict[Type[Asset], RiskMeasureCalculator]:
+        """Get the appropriate risk measure calculators based on the use case identifier."""
+        if use_case_id.upper() == "DEFAULT":
+            return get_default_risk_measure_calculators()
+        elif use_case_id.upper() == "STRESS_TEST":
+            return get_stress_test_risk_measure_calculators()
+        else:
+            return get_generic_risk_measure_calculators()

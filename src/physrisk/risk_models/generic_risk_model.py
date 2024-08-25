@@ -63,7 +63,9 @@ class HazardIndicatorBounds:
 
 
 class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
-    """A generic score based risk measure. 'Generic' indicates that the user of the score is unknown.
+    """A generic score based risk measure.
+
+    'Generic' indicates that the user of the score is unknown.
     i.e. it is unknown whether the user owns the assets in question, or interested in the assets from
     the point of view of loan origination or project financing.
     """

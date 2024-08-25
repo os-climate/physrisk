@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Dict, List, Optional, Union
 
 import numpy as np

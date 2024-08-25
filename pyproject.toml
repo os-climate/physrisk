@@ -73,10 +73,13 @@ include = ["physrisk*"]
 
 [tool.pdm.dev-dependencies]
 test = [
-  "pdm[pytest]",
-  "pytest",
-  "pytest-cov",
-  "sphinx-pyproject"
+    "pdm[pytest]",
+    "pytest",
+    "pytest-cov",
+    "sphinx-pyproject",
+    "pandas>=2.0.3",
+    "dependency-injector>=4.41.0",
+    "geopandas<1.0,>=0.13.2",
 ]
 dev = [
     "mypy",

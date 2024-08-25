@@ -40,6 +40,51 @@ class TurbineKind(Enum):
 
 
 class Asset:
+    """Class holding information about an asset that is used by vulnerability models.
+
+    Generic vulnerability models
+    ----------------------------
+    Generic vulnerability models cover a significant number of use-cases. For example, inundation vulnerability
+    models for a wide variety of assets may apply vulnerability curves which are looked up from the different
+    attributes of the asset (e.g. occupancy identifier and properties such as number of storeys).
+
+    Asset class sub-types
+    ---------------------
+    There may be cases however where vulnerability models have specificities associated with the class of the
+    asset. For example, thermal power generating assets might require a model for estimating efficiency loss as air
+    temperature rises. Such a model and its inputs are quite specific to the asset class and it can be convenient
+    to define a vulnerability model to encapsulate that logic. To this end, a number of asset classes, sub-types of
+    Asset as defined to facilitate plugging in of different vulnerability models.
+
+    Adherence to conventions
+    ------------------------
+    In general asset attributes should follow the Open Exposure Data (OED) standard.
+    OED and NACE codes contribute to naming of asset sub-types although as noted above, sub-types are defined at
+    the level of granularity to facilitate the plugging in of different models defined in code.
+
+    Asset 'archetypes' for sectorial models
+    ---------------------------------------
+    Calculations might have detailed asset information from which precise vulnerability functions can be
+    obtained, but sometimes - for example in the case of sectorial calculations - information might be limited to
+    the broad category of the asset. This can be specified via `type` (aka asset type as distinct from asset class)
+    and `location` attributes of assets.
+
+    Current Asset sub-type classes are:
+
+    AgricultureAsset
+    ConstructionAsset
+    OilGasAsset
+    ManufacturingAsset
+    PowerGeneratingAsset
+    RealEstateAsset
+    TransportationAsset
+    UtilityAsset
+
+    It is emphasized that the sub-types exist to facilitate development of plug-in models which can each deal with
+    a large number of types of asset.
+
+    """
+
     def __init__(
         self, latitude: float, longitude: float, id: Optional[str] = None, **kwargs
     ):
@@ -49,15 +94,43 @@ class Asset:
         self.__dict__.update(kwargs)
 
 
-# WindFarm as separate
-@dataclass
-class WindTurbine(Asset):
-    capacity: Optional[float] = None
-    hub_height: Optional[float] = None
-    cut_in_speed: Optional[float] = None
-    cut_out_speed: Optional[float] = None
-    fixed_base: Optional[bool] = True
-    rotor_diameter: Optional[float] = None
+class AgricultureAsset(Asset):
+    def __init__(
+        self, latitude: float, longitude: float, *, location: str, type: str, **kwargs
+    ):
+        super().__init__(latitude, longitude, **kwargs)
+        self.location = location
+        self.type = type
+
+
+class IndustrialActivity(Asset):
+    def __init__(
+        self,
+        latitude: float,
+        longitude: float,
+        *,
+        location: Optional[str] = None,
+        type: str,
+        **kwargs,
+    ):
+        super().__init__(latitude, longitude, **kwargs)
+        self.location = location
+        self.type = type
+
+
+class ManufacturingAsset(Asset):
+    def __init__(
+        self,
+        latitude: float,
+        longitude: float,
+        *,
+        location: Optional[str] = None,
+        type: Optional[str] = None,
+        **kwargs,
+    ):
+        super().__init__(latitude, longitude, **kwargs)
+        self.location = location
+        self.type = type
 
 
 class PowerGeneratingAsset(Asset):
@@ -82,6 +155,15 @@ class PowerGeneratingAsset(Asset):
             archetypes = type.split("/")
             if 0 < len(archetypes):
                 self.primary_fuel = FuelKind[archetypes[0]]
+
+
+class RealEstateAsset(Asset):
+    def __init__(
+        self, latitude: float, longitude: float, *, location: str, type: str, **kwargs
+    ):
+        super().__init__(latitude, longitude, **kwargs)
+        self.location = location
+        self.type = type
 
 
 class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
@@ -125,7 +207,11 @@ class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
         return 250.0
 
 
-class RealEstateAsset(Asset):
+class TestAsset(Asset):
+    pass
+
+
+class TransportationAsset(Asset):
     def __init__(
         self, latitude: float, longitude: float, *, location: str, type: str, **kwargs
     ):
@@ -134,35 +220,20 @@ class RealEstateAsset(Asset):
         self.type = type
 
 
-class ManufacturingAsset(Asset):
+class UtilityAsset(Asset):
     def __init__(
-        self,
-        latitude: float,
-        longitude: float,
-        *,
-        location: Optional[str] = None,
-        type: Optional[str] = None,
-        **kwargs,
+        self, latitude: float, longitude: float, *, location: str, type: str, **kwargs
     ):
         super().__init__(latitude, longitude, **kwargs)
         self.location = location
         self.type = type
 
 
-class IndustrialActivity(Asset):
-    def __init__(
-        self,
-        latitude: float,
-        longitude: float,
-        *,
-        location: Optional[str] = None,
-        type: str,
-        **kwargs,
-    ):
-        super().__init__(latitude, longitude, **kwargs)
-        self.location = location
-        self.type = type
-
-
-class TestAsset(Asset):
-    pass
+@dataclass
+class WindTurbine(Asset):
+    capacity: Optional[float] = None
+    hub_height: Optional[float] = None
+    cut_in_speed: Optional[float] = None
+    cut_out_speed: Optional[float] = None
+    fixed_base: Optional[bool] = True
+    rotor_diameter: Optional[float] = None

@@ -90,7 +90,7 @@ pre_release = "scripts/dev-versioning.sh"
 release = "scripts/release-versioning.sh"
 test = "pytest"
 tox = "tox"
-docs = { shell = "cd docs && mkdocs serve", help = "Start the dev server for doc preview" }
+docs = { shell = "cd docs && make html", help = "Start the dev server for doc preview" }
 lint = "pre-commit run --all-files"
 complete = { call = "tasks.complete:main", help = "Create autocomplete files for bash and fish" }
 all = {composite = ["pytest", "lint"]}

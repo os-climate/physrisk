@@ -31,7 +31,9 @@ class Store(Protocol):
 
 
 def to_json(store: Store, prefix: str = ""):
-    return json.dumps({k: json.loads(v) for k, v in store.getall(prefix).items()}, indent=4)
+    return json.dumps(
+        {k: json.loads(v) for k, v in store.getall(prefix).items()}, indent=4
+    )
 
 
 class LMDBStore(Store):
@@ -53,11 +55,15 @@ class LMDBStore(Store):
 
     def getall(self, prefix: str = ""):
         with Lmdb.open(self._file, "r") as db:
-            return {k.decode(): v for k, v in db.items() if k.decode().startswith(prefix)}
+            return {
+                k.decode(): v for k, v in db.items() if k.decode().startswith(prefix)
+            }
 
 
 class MemoryStore(Store):
-    def __init__(self, file: Optional[str] = None, values: Optional[Dict[str, str]] = None):
+    def __init__(
+        self, file: Optional[str] = None, values: Optional[Dict[str, str]] = None
+    ):
         self._dict = {}
         if file is not None and os.path.exists(file):
             with open(file, "r") as f:

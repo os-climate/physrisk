@@ -9,9 +9,15 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-#from deepdiff import DeepDiff
+# from deepdiff import DeepDiff
 
-from physrisk.hazard_models.hazard_cache import H3BasedCache, LMDBStore, MemoryStore, Store, to_json
+from physrisk.hazard_models.hazard_cache import (
+    H3BasedCache,
+    LMDBStore,
+    MemoryStore,
+    Store,
+    to_json,
+)
 
 
 class NumpyArrayEncoder(json.JSONEncoder):
@@ -26,7 +32,10 @@ def log_to_stdout():
     logging.basicConfig(
         level=logging.INFO,
         format="[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s",
-        handlers=[logging.FileHandler(filename="test.log"), logging.StreamHandler(sys.stdout)],
+        handlers=[
+            logging.FileHandler(filename="test.log"),
+            logging.StreamHandler(sys.stdout),
+        ],
     )
 
 
@@ -98,7 +107,12 @@ def hazard_dir():
 
 
 def get_result_expected(result: str, func_name: str, update_expected: bool):
-    path = pathlib.Path(__file__).parent / "test_data" / "expected" / (func_name.replace(".", "-") + ".json")
+    path = (
+        pathlib.Path(__file__).parent
+        / "test_data"
+        / "expected"
+        / (func_name.replace(".", "-") + ".json")
+    )
     if update_expected:
         with open(path, "w") as f:
             f.write(result)

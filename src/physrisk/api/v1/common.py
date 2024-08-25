@@ -89,7 +89,8 @@ class IntensityCurve(BaseModel):
 
     intensities: List[float] = Field([], description="Hazard indicator intensities.")
     return_periods: Optional[Sequence[float]] = Field(
-        [], description="[Deprecated] Return period in years in the case of an acute hazard."
+        [],
+        description="[Deprecated] Return period in years in the case of an acute hazard.",
     )
     index_values: Optional[Union[Sequence[float], Sequence[str]]] = Field(
         [],

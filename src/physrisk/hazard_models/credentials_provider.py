@@ -21,7 +21,9 @@ class EnvCredentialsProvider(CredentialsProvider):
         self._disable_api_calls = disable_api_calls
 
     def jba_access_key(self) -> str:
-        return getenv("JBA_TOKEN", getenv("JBA_PROD_TOKEN", ""))  # for back compatibility, alllow JBA_PROD_TOKEN also
+        return getenv(
+            "JBA_TOKEN", getenv("JBA_PROD_TOKEN", "")
+        )  # for back compatibility, alllow JBA_PROD_TOKEN also
 
     def jba_api_disabled(self) -> bool:
         return self._disable_api_calls

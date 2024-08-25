@@ -19,7 +19,10 @@ from physrisk.kernel.hazard_model import (
 from physrisk.kernel.hazards import PluvialInundation, RiverineInundation
 
 from physrisk.data.geocode import Geocoder
-from physrisk.hazard_models.credentials_provider import CredentialsProvider, EnvCredentialsProvider
+from physrisk.hazard_models.credentials_provider import (
+    CredentialsProvider,
+    EnvCredentialsProvider,
+)
 from physrisk.hazard_models.hazard_cache import H3BasedCache
 
 logger = logging.getLogger(__name__)
@@ -67,7 +70,9 @@ class JBAHazardModel(HazardModel):
         max_requests=5,
     ):
         self.cache_store = cache_store
-        self.credentials = credentials if credentials is not None else EnvCredentialsProvider()
+        self.credentials = (
+            credentials if credentials is not None else EnvCredentialsProvider()
+        )
         self.geocoder = geocoder if geocoder is not None else Geocoder()
         self.indicators = set(
             [
@@ -84,11 +89,16 @@ class JBAHazardModel(HazardModel):
         if any(
             r
             for r in requests
-            if Indicator(hazard_type=r.hazard_type.__name__, indicator_id=r.indicator_id) not in self.indicators
+            if Indicator(
+                hazard_type=r.hazard_type.__name__, indicator_id=r.indicator_id
+            )
+            not in self.indicators
         ):
             raise ValueError("invalid request")
 
-    def get_hazard_events(self, requests: List[HazardDataRequest]) -> Mapping[HazardDataRequest, HazardDataResponse]:
+    def get_hazard_events(
+        self, requests: List[HazardDataRequest]
+    ) -> Mapping[HazardDataRequest, HazardDataResponse]:
         # noqa:C90
 
         with self.lock:
@@ -99,8 +109,12 @@ class JBAHazardModel(HazardModel):
 
             if not self.geocoder:
                 self.geocoder = Geocoder()
-            groups: Dict[JBACacheKey, List[HazardDataRequest]] = defaultdict(list)  # cache item to requests
-            request_groups: Dict[RequestKey, List[JBACacheKey]] = defaultdict(list)  # request to cache items
+            groups: Dict[JBACacheKey, List[HazardDataRequest]] = defaultdict(
+                list
+            )  # cache item to requests
+            request_groups: Dict[RequestKey, List[JBACacheKey]] = defaultdict(
+                list
+            )  # request to cache items
 
             self.check_requests(requests)
 
@@ -109,19 +123,27 @@ class JBAHazardModel(HazardModel):
             for item in requests:
                 jba_scenario = self.jba_scenario(item.scenario, item.year)
                 cache_key = JBACacheKey(
-                    jba_scenario=jba_scenario, spatial_key=self.cache_store.spatial_key(item.latitude, item.longitude)
+                    jba_scenario=jba_scenario,
+                    spatial_key=self.cache_store.spatial_key(
+                        item.latitude, item.longitude
+                    ),
                 )
                 groups[cache_key].append(item)
 
             # JBA requires a 2-letter country code per request (at time of writing),
             # so it is necessary to geocode the country and group.
-            group_lats, group_lons = [v[0].latitude for v in groups.values()], [v[0].longitude for v in groups.values()]
+            group_lats, group_lons = (
+                [v[0].latitude for v in groups.values()],
+                [v[0].longitude for v in groups.values()],
+            )
             group_country_codes = self.geocoder.get_countries(group_lats, group_lons)
 
             for country_code, cache_key in zip(group_country_codes, groups.keys()):
-                request_groups[RequestKey(country_code=country_code, jba_scenario=cache_key.jba_scenario)].append(
-                    cache_key
-                )
+                request_groups[
+                    RequestKey(
+                        country_code=country_code, jba_scenario=cache_key.jba_scenario
+                    )
+                ].append(cache_key)
 
             access_token = self.credentials.jba_access_key()
             api_requests: List[APIRequest] = []
@@ -129,7 +151,9 @@ class JBAHazardModel(HazardModel):
             result: MutableMapping[HazardDataRequest, HazardDataResponse] = {}
             for request_key, cache_keys in request_groups.items():
                 # process anything that can be sourced from the cache and identify extra API requests needed
-                results_batch, api_requests_batch = self._identify_api_requests(request_key, cache_keys, groups)
+                results_batch, api_requests_batch = self._identify_api_requests(
+                    request_key, cache_keys, groups
+                )
                 result.update(results_batch)
                 api_requests.extend(api_requests_batch)
 
@@ -141,7 +165,9 @@ class JBAHazardModel(HazardModel):
                         provider_max_requests may be set incorrectly."
                 )
 
-            results_batch = self._process_api_requests(api_requests, groups, access_token)
+            results_batch = self._process_api_requests(
+                api_requests, groups, access_token
+            )
             result.update(results_batch)
 
             return result
@@ -156,12 +182,18 @@ class JBAHazardModel(HazardModel):
         if scenario == "historical":
             return "historical"
 
-        if scenario == "rcp8p5" or scenario == "ssp585":  # for now proxy pending availability true scnearios
+        if (
+            scenario == "rcp8p5" or scenario == "ssp585"
+        ):  # for now proxy pending availability true scnearios
             prefix = "rcp85"
-        elif scenario == "rcp45" or scenario == "ssp245":  # for now proxy pending availability true scnearios
+        elif (
+            scenario == "rcp45" or scenario == "ssp245"
+        ):  # for now proxy pending availability true scnearios
             prefix = "rcp45"
         else:
-            raise ValueError(f"scenario {scenario} not supported by JBA Risk Management API")
+            raise ValueError(
+                f"scenario {scenario} not supported by JBA Risk Management API"
+            )
         if year == 2030:
             range = "2016-2045"
         elif year == 2050:
@@ -169,10 +201,14 @@ class JBAHazardModel(HazardModel):
         elif year == 2080:
             range = "2066-2095"
         else:
-            raise ValueError(f"scenario {scenario} not supported by JBA Risk Management API")
+            raise ValueError(
+                f"scenario {scenario} not supported by JBA Risk Management API"
+            )
         return prefix + "_" + range
 
-    async def flood_depth(self, api_request: APIRequest, access_token: str, session: aiohttp.ClientSession):
+    async def flood_depth(
+        self, api_request: APIRequest, access_token: str, session: aiohttp.ClientSession
+    ):
         if len(api_request.cache_keys) == 0:
             return {}
 
@@ -193,7 +229,9 @@ class JBAHazardModel(HazardModel):
             "country_code": country_code,
             "geometries": [
                 {"id": id, "wkt_geometry": f"POINT({lon} {lat})", "buffer": 10}
-                for id, lat, lon in zip(req_ids, api_request.latitudes, api_request.longitudes)
+                for id, lat, lon in zip(
+                    req_ids, api_request.latitudes, api_request.longitudes
+                )
             ],
         }
         logger.info("JBA request: " + json.dumps(request))
@@ -232,7 +270,8 @@ class JBAHazardModel(HazardModel):
         # but batch up for requesting
         batch_size = 100  # 10
         req_key_batches = [
-            req_keys_all[i : min(i + batch_size, len(req_keys_all))] for i in range(0, len(req_keys_all), batch_size)
+            req_keys_all[i : min(i + batch_size, len(req_keys_all))]
+            for i in range(0, len(req_keys_all), batch_size)
         ]
         for req_keys in req_key_batches:
             lats = [groups[k][0].latitude for k in req_keys]
@@ -274,7 +313,12 @@ class JBAHazardModel(HazardModel):
             async def request_single(request: APIRequest):
                 async with semaphore:
                     responses = await self.flood_depth(request, access_token, session)
-                    self.cache_store.setitems({self.jba_cache_id(k): json.dumps(v) for k, v in responses.items()})
+                    self.cache_store.setitems(
+                        {
+                            self.jba_cache_id(k): json.dumps(v)
+                            for k, v in responses.items()
+                        }
+                    )
                     request_results = self._process_responses(groups, responses)
                     results.update(request_results)
 
@@ -286,7 +330,9 @@ class JBAHazardModel(HazardModel):
         return results
 
     def _process_responses(
-        self, groups: Dict[JBACacheKey, List[HazardDataRequest]], cached_responses: Dict[JBACacheKey, Dict]
+        self,
+        groups: Dict[JBACacheKey, List[HazardDataRequest]],
+        cached_responses: Dict[JBACacheKey, Dict],
     ):
         result: MutableMapping[HazardDataRequest, HazardDataResponse] = {}
         for cache_key in cached_responses.keys():
@@ -300,7 +346,9 @@ class JBAHazardModel(HazardModel):
                     raise ValueError("unexpected hazard type")
                 if req.indicator_id == "flood_sop":
                     sop = response["stats"]["FLRF_U"].get("sop", 0)
-                    resp: HazardDataResponse = HazardParameterDataResponse(np.array([sop, sop]))  # min and max: in this case just a single value
+                    resp: HazardDataResponse = HazardParameterDataResponse(
+                        np.array([sop, sop])
+                    )  # min and max: in this case just a single value
                 elif req.indicator_id == "flood_depth":
                     return_periods: List[float] = []
                     intens: List[float] = []
@@ -309,7 +357,9 @@ class JBAHazardModel(HazardModel):
                         if key.startswith("rp_"):
                             return_periods.append(float(key[3:]))
                             intens.append(value["max" + key[3:]])
-                    resp = HazardEventDataResponse(np.array(return_periods), np.array(intens))
+                    resp = HazardEventDataResponse(
+                        np.array(return_periods), np.array(intens)
+                    )
                 result[req] = resp
         return result
 

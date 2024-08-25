@@ -9,10 +9,15 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import numpy as np
-import pytest
-#from deepdiff import DeepDiff
+# from deepdiff import DeepDiff
 
-from physrisk.hazard_models.hazard_cache import H3BasedCache, LMDBStore, MemoryStore, Store, to_json
+from physrisk.hazard_models.hazard_cache import (
+    H3BasedCache,
+    LMDBStore,
+    MemoryStore,
+    Store,
+    to_json,
+)
 
 
 class NumpyArrayEncoder(json.JSONEncoder):
@@ -27,7 +32,10 @@ def log_to_stdout():
     logging.basicConfig(
         level=logging.INFO,
         format="[%(asctime)s] {%(filename)s:%(lineno)d} %(levelname)s - %(message)s",
-        handlers=[logging.FileHandler(filename="test.log"), logging.StreamHandler(sys.stdout)],
+        handlers=[
+            logging.FileHandler(filename="test.log"),
+            logging.StreamHandler(sys.stdout),
+        ],
     )
 
 
@@ -99,7 +107,12 @@ def hazard_dir():
 
 
 def get_result_expected(result: str, func_name: str, update_expected: bool):
-    path = pathlib.Path(__file__).parent / "test_data" / "expected" / (func_name.replace(".", "-") + ".json")
+    path = (
+        pathlib.Path(__file__).parent
+        / "test_data"
+        / "expected"
+        / (func_name.replace(".", "-") + ".json")
+    )
     if update_expected:
         with open(path, "w") as f:
             f.write(result)
@@ -142,10 +155,15 @@ def save_inputs_cache_store(store: Store, file: str):
         f.write(to_json(store))
 
 
-
 def pytest_addoption(parser):
-    parser.addoption("--update_expected", action="store", help="Update the test expected result if true")
-    parser.addoption("--update_inputs", action="store", help="Update the test mocked data if true")
+    parser.addoption(
+        "--update_expected",
+        action="store",
+        help="Update the test expected result if true",
+    )
+    parser.addoption(
+        "--update_inputs", action="store", help="Update the test mocked data if true"
+    )
 
 
 @pytest.fixture

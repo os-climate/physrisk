@@ -10,7 +10,7 @@ from physrisk.hazard_models.credentials_provider import EnvCredentialsProvider
 from physrisk.hazard_models.hazard_cache import H3BasedCache, LMDBStore, MemoryStore
 from physrisk.hazard_models.jba_hazard_model import JBAHazardModel
 
-from tests.conftest import cache_store_tests, hazard_dir, load_credentials
+from tests.conftest import cache_store_tests
 
 
 def lats_lons():
@@ -121,17 +121,19 @@ def test_geocoding():
 
 
 def test_continent_from_country_code():
-    continent_and_country_from_code_iso_3166 = Geocoder.get_continent_and_country_from_code_iso_3166(
-        country_codes=["USA", "FR", 56]
+    continent_and_country_from_code_iso_3166 = (
+        Geocoder.get_continent_and_country_from_code_iso_3166(
+            country_codes=["USA", "FR", 56]
+        )
     )
-    assert continent_and_country_from_code_iso_3166["Continent"]["USA"] == "North America"
+    assert (
+        continent_and_country_from_code_iso_3166["Continent"]["USA"] == "North America"
+    )
     assert continent_and_country_from_code_iso_3166["Continent"]["FR"] == "Europe"
     assert continent_and_country_from_code_iso_3166["Continent"][56] == "Europe"
 
 
 @pytest.mark.skip("Exclude until cache populated")
-
-
 def test_jba_hazard_model(load_credentials, hazard_dir, update_inputs):
     # this test has to be run live and will cost money!
     # run a batch of 34 lats and lons using an API batch size of 10
@@ -140,9 +142,9 @@ def test_jba_hazard_model(load_credentials, hazard_dir, update_inputs):
     latitudes = latitudes[0:34]
     longitudes = longitudes[0:34]
 
-    store = LMDBStore(str((Path(hazard_dir) / "temp" / "hazard_cache.db").absolute()))
+    # store = LMDBStore(str((Path(hazard_dir) / "temp" / "hazard_cache.db").absolute()))
     # cache = H3BasedCache(MemoryStore()) # in order to test this 'live', use the MemoryStore and enable API calls
-    cache = H3BasedCache(store)
+    # cache = H3BasedCache(store)
     credentials = EnvCredentialsProvider(disable_api_calls=False)
 
     with cache_store_tests(__name__, update_inputs) as cache_store:
@@ -171,17 +173,36 @@ def test_jba_hazard_model(load_credentials, hazard_dir, update_inputs):
             for lat, lon in zip(latitudes, longitudes)
         ]
         response = model.get_hazard_events(requests_riv + requests_pluv)
-        np.testing.assert_allclose(response[requests_riv[2]].intensities, np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.27]))
-        np.testing.assert_allclose(response[requests_riv[17]].intensities, np.array([0.0, 0.0, 0.0, 0.0, 0.22, 0.38]))
         np.testing.assert_allclose(
-            response[requests_pluv[15]].intensities, np.array([0.0, 0.31, 0.36, 0.43, 0.44, 0.6])
+            response[requests_riv[2]].intensities,
+            np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.27]),
         )
-        np.testing.assert_allclose(response[requests_pluv[24]].intensities, np.array([0.0, 0.0, 0.0, 0.0, 0.25, 0.33]))
+        np.testing.assert_allclose(
+            response[requests_riv[17]].intensities,
+            np.array([0.0, 0.0, 0.0, 0.0, 0.22, 0.38]),
+        )
+        np.testing.assert_allclose(
+            response[requests_pluv[15]].intensities,
+            np.array([0.0, 0.31, 0.36, 0.43, 0.44, 0.6]),
+        )
+        np.testing.assert_allclose(
+            response[requests_pluv[24]].intensities,
+            np.array([0.0, 0.0, 0.0, 0.0, 0.25, 0.33]),
+        )
         # model = JBAHazardModel(H3BasedCache(MemoryStore())) # uncomment this line to run again with a new cache (i.e. test data the same)
         # otherwise we are testing that we get the expected values if we request individually or as part of a batch
-        response = model.get_hazard_events([requests_riv[2], requests_pluv[15], requests_pluv[24]])
-        np.testing.assert_allclose(response[requests_riv[2]].intensities, np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.27]))
-        np.testing.assert_allclose(
-            response[requests_pluv[15]].intensities, np.array([0.0, 0.31, 0.36, 0.43, 0.44, 0.6])
+        response = model.get_hazard_events(
+            [requests_riv[2], requests_pluv[15], requests_pluv[24]]
         )
-        np.testing.assert_allclose(response[requests_pluv[24]].intensities, np.array([0.0, 0.0, 0.0, 0.0, 0.25, 0.33]))
+        np.testing.assert_allclose(
+            response[requests_riv[2]].intensities,
+            np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.27]),
+        )
+        np.testing.assert_allclose(
+            response[requests_pluv[15]].intensities,
+            np.array([0.0, 0.31, 0.36, 0.43, 0.44, 0.6]),
+        )
+        np.testing.assert_allclose(
+            response[requests_pluv[24]].intensities,
+            np.array([0.0, 0.0, 0.0, 0.0, 0.25, 0.33]),
+        )

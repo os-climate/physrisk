@@ -4,8 +4,14 @@ from typing import Dict, List, Mapping, MutableMapping, Optional
 from physrisk.data.hazard_data_provider import SourcePath
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
-from physrisk.kernel.hazard_model import HazardDataRequest, HazardDataResponse, HazardModel
-from physrisk.kernel.hazard_model import HazardModelFactory as HazardModelFactoryPhysrisk
+from physrisk.kernel.hazard_model import (
+    HazardDataRequest,
+    HazardDataResponse,
+    HazardModel,
+)
+from physrisk.kernel.hazard_model import (
+    HazardModelFactory as HazardModelFactoryPhysrisk,
+)
 from physrisk.kernel.hazards import PluvialInundation, RiverineInundation
 
 from physrisk.hazard_models.credentials_provider import CredentialsProvider
@@ -28,7 +34,9 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
         self.store = store
         self.reader = reader
 
-    def hazard_model(self, interpolation: str = "floor", provider_max_requests: Dict[str, int] = {}):
+    def hazard_model(
+        self, interpolation: str = "floor", provider_max_requests: Dict[str, int] = {}
+    ):
         return CompositeHazardModel(
             self.cache_store,
             self.credentials,
@@ -61,7 +69,10 @@ class CompositeHazardModel(HazardModel):
             else None
         )
         self.zarr_hazard_model = ZarrHazardModel(
-            source_paths=source_paths, reader=reader, store=store, interpolation=interpolation
+            source_paths=source_paths,
+            reader=reader,
+            store=store,
+            interpolation=interpolation,
         )
 
     def hazard_model(self, type):
@@ -74,7 +85,9 @@ class CompositeHazardModel(HazardModel):
         else:
             return self.zarr_hazard_model
 
-    def get_hazard_events(self, requests: List[HazardDataRequest]) -> Mapping[HazardDataRequest, HazardDataResponse]:
+    def get_hazard_events(
+        self, requests: List[HazardDataRequest]
+    ) -> Mapping[HazardDataRequest, HazardDataResponse]:
         requests_by_model = defaultdict(list)
 
         for request in requests:

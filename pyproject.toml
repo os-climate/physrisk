@@ -81,10 +81,10 @@ include = ["physrisk*"]
 physrisk = [
     "data/ne_110m_admin_0_countries/ne_*.*",
     "data/ne_110m_admin_0_countries/country_codes.tsv",
-    "physrisk/data/static/*.json",
-    "physrisk/data/static/example_portfolios/*.json",
-    "physrisk/data/static/hazard/*.json",
-    "physrisk/data/static/vulnerability/*.json"
+    "data/static/*.json",
+    "data/static/example_portfolios/*.json",
+    "data/static/hazard/*.json",
+    "data/static/vulnerability/*.json"
 ]
 
 [tool.pdm.dev-dependencies]

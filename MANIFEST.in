@@ -1,4 +1,0 @@
-include src/physrisk/data/static/*.json
-include src/physrisk/data/static/example_portfolios/*.json
-include src/physrisk/data/static/hazard/*.json
-include src/physrisk/data/static/vulnerability/*.json

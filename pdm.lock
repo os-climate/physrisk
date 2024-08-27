@@ -5,7 +5,7 @@
 groups = ["default", "lint", "test"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.1"
-content_hash = "sha256:5705c4309e12da1902efd5bfec1bacd3d42d6f4f7ca8c707c0e545ef4ab5f70c"
+content_hash = "sha256:0499a11690154139c0c2a9859f30d413bf34c1424216af9761c73d7a769c8feb"
 
 [[package]]
 name = "affine"
@@ -476,7 +476,7 @@ name = "click"
 version = "8.1.7"
 requires_python = ">=3.7"
 summary = "Composable command line interface toolkit"
-groups = ["lint"]
+groups = ["default", "lint"]
 dependencies = [
     "colorama; platform_system == \"Windows\"",
 ]
@@ -486,11 +486,38 @@ files = [
 ]
 
 [[package]]
+name = "click-plugins"
+version = "1.1.1"
+summary = "An extension module for click to enable registering CLI commands via setuptools entry-points."
+groups = ["default"]
+dependencies = [
+    "click>=4.0",
+]
+files = [
+    {file = "click-plugins-1.1.1.tar.gz", hash = "sha256:46ab999744a9d831159c3411bb0c79346d94a444df9a3a3742e9ed63645f264b"},
+    {file = "click_plugins-1.1.1-py2.py3-none-any.whl", hash = "sha256:5d262006d3222f5057fd81e1623d4443e41dcda5dc815c06b442aa3c02889fc8"},
+]
+
+[[package]]
+name = "cligj"
+version = "0.7.2"
+requires_python = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, <4"
+summary = "Click params for commmand line interfaces to GeoJSON"
+groups = ["default"]
+dependencies = [
+    "click>=4.0",
+]
+files = [
+    {file = "cligj-0.7.2-py3-none-any.whl", hash = "sha256:c1ca117dbce1fe20a5809dc96f01e1c2840f6dcc939b3ddbb1111bf330ba82df"},
+    {file = "cligj-0.7.2.tar.gz", hash = "sha256:a4bc13d623356b373c2c27c53dbd9c68cae5d526270bfa71f6c6fa69669c6b27"},
+]
+
+[[package]]
 name = "colorama"
 version = "0.4.6"
 requires_python = "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7"
 summary = "Cross-platform colored terminal text."
-groups = ["lint", "test"]
+groups = ["default", "lint", "test"]
 files = [
     {file = "colorama-0.4.6-py2.py3-none-any.whl", hash = "sha256:4f1d9991f5acc0ca119f9d443620b77f9d6b33703e51011c16baf57afb285fc6"},
     {file = "colorama-0.4.6.tar.gz", hash = "sha256:08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"},
@@ -784,6 +811,37 @@ files = [
 ]
 
 [[package]]
+name = "fiona"
+version = "1.9.6"
+requires_python = ">=3.7"
+summary = "Fiona reads and writes spatial data files"
+groups = ["default"]
+dependencies = [
+    "attrs>=19.2.0",
+    "certifi",
+    "click-plugins>=1.0",
+    "click~=8.0",
+    "cligj>=0.5",
+    "importlib-metadata; python_version < \"3.10\"",
+    "six",
+]
+files = [
+    {file = "fiona-1.9.6-cp310-cp310-macosx_10_15_x86_64.whl", hash = "sha256:63e528b5ea3d8b1038d788e7c65117835c787ba7fdc94b1b42f09c2cbc0aaff2"},
+    {file = "fiona-1.9.6-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:918bd27d8625416672e834593970f96dff63215108f81efb876fe5c0bc58a3b4"},
+    {file = "fiona-1.9.6-cp310-cp310-manylinux2014_x86_64.whl", hash = "sha256:e313210b30d09ed8f829bf625599e248dadd78622728030221f6526580ff26c5"},
+    {file = "fiona-1.9.6-cp310-cp310-win_amd64.whl", hash = "sha256:89095c2d542325ee45894b8837e8048cdbb2f22274934e1be3b673ca628010d7"},
+    {file = "fiona-1.9.6-cp38-cp38-macosx_10_15_x86_64.whl", hash = "sha256:e7617563b36d2be99f048f0d0054b4d765f4aae454398f88f19de9c2c324b7f8"},
+    {file = "fiona-1.9.6-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:50037c3b7a5f6f434b562b5b1a5b664f1caa7a4383b00af23cdb59bfc6ba852c"},
+    {file = "fiona-1.9.6-cp38-cp38-manylinux2014_x86_64.whl", hash = "sha256:bf51846ad602757bf27876f458c5c9f14b09421fac612f64273cc4e3fcabc441"},
+    {file = "fiona-1.9.6-cp38-cp38-win_amd64.whl", hash = "sha256:11af1afc1255642a7787fe112c29d01f968f1053e4d4700fc6f3bb879c1622e0"},
+    {file = "fiona-1.9.6-cp39-cp39-macosx_10_15_x86_64.whl", hash = "sha256:52e8fec650b72fc5253d8f86b63859acc687182281c29bfacd3930496cf982d1"},
+    {file = "fiona-1.9.6-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:c9b92aa1badb2773e7cac19bef3064d73e9d80c67c42f0928db2520a04be6f2f"},
+    {file = "fiona-1.9.6-cp39-cp39-manylinux2014_x86_64.whl", hash = "sha256:0eaffbf3bfae9960484c0c08ea461b0c40e111497f04e9475ebf15ac7a22d9dc"},
+    {file = "fiona-1.9.6-cp39-cp39-win_amd64.whl", hash = "sha256:f1b49d51a744874608b689f029766aa1e078dd72e94b44cf8eeef6d7bd2e9051"},
+    {file = "fiona-1.9.6.tar.gz", hash = "sha256:791b3494f8b218c06ea56f892bd6ba893dfa23525347761d066fb7738acda3b1"},
+]
+
+[[package]]
 name = "flake8"
 version = "5.0.4"
 requires_python = ">=3.6.1"
@@ -880,6 +938,51 @@ groups = ["default"]
 files = [
     {file = "fsspec-2024.2.0-py3-none-any.whl", hash = "sha256:817f969556fa5916bc682e02ca2045f96ff7f586d45110fcb76022063ad2c7d8"},
     {file = "fsspec-2024.2.0.tar.gz", hash = "sha256:b6ad1a679f760dda52b1168c859d01b7b80648ea6f7f7c7f5a8a91dc3f3ecb84"},
+]
+
+[[package]]
+name = "geopandas"
+version = "0.13.2"
+requires_python = ">=3.8"
+summary = "Geographic pandas extensions"
+groups = ["default"]
+dependencies = [
+    "fiona>=1.8.19",
+    "packaging",
+    "pandas>=1.1.0",
+    "pyproj>=3.0.1",
+    "shapely>=1.7.1",
+]
+files = [
+    {file = "geopandas-0.13.2-py3-none-any.whl", hash = "sha256:101cfd0de54bcf9e287a55b5ea17ebe0db53a5e25a28bacf100143d0507cabd9"},
+    {file = "geopandas-0.13.2.tar.gz", hash = "sha256:e5b56d9c20800c77bcc0c914db3f27447a37b23b2cd892be543f5001a694a968"},
+]
+
+[[package]]
+name = "h3"
+version = "3.7.7"
+summary = "Hierarchical hexagonal geospatial indexing system"
+groups = ["default"]
+files = [
+    {file = "h3-3.7.7-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:951ecc9da0bcd5091670b13636928747bc98bc76891da0fa725524ec017cd9de"},
+    {file = "h3-3.7.7-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:26b9dd605541223ef927cc913deccb236cee024b16032f4a3e4387e2791479f2"},
+    {file = "h3-3.7.7-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:996ebb32dc26dd607af7493149f94ce316117be6f42971f7b33bbd326ec695d2"},
+    {file = "h3-3.7.7-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fa2a4aa888cd9476788b874b4e11e178293f5b86e8461c36596bf183c242d417"},
+    {file = "h3-3.7.7-cp310-cp310-musllinux_1_1_x86_64.whl", hash = "sha256:0256e42687470c6f0044ca78fe375fe32a654be8b5a8313b4a68f52f513389c6"},
+    {file = "h3-3.7.7-cp310-cp310-win_amd64.whl", hash = "sha256:a3e2bc125490f900e0513c30480722f129bab1415f23040b6cd3a3f8d5a39336"},
+    {file = "h3-3.7.7-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:6f3a9da5472820b0a4add342f96fe52f65fbb8f46984383885738517b38af69e"},
+    {file = "h3-3.7.7-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:1c57da776a3c1a01e2986b1f6a31d497ee0be8fcdbaaf9b23bb90f5a90eb8f0b"},
+    {file = "h3-3.7.7-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:7a5c0c0ddd9c57694ecc3b9ba99cbef2842882f8943d6edc676a365e139dbc6d"},
+    {file = "h3-3.7.7-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0c1b5a0a652719b645387231bf6d7d4dd85150e4440a4ce72a804a10e86592ae"},
+    {file = "h3-3.7.7-cp38-cp38-musllinux_1_1_x86_64.whl", hash = "sha256:64f76dc827fef94e9f43f95a1daea2e11f2ad2e8c55deac072f3d59bd62412d4"},
+    {file = "h3-3.7.7-cp38-cp38-win_amd64.whl", hash = "sha256:c993a36120d7f5607f24ba9e39caf715eaf9cd9d44f5d5660fd85e3f4e0c6bf7"},
+    {file = "h3-3.7.7-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:eb154d2af699870b888e10476e327c895078009d2d2a6ef2d053d7dcf0e2c270"},
+    {file = "h3-3.7.7-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:c96ad74e246bb7638d413efa8199dd4c58ee929424a4dcaadb16365195f77f87"},
+    {file = "h3-3.7.7-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:52901f14f8b6e2c82075fd52c0e70176b868f621d47b5dc93f468c510e963722"},
+    {file = "h3-3.7.7-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:fa9d82a0fcc647e7bab36ab2e7a7392d141edc95d113ccf972e0fb7b0ddf80a0"},
+    {file = "h3-3.7.7-cp39-cp39-musllinux_1_1_x86_64.whl", hash = "sha256:9f4417d09acb36f0452346052f576923d6e4334bff3459f217d6278d40397424"},
+    {file = "h3-3.7.7-cp39-cp39-win_amd64.whl", hash = "sha256:7ae774cd43b057f68dc10c99e4522fa40ed6b32ab90b2df0025595ffa15e77a0"},
+    {file = "h3-3.7.7.tar.gz", hash = "sha256:33d141c3cef0725a881771fd8cb80c06a0db84a6e4ca5c647ce095ae07c61e94"},
 ]
 
 [[package]]
@@ -1138,6 +1241,41 @@ files = [
     {file = "llvmlite-0.41.1-cp39-cp39-win32.whl", hash = "sha256:880cb57ca49e862e1cd077104375b9d1dfdc0622596dfa22105f470d7bacb309"},
     {file = "llvmlite-0.41.1-cp39-cp39-win_amd64.whl", hash = "sha256:92f093986ab92e71c9ffe334c002f96defc7986efda18397d0f08534f3ebdc4d"},
     {file = "llvmlite-0.41.1.tar.gz", hash = "sha256:f19f767a018e6ec89608e1f6b13348fa2fcde657151137cb64e56d48598a92db"},
+]
+
+[[package]]
+name = "lmdb"
+version = "1.5.1"
+summary = "Universal Python binding for the LMDB 'Lightning' Database"
+groups = ["default"]
+files = [
+    {file = "lmdb-1.5.1-cp310-cp310-macosx_10_9_universal2.whl", hash = "sha256:0b8c6a9d4ecdb186ff010bd96c1d67e27399cfe5e8a70029b8fba056538a29d1"},
+    {file = "lmdb-1.5.1-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:8f5796c4ad57bce495395af7a24fd5f7f307b2ac30f91caa6c8046e90d40edba"},
+    {file = "lmdb-1.5.1-cp310-cp310-win_amd64.whl", hash = "sha256:96258cc9384963fdded53bf6bc815284dd25a65491e0915cc5d3e0c5cf59cdf8"},
+    {file = "lmdb-1.5.1-cp38-cp38-macosx_11_0_universal2.whl", hash = "sha256:e931fee0d7e587001bb98f7d6c0e689cf3842d67d4139f120a9afa053521e348"},
+    {file = "lmdb-1.5.1-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6ddffb6c24d0b24f08df0d4c2457ebf556e174bed99efd2e8e9cdad0e8cf1217"},
+    {file = "lmdb-1.5.1-cp38-cp38-win_amd64.whl", hash = "sha256:ba174f48512e1589f3651d6c240dd22b03d010d5916ae9831720f794476e9a49"},
+    {file = "lmdb-1.5.1-cp39-cp39-macosx_10_9_universal2.whl", hash = "sha256:f79e59d240889eb321bf310d7e94149b9bcad4fe6ba94bc6141429e9546e7129"},
+    {file = "lmdb-1.5.1-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b9edaab924d232aaa2631b6edc0ac9239813c8536a651e5168411caa2ec04c2f"},
+    {file = "lmdb-1.5.1-cp39-cp39-win_amd64.whl", hash = "sha256:cd784a255cdaa0a14906f766cff978b8dfd7d694f1b75ab0105a56fef1effa88"},
+    {file = "lmdb-1.5.1-pp310-pypy310_pp73-macosx_11_0_arm64.whl", hash = "sha256:95ec4ec7c685577ac042b4f3ccc60d0ae574be4ab193d8f67cedce6ca92da35d"},
+    {file = "lmdb-1.5.1-pp310-pypy310_pp73-win_amd64.whl", hash = "sha256:2bec71fc9ad1a98a8b0176be1fd2952254a65e60bcbe63c0ac010f61e11f06d7"},
+    {file = "lmdb-1.5.1.tar.gz", hash = "sha256:717c255827d331e02f7242b44051aa06466c90f6d732ecb07b31edfb1e06c67a"},
+]
+
+[[package]]
+name = "lmdbm"
+version = "0.0.6"
+requires_python = ">=3.7"
+summary = "Python DBM style wrapper around LMDB (Lightning Memory-Mapped Database)"
+groups = ["default"]
+dependencies = [
+    "lmdb",
+    "typing-extensions>=4",
+]
+files = [
+    {file = "lmdbm-0.0.6-py3-none-any.whl", hash = "sha256:452971c13009714acf21f47623fbec1b24fdc75e26062d9306580e615725d85b"},
+    {file = "lmdbm-0.0.6.tar.gz", hash = "sha256:2c1d0dd995b074fe72154cc59c9221b348afccb237e2994aa0a463d6621a4db9"},
 ]
 
 [[package]]
@@ -1561,10 +1699,45 @@ name = "packaging"
 version = "23.2"
 requires_python = ">=3.7"
 summary = "Core utilities for Python packages"
-groups = ["lint", "test"]
+groups = ["default", "lint", "test"]
 files = [
     {file = "packaging-23.2-py3-none-any.whl", hash = "sha256:8c491190033a9af7e1d931d0b5dacc2ef47509b34dd0de67ed209b5203fc88c7"},
     {file = "packaging-23.2.tar.gz", hash = "sha256:048fb0e9405036518eaaf48a55953c750c11e1a1b68e0dd1a9d62ed0c092cfc5"},
+]
+
+[[package]]
+name = "pandas"
+version = "2.0.3"
+requires_python = ">=3.8"
+summary = "Powerful data structures for data analysis, time series, and statistics"
+groups = ["default"]
+dependencies = [
+    "numpy>=1.20.3; python_version < \"3.10\"",
+    "numpy>=1.21.0; python_version >= \"3.10\"",
+    "python-dateutil>=2.8.2",
+    "pytz>=2020.1",
+    "tzdata>=2022.1",
+]
+files = [
+    {file = "pandas-2.0.3-cp310-cp310-macosx_10_9_x86_64.whl", hash = "sha256:e4c7c9f27a4185304c7caf96dc7d91bc60bc162221152de697c98eb0b2648dd8"},
+    {file = "pandas-2.0.3-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:f167beed68918d62bffb6ec64f2e1d8a7d297a038f86d4aed056b9493fca407f"},
+    {file = "pandas-2.0.3-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:ce0c6f76a0f1ba361551f3e6dceaff06bde7514a374aa43e33b588ec10420183"},
+    {file = "pandas-2.0.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ba619e410a21d8c387a1ea6e8a0e49bb42216474436245718d7f2e88a2f8d7c0"},
+    {file = "pandas-2.0.3-cp310-cp310-win32.whl", hash = "sha256:3ef285093b4fe5058eefd756100a367f27029913760773c8bf1d2d8bebe5d210"},
+    {file = "pandas-2.0.3-cp310-cp310-win_amd64.whl", hash = "sha256:9ee1a69328d5c36c98d8e74db06f4ad518a1840e8ccb94a4ba86920986bb617e"},
+    {file = "pandas-2.0.3-cp38-cp38-macosx_10_9_x86_64.whl", hash = "sha256:9e4da0d45e7f34c069fe4d522359df7d23badf83abc1d1cef398895822d11061"},
+    {file = "pandas-2.0.3-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:32fca2ee1b0d93dd71d979726b12b61faa06aeb93cf77468776287f41ff8fdc5"},
+    {file = "pandas-2.0.3-cp38-cp38-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:258d3624b3ae734490e4d63c430256e716f488c4fcb7c8e9bde2d3aa46c29089"},
+    {file = "pandas-2.0.3-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:9eae3dc34fa1aa7772dd3fc60270d13ced7346fcbcfee017d3132ec625e23bb0"},
+    {file = "pandas-2.0.3-cp38-cp38-win32.whl", hash = "sha256:f3421a7afb1a43f7e38e82e844e2bca9a6d793d66c1a7f9f0ff39a795bbc5e02"},
+    {file = "pandas-2.0.3-cp38-cp38-win_amd64.whl", hash = "sha256:69d7f3884c95da3a31ef82b7618af5710dba95bb885ffab339aad925c3e8ce78"},
+    {file = "pandas-2.0.3-cp39-cp39-macosx_10_9_x86_64.whl", hash = "sha256:5247fb1ba347c1261cbbf0fcfba4a3121fbb4029d95d9ef4dc45406620b25c8b"},
+    {file = "pandas-2.0.3-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:81af086f4543c9d8bb128328b5d32e9986e0c84d3ee673a2ac6fb57fd14f755e"},
+    {file = "pandas-2.0.3-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:1994c789bf12a7c5098277fb43836ce090f1073858c10f9220998ac74f37c69b"},
+    {file = "pandas-2.0.3-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:5ec591c48e29226bcbb316e0c1e9423622bc7a4eaf1ef7c3c9fa1a3981f89641"},
+    {file = "pandas-2.0.3-cp39-cp39-win32.whl", hash = "sha256:04dbdbaf2e4d46ca8da896e1805bc04eb85caa9a82e259e8eed00254d5e0c682"},
+    {file = "pandas-2.0.3-cp39-cp39-win_amd64.whl", hash = "sha256:1168574b036cd8b93abc746171c9b4f1b83467438a5e45909fed645cf8692dbc"},
+    {file = "pandas-2.0.3.tar.gz", hash = "sha256:c02f372a88e0d17f36d3093a644c73cfc1788e876a7c4bcb4020a77512e2043c"},
 ]
 
 [[package]]
@@ -2111,6 +2284,16 @@ files = [
 ]
 
 [[package]]
+name = "pytz"
+version = "2024.1"
+summary = "World timezone definitions, modern and historical"
+groups = ["default"]
+files = [
+    {file = "pytz-2024.1-py2.py3-none-any.whl", hash = "sha256:328171f4e3623139da4983451950b28e95ac706e13f3f2630a879749e7a8b319"},
+    {file = "pytz-2024.1.tar.gz", hash = "sha256:2a29735ea9c18baf14b448846bde5a48030ed267578472d8955cd0e7443a9812"},
+]
+
+[[package]]
 name = "pywin32"
 version = "306"
 summary = "Python for Window Extensions"
@@ -2640,6 +2823,17 @@ groups = ["default", "lint", "test"]
 files = [
     {file = "typing_extensions-4.10.0-py3-none-any.whl", hash = "sha256:69b1a937c3a517342112fb4c6df7e72fc39a38e7891a5730ed4985b5214b5475"},
     {file = "typing_extensions-4.10.0.tar.gz", hash = "sha256:b0abd7c89e8fb96f98db18d86106ff1d90ab692004eb746cf6eda2682f91b3cb"},
+]
+
+[[package]]
+name = "tzdata"
+version = "2024.1"
+requires_python = ">=2"
+summary = "Provider of IANA time zone data"
+groups = ["default"]
+files = [
+    {file = "tzdata-2024.1-py2.py3-none-any.whl", hash = "sha256:9068bc196136463f5245e51efda838afa15aaeca9903f49050dfa2679db4d252"},
+    {file = "tzdata-2024.1.tar.gz", hash = "sha256:2674120f8d891909751c38abcdfd386ac0a5a1127954fbc332af6b5ceae07efd"},
 ]
 
 [[package]]

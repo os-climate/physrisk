@@ -249,7 +249,7 @@ class TestPowerGeneratingAssetModels(TestWithCredentials):
 
     def api_assets(self, assets: List[Asset]):
         items = [
-            physrisk.api.v1.common.Asset(
+            physrisk.api.v1.common.Asset(  # type:ignore
                 asset_class=type(a).__name__,
                 type=getattr(a, "type", None),
                 location=getattr(a, "location", None),

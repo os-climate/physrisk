@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Sequence, Union
 
 import numpy as np
 from pydantic import BaseModel, ConfigDict, Field
@@ -88,11 +88,11 @@ class IntensityCurve(BaseModel):
     Index values are defined per indicator."""
 
     intensities: List[float] = Field([], description="Hazard indicator intensities.")
-    return_periods: Optional[List[float]] = Field(
+    return_periods: Optional[Sequence[float]] = Field(
         [],
         description="[Deprecated] Return period in years in the case of an acute hazard.",
     )
-    index_values: Optional[Union[List[float], List[str]]] = Field(
+    index_values: Optional[Union[Sequence[float], Sequence[str]]] = Field(
         [],
         description="Set of index values. \
             This is return period in years in the case of an acute hazard or \

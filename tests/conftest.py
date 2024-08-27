@@ -56,10 +56,10 @@ def load_credentials():
 
 @pytest.fixture(autouse=True)
 def skip_if_needs_live_data(request, load_credentials):
-    env = os.environ.get("ESG-PHYSRISK_ENVIRONMENT", "")
+    env = os.environ.get("PHYSRISK_ENVIRONMENT", "")
     if request.node.get_closest_marker("live_data"):
         if request.node.get_closest_marker("live_data").args[0] != env:
-            pytest.skip(f"skipped: ESG-PHYSRISK_ENVIRONMENT set to {env}")
+            pytest.skip(f"skipped: PHYSRISK_ENVIRONMENT set to {env}")
 
 
 @pytest.fixture

@@ -73,10 +73,11 @@ class Asset:
 
     AgricultureAsset
     ConstructionAsset
-    OilGasAsset
     ManufacturingAsset
+    OilGasAsset
     PowerGeneratingAsset
     RealEstateAsset
+    ThermalPowerGeneratingAsset
     TransportationAsset
     UtilityAsset
 
@@ -103,7 +104,21 @@ class AgricultureAsset(Asset):
         self.type = type
 
 
+class ConstructionAsset(Asset):
+    def __init__(
+        self, latitude: float, longitude: float, *, location: str, type: str, **kwargs
+    ):
+        super().__init__(latitude, longitude, **kwargs)
+        self.location = location
+        self.type = type
+
+
 class IndustrialActivity(Asset):
+    """To be deprecated. Preferred model is that loss for Assets is calculated both on the asset value
+    (i.e. loss from damage) and the revenue-generation associated with the Asset. That is, revenue-generation
+    is not separated out as it is here.
+    """
+
     def __init__(
         self,
         latitude: float,

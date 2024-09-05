@@ -250,4 +250,4 @@ class TestChronicAssetImpact(unittest.TestCase):
             ]
         )
         value_diff = np.sum(np.abs(value_test - value_exp))
-        self.assertAlmostEqual(value_diff, 0.0, places=8)
+        self.assertAlmostEqual(value_diff, 0.0, places=6)

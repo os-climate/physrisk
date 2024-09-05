@@ -7,7 +7,7 @@ description = "OS-Climate Physical Risk Library"
 authors = [
     {name = "Joe Moorhouse",email = "5102656+joemoorhouse@users.noreply.github.com"},
 ]
-requires-python = ">=3.8,<3.11"
+requires-python = ">=3.9,<3.11"
 readme = "README.md"
 license = {file = "LICENSE"}
 keywords = ["Physical", "Climate", "Risk", "Finance"]
@@ -46,7 +46,7 @@ dependencies = [
     "shapely>=2.0.1",
     "s3fs>=2022.1.0",
     "zarr>=2.10.3",
-    "geopandas>=0.13.2",
+    "geopandas>=0.14.4",
     "h3>=3.7.7",
     "lmdbm>=0.0.6",
 ]

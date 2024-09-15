@@ -96,6 +96,7 @@ target/
 src/test/data/coords.json
 credentials.env
 .pdm-python
+.python-version
 
 # Latex
 methodology/PhysicalRiskMethodology.aux
@@ -107,3 +108,4 @@ methodology/PhysicalRiskMethodology.glsdefs
 methodology/PhysicalRiskMethodology.ist
 methodology/PhysicalRiskMethodology.out
 methodology/PhysicalRiskMethodology.synctex.gz
+

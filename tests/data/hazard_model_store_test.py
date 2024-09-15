@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Sequence, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -40,8 +40,8 @@ class ZarrStoreMocker:
     def add_curves_global(
         self,
         array_path: str,
-        longitudes: List[float],
-        latitudes: List[float],
+        longitudes: Sequence[float],
+        latitudes: Sequence[float],
         return_periods: Union[List[float], npt.NDArray],
         intensities: Union[List[float], npt.NDArray],
         width: int = 43200,
@@ -75,13 +75,13 @@ class ZarrStoreMocker:
     def _add_curves(
         self,
         array_path: str,
-        longitudes: List[float],
-        latitudes: List[float],
+        longitudes: Sequence[float],
+        latitudes: Sequence[float],
         crs: str,
         shape: Tuple[int, int, int],
         trans: List[float],
-        return_periods: Union[List[float], npt.NDArray],
-        intensities: Union[List[float], npt.NDArray],
+        return_periods: Union[Sequence[float], npt.NDArray],
+        intensities: Union[Sequence[float], npt.NDArray],
         units: str = "default",
     ):
         z = self._root.create_dataset(  # type: ignore

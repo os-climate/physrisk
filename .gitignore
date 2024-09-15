@@ -45,6 +45,7 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *.cover
+tests/working/*
 
 # Translations
 *.mo
@@ -108,4 +109,3 @@ methodology/PhysicalRiskMethodology.glsdefs
 methodology/PhysicalRiskMethodology.ist
 methodology/PhysicalRiskMethodology.out
 methodology/PhysicalRiskMethodology.synctex.gz
-

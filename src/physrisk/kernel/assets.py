@@ -148,6 +148,21 @@ class ManufacturingAsset(Asset):
         self.type = type
 
 
+class OilGasAsset(Asset):
+    def __init__(
+        self,
+        latitude: float,
+        longitude: float,
+        *,
+        location: Optional[str] = None,
+        type: Optional[str] = None,
+        **kwargs,
+    ):
+        super().__init__(latitude, longitude, **kwargs)
+        self.location = location
+        self.type = type
+
+
 class PowerGeneratingAsset(Asset):
     def __init__(
         self,
@@ -164,9 +179,9 @@ class PowerGeneratingAsset(Asset):
         self.type: Optional[str] = type
         self.location: Optional[str] = location
         self.capacity: Optional[float] = capacity
+        self.primary_fuel: Optional[FuelKind] = None
 
         if type is not None:
-            self.primary_fuel: Optional[FuelKind] = None
             archetypes = type.split("/")
             if 0 < len(archetypes):
                 self.primary_fuel = FuelKind[archetypes[0]]

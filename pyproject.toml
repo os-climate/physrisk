@@ -89,16 +89,33 @@ physrisk = [
 
 [tool.pdm.dev-dependencies]
 test = [
-  "pdm[pytest]",
-  "pytest",
-  "pytest-cov",
-  "sphinx-pyproject"
+    "pdm[pytest]",
+    "pytest",
+    "pytest-cov",
+
+]
+doc = [
+    "numpydoc",
+    "nbsphinx",
+    "myst-nb",
+    "pandoc",
+    "pydata-sphinx-theme",
+    "sphinx",
+    "sphinxcontrib-details-directive",
+    "sphinxcontrib-bibtex",
+    "sphinx-copybutton",
+    "sphinx-simplepdf",
+    "sphinx-toolbox",
+    "sphinx_toggleprompt",
+    "sphinx_design",
+    "sphinx_rtd_theme",
+    "graphviz",
 ]
 dev = [
     "mypy",
     "pre-commit",
     "ruff",
-    "tox",
+    "tox"
 ]
 
 [tool.pdm.scripts]
@@ -106,7 +123,9 @@ pre_release = "scripts/dev-versioning.sh"
 release = "scripts/release-versioning.sh"
 test = "pytest"
 tox = "tox"
+docs_requirements = { shell = "pdm export -o docs/requirements-docs.txt --no-hashes", help = "Update requirements-docs.txt" }
 docs = { shell = "cd docs && make html", help = "Start the dev server for doc preview" }
+open_docs = { shell = "open ./docs/_build/html/index.html", help = "Start the dev server for doc preview" }
 lint = "pre-commit run --all-files"
 complete = { call = "tasks.complete:main", help = "Create autocomplete files for bash and fish" }
 all = {composite = ["pytest", "lint"]}

@@ -45,6 +45,7 @@ htmlcov/
 nosetests.xml
 coverage.xml
 *.cover
+tests/working/*
 
 # Translations
 *.mo
@@ -96,6 +97,7 @@ target/
 src/test/data/coords.json
 credentials.env
 .pdm-python
+.python-version
 
 # Latex
 methodology/PhysicalRiskMethodology.aux

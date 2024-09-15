@@ -19,7 +19,7 @@ repos:
     rev: v1.5.5
     hooks:
       - id: remove-tabs
-        exclude: ^.*\.(tsv)$
+        exclude: ^.*(\.(tsv)|Makefile)$
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.5.7

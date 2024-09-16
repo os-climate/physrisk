@@ -113,7 +113,7 @@ nest-asyncio==1.6.0
 nodeenv==1.9.1
 numba==0.60.0
 numcodecs==0.12.1
-numpy==2.0.2
+numpy==2.1.1
 numpydoc==1.8.0
 packaging==24.1
 pandas==2.2.2

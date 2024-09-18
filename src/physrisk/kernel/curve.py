@@ -18,7 +18,7 @@ def add_x_value_to_curve(x, curve_x, curve_y):
         curve_x = np.insert(curve_x, i, x)
     elif x == curve_x[i]:
         # point already exists; nothing to do
-        return curve_x, curve_y
+        return curve_x, curve_y, i
     elif i == 0:
         curve_y = np.insert(curve_y, 0, curve_y[0])  # flat extrapolation
         curve_x = np.insert(curve_x, 0, x)
@@ -30,7 +30,7 @@ def add_x_value_to_curve(x, curve_x, curve_y):
         curve_y = np.insert(curve_y, i, prob)
         curve_x = np.insert(curve_x, i, x)
 
-    return curve_x, curve_y
+    return curve_x, curve_y, i
 
 
 def to_exceedance_curve(bin_edges, probs):
@@ -148,7 +148,7 @@ class ExceedanceCurve:
         """Add a point to the curve with specified value and exceedance
         probability determined from existing curve by linear interpolation.
         """
-        values, probs = add_x_value_to_curve(value, self.values, self.probs)
+        values, probs, _ = add_x_value_to_curve(value, self.values, self.probs)
         return ExceedanceCurve(probs, values)
 
     def get_value(self, prob):

@@ -113,7 +113,7 @@ class PregeneratedHazardModel(HazardModel):
                             np.array([0]),
                         )
                     responses[req] = HazardEventDataResponse(
-                        valid_periods, valid_intensities, units, path
+                        valid_periods, valid_intensities.astype(dtype="float64"), units, path
                     )
             else:  # type: ignore
                 parameters, defns, units, path = hazard_data_provider.get_data(
@@ -128,7 +128,7 @@ class PregeneratedHazardModel(HazardModel):
                 for i, req in enumerate(batch):
                     valid = ~np.isnan(parameters[i, :])
                     responses[req] = HazardParameterDataResponse(
-                        parameters[i, :][valid], defns[valid], units, path
+                        parameters[i, :][valid].astype(dtype="float64"), defns[valid], units, path
                     )
         except Exception as err:
             # e.g. the requested data is unavailable

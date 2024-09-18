@@ -118,7 +118,14 @@ def vulnerability_config_dir():
     Returns:
         str: Directory path.
     """
-    path = Path(__file__).parents[1] / "src" / "physrisk" / "data" / "static" / "vulnerability"
+    path = (
+        Path(__file__).parents[1]
+        / "src"
+        / "physrisk"
+        / "data"
+        / "static"
+        / "vulnerability"
+    )
     return path
 
 

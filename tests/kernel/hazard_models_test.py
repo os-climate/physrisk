@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Dict, List, Mapping, NamedTuple, Sequence, Tuple
+from typing import Dict, Mapping, NamedTuple, Sequence, Tuple
 
 import numpy as np
 
@@ -58,8 +58,8 @@ class PointBasedHazardModel(HazardModel):
             year=year,
         )
 
-    def get_hazard_events(
-        self, requests: List[HazardDataRequest]
+    def get_hazard_data(
+        self, requests: Sequence[HazardDataRequest]
     ) -> Mapping[HazardDataRequest, HazardDataResponse]:
         response: Dict[HazardDataRequest, HazardDataResponse] = {}
         for request in requests:

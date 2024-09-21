@@ -21,7 +21,7 @@ from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.exposure import JupterExposureMeasure, calculate_exposures
-from physrisk.kernel.hazards import all_hazards
+from physrisk.kernel.hazards import Hazard, all_hazards
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey  # , ImpactKey
 from physrisk.kernel.impact_distrib import EmptyImpactDistrib
 from physrisk.kernel.risk import (
@@ -67,7 +67,7 @@ from .api.v1.impact_req_resp import (
 )
 from .data.image_creator import ImageCreator
 from .data.inventory import EmbeddedInventory, Inventory
-from .kernel import Asset, Hazard
+from .kernel.assets import Asset
 from .kernel import calculation as calc
 from .kernel.hazard_model import HazardDataRequest as hmHazardDataRequest
 from .kernel.hazard_model import HazardEventDataResponse as hmHazardEventDataResponse
@@ -289,7 +289,7 @@ def _get_hazard_data(request: HazardDataRequest, hazard_model: HazardModel):
         all_requests.extend(data_requests)
         item_requests.append(data_requests)
 
-    response_dict = hazard_model.get_hazard_events(all_requests)
+    response_dict = hazard_model.get_hazard_data(all_requests)
     # responses comes back as a dictionary because requests may be executed in different order to list
     # to optimise performance.
 

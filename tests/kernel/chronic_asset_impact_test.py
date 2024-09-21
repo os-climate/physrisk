@@ -1,5 +1,5 @@
 import unittest
-from typing import Iterable, List, Union
+from typing import List, Sequence, Union
 
 import numpy as np
 from scipy.stats import norm
@@ -53,7 +53,7 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
 
     def get_data_requests(
         self, asset: Asset, *, scenario: str, year: int
-    ) -> Union[HazardDataRequest, Iterable[HazardDataRequest]]:
+    ) -> Union[HazardDataRequest, Sequence[HazardDataRequest]]:
         """Request the hazard data needed by the vulnerability model for a specific asset
         (this is a Google-style doc string)
 
@@ -89,7 +89,7 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
         ]
 
     def get_impact(
-        self, asset: Asset, data_responses: List[HazardDataResponse]
+        self, asset: Asset, data_responses: Sequence[HazardDataResponse]
     ) -> ImpactDistrib:
         """Calcaulate impact (disruption) of asset based on the hazard data returned.
 

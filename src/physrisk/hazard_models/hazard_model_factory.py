@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, List, Mapping, MutableMapping, Optional
+from typing import Dict, List, Mapping, MutableMapping, Optional, Sequence
 
 from physrisk.data.hazard_data_provider import SourcePath
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
@@ -65,7 +65,7 @@ class CompositeHazardModel(HazardModel):
         self.max_jba_requests = provider_max_requests.get("jba", 0)
         self.jba_hazard_model = (
             JBAHazardModel(cache_store, credentials, max_requests=self.max_jba_requests)
-            if not self.credentials.jba_api_disabled() and self.max_jba_requests > 0
+            if not self.credentials.jba_api_disabled() and self.max_jba_requests >= 0
             else None
         )
         self.zarr_hazard_model = ZarrHazardModel(
@@ -76,19 +76,19 @@ class CompositeHazardModel(HazardModel):
         )
 
     def hazard_model(self, type):
-        if (
-            not self.credentials.jba_api_disabled()
-            and self.max_jba_requests > 0
-            and (type == RiverineInundation or type == PluvialInundation)
+        if self.jba_hazard_model is not None and (
+            type == RiverineInundation or type == PluvialInundation
         ):
             return self.jba_hazard_model
         else:
             return self.zarr_hazard_model
 
-    def get_hazard_events(
-        self, requests: List[HazardDataRequest]
+    def get_hazard_data(
+        self, requests: Sequence[HazardDataRequest]
     ) -> Mapping[HazardDataRequest, HazardDataResponse]:
-        requests_by_model = defaultdict(list)
+        requests_by_model: Dict[HazardModel, List[HazardDataRequest]] = defaultdict(
+            list
+        )
 
         for request in requests:
             requests_by_model[self.hazard_model(request.hazard_type)].append(request)
@@ -96,7 +96,7 @@ class CompositeHazardModel(HazardModel):
         responses: Dict[HazardDataRequest, HazardDataResponse] = {}
 
         for model, reqs in requests_by_model.items():
-            events_reponses = model.get_hazard_events(reqs)
+            events_reponses = model.get_hazard_data(reqs)
             responses.update(events_reponses)
 
         return responses

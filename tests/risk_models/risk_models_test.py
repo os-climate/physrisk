@@ -5,7 +5,6 @@ from typing import Dict, Sequence
 import numpy as np
 from dependency_injector import providers
 
-from physrisk import requests
 from physrisk.api.v1.impact_req_resp import (
     AssetImpactResponse,
     Category,
@@ -41,7 +40,6 @@ from physrisk.vulnerability_models.real_estate_models import (
     RealEstatePluvialInundationModel,
     RealEstateRiverineInundationModel,
 )
-from tests.api.container_test import TestContainer
 
 from ..base_test import TestWithCredentials
 from ..data.hazard_model_store_test import (

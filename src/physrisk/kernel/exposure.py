@@ -3,7 +3,7 @@ import math
 from abc import abstractmethod
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, List, Sequence, Tuple
 
 import numpy as np
 
@@ -55,7 +55,7 @@ class AssetExposureResult:
 class ExposureMeasure(DataRequester):
     @abstractmethod
     def get_exposures(
-        self, asset: Asset, data_responses: Iterable[HazardDataResponse]
+        self, asset: Asset, data_responses: Sequence[HazardDataResponse]
     ) -> Dict[type, Tuple[Category, float, str]]: ...
 
 
@@ -65,7 +65,7 @@ class JupterExposureMeasure(ExposureMeasure):
 
     def get_data_requests(
         self, asset: Asset, *, scenario: str, year: int
-    ) -> Iterable[HazardDataRequest]:
+    ) -> Sequence[HazardDataRequest]:
         return [
             HazardDataRequest(
                 hazard_type,
@@ -82,7 +82,7 @@ class JupterExposureMeasure(ExposureMeasure):
             for (hazard_type, indicator_id) in self.exposure_bins.keys()
         ]
 
-    def get_exposures(self, asset: Asset, data_responses: Iterable[HazardDataResponse]):
+    def get_exposures(self, asset: Asset, data_responses: Sequence[HazardDataResponse]):
         result: Dict[type, Tuple[Category, float, str]] = {}
         for (k, v), resp in zip(self.exposure_bins.items(), data_responses):
             if isinstance(resp, HazardParameterDataResponse):
@@ -161,7 +161,7 @@ class JupterExposureMeasure(ExposureMeasure):
         )
         return categories
 
-    def bounds_to_lookup(self, bounds: Iterable[Bounds]):
+    def bounds_to_lookup(self, bounds: Sequence[Bounds]):
         lower_bounds = np.array([b.lower for b in bounds])
         categories = np.array([b.category for b in bounds])
         return (lower_bounds, categories)

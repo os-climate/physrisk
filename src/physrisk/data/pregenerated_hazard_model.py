@@ -1,7 +1,7 @@
 import concurrent.futures
 from collections import defaultdict
 import logging
-from typing import Dict, List, Mapping, MutableMapping, Optional, Type
+from typing import Dict, List, Mapping, MutableMapping, Optional, Sequence, Type
 
 import numpy as np
 
@@ -30,8 +30,8 @@ class PregeneratedHazardModel(HazardModel):
     ):
         self.hazard_data_providers = hazard_data_providers
 
-    def get_hazard_events(  # noqa: C901
-        self, requests: List[HazardDataRequest]
+    def get_hazard_data(  # noqa: C901
+        self, requests: Sequence[HazardDataRequest]
     ) -> Mapping[HazardDataRequest, HazardDataResponse]:
         # A note on concurrency.
         # The requests will be batched up with batches accessing the same data set
@@ -45,10 +45,10 @@ class PregeneratedHazardModel(HazardModel):
         # for now we do 2; 1 might be preferred if the number of threads needed to download
         # data in parallel becomes large (probably not, given use of async in Zarr).
 
-        return self._get_hazard_events(requests)
+        return self._get_hazard_data(requests)
 
-    def _get_hazard_events(  # noqa: C901
-        self, requests: List[HazardDataRequest]
+    def _get_hazard_data(  # noqa: C901
+        self, requests: Sequence[HazardDataRequest]
     ) -> Mapping[HazardDataRequest, HazardDataResponse]:
         batches = defaultdict(list)
         for request in requests:
@@ -58,13 +58,13 @@ class PregeneratedHazardModel(HazardModel):
         # can change max_workers=1 for debugging
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
             futures = [
-                executor.submit(self._get_hazard_events_batch, batches[key], responses)
+                executor.submit(self._get_hazard_data_batch, batches[key], responses)
                 for key in batches.keys()
             ]
             concurrent.futures.wait(futures)
         return responses
 
-    def _get_hazard_events_batch(
+    def _get_hazard_data_batch(
         self,
         batch: List[HazardDataRequest],
         responses: MutableMapping[HazardDataRequest, HazardDataResponse],
@@ -113,7 +113,10 @@ class PregeneratedHazardModel(HazardModel):
                             np.array([0]),
                         )
                     responses[req] = HazardEventDataResponse(
-                        valid_periods, valid_intensities, units, path
+                        valid_periods,
+                        valid_intensities.astype(dtype="float64"),
+                        units,
+                        path,
                     )
             else:  # type: ignore
                 parameters, defns, units, path = hazard_data_provider.get_data(
@@ -128,7 +131,10 @@ class PregeneratedHazardModel(HazardModel):
                 for i, req in enumerate(batch):
                     valid = ~np.isnan(parameters[i, :])
                     responses[req] = HazardParameterDataResponse(
-                        parameters[i, :][valid], defns[valid], units, path
+                        parameters[i, :][valid].astype(dtype="float64"),
+                        defns[valid],
+                        units,
+                        path,
                     )
         except Exception as err:
             # e.g. the requested data is unavailable

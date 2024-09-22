@@ -85,7 +85,7 @@ class JBAHazardModel(HazardModel):
         self.lock = Lock()
         self.max_requests = max_requests
 
-    def check_requests(self, requests: List[HazardDataRequest]):
+    def check_requests(self, requests: Sequence[HazardDataRequest]):
         if any(
             r
             for r in requests
@@ -96,8 +96,8 @@ class JBAHazardModel(HazardModel):
         ):
             raise ValueError("invalid request")
 
-    def get_hazard_events(
-        self, requests: List[HazardDataRequest]
+    def get_hazard_data(
+        self, requests: Sequence[HazardDataRequest]
     ) -> Mapping[HazardDataRequest, HazardDataResponse]:
         # noqa:C90
 

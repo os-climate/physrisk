@@ -1,6 +1,5 @@
 import math
 from dataclasses import dataclass
-from enum import Enum
 from typing import Any, Callable, Dict, List, Sequence, Set, Tuple, Type
 
 import numpy as np

@@ -287,7 +287,7 @@ class TestEventRetrieval(TestWithCredentials):
             RiverineInundation: lambda indicator_id, scenario, year, hint: "test"
         }
         hazard_model = ZarrHazardModel(source_paths=source_paths, store=mocker.store)
-        response = hazard_model.get_hazard_events(
+        response = hazard_model.get_hazard_data(
             [
                 HazardDataRequest(
                     RiverineInundation,

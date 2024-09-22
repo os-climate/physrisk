@@ -206,7 +206,6 @@ ignore = [
     # Ignore this rules so that precommit passes. Uncomment to start fixing them
     "B006", "B008", "B904", "B012", "B024",
     "D",
-    "F401",
 ]
 
 [tool.ruff.lint.extend-per-file-ignores]

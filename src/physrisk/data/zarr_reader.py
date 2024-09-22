@@ -1,6 +1,6 @@
 import os
 from pathlib import PurePosixPath
-from typing import Any, Callable, MutableMapping, Optional, Sequence, Union
+from typing import Callable, MutableMapping, Optional, Sequence, Union
 
 import numpy as np
 import s3fs

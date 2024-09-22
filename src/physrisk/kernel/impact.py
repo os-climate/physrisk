@@ -1,7 +1,7 @@
 import logging
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, NamedTuple, Optional, Tuple, Union
+from typing import Dict, Iterable, List, NamedTuple, Optional, Sequence, Tuple, Union
 
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.hazard_event_distrib import HazardEventDistrib
@@ -46,7 +46,7 @@ class AssetImpactResult:
     impact: ImpactDistrib
     vulnerability: Optional[VulnerabilityDistrib] = None
     event: Optional[HazardEventDistrib] = None
-    hazard_data: Optional[Iterable[HazardDataResponse]] = (
+    hazard_data: Optional[Sequence[HazardDataResponse]] = (
         None  # optional detailed results for drill-down
     )
 
@@ -156,7 +156,7 @@ def _request_consolidated(
     # the list of requests for each requester and asset
     asset_requests: Dict[
         Tuple[DataRequester, Asset],
-        Union[HazardDataRequest, Iterable[HazardDataRequest]],
+        Union[HazardDataRequest, Sequence[HazardDataRequest]],
     ] = {}
 
     logging.info("Generating hazard data requests for requesters")
@@ -170,5 +170,5 @@ def _request_consolidated(
     flattened_requests = [
         req for requests in asset_requests.values() for req in get_iterable(requests)
     ]
-    responses = hazard_model.get_hazard_events(flattened_requests)
+    responses = hazard_model.get_hazard_data(flattened_requests)
     return asset_requests, responses

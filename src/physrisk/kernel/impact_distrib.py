@@ -1,9 +1,10 @@
 from enum import Enum
-from typing import List, Union
+from typing import List, Type, Union
 
 import numpy as np
 
 from physrisk.kernel.curve import to_exceedance_curve
+from physrisk.kernel.hazards import Hazard
 
 
 class ImpactType(Enum):
@@ -18,7 +19,7 @@ class ImpactDistrib:
 
     def __init__(
         self,
-        hazard_type: type,
+        hazard_type: Type[Hazard],
         impact_bins: Union[List[float], np.ndarray],
         prob: Union[List[float], np.ndarray],
         path: List[str],
@@ -26,7 +27,7 @@ class ImpactDistrib:
     ):
         """Create a new asset event distribution.
         Args:
-            event_type: type of event
+            hazard_type: Type of hazard.
             impact_bins: non-decreasing impact bin bounds
             prob: probabilities with size [len(intensity_bins) - 1]
             path: path to the hazard indicator data source

@@ -1,7 +1,7 @@
 import sys
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import Dict, List, Mapping, Optional, Protocol, Tuple, Type
+from typing import Dict, Mapping, Optional, Protocol, Sequence, Tuple, Type
 
 import numpy as np
 
@@ -146,15 +146,28 @@ class HazardModelFactory(Protocol):
 
 
 class HazardModel(ABC):
-    """Hazard event model. The model accepts a set of EventDataRequests and returns the corresponding
-    EventDataResponses."""
+    """Hazard model. The model accepts a set of HazardDataRequests and returns the corresponding
+    HazardDataResponses."""
 
     @abstractmethod
-    def get_hazard_events(
-        self, requests: List[HazardDataRequest]
+    def get_hazard_data(
+        self, requests: Sequence[HazardDataRequest]
     ) -> Mapping[HazardDataRequest, HazardDataResponse]:
-        """Process the hazard data requests and return responses."""
+        """Process the hazard indicator data requests and return responses.
+
+        Args:
+            requests (Sequence[HazardDataRequest]): Hazard indicator data requests.
+
+        Returns:
+            Mapping[HazardDataRequest, HazardDataResponse]: Responses for all hazard indicator data requests.
+        """
         ...
+
+    def get_hazard_events(
+        self, requests: Sequence[HazardDataRequest]
+    ) -> Mapping[HazardDataRequest, HazardDataResponse]:
+        """Deprecated: this has been renamed to get_hazard_data."""
+        return self.get_hazard_data(requests)
 
 
 class DataSource(Protocol):
@@ -169,8 +182,8 @@ class CompositeHazardModel(HazardModel):
     def __init__(self, hazard_models: Dict[type, HazardModel]):
         self.hazard_models = hazard_models
 
-    def get_hazard_events(
-        self, requests: List[HazardDataRequest]
+    def get_hazard_data(
+        self, requests: Sequence[HazardDataRequest]
     ) -> Mapping[HazardDataRequest, HazardDataResponse]:
         requests_by_event_type = defaultdict(list)
 
@@ -179,7 +192,7 @@ class CompositeHazardModel(HazardModel):
 
         responses: Dict[HazardDataRequest, HazardDataResponse] = {}
         for event_type, reqs in requests_by_event_type.items():
-            events_reponses = self.hazard_models[event_type].get_hazard_events(reqs)
+            events_reponses = self.hazard_models[event_type].get_hazard_data(reqs)
             responses.update(events_reponses)
 
         return responses

@@ -42,7 +42,7 @@ class ZarrStoreMocker:
         array_path: str,
         longitudes: Sequence[float],
         latitudes: Sequence[float],
-        return_periods: Union[List[float], npt.NDArray],
+        index_values: Union[List[float], npt.NDArray, List[str]],
         intensities: Union[List[float], npt.NDArray],
         width: int = 43200,
         height: int = 21600,
@@ -50,7 +50,7 @@ class ZarrStoreMocker:
     ):
         crs = "epsg:4326"
         crs, shape, trans = self._crs_shape_transform_global(
-            return_periods=return_periods, width=width, height=height
+            index_values=index_values, width=width, height=height
         )
         self._add_curves(
             array_path,
@@ -59,7 +59,7 @@ class ZarrStoreMocker:
             crs,
             shape,
             trans,
-            return_periods,
+            index_values,
             intensities,
             units=units,
         )
@@ -68,9 +68,9 @@ class ZarrStoreMocker:
         self,
         width: int = 43200,
         height: int = 21600,
-        return_periods: Union[List[float], npt.NDArray] = [0.0],
+        index_values: Union[List[float], npt.NDArray, List[str]] = [0.0],
     ):
-        return self._crs_shape_transform(width, height, return_periods)
+        return self._crs_shape_transform(width, height, index_values)
 
     def _add_curves(
         self,
@@ -80,7 +80,7 @@ class ZarrStoreMocker:
         crs: str,
         shape: Tuple[int, int, int],
         trans: List[float],
-        return_periods: Union[Sequence[float], npt.NDArray],
+        index_values: Union[Sequence[float], npt.NDArray, List[str]],
         intensities: Union[Sequence[float], npt.NDArray],
         units: str = "default",
     ):
@@ -91,7 +91,7 @@ class ZarrStoreMocker:
             dtype="f4",
         )
         z.attrs["transform_mat3x3"] = trans
-        z.attrs["index_values"] = return_periods
+        z.attrs["index_values"] = index_values
         z.attrs["crs"] = crs
         z.attrs["units"] = units
 
@@ -118,10 +118,10 @@ class ZarrStoreMocker:
         self,
         width: int,
         height: int,
-        return_periods: Union[List[float], npt.NDArray] = [0.0],
+        index_values: Union[List[float], npt.NDArray, List[str]] = [0.0],
     ):
         t = [360.0 / width, 0.0, -180.0, 0.0, -180.0 / height, 90.0, 0.0, 0.0, 1.0]
-        return "epsg:4326", (len(return_periods), height, width), t
+        return "epsg:4326", (len(index_values), height, width), t
 
 
 def shape_transform_21600_43200(

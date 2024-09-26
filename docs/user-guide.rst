@@ -11,3 +11,6 @@ The following sections document the structures and conventions of Physrisk and a
 
    user-guide/introduction
    user-guide/vulnerability_config
+   user-guide/general_workflow
+   user-guide/add_new_data
+   user-guide/calculations_via_request

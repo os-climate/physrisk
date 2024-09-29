@@ -27,7 +27,7 @@ This website contains the documentation for physrisk, a calculation engine for p
     :gutter: 1
 
     .. grid-item-card::  Getting started
-      :link: getting-started.html
+      :link: getting_started/getting_started.html
       :text-align: center
 
       :octicon:`location;5em;sd-text-info`
@@ -46,7 +46,7 @@ This website contains the documentation for physrisk, a calculation engine for p
     :gutter: 1
 
     .. grid-item-card::  User guide
-      :link: user-guide.html
+      :link: user_guide/user_guide.html
       :text-align: center
 
       :octicon:`upload;5em;sd-text-info`

@@ -110,6 +110,7 @@ doc = [
     "sphinx_design",
     "sphinx_rtd_theme",
     "graphviz",
+    "plotly>=5.24.1",
 ]
 dev = [
     "mypy",

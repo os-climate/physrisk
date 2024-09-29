@@ -13,9 +13,9 @@ sys.path.insert(0, os.path.abspath("../src/"))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "PhysicalRisk"
-copyright = "2024, DCV"
-author = "DCV"
+project = "physrisk"
+copyright = "2024, OS-Climate"
+author = "OS-Climate"
 
 # The full version, including alpha/beta/rc tags
 # release = "1.1.0"
@@ -70,18 +70,22 @@ autodoc_default_options = {
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_logo = "images/OS-Climate-Logo.png"
-html_theme = "pydata_sphinx_theme"
+html_theme = "sphinx_rtd_theme"
+#html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
 
 # Don't show the code
 html_show_sourcelink = True
 
 html_theme_options = {
-    # 'logo_only': False,
+    "logo_only": False,
     # 'display_version': False,
     # Table of contents options
     "collapse_navigation": False,
+    "style_nav_header_background": "#d2d2d2"
+    # "#e3e3e3",
 }
+
 
 html_sidebars = {
     "**": [

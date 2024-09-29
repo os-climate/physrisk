@@ -1,5 +1,5 @@
 =================================
-Physical Climate Risk methodology
+Physical climate risk methodology
 =================================
 
 :download:`Download PDF <../methodology/PhysicalRiskMethodology.pdf>`

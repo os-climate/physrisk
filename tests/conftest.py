@@ -107,7 +107,7 @@ def vulnerability_onboarding_dir():
     Returns:
         str: Directory path.
     """
-    path = Path(__file__).parents[1] / "docs" / "vulnerability_functions"
+    path = Path(__file__).parents[1] / "docs" / "user_guide" / "vulnerability" / "vulnerability_functions"
     return path
 
 

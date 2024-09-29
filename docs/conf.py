@@ -71,7 +71,7 @@ autodoc_default_options = {
 
 html_logo = "images/OS-Climate-Logo.png"
 html_theme = "sphinx_rtd_theme"
-#html_theme = "pydata_sphinx_theme"
+# html_theme = "pydata_sphinx_theme"
 html_static_path = ["_static"]
 
 # Don't show the code
@@ -82,7 +82,7 @@ html_theme_options = {
     # 'display_version': False,
     # Table of contents options
     "collapse_navigation": False,
-    "style_nav_header_background": "#d2d2d2"
+    "style_nav_header_background": "#d2d2d2",
     # "#e3e3e3",
 }
 

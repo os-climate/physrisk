@@ -82,7 +82,7 @@ html_theme_options = {
     # 'display_version': False,
     # Table of contents options
     "collapse_navigation": False,
-    "style_nav_header_background": "#d2d2d2",
+    "style_nav_header_background": "#35424b",
     # "#e3e3e3",
 }
 

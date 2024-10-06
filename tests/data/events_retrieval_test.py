@@ -312,7 +312,7 @@ class TestEventRetrieval(TestWithCredentials):
                     indicator_id="",
                     scenario="",
                     year=2050,
-                    buffer=10
+                    buffer=10,
                 )
             ]
         )

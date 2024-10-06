@@ -30,13 +30,15 @@ class HazardDataRequest:
         """Create HazardDataRequest.
 
         Args:
-            event_type: type of hazard.
-            longitude: required longitude.
-            latitude: required latitude.
-            model: model identifier.
-            scenario: identifier of scenario, e.g. rcp8p5 (RCP 8.5).
-            year: projection year, e.g. 2080.
-            buffer: delimitation of the area for the hazard data expressed in metres (within [0,1000]).
+            hazard_type (Type[Hazard]): Type of hazard.
+            longitude (float): Longitude.
+            latitude (float): Latitude.
+            indicator_id (str): Hazard indicator identifier, e.g. "flood_depth".
+            scenario (str): Scenario identifier, e.g. "SSP585", "RCP8p5".
+            year (int): Year for which data required.
+            hint (Optional[HazardDataHint], optional): Hint, typically providing the data set path.
+                Defaults to None.
+            buffer (Optional[int], optional): If not None applies a buffer around the point in metres, within [0, 1000m]. Defaults to None.
         """
         self.hazard_type = hazard_type
         self.longitude = longitude

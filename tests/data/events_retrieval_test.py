@@ -267,8 +267,8 @@ class TestEventRetrieval(TestWithCredentials):
         )
 
     def test_reproject(self):
-        """Test adding data in a non-ESPG-4326 coordinate reference system. Check that attribute
-        end in the correct convertion."""
+        """Test adding data in a non-ESPG-4326 coordinate reference system. Check that the round tip yields
+        the correct results."""
         mocker = ZarrStoreMocker()
         lons = [1.1, -0.31]
         lats = [47.0, 52.0]
@@ -301,4 +301,21 @@ class TestEventRetrieval(TestWithCredentials):
         )
         numpy.testing.assert_equal(
             next(iter(response.values())).intensities, [1.0, 2.0, 3.0]
+        )
+        # run with a non-point shape also (hits different code path)
+        response2 = hazard_model.get_hazard_data(
+            [
+                HazardDataRequest(
+                    RiverineInundation,
+                    lons[0],
+                    lats[0],
+                    indicator_id="",
+                    scenario="",
+                    year=2050,
+                    buffer=10
+                )
+            ]
+        )
+        numpy.testing.assert_equal(
+            next(iter(response2.values())).intensities, [1.0, 2.0, 3.0]
         )

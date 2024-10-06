@@ -4,6 +4,7 @@ from typing import Callable, MutableMapping, Optional, Sequence, Union
 
 import numpy as np
 import s3fs
+import shapely.ops
 import zarr
 from affine import Affine
 from pyproj import Transformer
@@ -180,9 +181,15 @@ class ZarrReader:
 
         t = z.attrs["transform_mat3x3"]  # type: ignore
         transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
+        crs = z.attrs.get("crs", "epsg:4326")
         units: str = z.attrs.get("units", "default")
 
+        if crs.lower() != "epsg:4236":
+            transproj = Transformer.from_crs("epsg:4326", crs, always_xy=True).transform
+            shapes = [shapely.ops.transform(transproj, shape) for shape in shapes]
+
         matrix = np.array(~transform).reshape(3, 3).transpose()[:, :-1].reshape(6)
+
         transformed_shapes = [
             affinity.affine_transform(shape, matrix) for shape in shapes
         ]
@@ -292,23 +299,26 @@ class ZarrReader:
         n_grid=5,
     ):
         """Get maximal intensity curve for a grid around a given latitude and longitude coordinate pair.
-            It is almost equivalent to:
-                self.get_max_curves
-                (
-                    set_id,
-                    [
-                        Polygon(
-                            (
-                                (x - 0.5 * delta_deg, y - 0.5 * delta_deg),
-                                (x - 0.5 * delta_deg, y + 0.5 * delta_deg),
-                                (x + 0.5 * delta_deg, y + 0.5 * delta_deg),
-                                (x + 0.5 * delta_deg, y - 0.5 * delta_deg)
-                            )
-                        )
-                        for x, y in zip(longitudes, latitudes)
-                    ]
-                    interpolation
+        It is almost equivalent to:
+        ```
+        self.get_max_curves
+        (
+            set_id,
+            [
+                Polygon(
+                    (
+                        (x - 0.5 * delta_deg, y - 0.5 * delta_deg),
+                        (x - 0.5 * delta_deg, y + 0.5 * delta_deg),
+                        (x + 0.5 * delta_deg, y + 0.5 * delta_deg),
+                        (x + 0.5 * delta_deg, y - 0.5 * delta_deg)
+                    )
                 )
+                for x, y in zip(longitudes, latitudes)
+            ]
+            interpolation
+        )
+        ```
+
         Args:
             set_id: string or tuple representing data set, converted into path by path_provider.
             longitudes: list of longitudes.
@@ -316,13 +326,14 @@ class ZarrReader:
             interpolation: interpolation method, "floor", "linear", "max" or "min".
             delta_km: linear distance in kilometres of the side of the square grid surrounding a given position.
             n_grid: number of grid points along the latitude and longitude dimensions used for
-            calculating the maximal value.
+                calculating the maximal value.
 
         Returns:
             curves_max: numpy array of maximum intensity on the grid for a given coordinate pair
             (no. coordinate pairs, no. return periods).
             return_periods: return periods in years.
         """
+
         kilometres_per_degree = 110.574
         delta_deg = delta_km / kilometres_per_degree
 

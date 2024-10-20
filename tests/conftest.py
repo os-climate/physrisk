@@ -100,47 +100,6 @@ def hazard_dir():
     return hazard.absolute()
 
 
-@pytest.fixture(scope="session")
-def vulnerability_onboarding_dir():
-    """Location of the vulnerability on-boarding directory..
-
-    Returns:
-        str: Directory path.
-    """
-    path = (
-        Path(__file__).parents[1]
-        / "docs"
-        / "user_guide"
-        / "vulnerability"
-        / "vulnerability_functions"
-    )
-    return path
-
-
-@pytest.fixture(scope="session")
-def vulnerability_config_dir():
-    """Location of the vulnerability on-boarding directory..
-
-    Returns:
-        str: Directory path.
-    """
-    path = (
-        Path(__file__).parents[1]
-        / "src"
-        / "physrisk"
-        / "data"
-        / "static"
-        / "vulnerability"
-    )
-    return path
-
-
-# def assert_expected(result: str, func_name: str, update_expected: bool):
-#     result_dict, expected_dict = get_result_expected(result, func_name, update_expected)
-#     diffs = DeepDiff(expected_dict, result_dict)
-#     assert len(diffs.affected_paths) == 0
-
-
 def get_result_expected(result: str, func_name: str, update_expected: bool):
     path = (
         pathlib.Path(__file__).parent

@@ -79,7 +79,7 @@ The `physrisk repo <https://github.com/os-climate/physrisk>`_ contains the main 
 
 Physrisk is also designed to be a hosted, e.g. to provide on-demand calculations; the project is a co-operative of members some of whom need to integrate physical risk calculation into other systems. `physrisk-api <https://github.com/os-climate/physrisk-api>`_ and `physrisk-ui <https://github.com/os-climate/physrisk-ui>`_ provide an example API and user interface.
 
-A `development or 'sandbox' version of the UI <https://physrisk-ui-sandbox.apps.odh-cl1.apps.os-climate.org>`_ is hosted by OS-Climate. Although used for demonstration and test, this is a useful way to explore the available hazard data.
+A `development or 'sandbox' version of the UI <https://physrisk-ui-physrisk.apps.odh-cl2.apps.os-climate.org>`_ is hosted by OS-Climate. Although used for demonstration and test, this is a useful way to explore the available hazard data.
 
 Also see the `OSC webpage <https://os-climate.org/physical-risk-resilience/>`_
 

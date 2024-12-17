@@ -28,7 +28,7 @@ Physrisk is primarily designed to run 'bottom-up' calculations that model the im
 Hazard indicators are on-boarded from public resources or inferred from climate projections, e.g. from CMIP or CORDEX data sets. Indicators are created from code in the
 [hazard repo](https://github.com/os-climate/hazard) to make calculations as transparent as possible.
 
-Physrisk is also designed to be a hosted, e.g. to provide on-demand calculations. [physrisk-api](https://github.com/os-climate/physrisk-api) and [physrisk-ui](https://github.com/os-climate/physrisk-ui) provide an example API and user interface. A [development version of the UI](https://physrisk-ui-sandbox.apps.odh-cl1.apps.os-climate.org) is hosted by OS-Climate.
+Physrisk is also designed to be a hosted, e.g. to provide on-demand calculations. [physrisk-api](https://github.com/os-climate/physrisk-api) and [physrisk-ui](https://github.com/os-climate/physrisk-ui) provide an example API and user interface. A [development version of the UI](https://physrisk-ui-physrisk.apps.odh-cl2.apps.os-climate.org) is hosted by OS-Climate.
 
 ## Using the library
 The library can be run locally, although access to the hazard indicator data is needed. The library is installed via:
@@ -36,12 +36,12 @@ The library can be run locally, although access to the hazard indicator data is 
 pip install physrisk-lib
 ```
 
-Hazard indicator data is freely available. Members of the project are able to access OS-Climate S3 buckets. Credentials are available [here](https://console-openshift-console.apps.odh-cl1.apps.os-climate.org/k8s/ns/sandbox/secrets/physrisk-s3-keys). Information about the project is available via the [community-hub](https://github.com/os-climate/OS-Climate-Community-Hub). Non-members are able to download or copy hazard indicator data.
+Hazard indicator data is freely available. Members of the project are able to access OS-Climate S3 buckets. Credentials are available [here](https://console-openshift-console.apps.odh-cl2.apps.os-climate.org/k8s/ns/physrisk/secrets/physrisk-s3-keys). Information about the project is available via the [community-hub](https://github.com/os-climate/OS-Climate-Community-Hub). Non-members are able to download or copy hazard indicator data.
 
 Hazard indicator data can be downloaded or copied from the 'os-climate-public-data' bucket. A list of the keys to copy is available from
 https://os-climate-public-data.s3.amazonaws.com/hazard/keys.txt
 
-An inventory of the hazard data is maintained [here](https://github.com/os-climate/hazard/blob/main/src/inventories/hazard/inventory.json) (this is used by the physrisk library itself). The [UI hazard viewer](https://physrisk-ui-sandbox.apps.odh-cl1.apps.os-climate.org) is a convenient way to browse data sets.
+An inventory of the hazard data is maintained [here](https://github.com/os-climate/hazard/blob/main/src/inventories/hazard/inventory.json) (this is used by the physrisk library itself). The [UI hazard viewer](https://physrisk-ui-physrisk.apps.odh-cl2.apps.os-climate.org) is a convenient way to browse data sets.
 
 Access to hazard event data requires setting of environment variables specifying the S3 Bucket, for example:
 

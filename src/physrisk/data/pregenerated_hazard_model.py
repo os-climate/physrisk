@@ -138,19 +138,21 @@ class PregeneratedHazardModel(HazardModel):
                     )
         except Exception as err:
             # e.g. the requested data is unavailable
-            for _i, req in enumerate(batch):
+            for _, req in enumerate(batch):
                 failed_response = HazardDataFailedResponse(err)
                 responses[req] = failed_response
                 failures.append(failed_response)
 
         if any(failures):
-            logger.error(
-                f"{len(failures)} errors in batch (hazard_type={hazard_type.__name__}, indicator_id={indicator_id}, "
+            # only a warning: perhaps the caller does not expect data to be present for all
+            # year/scenario combinations.
+            logger.warning(
+                f"{len(failures)} requests failed in batch (hazard_type={hazard_type.__name__}, indicator_id={indicator_id}, "
                 f"scenario={scenario}, year={year}): (logs limited to first 3)"
             )
             errors = (str(i.error) for i in failures)
-            for _ in range(3):
-                logger.error(next(errors))
+            for _ in range(min(len(failures), 3)):
+                logger.warning(next(errors))
         return
 
 

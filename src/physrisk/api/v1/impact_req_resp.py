@@ -57,7 +57,7 @@ class AssetImpactRequest(BaseModel):
     # to be deprecated
     scenario: str = Field("rcp8p5", description="Name of scenario ('rcp8p5')")
     year: int = Field(
-        [2050],
+        2050,
         description="""Projection years (e.g. 2030, 2050, 2080). Any year before 2030,
         e.g. 1980, is treated as historical.""",
     )
@@ -72,7 +72,7 @@ class Category(int, Enum):
 
 
 class RiskMeasureDefinition(BaseModel):
-    measure_id: str = Field(None, description="Identifier for the risk measure.")
+    measure_id: str = Field("", description="Identifier for the risk measure.")
     label: str = Field(
         "<short description of the measure, e.g. fractional loss for 1-in-100 year event>",
         description="Short label for the measure quantity.",
@@ -85,7 +85,7 @@ class RiskMeasureDefinition(BaseModel):
 
 class RiskScoreValue(BaseModel):
     value: Category = Field(
-        "", description="Value of the score: red, amber, green, nodata."
+        Category.NODATA, description="Value of the score: red, amber, green, nodata."
     )
     label: str = Field(
         "",
@@ -128,7 +128,7 @@ class RiskMeasureKey(BaseModel):
 
 class RiskMeasuresForAssets(BaseModel):
     key: RiskMeasureKey
-    scores: List[int] = Field(None, description="Identifier for the risk measure.")
+    scores: List[int] = Field([0], description="Identifier for the risk measure.")
     measures_0: List[float]
     measures_1: Optional[List[float]]
 
@@ -156,14 +156,14 @@ class AcuteHazardCalculationDetails(BaseModel):
     hazard_distribution: Distribution
     vulnerability_distribution: VulnerabilityDistrib
     hazard_path: List[str] = Field(
-        "unknown", description="Path to the hazard indicator data source."
+        ["unknown"], description="Path to the hazard indicator data source."
     )
 
 
 class ImpactKey(BaseModel):
     hazard_type: str = Field("", description="Type of the hazard.")
-    scenario_id: str = Field(None, description="Identifier of the scenario.")
-    year: str = Field(None, description="Year of impact.")
+    scenario_id: str = Field("", description="Identifier of the scenario.")
+    year: str = Field("", description="Year of impact.")
 
 
 class AssetSingleImpact(BaseModel):

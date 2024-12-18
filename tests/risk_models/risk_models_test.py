@@ -64,7 +64,7 @@ class TestRiskModels(TestWithCredentials):
         )
         measure_ids_for_asset, definitions = model.populate_measure_definitions(assets)
         _, measures = model.calculate_risk_measures(
-            assets, prosp_scens=scenarios, years=years
+            assets, scenarios=scenarios, years=years
         )
 
         # how to get a score using the MeasureKey
@@ -293,7 +293,7 @@ class TestRiskModels(TestWithCredentials):
         )
 
     def test_via_requests(self):
-        scenarios = ["ssp585"]
+        scenarios = ["ssp585", "historical"]
         years = [2050]
 
         assets = self._create_assets()
@@ -386,7 +386,7 @@ class TestRiskModels(TestWithCredentials):
         )
         measure_ids_for_asset, definitions = model.populate_measure_definitions(assets)
         _, measures = model.calculate_risk_measures(
-            assets, prosp_scens=scenarios, years=years
+            assets, scenarios=scenarios, years=years
         )
         np.testing.assert_approx_equal(
             measures[MeasureKey(assets[0], scenarios[0], years[0], Wind)].measure_0,

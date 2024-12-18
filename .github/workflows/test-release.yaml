@@ -8,7 +8,7 @@ name: "🐍📦 Test build and publish to Test PyPI"
 on: push
 
 env:
-  python-version: "3.8"
+  python-version: "3.9"
 
 jobs:
   publish:

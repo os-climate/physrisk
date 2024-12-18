@@ -103,7 +103,7 @@ class RiskModel:
 class MeasureKey(NamedTuple):
     asset: Asset
     prosp_scen: str  # prospective scenario
-    year: int
+    year: Optional[int]
     hazard_type: type
 
 
@@ -238,10 +238,10 @@ class AssetLevelRiskModel(RiskModel):
         return measure_ids_for_hazard, measure_id_lookup
 
     def calculate_risk_measures(
-        self, assets: Sequence[Asset], prosp_scens: Sequence[str], years: Sequence[int]
+        self, assets: Sequence[Asset], scenarios: Sequence[str], years: Sequence[int]
     ):
         impacts = self._calculate_all_impacts(
-            assets, prosp_scens, years, include_histo=True
+            assets, scenarios, years, include_histo=True
         )
         measures: Dict[MeasureKey, Measure] = {}
         aggregated_measures: Dict[MeasureKey, Measure] = {}
@@ -249,8 +249,8 @@ class AssetLevelRiskModel(RiskModel):
             if type(asset) not in self._measure_calculators:
                 continue
             measure_calc = self._measure_calculators[type(asset)]
-            for prosp_scen in prosp_scens:
-                for year in years:
+            for scenario in scenarios:
+                for year in [None] if scenario == "historical" else years:
                     for hazard_type in measure_calc.supported_hazards():
                         base_impacts = impacts.get(
                             ImpactKey(
@@ -260,20 +260,24 @@ class AssetLevelRiskModel(RiskModel):
                                 key_year=None,
                             )
                         )
-                        prosp_impacts = impacts.get(
+                        # the future impact might also be the historical if that is also specified
+                        fut_impacts = impacts.get(
                             ImpactKey(
                                 asset=asset,
                                 hazard_type=hazard_type,
-                                scenario=prosp_scen,
+                                scenario=scenario,
                                 key_year=year,
                             )
                         )
+                        if base_impacts is None or fut_impacts is None:
+                            # should only happen if we are working with limited hazard scope
+                            continue
                         risk_inds = [
                             measure_calc.calc_measure(
                                 hazard_type, base_impact, prosp_impact
                             )
                             for base_impact, prosp_impact in zip(
-                                base_impacts, prosp_impacts
+                                base_impacts, fut_impacts
                             )
                         ]
                         risk_ind = [
@@ -281,12 +285,10 @@ class AssetLevelRiskModel(RiskModel):
                         ]
                         if len(risk_ind) > 0:
                             # TODO: Aggregate  measures instead of picking the first value.
-                            measures[
-                                MeasureKey(asset, prosp_scen, year, hazard_type)
-                            ] = risk_ind[0]
-            aggregated_measures.update(
-                measure_calc.aggregate_risk_measures(
-                    measures, assets, prosp_scens, years
-                )
-            )
+                            measures[MeasureKey(asset, scenario, year, hazard_type)] = (
+                                risk_ind[0]
+                            )
+        aggregated_measures.update(
+            measure_calc.aggregate_risk_measures(measures, assets, scenarios, years)
+        )
         return impacts, aggregated_measures

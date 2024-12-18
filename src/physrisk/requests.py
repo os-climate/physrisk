@@ -556,7 +556,7 @@ def _create_risk_measures(
     measures_for_assets: List[RiskMeasuresForAssets] = []
     for hazard_type in hazard_types:
         for scenario_id in scenarios:
-            for year in years:
+            for year in [None] if scenario_id == "historical" else years:
                 # we calculate and tag results for each scenario, year and hazard
                 score_key = RiskMeasureKey(
                     hazard_type=hazard_type.__name__,

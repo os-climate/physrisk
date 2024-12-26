@@ -85,9 +85,11 @@ class PregeneratedHazardModel(HazardModel):
             try:
                 hazard_data_provider = self.hazard_data_providers[hazard_type]
             except Exception:
-                raise Exception(
-                    f"no hazard data provider for hazard type {hazard_type.__name__}."
-                )
+                no_provider_err = Exception(f"no hazard data provider for hazard type {hazard_type.__name__}.")
+                for req in batch:
+                    responses[req] = HazardDataFailedResponse(no_provider_err)
+                return
+
             if indicator_data(hazard_type, indicator_id) == IndicatorData.EVENT:
                 intensities, return_periods, units, path = (
                     hazard_data_provider.get_data(
@@ -138,7 +140,7 @@ class PregeneratedHazardModel(HazardModel):
                     )
         except Exception as err:
             # e.g. the requested data is unavailable
-            for _, req in enumerate(batch):
+            for req in batch:
                 failed_response = HazardDataFailedResponse(err)
                 responses[req] = failed_response
                 failures.append(failed_response)

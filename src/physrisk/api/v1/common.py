@@ -1,26 +1,25 @@
-from typing import Dict, List, Optional, Sequence, Union
+from typing import Annotated, Dict, List, Optional, Sequence, Union
 
 import numpy as np
-from pydantic import BaseModel, ConfigDict, Field
+import numpy.typing as npt
+from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, Field, PlainSerializer
 
 
-class TypedArray(np.ndarray):
-    @classmethod
-    def __get_validators__(cls):
-        yield cls.validate_type
-
-    @classmethod
-    def validate_type(cls, val):
-        return np.array(val, dtype=cls.inner_type)  # type: ignore
+# def deserialize_list(list: list) -> npt.NDArray:
+#     """Deserialize a list into a numpy array."""
+#     return np.array(list)
 
 
-class ArrayMeta(type):
-    def __getitem__(cls, t):
-        return type("Array", (TypedArray,), {"inner_type": t})
+def serialize_array(array: npt.NDArray) -> str:
+    """Serialize a numpy array into a list."""
+    return array.tolist()
 
 
-class Array(np.ndarray, metaclass=ArrayMeta):
-    pass
+NDArray = Annotated[
+    npt.NDArray,
+    #AfterValidator(deserialize_list),
+    PlainSerializer(serialize_array, return_type=list),
+]
 
 
 class Asset(BaseModel):
@@ -32,7 +31,7 @@ class Asset(BaseModel):
     (or equivalent value, e.g. by reducing expenses or increasing sales).
     """
 
-    model_config = ConfigDict(extra="allow")
+    #model_config = ConfigDict(extra="allow")
 
     asset_class: str = Field(
         description="name of asset class; corresponds to physrisk class names, e.g. PowerGeneratingAsset"
@@ -44,13 +43,28 @@ class Asset(BaseModel):
     )
     location: Optional[str] = Field(
         None,
-        description="Location (e.g. Africa, Asia, Europe, Global, Oceania, North America, South America)",
+        description="Location (e.g. Africa, Asia, Europe, North America, Oceania, South America); ",
     )
     capacity: Optional[float] = Field(None, description="Power generation capacity")
     attributes: Optional[Dict[str, str]] = Field(
         None,
         description="Bespoke attributes (e.g. number of storeys, structure type, occupancy type)",
     )
+
+    model_config = {
+        "extra": "allow",
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "asset_class": "RealEstateAsset",
+                    "type": "Buildings/Industrial",
+                    "latitude": 22.2972,
+                    "longitude": 91.8062,
+                    "location": "Asia",
+                }
+            ]
+        }
+    }
 
 
 class Assets(BaseModel):
@@ -109,8 +123,8 @@ class ExceedanceCurve(BaseModel):
     """General exceedance curve (e.g. hazazrd, impact)."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    values: np.ndarray = Field(default_factory=lambda: np.zeros(10), description="")
-    exceed_probabilities: np.ndarray = Field(
+    values: NDArray = Field(default_factory=lambda: np.zeros(10), description="")
+    exceed_probabilities: NDArray = Field(
         default_factory=lambda: np.zeros(10), description=""
     )
 
@@ -119,8 +133,8 @@ class Distribution(BaseModel):
     """General exceedance curve (e.g. hazazrd, impact)."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    bin_edges: np.ndarray = Field(default_factory=lambda: np.zeros(11), description="")
-    probabilities: np.ndarray = Field(
+    bin_edges: NDArray = Field(default_factory=lambda: np.zeros(11), description="")
+    probabilities: NDArray = Field(
         default_factory=lambda: np.zeros(10), description=""
     )
 
@@ -129,10 +143,10 @@ class HazardEventDistrib(BaseModel):
     """Intensity curve of an acute hazard."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    intensity_bin_edges: np.ndarray = Field(
+    intensity_bin_edges: NDArray = Field(
         default_factory=lambda: np.zeros(10), description=""
     )
-    probabilities: np.ndarray = Field(
+    probabilities: NDArray = Field(
         default_factory=lambda: np.zeros(10), description=""
     )
     path: List[str] = Field([], description="Path to the hazard indicator data source.")
@@ -166,12 +180,12 @@ class VulnerabilityDistrib(BaseModel):
     """Defines a vulnerability matrix."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
-    intensity_bin_edges: np.ndarray = Field(
+    intensity_bin_edges: NDArray = Field(
         default_factory=lambda: np.zeros(10), description=""
     )
-    impact_bin_edges: np.ndarray = Field(
+    impact_bin_edges: NDArray = Field(
         default_factory=lambda: np.zeros(10), description=""
     )
-    prob_matrix: np.ndarray = Field(
+    prob_matrix: NDArray = Field(
         default_factory=lambda: np.zeros(10), description=""
     )

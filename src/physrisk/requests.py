@@ -486,6 +486,9 @@ def compile_asset_impacts(
         ordered_impacts[asset] = []
     for k, value in impacts.items():
         for v in value:
+            if isinstance(v.impact, EmptyImpactDistrib):
+                continue
+
             if include_calc_details:
                 if v.event is not None and v.vulnerability is not None:
                     hazard_exceedance = v.event.to_exceedance_curve()
@@ -509,9 +512,6 @@ def compile_asset_impacts(
                     )
             else:
                 calc_details = None
-
-            if isinstance(v.impact, EmptyImpactDistrib):
-                continue
 
             impact_exceedance = v.impact.to_exceedance_curve()
             key = APIImpactKey(

@@ -85,7 +85,9 @@ class PregeneratedHazardModel(HazardModel):
             try:
                 hazard_data_provider = self.hazard_data_providers[hazard_type]
             except Exception:
-                no_provider_err = Exception(f"no hazard data provider for hazard type {hazard_type.__name__}.")
+                no_provider_err = Exception(
+                    f"no hazard data provider for hazard type {hazard_type.__name__}."
+                )
                 for req in batch:
                     responses[req] = HazardDataFailedResponse(no_provider_err)
                 return

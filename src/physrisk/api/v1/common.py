@@ -2,7 +2,7 @@ from typing import Annotated, Dict, List, Optional, Sequence, Union
 
 import numpy as np
 import numpy.typing as npt
-from pydantic import AfterValidator, BaseModel, BeforeValidator, ConfigDict, Field, PlainSerializer
+from pydantic import BaseModel, ConfigDict, Field, PlainSerializer
 
 
 # def deserialize_list(list: list) -> npt.NDArray:
@@ -17,7 +17,7 @@ def serialize_array(array: npt.NDArray) -> str:
 
 NDArray = Annotated[
     npt.NDArray,
-    #AfterValidator(deserialize_list),
+    # AfterValidator(deserialize_list),
     PlainSerializer(serialize_array, return_type=list),
 ]
 
@@ -31,7 +31,7 @@ class Asset(BaseModel):
     (or equivalent value, e.g. by reducing expenses or increasing sales).
     """
 
-    #model_config = ConfigDict(extra="allow")
+    # model_config = ConfigDict(extra="allow")
 
     asset_class: str = Field(
         description="name of asset class; corresponds to physrisk class names, e.g. PowerGeneratingAsset"
@@ -63,7 +63,7 @@ class Asset(BaseModel):
                     "location": "Asia",
                 }
             ]
-        }
+        },
     }
 
 
@@ -134,9 +134,7 @@ class Distribution(BaseModel):
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
     bin_edges: NDArray = Field(default_factory=lambda: np.zeros(11), description="")
-    probabilities: NDArray = Field(
-        default_factory=lambda: np.zeros(10), description=""
-    )
+    probabilities: NDArray = Field(default_factory=lambda: np.zeros(10), description="")
 
 
 class HazardEventDistrib(BaseModel):
@@ -146,9 +144,7 @@ class HazardEventDistrib(BaseModel):
     intensity_bin_edges: NDArray = Field(
         default_factory=lambda: np.zeros(10), description=""
     )
-    probabilities: NDArray = Field(
-        default_factory=lambda: np.zeros(10), description=""
-    )
+    probabilities: NDArray = Field(default_factory=lambda: np.zeros(10), description="")
     path: List[str] = Field([], description="Path to the hazard indicator data source.")
 
 
@@ -186,6 +182,4 @@ class VulnerabilityDistrib(BaseModel):
     impact_bin_edges: NDArray = Field(
         default_factory=lambda: np.zeros(10), description=""
     )
-    prob_matrix: NDArray = Field(
-        default_factory=lambda: np.zeros(10), description=""
-    )
+    prob_matrix: NDArray = Field(default_factory=lambda: np.zeros(10), description="")

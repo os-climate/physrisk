@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional, Sequence, Type, Union, cast
 
 import numpy as np
 
+import physrisk.data.image_creator
 import physrisk.data.static.example_portfolios
 from physrisk.api.v1.common import Distribution, ExceedanceCurve, VulnerabilityDistrib
 from physrisk.api.v1.exposure_req_resp import (
@@ -100,34 +101,25 @@ class Requester:
         self.zarr_reader = reader
 
     def get(self, *, request_id, request_dict):
-
         if request_id == "get_hazard_data":
             request = HazardDataRequest(**request_dict)
             return json.dumps(
-                self.get_hazard_data(request).model_dump() # , allow_nan=False)
-            )  
+                self.get_hazard_data(request).model_dump()  # , allow_nan=False)
+            )
         elif request_id == "get_hazard_data_availability":
             request = HazardAvailabilityRequest(**request_dict)
-            return json.dumps(
-                self.get_hazard_data_availability(request).model_dump()
-            )
+            return json.dumps(self.get_hazard_data_availability(request).model_dump())
         elif request_id == "get_hazard_data_description":
             request = HazardDescriptionRequest(**request_dict)
-            return json.dumps(
-                self.get_hazard_data_description(request).model_dump()
-            )
+            return json.dumps(self.get_hazard_data_description(request).model_dump())
         elif request_id == "get_asset_exposure":
             request = AssetExposureRequest(**request_dict)
             return json.dumps(
-                self.get_asset_exposures(request).model_dump(
-                    exclude_none=True
-                )
+                self.get_asset_exposures(request).model_dump(exclude_none=True)
             )
         elif request_id == "get_asset_impact":
             request = AssetImpactRequest(**request_dict)
-            return dumps(
-                self.get_asset_impacts(request).model_dump()
-            )
+            return dumps(self.get_asset_impacts(request).model_dump())
         elif request_id == "get_example_portfolios":
             return dumps(_get_example_portfolios())
         else:
@@ -135,37 +127,34 @@ class Requester:
 
     def get_hazard_data(self, request: HazardDataRequest):
         hazard_model = self.hazard_model_factory.hazard_model(
-                interpolation=request.interpolation,
-                provider_max_requests=request.provider_max_requests,
-            )
+            interpolation=request.interpolation,
+            provider_max_requests=request.provider_max_requests,
+        )
         return _get_hazard_data(request, hazard_model=hazard_model)
-    
+
     def get_hazard_data_availability(self, request: HazardAvailabilityRequest):
-        return _get_hazard_data_availability(
-                    request, self.inventory, self.colormaps)
-    
+        return _get_hazard_data_availability(request, self.inventory, self.colormaps)
+
     def get_hazard_data_description(self, request: HazardDescriptionRequest):
-        return _get_hazard_data_description(request, self.zarr_reader)
+        return _get_hazard_data_description(request, self.inventory_reader)
 
     def get_asset_exposures(self, request: AssetExposureRequest):
         hazard_model = self.hazard_model_factory.hazard_model(
-                interpolation=request.calc_settings.hazard_interp,
-                provider_max_requests=request.provider_max_requests,
-            )
+            interpolation=request.calc_settings.hazard_interp,
+            provider_max_requests=request.provider_max_requests,
+        )
         return _get_asset_exposures(request, hazard_model)
 
     def get_asset_impacts(self, request: AssetImpactRequest) -> AssetImpactResponse:
         hazard_model = self.hazard_model_factory.hazard_model(
-                interpolation=request.calc_settings.hazard_interp,
-                provider_max_requests=request.provider_max_requests,
-            ) 
-        vulnerability_models = (
-            self.vulnerability_models_factory.vulnerability_models()
+            interpolation=request.calc_settings.hazard_interp,
+            provider_max_requests=request.provider_max_requests,
         )
+        vulnerability_models = self.vulnerability_models_factory.vulnerability_models()
         measure_calculators = self.measures_factory.calculators(request.use_case_id)
-        return  _get_asset_impacts(
-                    request, hazard_model, vulnerability_models, measure_calculators)
-
+        return _get_asset_impacts(
+            request, hazard_model, vulnerability_models, measure_calculators
+        )
 
     def get_image(self, request_or_dict: Union[HazardImageRequest, Dict]):
         if isinstance(request_or_dict, Dict):
@@ -175,12 +164,13 @@ class Requester:
 
         inventory = self.inventory
         zarr_reader = self.zarr_reader
-        
+
         if not _read_permitted(
             request.group_ids, inventory.resources[request.resource]
         ):
             raise PermissionError()
         model = inventory.resources[request.resource]
+        assert model.map is not None
         len(PosixPath(model.map.path).parts)
         path = (
             str(PosixPath(model.path).with_name(model.map.path))
@@ -190,13 +180,17 @@ class Requester:
         colormap = (
             request.colormap
             if request.colormap is not None
-            else model.map.colormap.name
+            else (model.map.colormap.name if model.map.colormap is not None else "None")
         )
         creator = ImageCreator(zarr_reader)  # store=ImageCreator.test_store(path))
         return creator.convert(
             path,
             colormap=colormap,
-            tile=request.tile,
+            tile=None
+            if request.tile is None
+            else physrisk.data.image_creator.Tile(
+                request.tile.x, request.tile.y, request.tile.z
+            ),
             min_value=request.min_value,
             max_value=request.max_value,
         )
@@ -233,7 +227,7 @@ class NumpyArrayEncoder(json.JSONEncoder):
 
 
 def dumps(dict):
-    return json.dumps(dict) #, cls=NumpyArrayEncoder)
+    return json.dumps(dict)  # , cls=NumpyArrayEncoder)
 
 
 def _read_permitted(group_ids: List[str], resource: HazardResource):

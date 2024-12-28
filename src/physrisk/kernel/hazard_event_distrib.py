@@ -48,3 +48,8 @@ class HazardEventDistrib:
     @property
     def path(self) -> List[str]:
         return self.__path
+
+
+class EmptyHazardEventDistrib(HazardEventDistrib):
+    def __init__(self):
+        pass

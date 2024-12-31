@@ -10,7 +10,7 @@
             "params": {},
             "display_name": "Flood depth/baseline (WRI)",
             "display_groups": [],
-            "description": "\nWorld Resources Institute Aqueduct Floods baseline riverine model using historical data.\n\n\nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
+            "description": "\nWorld Resources Institute Aqueduct Floods baseline riverine model using historical data.\n\n                \nThe World Resources Institute (WRI) [Aqueduct Floods model](https://www.wri.org/aqueduct) is an acute riverine and coastal flood hazard model with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator). Flood intensity is provided as a _return period_ map: each point comprises a curve of inundation depths for 9 different return periods (also known as reoccurrence periods). If a flood event has depth $d_i$ with return period of $r_i$ this implies that the probability of a flood event with depth greater than $d_i$ occurring in any one year is $1 / r_i$; this is the _exceedance probability_. Aqueduct Floods is based on Global Flood Risk with IMAGE Scenarios (GLOFRIS); see [here](https://www.wri.org/aqueduct/publications) for more details.\n\nFor more details and relevant citations see the\n[OS-Climate Physical Climate Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -983,7 +983,7 @@
             "display_groups": [
                 "Mean degree days"
             ],
-            "description": "Degree days indicators are calculated by integrating over time the absolute difference in temperature\nof the medium over a reference temperature. The exact method of calculation may vary;\nhere the daily maximum near-surface temperature 'tasmax' is used to calculate an annual indicator:\n\n$$\nI^\\text{dd} = \\frac{365}{n_y} \\sum_{i = 1}^{n_y} |  T^\\text{max}_i - T^\\text{ref} | \\nonumber\n$$\n\n$I^\\text{dd}$ is the indicator, $T^\\text{max}$ is the daily maximum near-surface temperature, $n_y$ is the number of days in the year and $i$ is the day index.\nand $T^\\text{ref}$ is the reference temperature of 32\u00b0C. The OS-Climate-generated indicators are inferred\nfrom downscaled CMIP6 data, averaged over 6 models: ACCESS-CM2, CMCC-ESM2, CNRM-CM6-1, MPI-ESM1-2-LR, MIROC6 and NorESM2-MM.\nThe downscaled data is sourced from the [NASA Earth Exchange Global Daily Downscaled Projections](https://www.nccs.nasa.gov/services/data-collections/land-based-products/nex-gddp-cmip6).\nThe indicators are generated for periods: 'historical' (averaged over 1995-2014), 2030 (2021-2040), 2040 (2031-2050)\nand 2050 (2041-2060).\n",
+            "description": "Degree days indicators are calculated by integrating over time the absolute difference in temperature\nof the medium over a reference temperature. The exact method of calculation may vary;\nhere the daily maximum near-surface temperature 'tasmax' is used to calculate an annual indicator:\n\n$$\nI^\\text{dd} = \\frac{365}{n_y} \\sum_{i = 1}^{n_y} |  T^\\text{max}_i - T^\\text{ref} | \\nonumber\n$$\n\n$I^\\text{dd}$ is the indicator, $T^\\text{max}$ is the daily maximum near-surface temperature, $n_y$ is the number of days in the year and $i$ is the day index.\nand $T^\\text{ref}$ is the reference temperature of 32\u00b0C.\n\nDownscaled climate simulations from the Coupled Model Intercomparison Project (CMIP6), sourced from the [NASA Earth Exchange Global Daily Downscaled Projections](https://www.nccs.nasa.gov/services/data-collections/land-based-products/nex-gddp-cmip6).\n\nIndicators are generated for periods: 'historical' (averaged over 1995-2015), 2030 (2020-2040), 2040 (2030-2050), and 2050 (2040-2060).",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -1015,7 +1015,7 @@
                 ],
                 "bbox": [
                     -180.0,
-                    -85.0,
+                    -60.0,
                     180.0,
                     85.0
                 ],
@@ -1441,7 +1441,7 @@
             "params": {},
             "display_name": "Max 1 minute sustained wind speed (Jupiter)",
             "display_groups": [],
-            "description": "\nThese data should not be used in any manner relating to emergency management or planning, public safety,\nphysical safety or property endangerment. For higher-resolution data based on up-to-date methods,\nsubject to greater validation, and suitable for bottom-up risk analysis please contact\n[Jupiter Intelligence](https://www.jupiterintel.com).\n\nThis wind speed model computes the maximum 1-minute sustained wind speed (in km/hr) experienced over a\n100 year return period based on mean wind speed distributions\nfrom multiple Global Climate Models (GCMs).\n                ",
+            "description": "\nThese data should not be used in any manner relating to emergency management or planning, public safety,\nphysical safety or property endangerment. For higher-resolution data based on up-to-date methods,\nsubject to greater validation, and suitable for bottom-up risk analysis please contact\n[Jupiter Intelligence](https://www.jupiterintel.com).\n\nThis wind speed model computes the maximum 1-minute sustained wind speed (in m/s) experienced over a\n100 year return period based on mean wind speed distributions\nfrom multiple Global Climate Models (GCMs).\n                ",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -1450,7 +1450,7 @@
                     "max_value": 120.0,
                     "name": "heating",
                     "nodata_index": 0,
-                    "units": "km/hour"
+                    "units": "m/s"
                 },
                 "path": "max_1min_{scenario}_{year}_map",
                 "bounds": [
@@ -1504,7 +1504,7 @@
                     ]
                 }
             ],
-            "units": "km/hour"
+            "units": "m/s"
         },
         {
             "hazard_type": "CombinedInundation",
@@ -1639,7 +1639,7 @@
                 ],
                 "bbox": [
                     -180.0,
-                    -85.0,
+                    -60.0,
                     180.0,
                     85.0
                 ],
@@ -1710,7 +1710,7 @@
             "display_groups": [
                 "Days with average temperature above"
             ],
-            "description": "Days per year for which the average near-surface temperature 'tas' is above a threshold specified in \u00b0C.\n\n$$\nI =  \\frac{365}{n_y} \\sum_{i = 1}^{n_y} \\boldsymbol{\\mathbb{1}}_{\\; \\, T^{avg}_i > T^\\text{ref}} \\nonumber\n$$\n\n$I$ is the indicator, $T^\\text{avg}_i$ is the daily average near-surface temperature for day index $i$ in \u00b0C, $n_y$ is the number of days in the year\nand $T^\\text{ref}$ is the reference temperature.\nThe OS-Climate-generated indicators are inferred from downscaled CMIP6 data. This is done for 6 Global Circulation Models: ACCESS-CM2, CMCC-ESM2, CNRM-CM6-1, MPI-ESM1-2-LR, MIROC6 and NorESM2-MM.\nThe downscaled data is sourced from the [NASA Earth Exchange Global Daily Downscaled Projections](https://www.nccs.nasa.gov/services/data-collections/land-based-products/nex-gddp-cmip6).\nIndicators are generated for periods: 'historical' (averaged over 1995-2014), 2030 (2021-2040), 2040 (2031-2050)\nand 2050 (2041-2060).\n",
+            "description": "Days per year for which the average near-surface temperature 'tas' is above a threshold specified in \u00b0C.\n\n$$\nI =  \\frac{365}{n_y} \\sum_{i = 1}^{n_y} \\boldsymbol{\\mathbb{1}}_{\\; \\, T^{avg}_i > T^\\text{ref}} \\nonumber\n$$\n\n$I$ is the indicator, $T^\\text{avg}_i$ is the daily average near-surface temperature for day index $i$ in \u00b0C, $n_y$ is the number of days in the year\nand $T^\\text{ref}$ is the reference temperature.\n\nDownscaled climate simulations from the Coupled Model Intercomparison Project (CMIP6), sourced from the [NASA Earth Exchange Global Daily Downscaled Projections](https://www.nccs.nasa.gov/services/data-collections/land-based-products/nex-gddp-cmip6).\n\nIndicators are generated for periods: 'historical' (averaged over 1995-2015), 2030 (2020-2040), 2040 (2030-2050), and 2050 (2040-2060).",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -1793,7 +1793,7 @@
             "params": {},
             "display_name": "Max wind speed (IRIS)",
             "display_groups": [],
-            "description": "Sparks, N., Toumi, R. The Imperial College Storm Model (IRIS) Dataset. *Sci Data* **11**, 424 (2024). <https://doi.org/10.1038/s41597-024-03250-y>\n## The Imperial College Storm Model (IRIS) Dataset - Scientific Data\nAssessing tropical cyclone risk on a global scale given the infrequency of landfalling tropical cyclones and the short period of reliable observations remains a challenge. Synthetic tropical cyclone datasets can help overcome these problems. Here we present a new global dataset created by IRIS, the ImpeRIal college Storm Model. IRIS is novel because, unlike other synthetic TC models, it only simulates the decay from the point of lifetime maximum intensity. This minimises the bias in the dataset. It takes input from 42 years of observed tropical cyclones and creates a 10,000 year synthetic dataset which is then validated against the observations. IRIS captures important statistical characteristics of the observed data. The return periods of the landfall maximum wind speed (1 minute sustained in m/s) are realistic globally. Climate model projections are used to adjust the life-time maximum intensity.\n\n***Disclaimer***: There have been many improvements on the dataset. Contact Professor Toumi from the Imperial College London for improved data.",
+            "description": "Sparks, N., Toumi, R. The Imperial College Storm Model (IRIS) Dataset. *Sci Data* **11**, 424 (2024). <https://doi.org/10.1038/s41597-024-03250-y>\n\n## The Imperial College Storm Model (IRIS) Dataset - Scientific Data\nAssessing tropical cyclone risk on a global scale given the infrequency of landfalling tropical cyclones and the short period of reliable observations remains a challenge. Synthetic tropical cyclone datasets can help overcome these problems. Here we present a new global dataset created by IRIS, the ImpeRIal college Storm Model. IRIS is novel because, unlike other synthetic TC models, it only simulates the decay from the point of lifetime maximum intensity. This minimises the bias in the dataset. It takes input from 42 years of observed tropical cyclones and creates a 10,000 year synthetic dataset which is then validated against the observations. IRIS captures important statistical characteristics of the observed data. The return periods of the landfall maximum wind speed (1 minute sustained in m/s) are realistic globally. Climate model projections are used to adjust the life-time maximum intensity.\n\n***Disclaimer***: There have been many improvements on the dataset. Contact Professor Toumi from the Imperial College London for improved data.\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -1825,9 +1825,9 @@
                 ],
                 "bbox": [
                     -180.0,
-                    -85.0,
+                    -60.0,
                     180.0,
-                    85.0
+                    60.0
                 ],
                 "index_values": null,
                 "source": "map_array_pyramid"
@@ -1881,7 +1881,7 @@
             "display_groups": [
                 "Mean degree days"
             ],
-            "description": "Degree days indicators are calculated by integrating over time the absolute difference in temperature\nof the medium over a reference temperature. The exact method of calculation may vary;\nhere the daily maximum near-surface temperature 'tasmax' is used to calculate an annual indicator:\n\n$$\nI^\\text{dd} = \\frac{365}{n_y} \\sum_{i = 1}^{n_y} |  T^\\text{max}_i - T^\\text{ref} | \\nonumber\n$$\n\n$I^\\text{dd}$ is the indicator, $T^\\text{max}$ is the daily maximum near-surface temperature, $n_y$ is the number of days in the year and $i$ is the day index.\nand $T^\\text{ref}$ is the reference temperature of 32\u00b0C. The OS-Climate-generated indicators are inferred\nfrom downscaled CMIP6 data, averaged over 6 models: ACCESS-CM2, CMCC-ESM2, CNRM-CM6-1, MPI-ESM1-2-LR, MIROC6 and NorESM2-MM.\nThe downscaled data is sourced from the [NASA Earth Exchange Global Daily Downscaled Projections](https://www.nccs.nasa.gov/services/data-collections/land-based-products/nex-gddp-cmip6).\nThe indicators are generated for periods: 'historical' (averaged over 1995-2014), 2030 (2021-2040), 2040 (2031-2050)\nand 2050 (2041-2060).\n",
+            "description": "Degree days indicators are calculated by integrating over time the absolute difference in temperature\nof the medium over a reference temperature. The exact method of calculation may vary;\nhere the daily maximum near-surface temperature 'tasmax' is used to calculate an annual indicator:\n\n$$\nI^\\text{dd} = \\frac{365}{n_y} \\sum_{i = 1}^{n_y} |  T^\\text{max}_i - T^\\text{ref} | \\nonumber\n$$\n\n$I^\\text{dd}$ is the indicator, $T^\\text{max}$ is the daily maximum near-surface temperature, $n_y$ is the number of days in the year and $i$ is the day index.\nand $T^\\text{ref}$ is the reference temperature of 32\u00b0C.\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -1979,7 +1979,7 @@
             "display_groups": [
                 "Mean degree days"
             ],
-            "description": "Degree days indicators are calculated by integrating over time the absolute difference in temperature\nof the medium over a reference temperature. The exact method of calculation may vary;\nhere the daily maximum near-surface temperature 'tasmax' is used to calculate an annual indicator:\n\n$$\nI^\\text{dd} = \\frac{365}{n_y} \\sum_{i = 1}^{n_y} |  T^\\text{max}_i - T^\\text{ref} | \\nonumber\n$$\n\n$I^\\text{dd}$ is the indicator, $T^\\text{max}$ is the daily maximum near-surface temperature, $n_y$ is the number of days in the year and $i$ is the day index.\nand $T^\\text{ref}$ is the reference temperature of 32\u00b0C. The OS-Climate-generated indicators are inferred\nfrom downscaled CMIP6 data, averaged over 6 models: ACCESS-CM2, CMCC-ESM2, CNRM-CM6-1, MPI-ESM1-2-LR, MIROC6 and NorESM2-MM.\nThe downscaled data is sourced from the [NASA Earth Exchange Global Daily Downscaled Projections](https://www.nccs.nasa.gov/services/data-collections/land-based-products/nex-gddp-cmip6).\nThe indicators are generated for periods: 'historical' (averaged over 1995-2014), 2030 (2021-2040), 2040 (2031-2050)\nand 2050 (2041-2060).\n",
+            "description": "Degree days indicators are calculated by integrating over time the absolute difference in temperature\nof the medium over a reference temperature. The exact method of calculation may vary;\nhere the daily maximum near-surface temperature 'tasmax' is used to calculate an annual indicator:\n\n$$\nI^\\text{dd} = \\frac{365}{n_y} \\sum_{i = 1}^{n_y} |  T^\\text{max}_i - T^\\text{ref} | \\nonumber\n$$\n\n$I^\\text{dd}$ is the indicator, $T^\\text{max}$ is the daily maximum near-surface temperature, $n_y$ is the number of days in the year and $i$ is the day index.\nand $T^\\text{ref}$ is the reference temperature of 32\u00b0C.\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -2959,7 +2959,7 @@
                 ],
                 "bbox": [
                     -180.0,
-                    -85.0,
+                    -60.0,
                     180.0,
                     85.0
                 ],
@@ -3049,7 +3049,7 @@
             "params": {},
             "display_name": "Standard of protection (TUDelft)",
             "display_groups": [],
-            "description": "Maximum and minimum standards of protection for riverine floods occurring in Europe in the present and future climate. \nThis is derived from a data set of protected flood extent i.e. the minimum return period for which flood depth is non-zero.\n\nThe data set is [here](https://data.4tu.nl/datasets/df7b63b0-1114-4515-a562-117ca165dc5b), part of the\n[RAIN data set](https://data.4tu.nl/collections/1e84bf47-5838-40cb-b381-64d3497b3b36)\n(Risk Analysis of Infrastructure Networks in Response to Extreme Weather). The RAIN report is\n[here](http://rain-project.eu/wp-content/uploads/2016/09/D2.5_REPORT_final.pdf).\n\nThe 'River_flood_extent_X_Y_Z_with_protection' data set is obtained by applying FLOPROS database flood protection standards\non top of a data set of unprotected flood depth. That is, it provides information about flood protection for regions susceptible\nto flood. This data set is not simply based on FLOPROS database therefore.\n\nA minimum and maximum is provided to capture uncertainty in flood protection which vulnerability models may choose to take into\naccount. The protection bands are those of FLOPROS: 2-10 years, 10-30 years, 30-100 years, 100-300 years, 300-1000 years, 1000-10000 years.\n\nAs an example, if a region has a protected extent of 300 years, this is taken to imply that the area is protected against flood within the\nbounds 100-300 years. It is then a modelling choice as to whether protection is taken from the 100 or 300 year flood depth.\n",
+            "description": "Maximum and minimum standards of protection for riverine floods occurring in Europe in the present and future climate.\nThis is derived from a data set of protected flood extent i.e. the minimum return period for which flood depth is non-zero.\n\nThe data set is [here](https://data.4tu.nl/datasets/df7b63b0-1114-4515-a562-117ca165dc5b), part of the\n[RAIN data set](https://data.4tu.nl/collections/1e84bf47-5838-40cb-b381-64d3497b3b36)\n(Risk Analysis of Infrastructure Networks in Response to Extreme Weather). The RAIN report is\n[here](http://rain-project.eu/wp-content/uploads/2016/09/D2.5_REPORT_final.pdf).\n\nThe 'River_flood_extent_X_Y_Z_with_protection' data set is obtained by applying FLOPROS database flood protection standards\non top of a data set of unprotected flood depth. That is, it provides information about flood protection for regions susceptible\nto flood. This data set is not simply based on FLOPROS database therefore.\n\nA minimum and maximum is provided to capture uncertainty in flood protection which vulnerability models may choose to take into\naccount. The protection bands are those of FLOPROS: 2\u201310 years, 10\u201330 years, 30\u2013100 years, 100\u2013300 years, 300\u20131000 years, 1000\u201310000 years.\n\nAs an example, if a region has a protected extent of 300 years, this is taken to imply that the area is protected against flood within the\nbounds 100-300 years. It is then a modelling choice as to whether protection is taken from the 100 or 300 year flood depth.\n",
             "map": {
                 "colormap": {
                     "min_index": 1,
@@ -3091,44 +3091,63 @@
             "units": "years"
         },
         {
-          "hazard_type": "Subsidence",
-          "group_id": "",
-          "path": "subsidence/csm/v1/land_subsidence_rate_{scenario}_{year}",
-          "indicator_id": "land_subsidence_rate",
-          "indicator_model_id": null,
-          "indicator_model_gcm": "historical",
-          "params": {},
-          "display_name": "Land subsidence rate (Davydzenka et Al (2024))",
-          "display_groups": [],
-          "description": "Land subsidence refers to gradual settlement or rapid sinking of the ground that can occur as a result of natural factors (e.g., volcanic or seismic activity, collapse of subsurface cavities, compaction of loose fine-grained deposits) or anthropogenic activities (e.g., excessive groundwater (GW) abstraction, mining, subsurface energy extraction). It is a destructive phenomenon occurring around the globe causing damage to infrastructure, increased flood risks, and reduction of aquifer storage. However, prediction and quantification of land subsidence rates globally using physics-based methods presents a major challenge. Capitalizing on the robustness of modern deep learning methods and taking advantage of the increasingly available data sets of environmental parameters, the study [here](https://doi.org/10.1029/2023GL104497) introduces the first map of land subsidence rates on a global scale with a spatial resolution of 30 \u00c3\u2014 30 arc seconds (approx. 1 km at the equator).\n\nDavydzenka, T., Tahmasebi, P., & Shokri, N. (2023). [Data](https://doi.org/10.5281/zenodo.10223637) for \"Unveiling the Global Extent of Land Subsidence: The sinking crisis\".",
-          "map": {
-            "colormap": {
-              "min_index": 1,
-              "min_value": 0.0,
-              "max_index": 255,
-              "max_value": 100.0,
-              "name": "heating",
-              "nodata_index": 0,
-              "units": "millimetres/year"
+            "hazard_type": "Subsidence",
+            "group_id": "",
+            "path": "subsidence/csm/v1/land_subsidence_rate_{scenario}_{year}",
+            "indicator_id": "land_subsidence_rate",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "historical",
+            "params": {},
+            "display_name": "Land subsidence rate (Davydzenka et Al (2024))",
+            "display_groups": [],
+            "description": "# Global map of land subsidence rates (Davydzenka et al. (2024))\n\nLand subsidence refers to gradual settlement or rapid sinking of the ground that can occur as a result of natural factors (e.g., volcanic or seismic activity, collapse of subsurface cavities, compaction of loose fine-grained deposits) or anthropogenic activities (e.g., excessive groundwater (GW) abstraction, mining, subsurface energy extraction). It is a destructive phenomenon occurring around the globe causing damage to infrastructure, increased flood risks, and reduction of aquifer storage. However, prediction and quantification of land subsidence rates globally using physics-based methods presents a major challenge. Capitalizing on the robustness of modern deep learning methods and taking advantage of the increasingly available data sets of environmental parameters, the study [here](https://doi.org/10.1029/2023GL104497) introduces the first map of land subsidence rates on a global scale with a spatial resolution of 30 \u00d7 30 arc seconds (approx. 1 km at the equator).\n\nDavydzenka, T., Tahmasebi, P., & Shokri, N. (2023). [Data](https://doi.org/10.5281/zenodo.10223637) for \"Unveiling the Global Extent of Land Subsidence: The sinking crisis\".\n",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 100.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "millimetres/year"
+                },
+                "path": "maps/subsidence/csm/v1/land_subsidence_rate_{scenario}_{year}_map",
+                "bounds": [
+                    [
+                        -180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        85.0
+                    ],
+                    [
+                        180.0,
+                        -60.0
+                    ],
+                    [
+                        -180.0,
+                        -60.0
+                    ]
+                ],
+                "bbox": [
+                    -180.0,
+                    -60.0,
+                    180.0,
+                    85.0
+                ],
+                "index_values": null,
+                "source": "map_array_pyramid"
             },
-            "path": "maps/subsidence/csm/v1/land_subsidence_rate_{scenario}_{year}_map",
-            "bounds": [
-              [-180.0, 85.0],
-              [180.0, 85.0],
-              [180.0, -60.0],
-              [-180.0, -60.0]
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        2021
+                    ]
+                }
             ],
-            "bbox": [-180.0, -60.0, 180.0, 85.0],
-            "index_values": null,
-            "source": "map_array_pyramid"
-          },
-          "scenarios": [
-            {
-              "id": "historical",
-              "years": [2021]
-            }
-          ],
-          "units": "millimetres/year"
+            "units": "millimetres/year"
         }
     ]
 }

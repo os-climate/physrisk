@@ -3,7 +3,7 @@ from typing import Dict, Iterable, List, Optional, Tuple
 
 from pydantic import BaseModel, Field
 
-from physrisk.api.v1.common import BaseHazardRequest, IntensityCurve
+from physrisk.api.v1.common import BaseHazardRequest, HazardType, IntensityCurve
 
 
 class Colormap(BaseModel):
@@ -202,7 +202,7 @@ class HazardDataRequestItem(BaseModel):
     longitudes: List[float]
     latitudes: List[float]
     request_item_id: str
-    hazard_type: Optional[str] = None  # e.g. RiverineInundation
+    hazard_type: Optional[HazardType] = None  # e.g. RiverineInundation
     event_type: Optional[str] = (
         None  # e.g. RiverineInundation; deprecated: use hazard_type
     )
@@ -214,6 +214,25 @@ class HazardDataRequestItem(BaseModel):
 
 
 class HazardDataRequest(BaseHazardRequest):
+    """Request hazard indicator data for a set of locations, specified by latitude and longitude
+    (in coordinate reference system EPSG:4326).
+    A hazard indicator is defined by the type of the hazard ('hazard_type') and the indicator ('indicator_id').
+    A hazard indicator is a measure that is used to quantify the hazard. For example, for hazard type
+    'RiverineInundation', flood depth (unprotected) is given by the indicator 'flood_depth'.
+    In addition, 'scenario' and 'year' are required. For 'historical' scenario, year is ignored and can
+    be set to e.g. '-1'. Scenarios can be RCPs and SSPs; convention is e.g. 'rcp8p5' (RCP 8.5) and
+    'ssp585'.
+
+    If only 'hazard_type' and 'indicator_id' are provided, then the default physrisk logic will be used to
+    identify the data sets. If a specific data set is required, 'path' can be supplied. The path is the
+    unique identifier of a 'hazard resource'. A hazard resource is a collection of data arrays for different
+    scenarios and years, typically made available by the same model provider.
+
+    Current behaviour is that empty arrays are returned if there is no match for the scenario and year in the
+    selected / specified resource (an alternative would be to allow interpolation of years and proxying/interpolation
+    of scenarios).
+    """
+
     interpolation: str = "floor"
     provider_max_requests: Dict[str, int] = Field(
         {},
@@ -222,6 +241,41 @@ class HazardDataRequest(BaseHazardRequest):
         is the provider ID and the value is the maximum permitted requests.",
     )
     items: List[HazardDataRequestItem]
+
+    model_config = {
+        "json_schema_extra": {
+            "examples": [
+                {
+                    "items": [
+                        {
+                            "request_item_id": "my_id",
+                            "hazard_type": "RiverineInundation",
+                            "indicator_id": "flood_depth",
+                            "latitudes": [45.4089, 43.4923],
+                            "longitudes": [20.3162, 4.7877],
+                            "path": "inundation/river_tudelft/v2/flood_depth_unprot_{scenario}_{year}",
+                            "scenario": "rcp8p5",
+                            "year": 2035,
+                        }
+                    ]
+                },
+                {
+                    "items": [
+                        {
+                            "request_item_id": "my_id",
+                            "hazard_type": "RiverineInundation",
+                            "indicator_id": "flood_depth",
+                            "latitudes": [45.4089, 43.4923],
+                            "longitudes": [20.3162, 4.7877],
+                            "path": "inundation/river_tudelft/v2/flood_depth_unprot_{scenario}_{year}",
+                            "scenario": "historical",
+                            "year": -1,
+                        }
+                    ]
+                },
+            ]
+        }
+    }
 
 
 class HazardDataResponseItem(BaseModel):

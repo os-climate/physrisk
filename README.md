@@ -6,9 +6,6 @@
 <!-- markdownlint-enable -->
 
 # Physrisk
-
-
-==============================
 Physical climate risk calculation engine.
 
 <img src="docs/images/OS-Climate-Logo.png" alt="drawing" width="150"/>

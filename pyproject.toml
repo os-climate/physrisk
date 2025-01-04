@@ -92,7 +92,7 @@ test = [
     "pdm[pytest]",
     "pytest",
     "pytest-cov",
-
+    "openpyxl>=3.1.5",
 ]
 doc = [
     "numpydoc",

@@ -8,6 +8,7 @@ from physrisk.kernel import hazards
 from physrisk.kernel.hazards import (
     ChronicHeat,
     CoastalInundation,
+    Drought,
     RiverineInundation,
     Wind,
 )
@@ -186,6 +187,7 @@ class CoreInventorySourcePaths(InventorySourcePaths):
         self.add_selector(
             ChronicHeat, "mean/degree/days/above/32c", self._select_chronic_heat
         )
+        self.add_selector(Drought, "months/spei12m/below/index", self._select_drought)
         self.add_selector(
             RiverineInundation,
             "flood_depth",
@@ -220,6 +222,15 @@ class CoreInventorySourcePaths(InventorySourcePaths):
         hint: Optional[HazardDataHint] = None,
     ):
         return candidates.with_model_id("wtsub/95").first()
+
+    @staticmethod
+    def _select_drought(
+        candidates: ResourceSubset,
+        scenario: str,
+        year: int,
+        hint: Optional[HazardDataHint] = None,
+    ):
+        return candidates.with_model_gcm("MIROC6").first()
 
     @staticmethod
     def _select_riverine_inundation(

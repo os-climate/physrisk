@@ -69,10 +69,14 @@ class ZarrReader:
     ):
         access_key = get_env(cls.__access_key, "")
         secret_key = get_env(cls.__secret_key, "")
-        s3_bucket = get_env(cls.__S3_bucket, "physrisk-hazard-indicators")
-        zarr_path = get_env(cls.__zarr_path, "hazard/hazard.zarr")
+        s3_bucket = get_env(cls.__S3_bucket, "os-climate-physical-risk")
+        zarr_path = get_env(cls.__zarr_path, "hazard-indicators/hazard.zarr")
 
-        s3 = s3fs.S3FileSystem(anon=False, key=access_key, secret=secret_key)
+        s3 = (
+            s3fs.S3FileSystem(anon=True)
+            if access_key == ""
+            else s3fs.S3FileSystem(anon=False, key=access_key, secret=secret_key)
+        )
 
         store = s3fs.S3Map(
             root=str(PurePosixPath(s3_bucket, zarr_path)),
@@ -150,7 +154,10 @@ class ZarrReader:
             )
 
     def get_index_values(self, z: zarr.Array):
-        index_values = z.attrs.get("index_values", [0])
+        # if dimensions attribute is present, assume that the first index
+        # is the non-spatial one.
+        index_dim_name = z.attrs.get("dimensions", ["index"])[0]
+        index_values = z.attrs.get(index_dim_name + "_values", [0])
         if index_values is None:
             index_values = [0]
         return index_values

@@ -49,6 +49,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -110,6 +111,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -181,6 +183,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -252,6 +255,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -323,6 +327,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -394,6 +399,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -465,6 +471,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -526,6 +533,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -597,6 +605,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -668,6 +677,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -739,6 +749,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -800,6 +811,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -871,6 +883,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -942,6 +955,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "rcp4p5",
@@ -1022,6 +1036,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -1105,6 +1120,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp126",
@@ -1180,6 +1196,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp126",
@@ -1255,6 +1272,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp126",
@@ -1330,6 +1348,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp126",
@@ -1405,6 +1424,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp126",
@@ -1480,6 +1500,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp126",
@@ -1555,6 +1576,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp126",
@@ -1646,6 +1668,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -1749,6 +1772,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -1832,6 +1856,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -1924,6 +1949,7 @@
                 ],
                 "source": "map_array"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2022,6 +2048,7 @@
                 ],
                 "source": "map_array"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2131,6 +2158,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2260,6 +2288,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2343,6 +2372,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2452,6 +2482,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2537,6 +2568,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2622,6 +2654,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2707,6 +2740,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2792,6 +2826,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2877,6 +2912,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -2920,7 +2956,12 @@
             "indicator_model_gcm": "{gcm}",
             "params": {
                 "gcm": [
-                    "MIROC6"
+                    "ACCESS-CM2",
+                    "CMCC-ESM2",
+                    "CNRM-CM6-1",
+                    "MPI-ESM1-2-LR",
+                    "MIROC6",
+                    "NorESM2-MM"
                 ]
             },
             "display_name": "Drought SPEI index",
@@ -2938,7 +2979,7 @@
                     "nodata_index": 0,
                     "units": "months/year"
                 },
-                "path": "drought/osc/v1/months_spei12m_below_index_{gcm}_{scenario}_{year}_map",
+                "path": "maps/drought/osc/v1/months_spei12m_below_index_{gcm}_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -2974,6 +3015,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "ssp585",
@@ -3015,6 +3057,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -3066,6 +3109,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -3085,6 +3129,82 @@
                     "years": [
                         2035,
                         2085
+                    ]
+                }
+            ],
+            "units": "years"
+        },
+        {
+            "hazard_type": "RiverineInundation",
+            "group_id": "",
+            "path": "inundation/flopros_riverine/v1/flood_sop/sop",
+            "indicator_id": "flood_sop",
+            "indicator_model_id": "flopros",
+            "indicator_model_gcm": "",
+            "params": {},
+            "display_name": "Standard of protection (FLOPROS)",
+            "display_groups": [],
+            "description": "Global data set of protection levels for riverine and coastal flood, based on the [FLOPROS database] (https://nhess.copernicus.org/articles/16/1049/2016/). For each of coastal and riverine inundation, the dataset provides for every location a minimum (\"min\") and maximum (\"max\") protection, specified as a return period in years; the min and max reflects in uncertainty in the protection level. The return period indicates that the location is protected against flood events with that return period (e.g. 100 years indicates that the location is protected against 1-in-100 year flood events). Finding the equivalent flood depth protection level additionally requires a flood depth indicator data set.\n",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 1500.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "years"
+                },
+                "path": "maps/inundation/flopros_riverine/v1/flood_sop_map",
+                "bounds": [],
+                "bbox": [],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "store_netcdf_coords": true,
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1985
+                    ]
+                }
+            ],
+            "units": "years"
+        },
+        {
+            "hazard_type": "CoastalInundation",
+            "group_id": "",
+            "path": "inundation/flopros_coastal/v1/flood_sop/sop",
+            "indicator_id": "flood_sop",
+            "indicator_model_id": "flopros",
+            "indicator_model_gcm": "",
+            "params": {},
+            "display_name": "Standard of protection (FLOPROS)",
+            "display_groups": [],
+            "description": "Global data set of protection levels for riverine and coastal flood, based on the [FLOPROS database] (https://nhess.copernicus.org/articles/16/1049/2016/). For each of coastal and riverine inundation, the dataset provides for every location a minimum (\"min\") and maximum (\"max\") protection, specified as a return period in years; the min and max reflects in uncertainty in the protection level. The return period indicates that the location is protected against flood events with that return period (e.g. 100 years indicates that the location is protected against 1-in-100 year flood events). Finding the equivalent flood depth protection level additionally requires a flood depth indicator data set.\n",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 1500.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "years"
+                },
+                "path": "maps/inundation/flopros_coastal/v1/flood_sop_map",
+                "bounds": [],
+                "bbox": [],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "store_netcdf_coords": true,
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1985
                     ]
                 }
             ],
@@ -3139,6 +3259,7 @@
                 "index_values": null,
                 "source": "map_array_pyramid"
             },
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",

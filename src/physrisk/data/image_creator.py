@@ -54,8 +54,14 @@ class ImageCreator:
                 path, colormap, tile=tile, min_value=min_value, max_value=max_value
             )
         except Exception as e:
-            logger.exception(e)
-            image = Image.fromarray(np.array([[0]]), mode="RGBA")
+            # if we are creating a whole image that does not exist, we log the error
+            # and return a empty image; but if creating a tile we let the error propagate
+            # because many map controls expect an HTTPException in such cases.
+            if tile is None:
+                logger.exception(e)
+                image = Image.fromarray(np.array([[0]]), mode="RGBA")
+            else:
+                raise
         image_bytes = io.BytesIO()
         image.save(image_bytes, format=format)
         return image_bytes.getvalue()

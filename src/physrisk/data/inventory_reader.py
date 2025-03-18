@@ -19,7 +19,7 @@ class InventoryReader:
     # environment variable names:
     __access_key = "OSC_S3_ACCESS_KEY"
     __secret_key = "OSC_S3_SECRET_KEY"
-    __S3_bucket = "OSC_S3_BUCKET"
+    __S3_bucket = "OSC_S3_BUCKET"  # e.g. os-climate-physical-risk
 
     def __init__(
         self,
@@ -37,9 +37,13 @@ class InventoryReader:
         if fs is None:
             access_key = get_env(self.__access_key, "")
             secret_key = get_env(self.__secret_key, "")
-            fs = s3fs.S3FileSystem(anon=False, key=access_key, secret=secret_key)
+            fs = (
+                s3fs.S3FileSystem(anon=True)
+                if access_key == ""
+                else s3fs.S3FileSystem(anon=False, key=access_key, secret=secret_key)
+            )
 
-        bucket = get_env(self.__S3_bucket, "physrisk-hazard-indicators")
+        bucket = get_env(self.__S3_bucket, "os-climate-physical-risk")
         self._base_path = bucket if base_path is None else base_path
         self._fs = fs
 

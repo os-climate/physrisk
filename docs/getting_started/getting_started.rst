@@ -9,3 +9,4 @@ The following examples provide a walk-through of phyrisk's functionality, starti
    hazard_indicators
    hazard_inventory
    asset_level_impacts
+   custom_vulnerability

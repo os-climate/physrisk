@@ -122,25 +122,25 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
         if category == Category.LOW:
             description = (
                 f"Projected 1-in-{self.return_period:0.0f} year annual loss is less than "
-                f"{self.measure_thresholds_acute[Threshold.ABS_LOW]*100:0.0f}% of asset value."
+                f"{self.measure_thresholds_acute[Threshold.ABS_LOW] * 100:0.0f}% of asset value."
             )
         elif category == Category.MEDIUM:
             description = (
                 f"Projected 1-in-{self.return_period:0.0f} year annual loss is more than "
-                f"{self.measure_thresholds_acute[Threshold.ABS_LOW]*100:0.0f}% but increases by less than "
-                f"{self.measure_thresholds_acute[Threshold.CHANGE]*100:0.0f}% of asset value over historical baseline."
+                f"{self.measure_thresholds_acute[Threshold.ABS_LOW] * 100:0.0f}% but increases by less than "
+                f"{self.measure_thresholds_acute[Threshold.CHANGE] * 100:0.0f}% of asset value over historical baseline."
             )
         elif category == Category.HIGH:
             description = (
                 f"Projected 1-in-{self.return_period:0.0f} year annual loss is more than "
-                f"{self.measure_thresholds_acute[Threshold.ABS_LOW]*100:0.0f}% and increases by more than "
-                f"{self.measure_thresholds_acute[Threshold.CHANGE]*100:0.0f}% of asset value over historical baseline."
+                f"{self.measure_thresholds_acute[Threshold.ABS_LOW] * 100:0.0f}% and increases by more than "
+                f"{self.measure_thresholds_acute[Threshold.CHANGE] * 100:0.0f}% of asset value over historical baseline."
             )
         elif category == Category.REDFLAG:
             description = (
                 f"Projected 1-in-{self.return_period:0.0f} year annual loss is more than "
-                f"{self.measure_thresholds_acute[Threshold.ABS_HIGH]*100:0.0f}% and increases by more than "
-                f"{self.measure_thresholds_acute[Threshold.CHANGE]*100:0.0f}% of asset value over historical baseline."
+                f"{self.measure_thresholds_acute[Threshold.ABS_HIGH] * 100:0.0f}% and increases by more than "
+                f"{self.measure_thresholds_acute[Threshold.CHANGE] * 100:0.0f}% of asset value over historical baseline."
             )
         else:
             description = "No Data"
@@ -156,19 +156,19 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
             description = (
                 f"Expected cooling annual energy consumption is more than "
                 f"{self.measure_thresholds_cooling[Threshold.ABS_LOW]}kWh but increases by less than "
-                f"{self.measure_thresholds_cooling[Threshold.CHANGE]*100:0.0f}% over historical baseline."
+                f"{self.measure_thresholds_cooling[Threshold.CHANGE] * 100:0.0f}% over historical baseline."
             )
         elif category == Category.HIGH:
             description = (
                 f"Expected cooling annual energy consumption is more than "
                 f"{self.measure_thresholds_cooling[Threshold.ABS_LOW]}kWh and increases by more than "
-                f"{self.measure_thresholds_cooling[Threshold.CHANGE]*100:0.0f}% over historical baseline."
+                f"{self.measure_thresholds_cooling[Threshold.CHANGE] * 100:0.0f}% over historical baseline."
             )
         elif category == Category.REDFLAG:
             description = (
                 f"Expected cooling annual energy consumption is more than "
                 f"{self.measure_thresholds_cooling[Threshold.ABS_HIGH]}kWh and increases by more than "
-                f"{self.measure_thresholds_cooling[Threshold.CHANGE]*100:0.0f}% over historical baseline."
+                f"{self.measure_thresholds_cooling[Threshold.CHANGE] * 100:0.0f}% over historical baseline."
             )
         else:
             description = "No Data"

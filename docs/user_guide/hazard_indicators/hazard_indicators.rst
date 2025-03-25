@@ -6,4 +6,5 @@ The following sections cover hazard indicators, starting with a description of t
 .. toctree::
    :maxdepth: 2
 
-   indicators
+   indicators_introduction
+   raster_indicators

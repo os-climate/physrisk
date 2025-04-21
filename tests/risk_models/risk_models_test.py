@@ -135,44 +135,36 @@ class TestRiskModels(TestWithCredentials):
         source_paths = get_default_source_paths()
 
         def sp_riverine(scenario, year):
-            return source_paths[RiverineInundation](
-                indicator_id="flood_depth", scenario=scenario, year=year
-            )
-
+            return source_paths[RiverineInundation].cascading_year_paths(
+                RiverineInundation, indicator_id="flood_depth", scenario=scenario)[0].path(year)
+            
         def sp_coastal(scenario, year):
-            return source_paths[CoastalInundation](
-                indicator_id="flood_depth", scenario=scenario, year=year
-            )
+            return source_paths[CoastalInundation].cascading_year_paths(
+                CoastalInundation, indicator_id="flood_depth", scenario=scenario)[0].path(year)
 
         def sp_wind(scenario, year):
-            return source_paths[Wind](
-                indicator_id="max_speed", scenario=scenario, year=year
-            )
+            return source_paths[Wind].cascading_year_paths(
+                Wind, indicator_id="max_speed", scenario=scenario)[0].path(year)
 
         def sp_heat(scenario, year):
-            return source_paths[ChronicHeat](
-                indicator_id="days/above/35c", scenario=scenario, year=year
-            )
+            return source_paths[ChronicHeat].cascading_year_paths(
+                ChronicHeat, indicator_id="days/above/35c", scenario=scenario)[0].path(year)
 
         def sp_fire(scenario, year):
-            return source_paths[Fire](
-                indicator_id="fire_probability", scenario=scenario, year=year
-            )
+            return source_paths[Fire].cascading_year_paths(
+                Fire, indicator_id="fire_probability", scenario=scenario)[0].path(year)
 
         def sp_hail(scenario, year):
-            return source_paths[Hail](
-                indicator_id="days/above/5cm", scenario=scenario, year=year
-            )
+            return source_paths[Hail].cascading_year_paths(
+                Hail, indicator_id="days/above/5cm", scenario=scenario)[0].path(year)
 
         def sp_drought(scenario, year):
-            return source_paths[Drought](
-                indicator_id="months/spei3m/below/-2", scenario=scenario, year=year
-            )
+            return source_paths[Drought].cascading_year_paths(
+                Drought, indicator_id="months/spei3m/below/-2", scenario=scenario)[0].path(year)
 
         def sp_precipitation(scenario, year):
-            return source_paths[Precipitation](
-                indicator_id="max/daily/water_equivalent", scenario=scenario, year=year
-            )
+            return source_paths[Precipitation].cascading_year_paths(
+                Precipitation, indicator_id="max/daily/water_equivalent", scenario=scenario)[0].path(year)
 
         mocker = ZarrStoreMocker()
         return_periods = inundation_return_periods()
@@ -192,7 +184,7 @@ class TestRiskModels(TestWithCredentials):
                 flood_histo_curve,
             )
 
-        for path in [sp_riverine("rcp8p5", 2050), sp_coastal("rcp8p5", 2050)]:
+        for path in [sp_riverine("ssp585", 2050), sp_coastal("ssp585", 2050)]:
             mocker.add_curves_global(
                 path,
                 TestData.longitudes,
@@ -210,7 +202,7 @@ class TestRiskModels(TestWithCredentials):
             units="m/s",
         )
         mocker.add_curves_global(
-            sp_wind("rcp8p5", 2050),
+            sp_wind("ssp585", 2050),
             TestData.longitudes,
             TestData.latitudes,
             TestData.wind_return_periods,
@@ -225,7 +217,7 @@ class TestRiskModels(TestWithCredentials):
             TestData.degree_days_above_index_1,
         )
         mocker.add_curves_global(
-            sp_heat("rcp8p5", 2050),
+            sp_heat("ssp585", 2050),
             TestData.longitudes,
             TestData.latitudes,
             TestData.temperature_thresholds,
@@ -239,7 +231,7 @@ class TestRiskModels(TestWithCredentials):
             [0.15],
         )
         mocker.add_curves_global(
-            sp_fire("rcp8p5", 2050),
+            sp_fire("ssp585", 2050),
             TestData.longitudes,
             TestData.latitudes,
             [0],
@@ -253,7 +245,7 @@ class TestRiskModels(TestWithCredentials):
             [2.15],
         )
         mocker.add_curves_global(
-            sp_hail("rcp8p5", 2050),
+            sp_hail("ssp585", 2050),
             TestData.longitudes,
             TestData.latitudes,
             [0],
@@ -267,7 +259,7 @@ class TestRiskModels(TestWithCredentials):
             [3],
         )
         mocker.add_curves_global(
-            sp_drought("rcp8p5", 2050),
+            sp_drought("ssp585", 2050),
             TestData.longitudes,
             TestData.latitudes,
             [0],
@@ -281,7 +273,7 @@ class TestRiskModels(TestWithCredentials):
             [10],
         )
         mocker.add_curves_global(
-            sp_precipitation("rcp8p5", 2050),
+            sp_precipitation("ssp585", 2050),
             TestData.longitudes,
             TestData.latitudes,
             [0],
@@ -348,7 +340,7 @@ class TestRiskModels(TestWithCredentials):
         # json_str = json.dumps(response.model_dump(), cls=NumpyArrayEncoder)
 
     def test_generic_model(self):
-        scenarios = ["rcp8p5"]
+        scenarios = ["ssp585"]
         years = [2050]
 
         assets = [

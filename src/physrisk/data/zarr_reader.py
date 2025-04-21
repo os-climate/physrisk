@@ -369,7 +369,7 @@ class ZarrReader:
         )
         lats_grid = lats_grid_baseline + lats_grid_offsets
         lons_grid = lons_grid_baseline + lons_grid_offsets
-        curves, return_periods, _ = self.get_curves(
+        curves, _,return_periods, _ = self.get_curves(
             set_id,
             lons_grid.reshape(-1),
             lats_grid.reshape(-1),

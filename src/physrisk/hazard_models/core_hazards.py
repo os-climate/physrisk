@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Callable, Dict, Iterable, List, NamedTuple, Optional, Protocol, Tuple, Type
 
 from physrisk.api.v1.hazard_data import HazardResource
-from physrisk.data.hazard_data_provider import HazardDataHint, Paths, SourcePath, SourcePaths
+from physrisk.data.hazard_data_provider import HazardDataHint, Paths, SourcePaths
 from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.kernel import hazards
 from physrisk.kernel.hazards import (
@@ -72,30 +72,21 @@ class InventorySourcePaths:
         self._inventory = inventory
         self._selectors: Dict[ResourceSelectorKey, ResourceSelector] = {}
 
-    def source_paths(self) -> Dict[Type[Hazard], SourcePaths]:
-        all_hazard_types = list(self.all_hazards())
-        source_paths = { hazards.hazard_class(htype): self for htype in all_hazard_types }
-        #source_paths: Dict[Type[Hazard], SourcePaths] = {}
-        # for hazard_type in all_hazard_types:
-        #     source_paths[hazards.hazard_class(hazard_type)] = (
-        #         self._get_resource_source_path(
-        #             hazard_type,
-        #         )
-        #     )
-        return source_paths
-
     def add_selector(
         self, hazard_type: type, indicator_id: str, selector: ResourceSelector
     ):
         self._selectors[ResourceSelectorKey(hazard_type, indicator_id)] = selector
 
-    def all_hazards(self):
+    def hazard_type_strs(self):
         return set(
                 htype
                 for ((htype, _), _) in self._inventory.resources_by_type_id.items()
         )
 
-    def cascading_year_paths(
+    def hazard_types(self):
+        return [hazards.hazard_class(ht) for ht in self.hazard_type_strs()]
+
+    def paths(
         self,    
         hazard_type: Type[Hazard],
         indicator_id: str,
@@ -175,9 +166,7 @@ class InventorySourcePaths:
                 return [], lambda y: ""
             else:
                 return scenario.years, lambda y: resource.path.format(id=indicator_id, scenario=proxy_scenario_id, year=y)
-                #return { y: resource.path.format(id=indicator_id, scenario=proxy_scenario_id, year=y) for y in scenario.years }
         return [get_paths(r, scenario) for r in resources]    
-        #return [Paths(year_paths=get_paths(r, scenario)) for r in resources]
 
     @staticmethod
     def _no_selector(
@@ -302,4 +291,4 @@ def get_default_source_path_provider(inventory: Inventory = EmbeddedInventory())
 
 
 def get_default_source_paths(inventory: Inventory = EmbeddedInventory()):
-    return CoreInventorySourcePaths(inventory).source_paths()
+    return CoreInventorySourcePaths(inventory)

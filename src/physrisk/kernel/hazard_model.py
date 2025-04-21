@@ -74,6 +74,10 @@ class HazardDataResponse:
 class HazardDataFailedResponse(HazardDataResponse):
     def __init__(self, err: Optional[Exception] = None, reason: Optional[str] = None):
         self.error = err
+        self.reason = reason
+
+    def __repr__(self):
+        return self.reason if self.reason is not None else str(self.error)
 
 
 class HazardEventDataResponse(HazardDataResponse):

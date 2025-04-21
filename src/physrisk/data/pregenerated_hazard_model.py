@@ -258,19 +258,19 @@ class ZarrHazardModel(PregeneratedHazardModel):
     def __init__(
         self,
         *,
-        source_paths: Dict[Type[Hazard], SourcePaths],
+        source_paths: SourcePaths,
         reader: Optional[ZarrReader] = None,
         store=None,
         interpolation="floor",
     ):
         # share ZarrReaders across HazardDataProviders
         zarr_reader = ZarrReader(store=store) if reader is None else reader
-
+        hazard_types = source_paths.hazard_types()
         super().__init__(
             {
                 t: HazardDataProvider(
-                    t, sp, zarr_reader=zarr_reader, interpolation=interpolation
+                    t, source_paths, zarr_reader=zarr_reader, interpolation=interpolation
                 )
-                for t, sp in source_paths.items()
+                for t in hazard_types
             }
         )

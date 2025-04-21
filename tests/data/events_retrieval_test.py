@@ -293,7 +293,10 @@ class TestEventRetrieval(TestWithCredentials):
         )
 
         class SourcePathsTest(SourcePaths):
-            def cascading_year_paths(
+            def hazard_types(self):
+                return [RiverineInundation]
+            
+            def paths(
                 self,
                 hazard_type,
                 indicator_id,
@@ -301,9 +304,7 @@ class TestEventRetrieval(TestWithCredentials):
                 hint):
                 return [Paths(years=[2050], path=lambda y: "test")]
 
-        source_paths = {
-            RiverineInundation: SourcePathsTest()
-        }
+        source_paths = SourcePathsTest()
         hazard_model = ZarrHazardModel(source_paths=source_paths, store=mocker.store)
         response = hazard_model.get_hazard_data(
             [
@@ -383,8 +384,11 @@ class TestEventRetrieval(TestWithCredentials):
                     [HazardDataRequest(hazard_type=RiverineInundation, longitude=float(lon), latitude=float(lat),
                                 indicator_id="flood_depth", scenario="ssp585", year=2070) for lat, lon in zip(lats, lons)])            
         
-        class CascadingSourcePathsTest(SourcePaths):
-            def cascading_year_paths(
+        class SourcePathsTest(SourcePaths):
+            def hazard_types(self):
+                return [RiverineInundation]
+            
+            def paths(
                 self,
                 hazard_type: Type[Hazard],
                 indicator_id: str,
@@ -394,9 +398,7 @@ class TestEventRetrieval(TestWithCredentials):
                 return [Paths(years=[2030, 2050, 2080], path = lambda f: "test_set_europe_only"),
                         Paths(years=[2030, 2050, 2080], path = lambda f: "test_set_world")]
             
-        source_paths = {
-            RiverineInundation: CascadingSourcePathsTest()
-        }
+        source_paths = SourcePathsTest()
         hazard_model = ZarrHazardModel(source_paths=source_paths, store=mocker.store)
         response = hazard_model.get_hazard_data(requests)
         np.testing.assert_almost_equal(response[requests[0]].intensities, [1.0, 2.0, 3.0])

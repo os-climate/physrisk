@@ -135,35 +135,35 @@ class TestRiskModels(TestWithCredentials):
         source_paths = get_default_source_paths()
 
         def sp_riverine(scenario, year):
-            return source_paths[RiverineInundation].cascading_year_paths(
+            return source_paths.paths(
                 RiverineInundation, indicator_id="flood_depth", scenario=scenario)[0].path(year)
             
         def sp_coastal(scenario, year):
-            return source_paths[CoastalInundation].cascading_year_paths(
+            return source_paths.paths(
                 CoastalInundation, indicator_id="flood_depth", scenario=scenario)[0].path(year)
 
         def sp_wind(scenario, year):
-            return source_paths[Wind].cascading_year_paths(
+            return source_paths.paths(
                 Wind, indicator_id="max_speed", scenario=scenario)[0].path(year)
 
         def sp_heat(scenario, year):
-            return source_paths[ChronicHeat].cascading_year_paths(
+            return source_paths.paths(
                 ChronicHeat, indicator_id="days/above/35c", scenario=scenario)[0].path(year)
 
         def sp_fire(scenario, year):
-            return source_paths[Fire].cascading_year_paths(
+            return source_paths.paths(
                 Fire, indicator_id="fire_probability", scenario=scenario)[0].path(year)
 
         def sp_hail(scenario, year):
-            return source_paths[Hail].cascading_year_paths(
+            return source_paths.paths(
                 Hail, indicator_id="days/above/5cm", scenario=scenario)[0].path(year)
 
         def sp_drought(scenario, year):
-            return source_paths[Drought].cascading_year_paths(
+            return source_paths.paths(
                 Drought, indicator_id="months/spei3m/below/-2", scenario=scenario)[0].path(year)
 
         def sp_precipitation(scenario, year):
-            return source_paths[Precipitation].cascading_year_paths(
+            return source_paths.paths(
                 Precipitation, indicator_id="max/daily/water_equivalent", scenario=scenario)[0].path(year)
 
         mocker = ZarrStoreMocker()

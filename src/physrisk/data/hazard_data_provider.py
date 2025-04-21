@@ -60,30 +60,36 @@ class SourcePath(Protocol):
 
 
 class SourcePaths(Protocol):
-    def cascading_year_paths(
+    def hazard_types(self) -> List[Type[Hazard]]:
+        """Lists the available hazard types.
+
+        Returns:
+            List[Type[Hazard]]: Available hazard types.
+        """
+        ...
+    
+    def paths(
         self,
         hazard_type: Type[Hazard],
         indicator_id: str,
         scenario: str,
         hint: Optional[HazardDataHint] = None) -> List[Paths]:
-        """_summary_
-
+        """Get the cascading Paths list for the given hazard type, indicator ID and scenario.
+        Each Paths item in the list has the available years and a function to obtain the path for each year.
+        Each Paths item covers a different area and can be used to match multiple data sets. 
+        
         Args:
+            hazard_type (Type[Hazard]): Hazard yype.
             indicator_id (str): Hazard indicator identifier.
             scenario (str): Scenario identifier.
+            hint (Optional[HazardDataHint], optional): Hint to be applied to select path. Defaults to None.
+
+        Returns:
+            List[Paths]: List of Paths objects to be used in order to obtain the data.
         """
         ...
 
-    # def cascading_year_source_path(
-    #     self,    
-    #     hazard_type: Type[Hazard],
-    #     indicator_id: str,
-    #     scenario: str,
-    #     hint: Optional[HazardDataHint] = None,
-    # ) -> List[Tuple[List[int], Callable[[int], str]]]:
-    #     ...
-
-        
+    
 class ScenarioYear(NamedTuple):
     scenario: str
     year: Optional[int]
@@ -160,7 +166,7 @@ class HazardDataProvider(ABC):
             units (str). Units
             path: Path to the hazard indicator data source.
         """
-        path = self._source_paths.cascading_year_paths(self.hazard_type,
+        path = self._source_paths.paths(self.hazard_type,
             indicator_id=indicator_id, scenario=scenario, hint=hint
         )[-1 if scenario=="historical" else year]
         if buffer is None:
@@ -209,7 +215,7 @@ class HazardDataProvider(ABC):
         latitudes = np.array(latitudes)
         result: Dict[ScenarioYear, ScenarioYearResult] = {}
         for scenario in scenarios:
-            path_set = self._source_paths.cascading_year_paths(self.hazard_type,
+            path_set = self._source_paths.paths(self.hazard_type,
                                                           indicator_id=indicator_id,
                                                           scenario=scenario,
                                                           hint=hint)

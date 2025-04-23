@@ -56,8 +56,8 @@ def calculate_impacts(  # noqa: C901
     hazard_model: HazardModel,
     vulnerability_models: VulnerabilityModels,
     *,
-    scenario: str,
-    year: int,
+    scenarios: List[str],
+    years: List[int],
 ) -> Dict[ImpactKey, List[AssetImpactResult]]:
     """Calculate asset level impacts."""
 
@@ -72,103 +72,144 @@ def calculate_impacts(  # noqa: C901
             model_assets[mapping].append(asset)
     results: Dict[ImpactKey, List[AssetImpactResult]] = {}
 
-    asset_requests, responses = _request_consolidated(
-        hazard_model, model_assets, scenario, year
+    scen_year_asset_requests, responses = _download_data_consolidated(
+        hazard_model, model_assets, scenarios, years
     )
 
+    # with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+    #     # with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
+    #     tagged_futures = {
+    #         executor.submit(
+    #             self._calculate_single_impact, assets, scenario, year
+    #         ): BatchId(scenario, None if scenario == "historical" else year)
+    #         for scenario in scenarios
+    #         for year in years
+    #     }
+    #     for future in concurrent.futures.as_completed(tagged_futures):
+    #         tag = tagged_futures[future]
+    #         try:
+    #             res = future.result()
+    #             # flatten to use single key
+    #             for temp_key, value in res.items():
+    #                 key = ImpactKey(
+    #                     asset=temp_key.asset,
+    #                     hazard_type=temp_key.hazard_type,
+    #                     scenario=tag.scenario,
+    #                     key_year=tag.key_year,
+    #                 )
+    #                 impact_results[key] = value
+
+    #         except Exception as exc:
+    #             print("%r generated an exception: %s" % (tag, exc))
+
+
     logging.info("Calculating impacts")
-    for model, assets in model_assets.items():
-        assert isinstance(model, VulnerabilityModelBase)
-        logging.info(
-            "Applying vulnerability model {0} for hazard {1} to {2} assets of type {3}".format(
-                type(model).__name__,
-                model.hazard_type.__name__,
-                len(assets),
-                type(assets[0]).__name__,
-            )
-        )
-        for asset in assets:
-            requests = asset_requests[(model, asset)]
-            hazard_data = [responses[req] for req in get_iterable(requests)]
-            if (
-                ImpactKey(
-                    asset=asset,
-                    hazard_type=model.hazard_type,
-                    scenario=scenario,
-                    key_year=year,
+    for scenario in scenarios:
+        for year in ([-1] if scenario=="historical" else years):
+            asset_requests = scen_year_asset_requests[ScenarioYear(scenario, year)]
+            for model, assets in model_assets.items():
+                assert isinstance(model, VulnerabilityModelBase)
+                logging.info(
+                    "Applying vulnerability model {0} for hazard {1} to {2} assets of type {3}".format(
+                        type(model).__name__,
+                        model.hazard_type.__name__,
+                        len(assets),
+                        type(assets[0]).__name__,
+                    )
                 )
-                not in results
-            ):
-                results[
-                    ImpactKey(
-                        asset=asset,
-                        hazard_type=model.hazard_type,
-                        scenario=scenario,
-                        key_year=year,
-                    )
-                ] = []
-            if any(isinstance(hd, HazardDataFailedResponse) for hd in hazard_data):
-                # the failed responses should have been logged already
-                continue
-            try:
-                if isinstance(model, VulnerabilityModelAcuteBase):
-                    impact, vul, event = model.get_impact_details(asset, hazard_data)
-                    results[
+                for asset in assets:
+                    requests = asset_requests[(model, asset)]
+                    hazard_data = [responses[req] for req in get_iterable(requests)]
+                    
+                    if (
                         ImpactKey(
                             asset=asset,
                             hazard_type=model.hazard_type,
                             scenario=scenario,
-                            key_year=year,
+                            key_year=None if year == -1 else year,
                         )
-                    ].append(
-                        AssetImpactResult(
-                            impact,
-                            vulnerability=vul,
-                            event=event,
-                            hazard_data=hazard_data,
-                        )
-                    )
-                elif isinstance(model, VulnerabilityModelBase):
-                    impact = model.get_impact(asset, hazard_data)
-                    results[
-                        ImpactKey(
-                            asset=asset,
-                            hazard_type=model.hazard_type,
-                            scenario=scenario,
-                            key_year=year,
-                        )
-                    ].append(AssetImpactResult(impact, hazard_data=hazard_data))
-            except Exception as e:
-                logger.exception(e)
+                        not in results
+                    ):
+                        results[
+                            ImpactKey(
+                                asset=asset,
+                                hazard_type=model.hazard_type,
+                                scenario=scenario,
+                                key_year=None if year == -1 else year,
+                            )
+                        ] = []
+                    if any(isinstance(hd, HazardDataFailedResponse) for hd in hazard_data):
+                        # the failed responses should have been logged already
+                        continue
+                    try:
+                        if isinstance(model, VulnerabilityModelAcuteBase):
+                            impact, vul, event = model.get_impact_details(asset, hazard_data)
+                            results[
+                                ImpactKey(
+                                    asset=asset,
+                                    hazard_type=model.hazard_type,
+                                    scenario=scenario,
+                                    key_year=None if year == -1 else year,
+                                )
+                            ].append(
+                                AssetImpactResult(
+                                    impact,
+                                    vulnerability=vul,
+                                    event=event,
+                                    hazard_data=hazard_data,
+                                )
+                            )
+                        elif isinstance(model, VulnerabilityModelBase):
+                            impact = model.get_impact(asset, hazard_data)
+                            results[
+                                ImpactKey(
+                                    asset=asset,
+                                    hazard_type=model.hazard_type,
+                                    scenario=scenario,
+                                    key_year=None if year == -1 else year,
+                                )
+                            ].append(AssetImpactResult(impact, hazard_data=hazard_data))
+                    except Exception as e:
+                        logger.exception(e)
     return results
 
+class ScenarioYear(NamedTuple):
+    scenario: str
+    key_year: Optional[int] = None
 
-def _request_consolidated(
+def _download_data_consolidated(
     hazard_model: HazardModel,
     requester_assets: Dict[DataRequester, List[Asset]],
-    scenario: str,
-    year: int,
+    scenarios: List[str],
+    years: List[int],
 ):
     """As an important performance optimization, data requests are consolidated for all requesters
     (e.g. vulnerability model) because different requesters may query the same hazard data sets
     note that key for a single request is (requester, asset).
     """
     # the list of requests for each requester and asset
-    asset_requests: Dict[
-        Tuple[DataRequester, Asset],
-        Union[HazardDataRequest, Sequence[HazardDataRequest]],
-    ] = {}
-
-    logging.info("Generating hazard data requests for requesters")
-    for requester, assets in requester_assets.items():
-        for asset in assets:
-            asset_requests[(requester, asset)] = requester.get_data_requests(
-                asset, scenario=scenario, year=year
-            )
+    scen_year_asset_requests: Dict[ScenarioYear: 
+                Dict[Tuple[DataRequester, Asset],
+                Union[HazardDataRequest, Sequence[HazardDataRequest]],
+            ]] = {}
+    for scenario in scenarios:
+        for year in ([-1] if scenario == "historical" else years):
+            asset_requests: Dict[
+                Tuple[DataRequester, Asset],
+                Union[HazardDataRequest, Sequence[HazardDataRequest]],
+            ] = {}
+            for requester, assets in requester_assets.items():
+                for asset in assets:
+                    asset_requests[(requester, asset)] = requester.get_data_requests(
+                        asset, scenario=scenario, year=year
+                    )
+            scen_year_asset_requests[ScenarioYear(scenario, year)] = asset_requests
 
     logging.info("Retrieving hazard data")
-    flattened_requests = [
-        req for requests in asset_requests.values() for req in get_iterable(requests)
+    flattened_requests = [req 
+        for asset_requests in scen_year_asset_requests.values()
+        for requests in asset_requests.values()
+        for req in get_iterable(requests)
     ]
     responses = hazard_model.get_hazard_data(flattened_requests)
-    return asset_requests, responses
+    return scen_year_asset_requests, responses

@@ -66,8 +66,8 @@ class LossModel:
             assets,
             self.hazard_model,
             self.vulnerability_models,
-            scenario=scenario,
-            year=year,
+            scenarios=[scenario],
+            years=[year],
         )
         # the impacts in the results are either fractional damage or a fractional disruption
 

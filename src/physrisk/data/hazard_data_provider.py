@@ -214,89 +214,121 @@ class HazardDataProvider(ABC):
         longitudes = np.array(longitudes)
         latitudes = np.array(latitudes)
         result: Dict[ScenarioYear, ScenarioYearResult] = {}
-        for scenario in scenarios:
-            path_set = self._source_paths.paths(self.hazard_type,
-                                                          indicator_id=indicator_id,
-                                                          scenario=scenario,
-                                                          hint=hint)
-            # TODO, check transforms are the same across years
-            # mask is the mask of lats and lons that remain unprocessed, alwatys has the same length 
-            #for year in years:
-            mask_unprocessed = np.ones(len(longitudes), dtype=np.bool)
-            combined_values: Dict[int, np.ndarray] = {}
-            paths = np.empty((len(longitudes)), dtype=np.object_)
-            for path_index, path_item in enumerate(path_set): 
-                # get the data for all available years for the path in question
-                available_years = [y for y in ([-1] if scenario == "historical" else years) if y in path_item.years] 
-                if len(available_years) == 0:
-                    # can happen if not interpolating years: year just not available
-                    continue
-                data_for_year: Dict[int: np.ndarray] = {}
-                mask_for_year: Dict[int: np.ndarray] = {}
-                # get data for each year
-                for year in available_years:    
-                    try:
-                        if buffer is None:
-                            values, mask_in_bounds, indices, units = await asyncio.to_thread(
-                                self._reader.get_curves,
-                                path_item.path(year),
-                                longitudes[mask_unprocessed],
-                                latitudes[mask_unprocessed],
-                                self._interpolation)
-                        else:
-                            if buffer < 0 or 1000 < buffer:
-                                raise Exception(
-                                    "The buffer must be an integer between 0 and 1000 metres."
-                                )
-                            values, indices, units = self._reader.get_max_curves(
-                                path_item.path,
-                                [
-                                    (
-                                        Point(longitude, latitude)
-                                        if buffer == 0
-                                        else Point(longitude, latitude).buffer(
-                                            ZarrReader._get_equivalent_buffer_in_arc_degrees(
-                                                latitude, buffer
-                                            )
-                                        )
-                                    )
-                                    for longitude, latitude in zip(longitudes, latitudes)
-                                ],
-                                self._interpolation,
-                            )  # type: ignore
-                        data_for_year[year] = values
-                        mask_for_year[year] = mask_in_bounds
-                    except KeyError as ke:
-                        data_for_year[year] = np.empty(0)
-                        mask_for_year[year] = np.ones(len(longitudes), dtype=np.bool)
-                    except Exception as e:
-                        data_for_year[year] = np.empty(0)
-                        mask_for_year[year] = np.ones(len(longitudes), dtype=np.bool)
-                # we can choose to interpolate data at this point
-                # For a given data set, the spatial coverage should be identical between years. If not, something is wrong.
-                mask_in_bounds = mask_for_year[available_years[0]] 
-                if any(np.any(mask_for_year[y] != mask_in_bounds) for y in available_years[1:]):
-                    raise ValueError("inconsistent coverage across years detected")
-                for year in available_years:
-                    # if interpolating, we would 
-                    if path_index == 0:
-                        combined_values[year] = data_for_year[year]
-                    else:
-                        combined_values[year][mask_unprocessed] = data_for_year[year]
-
-                paths[mask_unprocessed] = sys.intern(path_item.path(year))
-                mask_unprocessed[mask_unprocessed] = mask_unprocessed[mask_unprocessed] & ~mask_in_bounds
-                if not np.any(mask_unprocessed):
-                    break
-                # we need to first find the specific set_id of the data sets, as this gives the
-            for year in available_years:
-                if np.any(mask_unprocessed):
-                    combined_values[year][mask_unprocessed] = np.nan
-                if len(combined_values[year]) > 0:
-                    # if there was an exception, length will be zero: no result
-                    result[ScenarioYear(scenario, year)] = ScenarioYearResult(combined_values[year], indices, mask_unprocessed, units, paths)
+        await asyncio.gather(*(self.get_scenario(longitudes, latitudes, indicator_id, scenario, years,
+                            hint, buffer, interpolate_years, result) for scenario in scenarios))
         return result
     
+    async def get_scenario(self,
+                        longitudes: Sequence[float],
+                        latitudes: Sequence[float],
+                        indicator_id: str,
+                        scenario: str,
+                        years: Sequence[int],
+                        hint: Optional[HazardDataHint],
+                        buffer: Optional[int],
+                        interpolate_years: bool,
+                        result: Dict[ScenarioYear, ScenarioYearResult]):
+        path_set = self._source_paths.paths(self.hazard_type,
+                                                indicator_id=indicator_id,
+                                                scenario=scenario,
+                                                hint=hint)
+        # TODO, check transforms are the same across years
+        # mask is the mask of lats and lons that remain unprocessed, alwatys has the same length 
+        #for year in years:
+        mask_unprocessed = np.ones(len(longitudes), dtype=np.bool)
+        combined_values: Dict[int, np.ndarray] = {}
+        paths = np.empty((len(longitudes)), dtype=np.object_)
+        for path_index, path_item in enumerate(path_set): 
+            # get the data for all available years for the path in question
+            available_years = [y for y in ([-1] if scenario == "historical" else years) if y in path_item.years] 
+            if len(available_years) == 0:
+                # can happen if not interpolating years: year just not available
+                continue
+            data_for_year: Dict[int, np.ndarray] = {}
+            mask_for_year: Dict[int, np.ndarray] = {}
+            # get data for each year
+            
+            rets = await asyncio.gather(*(self.get_year(latitudes, longitudes, buffer, path_item, year, mask_unprocessed, data_for_year, mask_for_year)
+                                for year in available_years))
+            indices, units = rets[0]    
+
+            # we can choose to interpolate data at this point
+            # For a given data set, the spatial coverage should be identical between years. If not, something is wrong.
+            mask_in_bounds = mask_for_year[available_years[0]] 
+            if any(np.any(mask_for_year[y] != mask_in_bounds) for y in available_years[1:]):
+                raise ValueError("inconsistent coverage across years detected")
+            for year in available_years:
+                # if interpolating, we would 
+                if path_index == 0:
+                    combined_values[year] = data_for_year[year]
+                else:
+                    combined_values[year][mask_unprocessed] = data_for_year[year]
+
+            paths[mask_unprocessed] = sys.intern(path_item.path(year))
+            mask_unprocessed[mask_unprocessed] = mask_unprocessed[mask_unprocessed] & ~mask_in_bounds
+            if not np.any(mask_unprocessed):
+                break
+            # we need to first find the specific set_id of the data sets, as this gives the
+        for year in available_years:
+            if np.any(mask_unprocessed):
+                combined_values[year][mask_unprocessed] = np.nan
+            if len(combined_values[year]) > 0:
+                # if there was an exception, length will be zero: no result
+                result[ScenarioYear(scenario, year)] = ScenarioYearResult(combined_values[year], indices, mask_unprocessed, units, paths)
+
+    async def get_year(self,
+                        latitudes: Sequence[float],
+                        longitudes: Sequence[float],
+                        buffer: Optional[int],
+                        path_item: Paths,
+                        year: int,
+                        mask_unprocessed: np.ndarray,
+                        data_for_year: Dict[int, np.ndarray],
+                        mask_for_year: Dict[int, np.ndarray]): 
+        try:
+            indices, units = [], ""
+            if buffer is None:
+                # values, mask_in_bounds, indices, units = self._reader.get_curves(
+                #     path_item.path(year),
+                #     longitudes[mask_unprocessed],
+                #     latitudes[mask_unprocessed],
+                #     self._interpolation)
+                values, mask_in_bounds, indices, units = await asyncio.to_thread(
+                    self._reader.get_curves,
+                    path_item.path(year),
+                    longitudes[mask_unprocessed],
+                    latitudes[mask_unprocessed],
+                    self._interpolation)
+            else:
+                if buffer < 0 or 1000 < buffer:
+                    raise Exception(
+                        "The buffer must be an integer between 0 and 1000 metres."
+                    )
+                values, indices, units = self._reader.get_max_curves(
+                    path_item.path,
+                    [
+                        (
+                            Point(longitude, latitude)
+                            if buffer == 0
+                            else Point(longitude, latitude).buffer(
+                                ZarrReader._get_equivalent_buffer_in_arc_degrees(
+                                    latitude, buffer
+                                )
+                            )
+                        )
+                        for longitude, latitude in zip(longitudes, latitudes)
+                    ],
+                    self._interpolation,
+                )  # type: ignore
+            data_for_year[year] = values
+            mask_for_year[year] = mask_in_bounds
+        except KeyError as ke:
+            data_for_year[year] = np.empty(0)
+            mask_for_year[year] = np.ones(len(longitudes), dtype=np.bool)
+        except Exception as e:
+            data_for_year[year] = np.empty(0)
+            mask_for_year[year] = np.ones(len(longitudes), dtype=np.bool)
+        return indices, units
 
     @staticmethod
     def _bounding_years(requested_years: np.ndarray, available_years: np.ndarray):

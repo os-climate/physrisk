@@ -121,23 +121,13 @@ def calculate_impacts(  # noqa: C901
                     requests = asset_requests[(model, asset)]
                     hazard_data = [responses[req] for req in get_iterable(requests)]
                     
-                    if (
-                        ImpactKey(
+                    results.setdefault(ImpactKey(
                             asset=asset,
                             hazard_type=model.hazard_type,
                             scenario=scenario,
                             key_year=None if year == -1 else year,
-                        )
-                        not in results
-                    ):
-                        results[
-                            ImpactKey(
-                                asset=asset,
-                                hazard_type=model.hazard_type,
-                                scenario=scenario,
-                                key_year=None if year == -1 else year,
-                            )
-                        ] = []
+                        ), [])
+
                     if any(isinstance(hd, HazardDataFailedResponse) for hd in hazard_data):
                         # the failed responses should have been logged already
                         continue

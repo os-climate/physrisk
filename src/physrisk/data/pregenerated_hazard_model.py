@@ -113,12 +113,12 @@ class PregeneratedHazardModel(HazardModel):
                         for req in batch:
                             if req.scenario != scenario or (scenario != "historical" and req.year != year):
                                 continue
-                            index = lat_lon_index[(req.latitude, req.longitude, req.buffer)]
                             if res is None:
                                 responses[req] = HazardDataFailedResponse(reason="no match")
                                 continue
+                            index = lat_lon_index[(req.latitude, req.longitude, req.buffer)]
                             if res.mask_unprocessed[index]:
-                                # item remains unprocessed, presumably because out of bounds 
+                                # item remains unprocessed, presumably because out of bounds of all paths
                                 responses[req] = HazardDataFailedResponse(reason="out of bounds")
                                 continue
                             if is_event:
@@ -149,6 +149,7 @@ class PregeneratedHazardModel(HazardModel):
                                     res.paths[index],
                                 )
 
+            #asyncio.get_event_loop().set_default_executor(concurrent.futures.ThreadPoolExecutor(max_workers=64))
             for request in requests:
                 batches[(request.hazard_type, request.indicator_id, request.hint.group_key() if request.hint is not None else None)].append(request)
             

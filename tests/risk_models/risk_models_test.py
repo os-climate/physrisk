@@ -149,6 +149,10 @@ class TestRiskModels(TestWithCredentials):
         def sp_heat(scenario, year):
             return source_paths.paths(
                 ChronicHeat, indicator_id="days/above/35c", scenario=scenario)[0].path(year)
+        
+        def sp_heat2(scenario, year):
+            return source_paths.paths(
+                ChronicHeat, indicator_id="mean_degree_days/above/index", scenario=scenario)[0].path(year)
 
         def sp_fire(scenario, year):
             return source_paths.paths(
@@ -213,11 +217,25 @@ class TestRiskModels(TestWithCredentials):
             sp_heat("historical", -1),
             TestData.longitudes,
             TestData.latitudes,
+            [0],
+            [5.],
+        )
+        mocker.add_curves_global(
+            sp_heat("ssp585", 2050),
+            TestData.longitudes,
+            TestData.latitudes,
+            [0],
+            [7.],
+        )
+        mocker.add_curves_global(
+            sp_heat2("historical", -1),
+            TestData.longitudes,
+            TestData.latitudes,
             TestData.temperature_thresholds,
             TestData.degree_days_above_index_1,
         )
         mocker.add_curves_global(
-            sp_heat("ssp585", 2050),
+            sp_heat2("ssp585", 2050),
             TestData.longitudes,
             TestData.latitudes,
             TestData.temperature_thresholds,

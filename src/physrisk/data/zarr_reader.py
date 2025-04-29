@@ -160,6 +160,30 @@ class ZarrReader:
                 "interpolation must have value 'floor', 'linear', 'max' or 'min"
             )
 
+    def in_bounds(
+        self,
+        set_id: str,
+        longitudes: Union[np.ndarray, Sequence[float]],
+        latitudes: Union[np.ndarray, Sequence[float]]):
+
+        if len(longitudes) != len(latitudes):
+            raise ValueError("length of longitudes and latitudes not equal")
+
+        z = self._root[set_id] 
+        t = z.attrs["transform_mat3x3"]  # type: ignore
+        transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
+        crs = z.attrs.get("crs", "epsg:4326")
+        image_coords = self._get_coordinates(
+            longitudes,
+            latitudes,
+            crs,
+            transform,
+            pixel_is_area=True
+        )
+        in_bounds = (image_coords[0, :] < z.shape[2]) & (image_coords[0, :] >= -0.5) # x/lon coords
+        in_bounds = in_bounds & (image_coords[1, :] < z.shape[1]) & (image_coords[1, :] >= -0.5) # y/lat coords
+        return in_bounds
+
     def get_index_values(self, z: zarr.Array):
         # if dimensions attribute is present, assume that the first index
         # is the non-spatial one.
@@ -300,7 +324,6 @@ class ZarrReader:
                 )
             ]
         )
-
         return curves_max, np.array(index_values), units
 
     def get_max_curves_on_grid(

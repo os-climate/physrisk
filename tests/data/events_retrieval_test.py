@@ -20,7 +20,7 @@ from physrisk.api.v1.hazard_data import (
     HazardResource,
     Scenario,
 )
-from physrisk.data.hazard_data_provider import HazardDataHint, HazardDataProvider, Paths, SourcePath, SourcePaths
+from physrisk.data.hazard_data_provider import HazardDataHint, HazardDataProvider, ScenarioPaths, SourcePath, SourcePaths
 from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
@@ -296,13 +296,13 @@ class TestEventRetrieval(TestWithCredentials):
             def hazard_types(self):
                 return [RiverineInundation]
             
-            def paths(
+            def paths_set(
                 self,
                 hazard_type,
                 indicator_id,
-                scenario,
+                scenarios,
                 hint):
-                return [Paths(years=[2050], path=lambda y: "test")]
+                return [{"ssp585": ScenarioPaths(years=[2050], path=lambda y: "test")}]
 
         source_paths = SourcePathsTest()
         hazard_model = ZarrHazardModel(source_paths=source_paths, store=mocker.store)
@@ -313,7 +313,7 @@ class TestEventRetrieval(TestWithCredentials):
                     lons[0],
                     lats[0],
                     indicator_id="",
-                    scenario="",
+                    scenario="ssp585",
                     year=2050,
                 )
             ]
@@ -329,7 +329,7 @@ class TestEventRetrieval(TestWithCredentials):
                     lons[0],
                     lats[0],
                     indicator_id="",
-                    scenario="",
+                    scenario="ssp585",
                     year=2050,
                     buffer=10,
                 )
@@ -374,37 +374,42 @@ class TestEventRetrieval(TestWithCredentials):
             "test_set_world",
             lons,
             lats,
-            [10.0, 100.0, 1000.0],
-            [4.0, 5.0, 6.0],
+            [10.0, 20.0, 100.0, 1000.0],
+            [4.0, 4.5, 5.0, 6.0],
         )
         requests = ([HazardDataRequest(hazard_type=RiverineInundation, longitude=float(lon), latitude=float(lat),
                                 indicator_id="flood_depth", scenario="ssp585", year=2050) for lat, lon in zip(lats, lons)] + 
                     [HazardDataRequest(hazard_type=RiverineInundation, longitude=float(lon), latitude=float(lat),
                                 indicator_id="flood_depth", scenario="ssp585", year=2080) for lat, lon in zip(lats, lons)] +
                     [HazardDataRequest(hazard_type=RiverineInundation, longitude=float(lon), latitude=float(lat),
-                                indicator_id="flood_depth", scenario="ssp585", year=2070) for lat, lon in zip(lats, lons)])            
+                                indicator_id="flood_depth", scenario="ssp585", year=2070) for lat, lon in zip(lats, lons)] +
+                    [HazardDataRequest(hazard_type=RiverineInundation, longitude=float(lon), latitude=float(lat),
+                                indicator_id="flood_depth", scenario="historical", year=-1) for lat, lon in zip(lats, lons)])            
         
         class SourcePathsTest(SourcePaths):
             def hazard_types(self):
                 return [RiverineInundation]
             
-            def paths(
+            def paths_set(
                 self,
                 hazard_type: Type[Hazard],
                 indicator_id: str,
-                scenario: str,
-                hint: Optional[HazardDataHint] = None) -> List[Paths]:
+                scenarios: List[str],
+                hint: Optional[HazardDataHint] = None) -> List[ScenarioPaths]:
                 # try Europe-specific first and then the whole-world
-                return [Paths(years=[2030, 2050, 2080], path = lambda f: "test_set_europe_only"),
-                        Paths(years=[2030, 2050, 2080], path = lambda f: "test_set_world")]
+                return [{"ssp585": ScenarioPaths(years=[2030, 2050, 2080], path = lambda f: "test_set_europe_only"),
+                         "historical": ScenarioPaths(years=[-1], path = lambda f: "test_set_europe_only")},
+                        {"ssp585": ScenarioPaths(years=[2030, 2050, 2080], path = lambda f: "test_set_world"),
+                         "historical": ScenarioPaths(years=[-1], path = lambda f: "test_set_world")}]
             
         source_paths = SourcePathsTest()
         hazard_model = ZarrHazardModel(source_paths=source_paths, store=mocker.store)
         response = hazard_model.get_hazard_data(requests)
         np.testing.assert_almost_equal(response[requests[0]].intensities, [1.0, 2.0, 3.0])
-        np.testing.assert_almost_equal(response[requests[2]].intensities, [4.0, 5.0, 6.0])
+        np.testing.assert_almost_equal(response[requests[2]].intensities, [4.0, 4.5, 5.0, 6.0])
         np.testing.assert_almost_equal(response[requests[9]].intensities, [1.0, 2.0, 3.0])
         assert isinstance(response[requests[10]], HazardDataFailedResponse)
+        np.testing.assert_almost_equal(response[requests[15]].intensities, [1.0, 2.0, 3.0])
 
     def test_cascading_sources_and_interpolation(self):
         """This is a performance test to verify that it is sufficiently efficient to have

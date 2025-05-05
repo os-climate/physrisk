@@ -836,6 +836,9 @@ class TestImpactRequests(TestWithCredentials):
         response = requester.get(
             request_id="get_asset_impact", request_dict=request_dict
         )
+        response = requester.get(
+            request_id="get_asset_impact", request_dict=request_dict
+        )
         risk_measures_dict = json.loads(response)["risk_measures"]
         helper = RiskMeasuresHelper(
             TypeAdapter(RiskMeasures).validate_python(risk_measures_dict)

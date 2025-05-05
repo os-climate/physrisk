@@ -51,7 +51,7 @@ from ..data.hazard_model_store_test import (
 
 class TestRiskModels(TestWithCredentials):
     def test_risk_indicator_model(self):
-        scenarios = ["rcp8p5"]
+        scenarios = ["ssp585"]
         years = [2050]
 
         assets = self._create_assets()

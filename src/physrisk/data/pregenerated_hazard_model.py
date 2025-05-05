@@ -72,7 +72,7 @@ class PregeneratedHazardModel(HazardModel):
         #except Exception:
         #    loop = asyncio.new_event_loop()
         #    asyncio.set_event_loop(loop)
-        
+        logger.info(f"{len(requests)} hazard data requests")
         responses: MutableMapping[HazardDataRequest, HazardDataResponse] = {}
         batches: Dict[Tuple[str, str], List[HazardDataRequest]] = defaultdict(list)
         # find the requests for the same indicator, but different scenarios and years
@@ -84,7 +84,7 @@ class PregeneratedHazardModel(HazardModel):
                 for req in batch:
                     lat_lon_index.setdefault((req.latitude, req.longitude, req.buffer), len(lat_lon_index))
                 # get the list of scenarios and years needed
-                scenarios = set(req.scenario for req in batch)
+                scenarios = list(set(req.scenario for req in batch))
                 years = set(req.year for req in batch if req.scenario != "historical")
 
                 latitudes = [lat_lon[0] for lat_lon in lat_lon_index]
@@ -106,6 +106,7 @@ class PregeneratedHazardModel(HazardModel):
                                                                             scenarios=scenarios,
                                                                             years=years,
                                                                             hint=hint)
+                
                 # finally, unpack
                 for scenario in scenarios:
                     for year in ([-1] if scenario == "historical" else years):
@@ -117,17 +118,19 @@ class PregeneratedHazardModel(HazardModel):
                                 responses[req] = HazardDataFailedResponse(reason="no match")
                                 continue
                             index = lat_lon_index[(req.latitude, req.longitude, req.buffer)]
-                            if res.mask_unprocessed[index]:
+                            if ~res.coverage_mask[index]:
                                 # item remains unprocessed, presumably because out of bounds of all paths
                                 responses[req] = HazardDataFailedResponse(reason="out of bounds")
                                 continue
+                            indices_length = res.indices_length[index]
+                            values = res.values[index, :indices_length]
+                            indices = res.indices[index, :indices_length]
                             if is_event:
                                 # if event data contains NaNs, this is taken to be zero    
-                                responses[req] = res.values[index]
-                                valid = ~np.isnan(res.values[index, :])
+                                valid = ~np.isnan(values)
                                 valid_periods, valid_intensities = (
-                                    res.indices[valid],
-                                    res.values[index, :][valid],
+                                    indices[valid],
+                                    values[valid],
                                 )
                                 if len(valid_periods) == 0:
                                     valid_periods, valid_intensities = (
@@ -141,15 +144,15 @@ class PregeneratedHazardModel(HazardModel):
                                     res.paths[index],
                                 )
                             else:
-                                valid = ~np.isnan(res.values[index, :])
+                                valid = ~np.isnan(values)
                                 responses[req] = HazardParameterDataResponse(
-                                    res.values[index, :][valid].astype(dtype="float64"),
-                                    res.indices[valid],
+                                    values[valid].astype(dtype="float64"),
+                                    indices[valid],
                                     res.units,
                                     res.paths[index],
                                 )
 
-            #asyncio.get_event_loop().set_default_executor(concurrent.futures.ThreadPoolExecutor(max_workers=64))
+            asyncio.get_event_loop().set_default_executor(concurrent.futures.ThreadPoolExecutor(max_workers=32)) # 1
             for request in requests:
                 batches[(request.hazard_type, request.indicator_id, request.hint.group_key() if request.hint is not None else None)].append(request)
             
@@ -157,6 +160,7 @@ class PregeneratedHazardModel(HazardModel):
                 
         #loop.run_until_complete(all_requests())
         asyncio.run(all_requests())
+        logger.info("Download complete")
         return responses
 
     def _get_hazard_data_batch(

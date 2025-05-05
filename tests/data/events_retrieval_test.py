@@ -339,22 +339,6 @@ class TestEventRetrieval(TestWithCredentials):
             next(iter(response2.values())).intensities, [1.0, 2.0, 3.0]
         )
 
-    def test_get_required_years(self):
-        requested = np.array([2045])
-        available = np.array([2025, 2040, 2050])
-        required = HazardDataProvider._bounding_years(requested, available)
-        # need 2040 and 2050 only
-        np.testing.assert_equal(required, [1, 2])
-        requested = np.array([2045, 2050, 2060])
-        available = np.array([2025, 2040, 2050])
-        required = HazardDataProvider._bounding_years(requested, available)
-        # need 2040 and 2050 only still (extrapolation requires last 2)
-        np.testing.assert_equal(required, [1, 2])
-        requested = np.array([2030, 2050, 2085])
-        available = np.array([2025, 2040, 2050, 2060, 2070, 2080])
-        required = HazardDataProvider._bounding_years(requested, available)
-        # note, again extrapolation requires last 2
-        np.testing.assert_equal(required, [0, 1, 2, 4, 5])
 
     def test_cascade(self):
         mocker = ZarrStoreMocker()
@@ -475,9 +459,23 @@ class TestEventRetrieval(TestWithCredentials):
 
     def test_years_interpolation(self):
         weights = HazardDataProvider._weights(
-            "ssp585", [2050, 2060, 2080], [2050, 2065, 2090], 2025
+            "ssp585", [2050, 2060, 2080], [2040, 2050, 2065, 2090], 2025
         )
-        assert weights[ScenarioYear("ssp585", 2050)]
+        assert weights[ScenarioYear("ssp585", 2040)].weights[0][0].scenario == "historical"
+        assert weights[ScenarioYear("ssp585", 2040)].weights[0][1] == (2050. - 2040.) / (2050. - 2025.) 
+        #
+        assert weights[ScenarioYear("ssp585", 2050)].weights[0][0].year == 2050
+        assert weights[ScenarioYear("ssp585", 2050)].weights[0][1] == 1.0
+        #
+        assert weights[ScenarioYear("ssp585", 2090)].weights[0][0].year == 2060
+        assert weights[ScenarioYear("ssp585", 2090)].weights[0][1] == - (2090. - 2080.) / (2080. - 2060.)
+        # v_e = v_2 + (y_e - y_2) * (v_2 - v_1) / (y_2 - y_1)
+        # w1 = - (y_e - y_2) / (y_2 - y_1)
+        # w2 = 1 + (y_e - y_2) / (y_2 - y_1)
+        weights = HazardDataProvider._weights(
+            "ssp585", [2050], [2040, 2090], 2025
+        )
+        assert weights[ScenarioYear("ssp585", 2090)].weights[0][0].year == -1
 
     def test_cascading_sources_and_interpolation(self):
         """This is a performance test to verify that it is sufficiently efficient to have

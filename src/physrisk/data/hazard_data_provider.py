@@ -446,59 +446,37 @@ class HazardDataProvider(ABC):
         weights: List[Tuple[ScenarioYear, float]] = []
         indices = np.searchsorted(available_with_current, requested_years, side="left")
         result: Dict[ScenarioYear, WeightedSum] = {}
+        
+        def scenario_year(scenario: str, year: int):
+            return ScenarioYear("historical", -1) if year == historical_year else ScenarioYear(scenario, int(year)) 
+        
         for i, index in enumerate(indices):
             if index == len(available_with_current):
                 # linear extrapolation
-                slope = (requested_years[i] - available_with_current[-1]) / (
-                    available_with_current[-1] - available_with_current[-2]
+                # v_e = v_2 + (y_e - y_2) * (v_2 - v_1) / (y_2 - y_1)
+                slope = (float(requested_years[i]) - float(available_with_current[-1])) / (
+                    float(available_with_current[-1]) - float(available_with_current[-2])
                 )
                 weights = [
-                    (ScenarioYear(scenario, available_with_current[-2]), slope),
-                    (ScenarioYear(scenario, available_with_current[-1]), 1.0 - slope),
+                    (scenario_year(scenario, available_with_current[-2]), -slope),
+                    (scenario_year(scenario, available_with_current[-1]), 1.0 + slope),
                 ]
             elif available_with_current[index] == requested_years[i]:
                 # exact match
-                weights = [(ScenarioYear(scenario, available_with_current[index]), 1.0)]
+                weights = [(scenario_year(scenario, available_with_current[index]), 1.0)]
             else:
                 # linear interpolation
-                w1 = (available_with_current[index] - requested_years[i]) / (
-                    available_with_current[index] - available_with_current[index - 1]
+                w1 = (float(available_with_current[index]) - float(requested_years[i])) / (
+                    float(available_with_current[index]) - float(available_with_current[index - 1])
                 )
                 weights = [
                     (
-                        ScenarioYear(scenario, available_with_current[index - 1]),
-                        1.0 - w1,
+                        scenario_year(scenario, available_with_current[index - 1]),
+                        w1,
                     ),
-                    (ScenarioYear(scenario, available_with_current[index]), w1),
+                    (scenario_year(scenario, available_with_current[index]), 1.0 - w1),
                 ]
-            result[ScenarioYear(scenario, requested_years[i])] = WeightedSum(
+            result[scenario_year(scenario, requested_years[i])] = WeightedSum(
                 weights=weights
             )
         return result
-
-    @staticmethod
-    def _bounding_years(requested_years: np.ndarray, available_years: np.ndarray):
-        # available years includes current year
-        # 2025, 2040, 2050, 2060
-        # 2045 gives 2, need 1 and 2
-        # 2050 gives 2, need 2
-        # 2060 gives 3, need 1 and 2
-
-        # a[i-1] < v <= a[i]
-        # indices of available_years
-        indices = np.searchsorted(available_years, requested_years)
-
-        extrap_needed = False
-        required_indices = []
-        for i, index in enumerate(indices):
-            if index == len(available_years):
-                extrap_needed = True
-            elif available_years[index] == requested_years[i]:
-                required_indices.append(index)
-            else:
-                required_indices.extend([index - 1, index])
-        if extrap_needed:
-            required_indices.extend(
-                [len(available_years) - 2, len(available_years) - 1]
-            )
-        return np.unique(required_indices)

@@ -446,16 +446,23 @@ class HazardDataProvider(ABC):
         weights: List[Tuple[ScenarioYear, float]] = []
         indices = np.searchsorted(available_with_current, requested_years, side="left")
         result: Dict[ScenarioYear, WeightedSum] = {}
-        
+
         def scenario_year(scenario: str, year: int):
-            return ScenarioYear("historical", -1) if year == historical_year else ScenarioYear(scenario, int(year)) 
-        
+            return (
+                ScenarioYear("historical", -1)
+                if year == historical_year
+                else ScenarioYear(scenario, int(year))
+            )
+
         for i, index in enumerate(indices):
             if index == len(available_with_current):
                 # linear extrapolation
                 # v_e = v_2 + (y_e - y_2) * (v_2 - v_1) / (y_2 - y_1)
-                slope = (float(requested_years[i]) - float(available_with_current[-1])) / (
-                    float(available_with_current[-1]) - float(available_with_current[-2])
+                slope = (
+                    float(requested_years[i]) - float(available_with_current[-1])
+                ) / (
+                    float(available_with_current[-1])
+                    - float(available_with_current[-2])
                 )
                 weights = [
                     (scenario_year(scenario, available_with_current[-2]), -slope),
@@ -463,11 +470,16 @@ class HazardDataProvider(ABC):
                 ]
             elif available_with_current[index] == requested_years[i]:
                 # exact match
-                weights = [(scenario_year(scenario, available_with_current[index]), 1.0)]
+                weights = [
+                    (scenario_year(scenario, available_with_current[index]), 1.0)
+                ]
             else:
                 # linear interpolation
-                w1 = (float(available_with_current[index]) - float(requested_years[i])) / (
-                    float(available_with_current[index]) - float(available_with_current[index - 1])
+                w1 = (
+                    float(available_with_current[index]) - float(requested_years[i])
+                ) / (
+                    float(available_with_current[index])
+                    - float(available_with_current[index - 1])
                 )
                 weights = [
                     (

@@ -339,7 +339,6 @@ class TestEventRetrieval(TestWithCredentials):
             next(iter(response2.values())).intensities, [1.0, 2.0, 3.0]
         )
 
-
     def test_cascade(self):
         mocker = ZarrStoreMocker()
         lons = [1.1, -0.31, 32.5, -84.0, 1.15]
@@ -461,20 +460,24 @@ class TestEventRetrieval(TestWithCredentials):
         weights = HazardDataProvider._weights(
             "ssp585", [2050, 2060, 2080], [2040, 2050, 2065, 2090], 2025
         )
-        assert weights[ScenarioYear("ssp585", 2040)].weights[0][0].scenario == "historical"
-        assert weights[ScenarioYear("ssp585", 2040)].weights[0][1] == (2050. - 2040.) / (2050. - 2025.) 
+        assert (
+            weights[ScenarioYear("ssp585", 2040)].weights[0][0].scenario == "historical"
+        )
+        assert weights[ScenarioYear("ssp585", 2040)].weights[0][1] == (
+            2050.0 - 2040.0
+        ) / (2050.0 - 2025.0)
         #
         assert weights[ScenarioYear("ssp585", 2050)].weights[0][0].year == 2050
         assert weights[ScenarioYear("ssp585", 2050)].weights[0][1] == 1.0
         #
         assert weights[ScenarioYear("ssp585", 2090)].weights[0][0].year == 2060
-        assert weights[ScenarioYear("ssp585", 2090)].weights[0][1] == - (2090. - 2080.) / (2080. - 2060.)
+        assert weights[ScenarioYear("ssp585", 2090)].weights[0][1] == -(
+            2090.0 - 2080.0
+        ) / (2080.0 - 2060.0)
         # v_e = v_2 + (y_e - y_2) * (v_2 - v_1) / (y_2 - y_1)
         # w1 = - (y_e - y_2) / (y_2 - y_1)
         # w2 = 1 + (y_e - y_2) / (y_2 - y_1)
-        weights = HazardDataProvider._weights(
-            "ssp585", [2050], [2040, 2090], 2025
-        )
+        weights = HazardDataProvider._weights("ssp585", [2050], [2040, 2090], 2025)
         assert weights[ScenarioYear("ssp585", 2090)].weights[0][0].year == -1
 
     def test_cascading_sources_and_interpolation(self):

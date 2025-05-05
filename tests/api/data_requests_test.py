@@ -63,7 +63,7 @@ class TestDataRequests(TestWithCredentials):
             scenario="ssp585",
             hint=HazardDataHint(
                 path="chronic_heat/osc/v2/mean_degree_days_v2_above_32c_CMCC-ESM2_{scenario}_{year}"
-            )
+            ),
         )[0].path(2050)
 
         assert (

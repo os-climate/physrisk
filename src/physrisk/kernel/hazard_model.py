@@ -14,7 +14,17 @@ class HazardDataRequest:
     An acute hazard is an event and the response will therefore comprise hazard intensities for the
     different event return periods. A chronic hazard on the other hand is a shift in a climate parameter
     and the parameter value is returned."""
-    __slots__ = ("hazard_type", "longitude", "latitude", "indicator_id", "scenario", "year", "hint", "buffer")
+
+    __slots__ = (
+        "hazard_type",
+        "longitude",
+        "latitude",
+        "indicator_id",
+        "scenario",
+        "year",
+        "hint",
+        "buffer",
+    )
 
     def __init__(
         self,
@@ -64,8 +74,11 @@ class HazardDataRequest:
 
     def __repr__(self) -> str:
         return (
-            "HazardDataRequest(" + ",".join(str(getattr(self, a)) for a in HazardDataRequest.__slots__) + ")"
+            "HazardDataRequest("
+            + ",".join(str(getattr(self, a)) for a in HazardDataRequest.__slots__)
+            + ")"
         )
+
 
 class HazardDataResponse:
     pass
@@ -105,8 +118,14 @@ class HazardEventDataResponse(HazardDataResponse):
 
     def __repr__(self) -> str:
         return (
-            "HazardDataRequest(" + ",".join(str(getattr(self, a)) for a in ["return_periods", "intensities", "units", "path"]) + ")"
+            "HazardDataRequest("
+            + ",".join(
+                str(getattr(self, a))
+                for a in ["return_periods", "intensities", "units", "path"]
+            )
+            + ")"
         )
+
 
 class HazardParameterDataResponse(HazardDataResponse):
     """Response to HazardDataRequest."""
@@ -143,10 +162,15 @@ class HazardParameterDataResponse(HazardDataResponse):
             float: Single parameter.
         """
         return self.parameters[0]
-    
+
     def __repr__(self) -> str:
         return (
-            "HazardDataRequest(" + ",".join(str(getattr(self, a)) for a in ["parameters", "param_defns", "units", "path"]) + ")"
+            "HazardDataRequest("
+            + ",".join(
+                str(getattr(self, a))
+                for a in ["parameters", "param_defns", "units", "path"]
+            )
+            + ")"
         )
 
 

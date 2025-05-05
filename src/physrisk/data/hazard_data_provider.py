@@ -2,8 +2,18 @@ from abc import ABC
 import asyncio
 from dataclasses import dataclass
 import logging
-import sys
-from typing import Callable, Dict, List, MutableMapping, NamedTuple, Optional, Sequence, Tuple, Type, Union, runtime_checkable
+from typing import (
+    Callable,
+    Dict,
+    List,
+    MutableMapping,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+)
 
 import numpy as np
 from shapely import Point
@@ -32,10 +42,11 @@ class HazardDataHint:
 
 @dataclass
 class ScenarioPaths:
-    """For a given HazardResource and scenario, gives the available years and 
+    """For a given HazardResource and scenario, gives the available years and
     function to generate the path for each year.
     """
-    #year_paths: Dict[int, str]
+
+    # year_paths: Dict[int, str]
     years: List[int]
     path: Callable[[int], str]
 
@@ -77,17 +88,18 @@ class SourcePaths(Protocol):
             List[Type[Hazard]]: Available hazard types.
         """
         ...
-    
+
     def paths(
         self,
         hazard_type: Type[Hazard],
         indicator_id: str,
         scenario: str,
-        hint: Optional[HazardDataHint] = None) -> List[Dict[str, ScenarioPaths]]:
+        hint: Optional[HazardDataHint] = None,
+    ) -> List[Dict[str, ScenarioPaths]]:
         """Get the cascading Paths list for the given hazard type, indicator ID and scenario.
         Each Paths item in the list has the available years and a function to obtain the path for each year.
-        Each Paths item covers a different area and can be used to match multiple data sets. 
-        
+        Each Paths item covers a different area and can be used to match multiple data sets.
+
         Args:
             hazard_type (Type[Hazard]): Hazard type.
             indicator_id (str): Hazard indicator identifier.
@@ -103,22 +115,23 @@ class SourcePaths(Protocol):
         self,
         hazard_type: Type[Hazard],
         indicator_id: str,
-        scenarios: List[str],
-        hint: Optional[HazardDataHint] = None) -> List[Dict[str, ScenarioPaths]]:
-        ...
+        scenarios: Sequence[str],
+        hint: Optional[HazardDataHint] = None,
+    ) -> List[Dict[str, ScenarioPaths]]: ...
+
 
 class DataSourcingError(Exception):
     pass
 
-    
+
 class ScenarioYear(NamedTuple):
     scenario: str
-    year: Optional[int]
+    year: int
 
 
 class ScenarioYearRes(NamedTuple):
     scenario: str
-    year: Optional[int]
+    year: int
     resource_index: Optional[int]
 
 
@@ -127,7 +140,7 @@ class ScenarioYearResult:
     values: np.ndarray
     indices: np.ndarray
     indices_length: np.ndarray
-    coverage_mask: np.ndarray # boolean mask giving the part of the original set of lats/lons that this applies to
+    coverage_mask: np.ndarray  # boolean mask giving the part of the original set of lats/lons that this applies to
     units: str
     paths: np.ndarray
 
@@ -146,7 +159,7 @@ class HazardDataProvider(ABC):
         store: Optional[MutableMapping] = None,
         zarr_reader: Optional[ZarrReader] = None,
         interpolation: Optional[str] = "floor",
-        historical_year: int = 2025
+        historical_year: int = 2025,
     ):
         """Provides hazard data.
 
@@ -168,7 +181,7 @@ class HazardDataProvider(ABC):
         if interpolation not in ["floor", "linear", "max", "min"]:
             raise ValueError("interpolation must be 'floor', 'linear', 'max' or 'min'")
         self._interpolation = interpolation
-    
+
     async def get_data_cascading(
         self,
         longitudes: Sequence[float],
@@ -179,7 +192,7 @@ class HazardDataProvider(ABC):
         years: Sequence[int],
         hint: Optional[HazardDataHint] = None,
         buffer: Optional[int] = None,
-        interpolate_years: bool = False
+        interpolate_years: bool = False,
     ):
         """Returns data for set of latitude and longitudes.
 
@@ -196,80 +209,106 @@ class HazardDataProvider(ABC):
         Returns:
             Dict[ScenarioYear, ScenarioYearResult]: Results.
         """
-        if interpolate_years == True:
+        if interpolate_years:
             raise NotImplementedError("interpolation not yet implemented")
         # For each scenario, we find the list of array paths and available years for each path.
         longitudes = np.array(longitudes)
         latitudes = np.array(latitudes)
         final_result: Dict[ScenarioYear, ScenarioYearResult] = {}
         # mask_unprocessed is the mask of lats and lons that remain unprocessed.
-        # This always has the same length and is updated for each path_item. 
+        # This always has the same length and is updated for each path_item.
         # combined data for each year
         mask_unprocessed = np.ones(len(longitudes), dtype=np.bool)
-        scenario_paths_set: List[Dict[str, ScenarioPaths]] = self._source_paths.paths_set(self.hazard_type,
-                                                indicator_id=indicator_id,
-                                                scenarios=scenarios,
-                                                hint=hint)
+        scenario_paths_set: List[Dict[str, ScenarioPaths]] = (
+            self._source_paths.paths_set(
+                self.hazard_type,
+                indicator_id=indicator_id,
+                scenarios=scenarios,
+                hint=hint,
+            )
+        )
         results: Dict[ScenarioYearRes, ScenarioYearResult] = {}
         max_dim = 0
         for i, scenario_paths in enumerate(scenario_paths_set):
             _, p = next(iter(scenario_paths.items()))
-            y = next((y for y in years if y in p.years), p.years[0]) # use match if there is one
+            y = next(
+                (y for y in years if y in p.years), p.years[0]
+            )  # use match if there is one
             set_id = p.path(y)
             mask_in_bounds = await asyncio.to_thread(
                 self._reader.in_bounds,
                 set_id,
                 longitudes[mask_unprocessed],
-                latitudes[mask_unprocessed])
+                latitudes[mask_unprocessed],
+            )
             coverage = mask_unprocessed.copy()
             coverage[mask_unprocessed] = coverage[mask_unprocessed] & mask_in_bounds
-            mask_unprocessed[mask_unprocessed] = mask_unprocessed[mask_unprocessed] & ~mask_in_bounds
-        
-            resource_result = await self.get_scenarios_and_years(i, coverage, longitudes[coverage], latitudes[coverage], indicator_id, scenario_paths,
-                            years, buffer, interpolate_years)
+            mask_unprocessed[mask_unprocessed] = (
+                mask_unprocessed[mask_unprocessed] & ~mask_in_bounds
+            )
+
+            resource_result = await self.get_scenarios_and_years(
+                i,
+                coverage,
+                longitudes[coverage],
+                latitudes[coverage],
+                indicator_id,
+                scenario_paths,
+                years,
+                buffer,
+                interpolate_years,
+            )
             if len(resource_result) > 0:
                 results.update(resource_result)
-                max_dim = max(max_dim, next(iter(resource_result.values())).indices_length[0])
+                max_dim = max(
+                    max_dim, next(iter(resource_result.values())).indices_length[0]
+                )
 
         for k, v in results.items():
             key = ScenarioYear(k.scenario, k.year)
             if key not in final_result:
                 values = np.empty((len(longitudes), max_dim))
                 indices = np.empty((len(longitudes), max_dim), dtype=v.indices.dtype)
-                indices_length = np.empty((len(longitudes)), dtype=v.indices_length.dtype)
+                indices_length = np.empty(
+                    (len(longitudes)), dtype=v.indices_length.dtype
+                )
                 paths = np.empty((len(longitudes)), dtype=np.object_)
-                final_result[key] = ScenarioYearResult(values=values,
-                                   indices=indices,
-                                   indices_length=indices_length,
-                                   coverage_mask=mask_unprocessed,
-                                   units=v.units,
-                                   paths=paths)
+                final_result[key] = ScenarioYearResult(
+                    values=values,
+                    indices=indices,
+                    indices_length=indices_length,
+                    coverage_mask=mask_unprocessed,
+                    units=v.units,
+                    paths=paths,
+                )
             res = final_result[key]
             indices_length = v.indices_length[0]
-            res.values[v.coverage_mask,:indices_length] = v.values
-            res.indices[v.coverage_mask,:indices_length] = v.indices
+            res.values[v.coverage_mask, :indices_length] = v.values
+            res.indices[v.coverage_mask, :indices_length] = v.indices
             res.indices_length[v.coverage_mask] = v.indices_length
             res.coverage_mask[v.coverage_mask] = True
             res.paths[v.coverage_mask] = v.paths
-            
+
         # for k, r in final_result.items():
         #     if np.any(r.mask_unprocessed):
         #         r.values[mask_unprocessed] = np.nan
         return final_result
-    
-    async def get_scenarios_and_years(self,
-                        resource_index: int,
-                        coverage: np.ndarray,
-                        longitudes: np.ndarray,
-                        latitudes: np.ndarray,
-                        indicator_id: str,
-                        scenario_paths: Dict[str, ScenarioPaths],
-                        years: Sequence[int],
-                        buffer: Optional[int],
-                        interpolate_years: bool):
+
+    async def get_scenarios_and_years(
+        self,
+        resource_index: int,
+        coverage: np.ndarray,
+        longitudes: np.ndarray,
+        latitudes: np.ndarray,
+        indicator_id: str,
+        scenario_paths: Dict[str, ScenarioPaths],
+        years: Sequence[int],
+        buffer: Optional[int],
+        interpolate_years: bool,
+    ):
         """Get data for all scenarios and years using just a single HazardResource as the source.
         The importance of this is that interpolation of years is assumed to be feasible within the same resource as this
-        is a single model (with consistent meaning of the values). 
+        is a single model (with consistent meaning of the values).
         """
         result: Dict[ScenarioYear, ScenarioYearResult] = {}
         # Retrieve the data for all available years for the path in question.
@@ -277,10 +316,17 @@ class HazardDataProvider(ABC):
         for scenario, paths in scenario_paths.items():
             requested_years = [-1] if scenario == "historical" else years
             if interpolate_years:
-                year_weights = HazardDataProvider._weights(scenario, paths.years, requested_years, self.historical_year)
+                year_weights = HazardDataProvider._weights(
+                    scenario, paths.years, requested_years, self.historical_year
+                )
             else:
-                year_weights = {ScenarioYear(scenario, y): WeightedSum(weights=[(ScenarioYear(scenario, y), 1.0)]) 
-                           for y in requested_years if y in paths.years}
+                year_weights = {
+                    ScenarioYear(scenario, y): WeightedSum(
+                        weights=[(ScenarioYear(scenario, y), 1.0)]
+                    )
+                    for y in requested_years
+                    if y in paths.years
+                }
             weights.update(year_weights)
 
         all_items = set(w[0] for ws in weights.values() for w in ws.weights)
@@ -291,43 +337,66 @@ class HazardDataProvider(ABC):
         targets: Dict[ScenarioYear, ScenarioYearResult] = {}
         try:
             # Any errors should propagate up.
-            res = await asyncio.gather(*(self.get_single_item(item,
-                                                              latitudes,
-                                                              longitudes,
-                                                              buffer,
-                                                              scenario_paths[item.scenario].path(item.year))
-                                for item in all_items))
+            res = await asyncio.gather(
+                *(
+                    self.get_single_item(
+                        item,
+                        latitudes,
+                        longitudes,
+                        buffer,
+                        scenario_paths[item.scenario].path(item.year),
+                    )
+                    for item in all_items
+                )
+            )
             for item, values, mask_in_bounds, indices, units, path in res:
-                targets[item] = ScenarioYearResult(values=values, indices=indices,
-                                                   indices_length=np.array([len(indices)], dtype=np.int32), # a numpy scalar
-                                                   coverage_mask=coverage, units=units, paths= np.array([path], dtype=np.object_))
+                targets[item] = ScenarioYearResult(
+                    values=values,
+                    indices=indices,
+                    indices_length=np.array(
+                        [len(indices)], dtype=np.int32
+                    ),  # a numpy scalar
+                    coverage_mask=coverage,
+                    units=units,
+                    paths=np.array([path], dtype=np.object_),
+                )
+                masks_in_bounds[item] = mask_in_bounds
         except KeyError as ke:
-            raise DataSourcingError(f"Dataset not found for hazard type {self.hazard_type.__name__} " +
-                                    f"indicator ID {indicator_id}: {ke.args[0]}")
+            raise DataSourcingError(
+                f"Dataset not found for hazard type {self.hazard_type.__name__} "
+                + f"indicator ID {indicator_id}: {ke.args[0]}"
+            )
         for item, sum in weights.items():
             r1, w1 = targets[sum.weights[0][0]], sum.weights[0][1]
             values = r1.values * w1
             if len(sum.weights) > 1:
                 r2, w2 = targets[sum.weights[1][0]], sum.weights[1][1]
                 values = values + r2.values * w2
-            result[item] = ScenarioYearResult(values=values, indices=r1.indices,
-                                            indices_length=r1.indices_length,
-                                            coverage_mask=r1.coverage_mask,
-                                            units=r1.units,
-                                            paths=r1.paths)
-            masks_in_bounds[item] = mask_in_bounds
+            result[item] = ScenarioYearResult(
+                values=values,
+                indices=r1.indices,
+                indices_length=r1.indices_length,
+                coverage_mask=r1.coverage_mask,
+                units=r1.units,
+                paths=r1.paths,
+            )
         # For a given data set, the spatial coverage should be identical between years. If not, something is wrong.
         mask_in_bounds = next(iter(masks_in_bounds.values()))
         if any(np.any(mask != mask_in_bounds) for mask in masks_in_bounds.values()):
             raise ValueError("inconsistent coverage across years")
-        return {ScenarioYearRes(k.scenario, k.year, resource_index): v for k, v in result.items()}
+        return {
+            ScenarioYearRes(k.scenario, k.year, resource_index): v
+            for k, v in result.items()
+        }
 
-    async def get_single_item(self,
-                        item: ScenarioYear,
-                        latitudes: Sequence[float],
-                        longitudes: Sequence[float],
-                        buffer: Optional[int],
-                        path: str): 
+    async def get_single_item(
+        self,
+        item: ScenarioYear,
+        latitudes: Sequence[float],
+        longitudes: Sequence[float],
+        buffer: Optional[int],
+        path: str,
+    ):
         indices, units = [], ""
         if buffer is None:
             values, mask_in_bounds, indices, units = await asyncio.to_thread(
@@ -335,7 +404,8 @@ class HazardDataProvider(ABC):
                 path,
                 longitudes,
                 latitudes,
-                self._interpolation)
+                self._interpolation,
+            )
         else:
             if buffer < 0 or 1000 < buffer:
                 raise Exception(
@@ -356,38 +426,54 @@ class HazardDataProvider(ABC):
                     )
                     for longitude, latitude in zip(longitudes, latitudes)
                 ],
-                self._interpolation) # type: ignore
+                self._interpolation,
+            )  # type: ignore
         return item, values, mask_in_bounds, indices, units, path
 
     @staticmethod
-    def _weights(scenario: str, available_years: Sequence[float],
-                 requested_years: np.ndarray,
-                 historical_year: int) -> Dict[ScenarioYear, WeightedSum]:
-        available_with_current = np.ndarray([historical_year] + available_years)
+    def _weights(
+        scenario: str,
+        available_years: Sequence[float],
+        requested_years: np.ndarray,
+        historical_year: int,
+    ) -> Dict[ScenarioYear, WeightedSum]:
+        available_with_current = np.array([historical_year] + list(available_years))
         # return i such that a[i-1] < v <= a[i]
         # e.g. with available years: 2025, 2040, 2050, 2060
         # 2045 gives index 2, need 1 and 2
         # 2050 gives index 2, need 2
         # 2060 gives index 3, need 1 and 2
-        weights = List[Tuple[int, float, Optional[int], Optional[float]]]
+        weights: List[Tuple[ScenarioYear, float]] = []
         indices = np.searchsorted(available_with_current, requested_years, side="left")
-        result = {}
+        result: Dict[ScenarioYear, WeightedSum] = {}
         for i, index in enumerate(indices):
             if index == len(available_with_current):
                 # linear extrapolation
-                slope =  (requested_years[i] - available_with_current[-1]) / (available_with_current[-1] - available_with_current[-2])
-                weights = [(ScenarioYear(scenario, available_with_current[-1]), 1. - slope),
-                           (ScenarioYear(scenario, available_with_current[-2]), slope)]
+                slope = (requested_years[i] - available_with_current[-1]) / (
+                    available_with_current[-1] - available_with_current[-2]
+                )
+                weights = [
+                    (ScenarioYear(scenario, available_with_current[-2]), slope),
+                    (ScenarioYear(scenario, available_with_current[-1]), 1.0 - slope),
+                ]
             elif available_with_current[index] == requested_years[i]:
                 # exact match
-                weights = [(ScenarioYear(scenario, available_with_current[index]), 1.)]
+                weights = [(ScenarioYear(scenario, available_with_current[index]), 1.0)]
             else:
                 # linear interpolation
-                w1 = ((available_with_current[index] - requested_years[i]) 
-                      / (available_with_current[index] - available_with_current[index - 1]))
-                weights = [(ScenarioYear(scenario, available_with_current[index - 1]), w1),
-                           (ScenarioYear(scenario, available_with_current[index - 2]), 1. - w1)]
-            result[ScenarioYear(scenario, requested_years[i])] = weights
+                w1 = (available_with_current[index] - requested_years[i]) / (
+                    available_with_current[index] - available_with_current[index - 1]
+                )
+                weights = [
+                    (
+                        ScenarioYear(scenario, available_with_current[index - 1]),
+                        1.0 - w1,
+                    ),
+                    (ScenarioYear(scenario, available_with_current[index]), w1),
+                ]
+            result[ScenarioYear(scenario, requested_years[i])] = WeightedSum(
+                weights=weights
+            )
         return result
 
     @staticmethod
@@ -412,7 +498,7 @@ class HazardDataProvider(ABC):
             else:
                 required_indices.extend([index - 1, index])
         if extrap_needed:
-            required_indices.extend([len(available_years) - 2, len(available_years) - 1])
+            required_indices.extend(
+                [len(available_years) - 2, len(available_years) - 1]
+            )
         return np.unique(required_indices)
-
-            

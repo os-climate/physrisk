@@ -56,8 +56,8 @@ def calculate_impacts(  # noqa: C901
     hazard_model: HazardModel,
     vulnerability_models: VulnerabilityModels,
     *,
-    scenarios: List[str],
-    years: List[int],
+    scenarios: Sequence[str],
+    years: Sequence[int],
 ) -> Dict[ImpactKey, List[AssetImpactResult]]:
     """Calculate asset level impacts."""
 
@@ -102,10 +102,9 @@ def calculate_impacts(  # noqa: C901
     #         except Exception as exc:
     #             print("%r generated an exception: %s" % (tag, exc))
 
-
     logging.info("Calculating impacts")
     for scenario in scenarios:
-        for year in ([-1] if scenario=="historical" else years):
+        for year in [-1] if scenario == "historical" else years:
             asset_requests = scen_year_asset_requests[ScenarioYear(scenario, year)]
             for model, assets in model_assets.items():
                 assert isinstance(model, VulnerabilityModelBase)
@@ -120,20 +119,27 @@ def calculate_impacts(  # noqa: C901
                 for asset in assets:
                     requests = asset_requests[(model, asset)]
                     hazard_data = [responses[req] for req in get_iterable(requests)]
-                    
-                    results.setdefault(ImpactKey(
+
+                    results.setdefault(
+                        ImpactKey(
                             asset=asset,
                             hazard_type=model.hazard_type,
                             scenario=scenario,
                             key_year=None if year == -1 else year,
-                        ), [])
+                        ),
+                        [],
+                    )
 
-                    if any(isinstance(hd, HazardDataFailedResponse) for hd in hazard_data):
+                    if any(
+                        isinstance(hd, HazardDataFailedResponse) for hd in hazard_data
+                    ):
                         # the failed responses should have been logged already
                         continue
                     try:
                         if isinstance(model, VulnerabilityModelAcuteBase):
-                            impact, vul, event = model.get_impact_details(asset, hazard_data)
+                            impact, vul, event = model.get_impact_details(
+                                asset, hazard_data
+                            )
                             results[
                                 ImpactKey(
                                     asset=asset,
@@ -163,27 +169,32 @@ def calculate_impacts(  # noqa: C901
                         logger.exception(e)
     return results
 
+
 class ScenarioYear(NamedTuple):
     scenario: str
     key_year: Optional[int] = None
 
+
 def _download_data_consolidated(
     hazard_model: HazardModel,
     requester_assets: Dict[DataRequester, List[Asset]],
-    scenarios: List[str],
-    years: List[int],
+    scenarios: Sequence[str],
+    years: Sequence[int],
 ):
     """As an important performance optimization, data requests are consolidated for all requesters
     (e.g. vulnerability model) because different requesters may query the same hazard data sets
     note that key for a single request is (requester, asset).
     """
     # the list of requests for each requester and asset
-    scen_year_asset_requests: Dict[ScenarioYear: 
-                Dict[Tuple[DataRequester, Asset],
-                Union[HazardDataRequest, Sequence[HazardDataRequest]],
-            ]] = {}
+    scen_year_asset_requests: Dict[
+        ScenarioYear,
+        Dict[
+            Tuple[DataRequester, Asset],
+            Union[HazardDataRequest, Sequence[HazardDataRequest]],
+        ],
+    ] = {}
     for scenario in scenarios:
-        for year in ([-1] if scenario == "historical" else years):
+        for year in [-1] if scenario == "historical" else years:
             asset_requests: Dict[
                 Tuple[DataRequester, Asset],
                 Union[HazardDataRequest, Sequence[HazardDataRequest]],
@@ -196,7 +207,8 @@ def _download_data_consolidated(
             scen_year_asset_requests[ScenarioYear(scenario, year)] = asset_requests
 
     logging.info("Retrieving hazard data")
-    flattened_requests = [req 
+    flattened_requests = [
+        req
         for asset_requests in scen_year_asset_requests.values()
         for requests in asset_requests.values()
         for req in get_iterable(requests)

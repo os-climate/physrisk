@@ -127,8 +127,12 @@ class ZarrReader:
             transform,
             pixel_is_area=interpolation != "floor",
         )
-        in_bounds = (image_coords[0, :] < z.shape[2]) & (image_coords[0, :] >= -0.5) # x/lon coords
-        in_bounds = in_bounds & (image_coords[1, :] < z.shape[1]) & (image_coords[1, :] >= -0.5) # y/lat coords
+        in_bounds = (image_coords[0, :] < z.shape[2]) & (
+            image_coords[0, :] >= -0.5
+        )  # x/lon coords
+        in_bounds = (
+            in_bounds & (image_coords[1, :] < z.shape[1]) & (image_coords[1, :] >= -0.5)
+        )  # y/lat coords
         image_coords = image_coords[:, in_bounds]
         res = np.zeros((len(longitudes), len(index_values)))
         res[~in_bounds] = np.nan
@@ -140,7 +144,9 @@ class ZarrReader:
             ix = np.repeat(image_coords[0, :], len(index_values))
 
             data = z.get_coordinate_selection((iz, iy, ix))  # type: ignore
-            res[in_bounds] = data.reshape([len(longitudes[in_bounds]), len(index_values)])
+            res[in_bounds] = data.reshape(
+                [len(longitudes[in_bounds]), len(index_values)]
+            )
             return (
                 res,
                 in_bounds,
@@ -164,24 +170,24 @@ class ZarrReader:
         self,
         set_id: str,
         longitudes: Union[np.ndarray, Sequence[float]],
-        latitudes: Union[np.ndarray, Sequence[float]]):
-
+        latitudes: Union[np.ndarray, Sequence[float]],
+    ):
         if len(longitudes) != len(latitudes):
             raise ValueError("length of longitudes and latitudes not equal")
 
-        z = self._root[set_id] 
+        z = self._root[set_id]
         t = z.attrs["transform_mat3x3"]  # type: ignore
         transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
         crs = z.attrs.get("crs", "epsg:4326")
         image_coords = self._get_coordinates(
-            longitudes,
-            latitudes,
-            crs,
-            transform,
-            pixel_is_area=True
+            longitudes, latitudes, crs, transform, pixel_is_area=True
         )
-        in_bounds = (image_coords[0, :] < z.shape[2]) & (image_coords[0, :] >= -0.5) # x/lon coords
-        in_bounds = in_bounds & (image_coords[1, :] < z.shape[1]) & (image_coords[1, :] >= -0.5) # y/lat coords
+        in_bounds = (image_coords[0, :] < z.shape[2]) & (
+            image_coords[0, :] >= -0.5
+        )  # x/lon coords
+        in_bounds = (
+            in_bounds & (image_coords[1, :] < z.shape[1]) & (image_coords[1, :] >= -0.5)
+        )  # y/lat coords
         return in_bounds
 
     def get_index_values(self, z: zarr.Array):
@@ -392,7 +398,7 @@ class ZarrReader:
         )
         lats_grid = lats_grid_baseline + lats_grid_offsets
         lons_grid = lons_grid_baseline + lons_grid_offsets
-        curves, _,return_periods, _ = self.get_curves(
+        curves, _, return_periods, _ = self.get_curves(
             set_id,
             lons_grid.reshape(-1),
             lats_grid.reshape(-1),

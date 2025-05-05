@@ -1,8 +1,8 @@
 from enum import Enum
-from typing import Callable, Dict, Iterable, List, NamedTuple, Optional, Protocol, Tuple, Type
+from typing import Dict, Iterable, List, NamedTuple, Optional, Protocol, Type
 
 from physrisk.api.v1.hazard_data import HazardResource
-from physrisk.data.hazard_data_provider import HazardDataHint, ScenarioPaths, SourcePaths
+from physrisk.data.hazard_data_provider import HazardDataHint, ScenarioPaths
 from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.kernel import hazards
 from physrisk.kernel.hazards import (
@@ -78,15 +78,14 @@ class InventorySourcePaths:
 
     def all_hazards(self):
         return set(
-                htype
-                for ((htype, _), _) in self._inventory.resources_by_type_id.items()
+            htype for ((htype, _), _) in self._inventory.resources_by_type_id.items()
         )
 
     def hazard_types(self):
         return [hazards.hazard_class(ht) for ht in self.all_hazards()]
 
     def paths(
-        self,    
+        self,
         hazard_type: Type[Hazard],
         indicator_id: str,
         scenario: str,
@@ -96,9 +95,9 @@ class InventorySourcePaths:
         resources = self.get_resources(hazard_type, indicator_id, hint=hint)
         result = [self._get_paths(r, scenario) for r in resources]
         return result
-    
+
     def paths_set(
-        self,    
+        self,
         hazard_type: Type[Hazard],
         indicator_id: str,
         scenarios: List[str],
@@ -110,7 +109,7 @@ class InventorySourcePaths:
         for r in resources:
             result.append({s: self._get_paths(r, s) for s in scenarios})
         return result
-    
+
     def _get_paths(self, resource: HazardResource, scenario_id: str):
         if scenario_id == "historical":
             # there are some cases where there is no historical scenario or -
@@ -123,11 +122,18 @@ class InventorySourcePaths:
             )
             if scenario is None:
                 scenario = next(
-                    s
-                    for s in sorted(resource.scenarios, key=lambda s: min(s.years))
+                    s for s in sorted(resource.scenarios, key=lambda s: min(s.years))
                 )
+            assert scenario is not None
             year = min(scenario.years)
-            return ScenarioPaths([-1], lambda y: resource.path.format(id=resource.indicator_id, scenario=scenario.id, year=year))
+            return ScenarioPaths(
+                [-1],
+                lambda y: resource.path.format(
+                    id=resource.indicator_id,
+                    scenario=scenario.id,  # type:ignore
+                    year=year,
+                ),
+            )
         proxy_scenario_id = (
             cmip6_scenario_to_rcp(scenario_id)
             if resource.scenarios[0].id.startswith("rcp")
@@ -135,14 +141,20 @@ class InventorySourcePaths:
             else scenario_id
         )
         scenario = next(
-                iter(s for s in resource.scenarios if s.id == proxy_scenario_id), None)
+            iter(s for s in resource.scenarios if s.id == proxy_scenario_id), None
+        )
         if scenario is None:
             return ScenarioPaths([], lambda y: "")
         else:
-            return ScenarioPaths(scenario.years, lambda y: resource.path.format(id=resource.indicator_id, scenario=proxy_scenario_id, year=y))
+            return ScenarioPaths(
+                scenario.years,
+                lambda y: resource.path.format(
+                    id=resource.indicator_id, scenario=proxy_scenario_id, year=y
+                ),
+            )
 
     def get_resources(
-        self,    
+        self,
         hazard_type: Type[Hazard],
         indicator_id: str,
         hint: Optional[HazardDataHint] = None,
@@ -168,9 +180,7 @@ class InventorySourcePaths:
             if hint is not None:
                 resources = candidates.match(hint)
             else:
-                resources = selector(
-                    candidates=candidates
-                )
+                resources = selector(candidates=candidates)
         except Exception as e:
             raise RuntimeError(
                 f"unable to select resources for hazard {hazard_type.__name__} "

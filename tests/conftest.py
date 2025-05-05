@@ -42,6 +42,7 @@ def log_to_stdout():
 @pytest.fixture()
 def load_credentials():
     from dotenv import load_dotenv
+
     load_dotenv("credentials.env")
     return "loaded"
 

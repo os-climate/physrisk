@@ -1,4 +1,3 @@
-import concurrent.futures
 from dataclasses import dataclass
 from typing import (
     Dict,
@@ -54,14 +53,16 @@ class RiskModel:
         include_histo: bool = False,
     ):
         # ensure "historical" is present, e.g. needed for risk measures
-        scenarios = (
+        scenarios = list(
             set(["historical"] + list(prosp_scens)) if include_histo else prosp_scens
         )
-        impact_results = calculate_impacts(assets,
-                        self._hazard_model,
-                        self._vulnerability_models,
-                        scenarios=scenarios,
-                        years=years)
+        impact_results = calculate_impacts(
+            assets,
+            self._hazard_model,
+            self._vulnerability_models,
+            scenarios=scenarios,
+            years=years,
+        )
         return impact_results
 
 

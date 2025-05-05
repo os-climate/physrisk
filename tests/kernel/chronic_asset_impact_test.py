@@ -209,7 +209,11 @@ class TestChronicAssetImpact(unittest.TestCase):
         ][:1]
 
         results = calculate_impacts(
-            assets, hazard_model, vulnerability_models, scenarios=[scenario], years=[year]
+            assets,
+            hazard_model,
+            vulnerability_models,
+            scenarios=[scenario],
+            years=[year],
         )
 
         value_test = list(results.values())[0][0].impact.mean_impact()

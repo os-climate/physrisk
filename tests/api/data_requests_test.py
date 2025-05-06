@@ -48,23 +48,23 @@ class TestDataRequests(TestWithCredentials):
     def test_generic_source_path(self):
         inventory = EmbeddedInventory()
         source_paths = get_default_source_paths(inventory)
-        result_heat = source_paths.paths(
-            ChronicHeat, indicator_id="mean_degree_days/above/32c", scenario="ssp585"
-        )[0].path(2050)
-        result_flood = source_paths.paths(
-            RiverineInundation, indicator_id="flood_depth", scenario="ssp585"
-        )[0].path(2050)
-        result_flood_hist = source_paths.paths(
-            RiverineInundation, indicator_id="flood_depth", scenario="historical"
-        )[0].path(2080)
-        result_heat_hint = source_paths.paths(
+        result_heat = source_paths.paths_set(
+            ChronicHeat, indicator_id="mean_degree_days/above/32c", scenarios=["ssp585"]
+        )[0]["ssp585"].path(2050)
+        result_flood = source_paths.paths_set(
+            RiverineInundation, indicator_id="flood_depth", scenarios=["ssp585"]
+        )[0]["ssp585"].path(2050)
+        result_flood_hist = source_paths.paths_set(
+            RiverineInundation, indicator_id="flood_depth", scenarios=["historical"]
+        )[0]["historical"].path(2080)
+        result_heat_hint = source_paths.paths_set(
             ChronicHeat,
             indicator_id="mean_degree_days/above/32c",
-            scenario="ssp585",
+            scenarios=["ssp585"],
             hint=HazardDataHint(
                 path="chronic_heat/osc/v2/mean_degree_days_v2_above_32c_CMCC-ESM2_{scenario}_{year}"
             ),
-        )[0].path(2050)
+        )[0]["ssp585"].path(2050)
 
         assert (
             result_heat

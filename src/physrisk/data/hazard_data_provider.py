@@ -12,7 +12,6 @@ from typing import (
     Sequence,
     Tuple,
     Type,
-    Union,
 )
 
 import numpy as np
@@ -57,29 +56,6 @@ class Resource:
     path: Callable[[str, int], str]
 
 
-class SourcePath(Protocol):
-    def __call__(
-        self,
-        *,
-        indicator_id: str,
-        scenario: str,
-        year: int,
-        hint: Optional[HazardDataHint] = None,
-    ) -> Union[str, List[ScenarioPaths]]:
-        """_summary_
-
-        Args:
-            indicator_id (str): Hazard indicator identifier.
-            scenario (str): Scenario identifier.
-            year (int): Year. Defaults to None.
-            hint (Optional[HazardDataHint], optional): Hint. Defaults to None.
-
-        Returns:
-            str: If there is just a single path, return it, otherwise return paths for each year.
-        """
-        ...
-
-
 class SourcePaths(Protocol):
     def hazard_types(self) -> List[Type[Hazard]]:
         """Lists the available hazard types.
@@ -89,35 +65,29 @@ class SourcePaths(Protocol):
         """
         ...
 
-    def paths(
-        self,
-        hazard_type: Type[Hazard],
-        indicator_id: str,
-        scenario: str,
-        hint: Optional[HazardDataHint] = None,
-    ) -> List[Dict[str, ScenarioPaths]]:
-        """Get the cascading Paths list for the given hazard type, indicator ID and scenario.
-        Each Paths item in the list has the available years and a function to obtain the path for each year.
-        Each Paths item covers a different area and can be used to match multiple data sets.
-
-        Args:
-            hazard_type (Type[Hazard]): Hazard type.
-            indicator_id (str): Hazard indicator identifier.
-            scenario (str): Scenario identifier.
-            hint (Optional[HazardDataHint], optional): Hint to be applied to select path. Defaults to None.
-
-        Returns:
-            List[Dict[str, ScenarioPaths]]: List of Paths objects to be used in order to obtain the data.
-        """
-        ...
-
     def paths_set(
         self,
         hazard_type: Type[Hazard],
         indicator_id: str,
         scenarios: Sequence[str],
         hint: Optional[HazardDataHint] = None,
-    ) -> List[Dict[str, ScenarioPaths]]: ...
+    ) -> List[Dict[str, ScenarioPaths]]:
+        """Get a cascading list of ScenarioPaths for the given hazard type and indicator ID.
+        Each item in the returned list is a dictionary, where the key is the scenario ID and the value
+        is a ScenarioPaths object. This object has the available years and a function to obtain the
+        path for each year. Each item in the list can cover a different area and can be used to match
+        multiple data sets.
+
+        Args:
+            hazard_type (Type[Hazard]): Hazard type.
+            indicator_id (str): Hazard indicator identifier.
+            scenarios (Sequence[str]): Scenario identifiers.
+            hint (Optional[HazardDataHint], optional): Hint to be applied to select path. Defaults to None.
+
+        Returns:
+            List[Dict[str, ScenarioPaths]]: List of dictionaries of scenario ID to ScenarioPaths objects.
+        """
+        ...
 
 
 class DataSourcingError(Exception):

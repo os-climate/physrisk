@@ -135,53 +135,53 @@ class TestRiskModels(TestWithCredentials):
         source_paths = get_default_source_paths()
 
         def sp_riverine(scenario, year):
-            return source_paths.paths(
-                RiverineInundation, indicator_id="flood_depth", scenario=scenario
-            )[0].path(year)
+            return source_paths.paths_set(
+                RiverineInundation, indicator_id="flood_depth", scenarios=[scenario]
+            )[0][scenario].path(year)
 
         def sp_coastal(scenario, year):
-            return source_paths.paths(
-                CoastalInundation, indicator_id="flood_depth", scenario=scenario
-            )[0].path(year)
+            return source_paths.paths_set(
+                CoastalInundation, indicator_id="flood_depth", scenarios=[scenario]
+            )[0][scenario].path(year)
 
         def sp_wind(scenario, year):
-            return source_paths.paths(
-                Wind, indicator_id="max_speed", scenario=scenario
-            )[0].path(year)
+            return source_paths.paths_set(
+                Wind, indicator_id="max_speed", scenarios=[scenario]
+            )[0][scenario].path(year)
 
         def sp_heat(scenario, year):
-            return source_paths.paths(
-                ChronicHeat, indicator_id="days/above/35c", scenario=scenario
-            )[0].path(year)
+            return source_paths.paths_set(
+                ChronicHeat, indicator_id="days/above/35c", scenarios=[scenario]
+            )[0][scenario].path(year)
 
         def sp_heat2(scenario, year):
-            return source_paths.paths(
+            return source_paths.paths_set(
                 ChronicHeat,
                 indicator_id="mean_degree_days/above/index",
-                scenario=scenario,
-            )[0].path(year)
+                scenarios=[scenario],
+            )[0][scenario].path(year)
 
         def sp_fire(scenario, year):
-            return source_paths.paths(
-                Fire, indicator_id="fire_probability", scenario=scenario
-            )[0].path(year)
+            return source_paths.paths_set(
+                Fire, indicator_id="fire_probability", scenarios=[scenario]
+            )[0][scenario].path(year)
 
         def sp_hail(scenario, year):
-            return source_paths.paths(
-                Hail, indicator_id="days/above/5cm", scenario=scenario
-            )[0].path(year)
+            return source_paths.paths_set(
+                Hail, indicator_id="days/above/5cm", scenarios=[scenario]
+            )[0][scenario].path(year)
 
         def sp_drought(scenario, year):
-            return source_paths.paths(
-                Drought, indicator_id="months/spei3m/below/-2", scenario=scenario
-            )[0].path(year)
+            return source_paths.paths_set(
+                Drought, indicator_id="months/spei3m/below/-2", scenarios=[scenario]
+            )[0][scenario].path(year)
 
         def sp_precipitation(scenario, year):
-            return source_paths.paths(
+            return source_paths.paths_set(
                 Precipitation,
                 indicator_id="max/daily/water_equivalent",
-                scenario=scenario,
-            )[0].path(year)
+                scenarios=[scenario],
+            )[0][scenario].path(year)
 
         mocker = ZarrStoreMocker()
         return_periods = inundation_return_periods()

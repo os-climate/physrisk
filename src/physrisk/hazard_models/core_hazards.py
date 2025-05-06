@@ -84,18 +84,6 @@ class InventorySourcePaths:
     def hazard_types(self):
         return [hazards.hazard_class(ht) for ht in self.all_hazards()]
 
-    def paths(
-        self,
-        hazard_type: Type[Hazard],
-        indicator_id: str,
-        scenario: str,
-        hint: Optional[HazardDataHint] = None,
-    ) -> List[Dict[str, ScenarioPaths]]:
-        # all matching resources in the inventory
-        resources = self.get_resources(hazard_type, indicator_id, hint=hint)
-        result = [self._get_paths(r, scenario) for r in resources]
-        return result
-
     def paths_set(
         self,
         hazard_type: Type[Hazard],

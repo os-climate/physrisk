@@ -118,7 +118,7 @@ class HazardEventDataResponse(HazardDataResponse):
 
     def __repr__(self) -> str:
         return (
-            "HazardDataRequest("
+            "HazardEventDataResponse("
             + ",".join(
                 str(getattr(self, a))
                 for a in ["return_periods", "intensities", "units", "path"]
@@ -165,7 +165,7 @@ class HazardParameterDataResponse(HazardDataResponse):
 
     def __repr__(self) -> str:
         return (
-            "HazardDataRequest("
+            "HazardParameterDataResponse("
             + ",".join(
                 str(getattr(self, a))
                 for a in ["parameters", "param_defns", "units", "path"]

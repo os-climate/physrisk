@@ -82,7 +82,8 @@ class SourcePaths(Protocol):
             hazard_type (Type[Hazard]): Hazard type.
             indicator_id (str): Hazard indicator identifier.
             scenarios (Sequence[str]): Scenario identifiers.
-            hint (Optional[HazardDataHint], optional): Hint to be applied to select path. Defaults to None.
+            hint (Optional[HazardDataHint], optional): Hint to be applied to select path. Generally only
+             makes sense if there is just a single scenario. Defaults to None.
 
         Returns:
             List[Dict[str, ScenarioPaths]]: List of dictionaries of scenario ID to ScenarioPaths objects.
@@ -247,7 +248,9 @@ class HazardDataProvider(ABC):
                     values=values,
                     indices=indices,
                     indices_length=indices_length,
-                    coverage_mask=mask_unprocessed,
+                    coverage_mask=np.zeros(
+                        len(longitudes), dtype=np.bool
+                    ),  # ~mask_unprocessed,
                     units=v.units,
                     paths=paths,
                 )
@@ -352,7 +355,11 @@ class HazardDataProvider(ABC):
             )
         # For a given data set, the spatial coverage should be identical between years. If not, something is wrong.
         mask_in_bounds = next(iter(masks_in_bounds.values()))
-        if any(np.any(mask != mask_in_bounds) for mask in masks_in_bounds.values()):
+        if mask_in_bounds is not None and any(
+            np.any(mask != mask_in_bounds)
+            for mask in masks_in_bounds.values()
+            if mask is not None
+        ):
             raise ValueError("inconsistent coverage across years")
         return {
             ScenarioYearRes(k.scenario, k.year, resource_index): v
@@ -368,6 +375,7 @@ class HazardDataProvider(ABC):
         path: str,
     ):
         indices, units = [], ""
+        mask_in_bounds = None
         if buffer is None:
             values, mask_in_bounds, indices, units = await asyncio.to_thread(
                 self._reader.get_curves,

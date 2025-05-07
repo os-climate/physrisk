@@ -89,6 +89,7 @@ class PregeneratedHazardModel(HazardModel):
 
                 latitudes = [lat_lon[0] for lat_lon in lat_lon_index]
                 longitudes = [lat_lon[1] for lat_lon in lat_lon_index]
+                buffers = [lat_lon[2] for lat_lon in lat_lon_index]
                 # all scenarios and all years for the latitudes and longitudes are obtained
 
                 try:
@@ -108,6 +109,7 @@ class PregeneratedHazardModel(HazardModel):
                     scenarios=scenarios,
                     years=years,
                     hint=hint,
+                    buffer=buffers[0],
                 )
 
                 # finally, unpack

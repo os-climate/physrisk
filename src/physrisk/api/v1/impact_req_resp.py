@@ -97,11 +97,11 @@ class RiskScoreValue(BaseModel):
         e.g. change in fractional loss from 1-in-100 year event is greater than 10%.",
     )
     lower_bound: Optional[List[float]] = Field(
-        None,
+        default=None,
         description="Lower bound(s) of the measure(s) from which the score is derived",
     )
     upper_bound: Optional[List[float]] = Field(
-        None,
+        default=None,
         description="Upper bound(s) of the measure(s) from which the score is derived",
     )
 

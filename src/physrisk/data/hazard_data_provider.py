@@ -157,8 +157,8 @@ class HazardDataProvider(ABC):
 
     async def get_data_cascading(
         self,
-        longitudes: Sequence[float],
-        latitudes: Sequence[float],
+        longitudes: np.ndarray,
+        latitudes: np.ndarray,
         *,
         indicator_id: str,
         scenarios: Sequence[str],
@@ -170,8 +170,8 @@ class HazardDataProvider(ABC):
         """Returns data for set of latitude and longitudes.
 
         Args:
-            longitudes (Sequence[float]): Longitudes.
-            latitudes (Sequence[float]): Latitudes.
+            longitudes (np.ndarray): Longitudes.
+            latitudes (np.ndarray): Latitudes.
             indicator_id (str): Hazard Indicator ID.
             scenarios (Sequence[str]): Identifier of scenario, e.g. ssp585 (SSP 585), rcp8p5 (RCP 8.5).
             years (Sequence[int]): Projection years, e.g. [2050, 2080].
@@ -185,8 +185,6 @@ class HazardDataProvider(ABC):
         if interpolate_years:
             raise NotImplementedError("interpolation not yet implemented")
         # For each scenario, we find the list of array paths and available years for each path.
-        longitudes = np.array(longitudes)
-        latitudes = np.array(latitudes)
         final_result: Dict[ScenarioYear, ScenarioYearResult] = {}
         # mask_unprocessed is the mask of lats and lons that remain unprocessed.
         # This always has the same length and is updated for each path_item.
@@ -373,8 +371,8 @@ class HazardDataProvider(ABC):
     async def get_single_item(
         self,
         item: ScenarioYear,
-        latitudes: Sequence[float],
-        longitudes: Sequence[float],
+        latitudes: np.ndarray,
+        longitudes: np.ndarray,
         buffer: Optional[int],
         path: str,
     ):
@@ -415,8 +413,8 @@ class HazardDataProvider(ABC):
     @staticmethod
     def _weights(
         scenario: str,
-        available_years: Sequence[float],
-        requested_years: np.ndarray,
+        available_years: Sequence[int],
+        requested_years: Sequence[int],
         historical_year: int,
     ) -> Dict[ScenarioYear, WeightedSum]:
         available_with_current = np.array([historical_year] + list(available_years))

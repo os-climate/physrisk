@@ -35,7 +35,10 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
         self.reader = reader
 
     def hazard_model(
-        self, interpolation: str = "floor", provider_max_requests: Dict[str, int] = {}
+        self,
+        interpolation: str = "floor",
+        provider_max_requests: Dict[str, int] = {},
+        interpolate_years: bool = False,
     ):
         return CompositeHazardModel(
             self.cache_store,
@@ -45,6 +48,7 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
             reader=self.reader,
             interpolation=interpolation,
             provider_max_requests=provider_max_requests,
+            interpolate_years=interpolate_years,
         )
 
 
@@ -60,6 +64,7 @@ class CompositeHazardModel(HazardModel):
         reader: Optional[ZarrReader] = None,
         interpolation: str = "floor",
         provider_max_requests: Dict[str, int] = {},
+        interpolate_years: bool = False,
     ):
         self.credentials = credentials
         self.max_jba_requests = provider_max_requests.get("jba", 0)
@@ -73,6 +78,7 @@ class CompositeHazardModel(HazardModel):
             reader=reader,
             store=store,
             interpolation=interpolation,
+            interpolate_years=interpolate_years,
         )
 
     def hazard_model(self, type):

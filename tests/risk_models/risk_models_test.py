@@ -341,6 +341,7 @@ class TestRiskModels(TestWithCredentials):
                 self,
                 interpolation: str = "floor",
                 provider_max_requests: Dict[str, int] = {},
+                interpolate_years: bool = False,
             ):
                 return hazard_model
 

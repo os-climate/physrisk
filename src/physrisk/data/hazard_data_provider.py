@@ -135,10 +135,12 @@ class HazardDataProvider(ABC):
         """Provides hazard data.
 
         Args:
-            get_source_path (SourcePath): Provides the source path mappings.
+            hazard_type (Type[Hazard]): Hazard type.
+            source_paths (SourcePath): Provides the source path mappings.
             store (Optional[MutableMapping], optional): Zarr store instance. Defaults to None.
             zarr_reader (Optional[ZarrReader], optional): ZarrReader instance. Defaults to None.
             interpolation (Optional[str], optional): Interpolation type. Defaults to "floor".
+            historical_year (int): The year to be considered as 'historical' for purposes of interpolation over years.
 
         Raises:
             ValueError: If interpolation not in permitted list.
@@ -202,6 +204,8 @@ class HazardDataProvider(ABC):
         max_dim = 0
         for i, scenario_paths in enumerate(scenario_paths_set):
             _, p = next(iter(scenario_paths.items()))
+            if len(p.years) == 0:
+                continue
             y = next(
                 (y for y in years if y in p.years), p.years[0]
             )  # use match if there is one

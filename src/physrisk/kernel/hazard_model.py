@@ -75,7 +75,14 @@ class HazardDataRequest:
     def __repr__(self) -> str:
         return (
             "HazardDataRequest("
-            + ",".join(str(getattr(self, a)) for a in HazardDataRequest.__slots__)
+            + ",".join(
+                (
+                    getattr(self, a).__name__
+                    if a == "hazard_type"
+                    else str(getattr(self, a))
+                )
+                for a in HazardDataRequest.__slots__
+            )
             + ")"
         )
 
@@ -176,7 +183,10 @@ class HazardParameterDataResponse(HazardDataResponse):
 
 class HazardModelFactory(Protocol):
     def hazard_model(
-        self, interpolation: str = "floor", provider_max_requests: Dict[str, int] = {}
+        self,
+        interpolation: str = "floor",
+        provider_max_requests: Dict[str, int] = {},
+        interpolate_years: bool = False,
     ):
         """Create a HazardModel instance based on a number of options.
 
@@ -185,6 +195,7 @@ class HazardModelFactory(Protocol):
             this is supported by hazard models).
             provider_max_requests (Dict[str, int]): The maximum permitted number of permitted
             requests to external providers.
+            interpolate_years (bool): If True, apply linear interpolation for hazard requests where exact match is not present.
         """
         ...
 

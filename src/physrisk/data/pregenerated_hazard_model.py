@@ -33,8 +33,10 @@ class PregeneratedHazardModel(HazardModel):
     def __init__(
         self,
         hazard_data_providers: Dict[Type[Hazard], HazardDataProvider],
+        interpolate_years: bool = False,
     ):
         self.hazard_data_providers = hazard_data_providers
+        self.interpolate_years = interpolate_years
 
     def get_hazard_data(  # noqa: C901
         self, requests: Sequence[HazardDataRequest]
@@ -44,14 +46,12 @@ class PregeneratedHazardModel(HazardModel):
         # (e.g. same Zarr array in case of Zarr data).
         # Within each batch if there are multiple lats/lons, the necessary chunks are
         # accessed asynchronously (thanks to async chunk stores in case of Zarr).
-        # Across batches we could
-        # 1) make async and use event loop executor for CPU-bound parts
-        # e.g. asyncio.get_event_loop().run_in_executor
-        # 2) use thread pool
-        # for now we do 2; 1 might be preferred if the number of threads needed to download
-        # data in parallel becomes large (probably not, given use of async in Zarr).
-
-        return self._get_cascading_hazard_data_batches(requests)
+        # Across batches we also call asynchronously.
+        logger.info(f"Retrieving data for {len(requests)} hazard data requests")
+        responses = self._get_cascading_hazard_data_batches(requests)
+        logger.info("Data retrieval complete")
+        self.log_response_issues(responses)
+        return responses
 
     def _get_cascading_hazard_data_batches(self, requests: Sequence[HazardDataRequest]):
         # try:
@@ -59,7 +59,6 @@ class PregeneratedHazardModel(HazardModel):
         # except Exception:
         #    loop = asyncio.new_event_loop()
         #    asyncio.set_event_loop(loop)
-        logger.info(f"{len(requests)} hazard data requests")
         responses: MutableMapping[HazardDataRequest, HazardDataResponse] = {}
         batches: Dict[Tuple[str, str], List[HazardDataRequest]] = defaultdict(list)
         # find the requests for the same indicator, but different scenarios and years
@@ -96,7 +95,7 @@ class PregeneratedHazardModel(HazardModel):
                     hazard_data_provider = self.hazard_data_providers[hazard_type]
                 except Exception:
                     no_provider_err = Exception(
-                        f"no hazard data provider for hazard type {hazard_type.__name__}."
+                        f"no hazard data provider for hazard type {hazard_type.__name__}"
                     )
                     for req in batch:
                         responses[req] = HazardDataFailedResponse(err=no_provider_err)
@@ -110,6 +109,7 @@ class PregeneratedHazardModel(HazardModel):
                     years=years,
                     hint=hint,
                     buffer=buffers[0],
+                    interpolate_years=self.interpolate_years,
                 )
 
                 # finally, unpack
@@ -186,8 +186,26 @@ class PregeneratedHazardModel(HazardModel):
 
         # loop.run_until_complete(all_requests())
         asyncio.run(all_requests())
-        logger.info("Download complete")
         return responses
+
+    def log_response_issues(
+        self, responses: Dict[HazardDataRequest, HazardDataResponse]
+    ):
+        # in some cases requested data cannot be retrieved, leading to a HazardDataFailedResponse
+        # this may be handled by the vulnerability model or might result in missing results.
+        grouped_failures: Dict[
+            str, List[Tuple[HazardDataRequest, HazardDataFailedResponse]]
+        ] = defaultdict(list)
+        for req, resp in responses.items():
+            if isinstance(resp, HazardDataFailedResponse):
+                key = resp.reason if resp.reason else str(resp.error)
+                grouped_failures[key].append((req, resp))
+        for key, values in grouped_failures.items():
+            logger.info(
+                f"{len(values)} {'failures' if len(values) > 1 else 'failure'}: {key}. Limited to first 5:"
+            )
+            for v in values[0:5]:
+                logger.info(str(v[0]))
 
 
 class ZarrHazardModel(PregeneratedHazardModel):
@@ -198,6 +216,7 @@ class ZarrHazardModel(PregeneratedHazardModel):
         reader: Optional[ZarrReader] = None,
         store=None,
         interpolation="floor",
+        interpolate_years: bool = False,
     ):
         # share ZarrReaders across HazardDataProviders
         zarr_reader = ZarrReader(store=store) if reader is None else reader
@@ -211,5 +230,6 @@ class ZarrHazardModel(PregeneratedHazardModel):
                     interpolation=interpolation,
                 )
                 for t in hazard_types
-            }
+            },
+            interpolate_years,
         )

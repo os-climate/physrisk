@@ -228,7 +228,7 @@ class ZarrReader:
         crs = z.attrs.get("crs", "epsg:4326")
         units: str = z.attrs.get("units", "default")
 
-        if crs.lower() != "epsg:4236":
+        if crs.lower() != "epsg:4326":
             transproj = Transformer.from_crs("epsg:4326", crs, always_xy=True).transform
             shapes = [shapely.ops.transform(transproj, shape) for shape in shapes]
 

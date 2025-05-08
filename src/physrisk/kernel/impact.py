@@ -103,19 +103,25 @@ def calculate_impacts(  # noqa: C901
     #             print("%r generated an exception: %s" % (tag, exc))
 
     logging.info("Calculating impacts")
+    summary: Dict[str, List[Tuple[str, int, str]]] = defaultdict(list)
+    for model, assets in model_assets.items():
+        assert isinstance(model, VulnerabilityModelBase)
+        summary[model.hazard_type.__name__].append(
+            (type(model).__name__, len(assets), type(assets[0]).__name__)
+        )
+    logging.info("Applying vulnerability models:")
+    for k, vl in summary.items():
+        logging.info(f"{k}:")
+        for v in vl:
+            logging.info(f"{v[1]} {v[2]}{'s' if v[1] > 1 else ''}: {v[0]}")
     for scenario in scenarios:
+        logging.info(f"Scenario {scenario}")
         for year in [-1] if scenario == "historical" else years:
+            if scenario != "historical":
+                logging.info(f"Year {year}")
             asset_requests = scen_year_asset_requests[ScenarioYear(scenario, year)]
             for model, assets in model_assets.items():
                 assert isinstance(model, VulnerabilityModelBase)
-                logging.info(
-                    "Applying vulnerability model {0} for hazard {1} to {2} assets of type {3}".format(
-                        type(model).__name__,
-                        model.hazard_type.__name__,
-                        len(assets),
-                        type(assets[0]).__name__,
-                    )
-                )
                 for asset in assets:
                     requests = asset_requests[(model, asset)]
                     hazard_data = [responses[req] for req in get_iterable(requests)]

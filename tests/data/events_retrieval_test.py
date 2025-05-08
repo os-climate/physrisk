@@ -1,4 +1,8 @@
+from collections import defaultdict
+import logging
 import os
+import time
+from typing import Dict, List, Optional, Sequence, Type
 import unittest
 
 # import fsspec.implementations.local as local  # type: ignore
@@ -14,12 +18,19 @@ from physrisk.api.v1.hazard_data import (
     HazardResource,
     Scenario,
 )
+from physrisk.data.hazard_data_provider import (
+    HazardDataHint,
+    HazardDataProvider,
+    ScenarioPaths,
+    ScenarioYear,
+    SourcePaths,
+)
 from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
-from physrisk.kernel.hazard_model import HazardDataRequest
-from physrisk.kernel.hazards import RiverineInundation
+from physrisk.kernel.hazard_model import HazardDataFailedResponse, HazardDataRequest
+from physrisk.kernel.hazards import Hazard, RiverineInundation
 from physrisk.requests import _get_hazard_data_availability
 
 # from pathlib import PurePosixPath
@@ -28,6 +39,8 @@ from ..data.hazard_model_store_test import (
     ZarrStoreMocker,
     mock_hazard_model_store_inundation,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class TestEventRetrieval(TestWithCredentials):
@@ -283,39 +296,323 @@ class TestEventRetrieval(TestWithCredentials):
             [1.0, 2.0, 3.0],
         )
 
-        source_paths = {
-            RiverineInundation: lambda indicator_id, scenario, year, hint: "test"
-        }
-        hazard_model = ZarrHazardModel(source_paths=source_paths, store=mocker.store)
-        response = hazard_model.get_hazard_data(
+    def test_years_interpolation(self):
+        weights = HazardDataProvider._weights(
+            "ssp585", [2050, 2060, 2080], [2040, 2050, 2065, 2090], 2025
+        )
+        assert (
+            weights[ScenarioYear("ssp585", 2040)].weights[0][0].scenario == "historical"
+        )
+        assert weights[ScenarioYear("ssp585", 2040)].weights[0][1] == (
+            2050.0 - 2040.0
+        ) / (2050.0 - 2025.0)
+        #
+        assert weights[ScenarioYear("ssp585", 2050)].weights[0][0].year == 2050
+        assert weights[ScenarioYear("ssp585", 2050)].weights[0][1] == 1.0
+        #
+        assert weights[ScenarioYear("ssp585", 2090)].weights[0][0].year == 2060
+        assert weights[ScenarioYear("ssp585", 2090)].weights[0][1] == -(
+            2090.0 - 2080.0
+        ) / (2080.0 - 2060.0)
+        # v_e = v_2 + (y_e - y_2) * (v_2 - v_1) / (y_2 - y_1)
+        # w1 = - (y_e - y_2) / (y_2 - y_1)
+        # w2 = 1 + (y_e - y_2) / (y_2 - y_1)
+        weights = HazardDataProvider._weights("ssp585", [2050], [2040, 2090], 2025)
+        assert weights[ScenarioYear("ssp585", 2090)].weights[0][0].year == -1
+
+    def test_cascading_sources_and_interpolation(self):
+        """This is a performance test to verify that it is sufficiently efficient to have
+        unsorted HazardDataRequest objects as an input, which can then be sorted and processed.
+        A few seconds per 5,000,000 requests is deemed acceptable, single-threaded.
+        """
+        n_samples = 5000000
+        logger.info(f"Sampling asset locations for {n_samples} assets")
+        latitudes = np.random.uniform(-80, 80, n_samples)
+        longitudes = np.random.uniform(-180, 180, n_samples)
+        logger.info("Creating request objects")
+        requests = [
+            HazardDataRequest(
+                hazard_type=RiverineInundation,
+                longitude=float(lon),
+                latitude=float(lat),
+                indicator_id="flood_depth",
+                scenario="ssp585",
+                year=2050,
+            )
+            for lat, lon in zip(latitudes, longitudes)
+        ]
+        logger.info(f"{len(requests)} request objects created.")
+        logger.info("Grouping request objects (just for comparison)")
+        groups = defaultdict(list)
+        for req in requests:
+            groups[req.group_key()].append(req)
+        logger.info("Finding unique years")
+        logger.info("Timing sorting step:")
+        start = time.time()
+        logger.info(
+            "First latitudes and longitudes are identified, to process all scenarios and years together"
+        )
+        lookup = {}
+        for req in requests:
+            lookup.setdefault((req.latitude, req.longitude, req.buffer), len(lookup))
+
+        times = {2050: []}
+        logger.info(
+            "These are then processed for all times and scenarios in index order"
+        )
+        logger.info("Finally, the index is looked up for each request again")
+        for req in requests:
+            index = lookup[(req.latitude, req.longitude, req.buffer)]
+            value = times[req.year]
+
+        elapsed = time.time() - start
+        logger.info(f"(Additional) time for dealing with unsorted requests: {elapsed}s")
+        assert index is not None
+        assert value is not None
+
+
+class SourcePathsTest(SourcePaths):
+    def __init__(self, cascade: bool = True):
+        self.cascade = cascade
+
+    def hazard_types(self):
+        return [RiverineInundation]
+
+    def paths_set(
+        self,
+        hazard_type: Type[Hazard],
+        indicator_id: str,
+        scenarios: Sequence[str],
+        hint: Optional[HazardDataHint] = None,
+    ) -> List[Dict[str, ScenarioPaths]]:
+        # try Europe-specific first and then the whole-world
+        result = [
+            {
+                "ssp585": ScenarioPaths(
+                    years=[2030, 2050, 2080],
+                    path=lambda f: "test_set_europe_only",
+                ),
+                "historical": ScenarioPaths(
+                    years=[-1], path=lambda f: "test_set_europe_only"
+                ),
+            }
+        ]
+        if self.cascade:
+            result.append(
+                {
+                    "ssp585": ScenarioPaths(
+                        years=[2030, 2050, 2080], path=lambda f: "test_set_world"
+                    ),
+                    "historical": ScenarioPaths(
+                        years=[-1], path=lambda f: "test_set_world"
+                    ),
+                }
+            )
+        return result
+
+
+def test_cascade():
+    mocker = ZarrStoreMocker()
+    # Europe, Europe, not Europe, not Europe, Europe
+    lons = [1.1, -0.31, 32.5, -84.0, 1.15]
+    lats = [47.0, 52.0, 16.0, 38.0, 47.1]
+    mocker._add_curves(
+        "test_set_europe_only",
+        lons[0:2] + [lons[4]],
+        lats[0:2] + [lats[4]],
+        "epsg:3035",
+        [3, 39420, 38371],
+        [100.0, 0.0, 2648100.0, 0.0, -100.0, 5404500],
+        [10.0, 100.0, 1000.0],
+        np.array([[1.0, 2.0, 3.0], [1.0, 2.0, 3.0], [1.0, 2.0, 3.0]]),
+    )
+    mocker.add_curves_global(
+        "test_set_world",
+        lons,
+        lats,
+        [10.0, 20.0, 100.0, 1000.0],
+        [4.0, 4.5, 5.0, 6.0],
+    )
+    requests = (
+        [
+            HazardDataRequest(
+                hazard_type=RiverineInundation,
+                longitude=float(lon),
+                latitude=float(lat),
+                indicator_id="flood_depth",
+                scenario="ssp585",
+                year=2050,
+            )
+            for lat, lon in zip(lats, lons)
+        ]
+        + [
+            HazardDataRequest(
+                hazard_type=RiverineInundation,
+                longitude=float(lon),
+                latitude=float(lat),
+                indicator_id="flood_depth",
+                scenario="ssp585",
+                year=2080,
+            )
+            for lat, lon in zip(lats, lons)
+        ]
+        + [
+            HazardDataRequest(
+                hazard_type=RiverineInundation,
+                longitude=float(lon),
+                latitude=float(lat),
+                indicator_id="flood_depth",
+                scenario="ssp585",
+                year=2070,
+            )
+            for lat, lon in zip(lats, lons)
+        ]
+        + [
+            HazardDataRequest(
+                hazard_type=RiverineInundation,
+                longitude=float(lon),
+                latitude=float(lat),
+                indicator_id="flood_depth",
+                scenario="historical",
+                year=-1,
+            )
+            for lat, lon in zip(lats, lons)
+        ]
+    )
+
+    source_paths = SourcePathsTest(cascade=True)
+    hazard_model = ZarrHazardModel(source_paths=source_paths, store=mocker.store)
+    response = hazard_model.get_hazard_data(requests)
+    np.testing.assert_almost_equal(
+        response[requests[0]].intensities,
+        [1.0, 2.0, 3.0],  # Europe
+    )
+    np.testing.assert_almost_equal(
+        response[requests[2]].intensities,
+        [4.0, 4.5, 5.0, 6.0],  # not Europe
+    )
+    np.testing.assert_almost_equal(
+        response[requests[9]].intensities,
+        [1.0, 2.0, 3.0],  #
+    )
+    assert isinstance(response[requests[10]], HazardDataFailedResponse)
+    np.testing.assert_almost_equal(response[requests[15]].intensities, [1.0, 2.0, 3.0])
+
+
+def test_error_cases():
+    mocker = ZarrStoreMocker()
+    # Europe, Europe, not Europe, not Europe, Europe
+    lons = [1.1, -0.31, 32.5, -84.0, 1.15]
+    lats = [47.0, 52.0, 16.0, 38.0, 47.1]
+    mocker._add_curves(
+        "test_set_europe_only",
+        lons[0:2] + [lons[4]],
+        lats[0:2] + [lats[4]],
+        "epsg:3035",
+        [3, 39420, 38371],
+        [100.0, 0.0, 2648100.0, 0.0, -100.0, 5404500],
+        [10.0, 100.0, 1000.0],
+        np.array(
             [
-                HazardDataRequest(
-                    RiverineInundation,
-                    lons[0],
-                    lats[0],
-                    indicator_id="",
-                    scenario="",
-                    year=2050,
-                )
+                [1.0, 2.0, 3.0],
+                [4.0, 5.0, 6.0],
+                [float("nan"), float("nan"), float("nan")],
             ]
+        ),
+    )
+    mocker.add_curves_global(
+        "test_set_world",
+        lons,
+        lats,
+        [10.0, 20.0, 100.0, 1000.0],
+        [4.0, 4.5, 5.0, 6.0],
+    )
+    requests = [
+        HazardDataRequest(
+            hazard_type=RiverineInundation,
+            longitude=float(lon),
+            latitude=float(lat),
+            indicator_id="flood_depth",
+            scenario="ssp585",
+            year=2050,
         )
-        numpy.testing.assert_equal(
-            next(iter(response.values())).intensities, [1.0, 2.0, 3.0]
+        for lat, lon in zip(lats, lons)
+    ] + [
+        HazardDataRequest(
+            hazard_type=RiverineInundation,
+            longitude=float(lon),
+            latitude=float(lat),
+            indicator_id="flood_depth",
+            scenario="ssp245",
+            year=2050,
         )
-        # run with a non-point shape also (hits different code path)
-        response2 = hazard_model.get_hazard_data(
+        for lat, lon in zip(lats[0:1], lons[0:1])
+    ]
+
+    source_paths = SourcePathsTest(cascade=False)
+    hazard_model = ZarrHazardModel(source_paths=source_paths, store=mocker.store)
+    response = hazard_model.get_hazard_data(requests)
+    np.testing.assert_almost_equal(
+        response[requests[0]].intensities,
+        [1.0, 2.0, 3.0],  # Europe
+    )
+    # the out-of bounds data should come through as failed responses as no cascading
+    assert isinstance(response[requests[2]], HazardDataFailedResponse)
+    # for acute events, the not-a-number should be interpreted as zero intensity, as long as in-bounds
+    # (in line with the convention for many acute sets).
+    np.testing.assert_almost_equal(
+        response[requests[4]].intensities,
+        [0.0],  # Europe
+    )
+    # non-matching scenario
+    assert isinstance(response[requests[5]], HazardDataFailedResponse)
+
+
+def test_buffer_integration():
+    mocker = ZarrStoreMocker()
+    # Europe, Europe, not Europe, not Europe, Europe
+    lons = [1.1, -0.31, 32.5, -84.0, 1.15]
+    lats = [47.0, 52.0, 16.0, 38.0, 47.1]
+    mocker._add_curves(
+        "test_set_europe_only",
+        lons[0:2] + [lons[4]],
+        lats[0:2] + [lats[4]],
+        "epsg:3035",
+        [3, 39420, 38371],
+        [100.0, 0.0, 2648100.0, 0.0, -100.0, 5404500],
+        [10.0, 100.0, 1000.0],
+        np.array(
             [
-                HazardDataRequest(
-                    RiverineInundation,
-                    lons[0],
-                    lats[0],
-                    indicator_id="",
-                    scenario="",
-                    year=2050,
-                    buffer=10,
-                )
+                [1.0, 2.0, 3.0],
+                [4.0, 5.0, 6.0],
+                [float("nan"), float("nan"), float("nan")],
             ]
+        ),
+    )
+    mocker.add_curves_global(
+        "test_set_world",
+        lons,
+        lats,
+        [10.0, 20.0, 100.0, 1000.0],
+        [4.0, 4.5, 5.0, 6.0],
+    )
+    requests = [
+        HazardDataRequest(
+            hazard_type=RiverineInundation,
+            longitude=float(lon),
+            latitude=float(lat),
+            indicator_id="flood_depth",
+            scenario="ssp585",
+            year=2050,
+            buffer=10,
         )
-        numpy.testing.assert_equal(
-            next(iter(response2.values())).intensities, [1.0, 2.0, 3.0]
-        )
+        for lat, lon in zip(lats, lons)
+    ]
+
+    source_paths = SourcePathsTest(cascade=False)
+    hazard_model = ZarrHazardModel(source_paths=source_paths, store=mocker.store)
+    response = hazard_model.get_hazard_data(requests)
+    np.testing.assert_almost_equal(
+        response[requests[0]].intensities,
+        [1.0, 2.0, 3.0],  # Europe
+    )

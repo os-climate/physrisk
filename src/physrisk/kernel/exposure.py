@@ -7,7 +7,7 @@ from typing import Dict, List, Sequence, Tuple
 
 import numpy as np
 
-from physrisk.data.hazard_data_provider import HazardDataHint
+from physrisk.data.hazard_data_provider import HazardDataHint, ScenarioYear
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.hazard_model import (
     HazardDataRequest,
@@ -24,7 +24,7 @@ from physrisk.kernel.hazards import (
     Hail,
     Wind,
 )
-from physrisk.kernel.impact import _request_consolidated
+from physrisk.kernel.impact import _download_data_consolidated
 from physrisk.kernel.vulnerability_model import DataRequester
 from physrisk.utils.helpers import get_iterable
 
@@ -175,10 +175,10 @@ def calculate_exposures(
     year: int,
 ) -> Dict[Asset, AssetExposureResult]:
     requester_assets: Dict[DataRequester, List[Asset]] = {exposure_measure: assets}
-    asset_requests, responses = _request_consolidated(
-        hazard_model, requester_assets, scenario, year
+    scen_year_asset_requests, responses = _download_data_consolidated(
+        hazard_model, requester_assets, [scenario], [year]
     )
-
+    asset_requests = scen_year_asset_requests[ScenarioYear(scenario, year)]
     logging.info(
         "Applying exposure measure {0} to {1} assets of type {2}".format(
             type(exposure_measure).__name__, len(assets), type(assets[0]).__name__

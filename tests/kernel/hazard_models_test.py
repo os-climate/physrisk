@@ -111,7 +111,7 @@ def test_using_point_based_hazard_model():
         {RealEstateAsset: [GenericTropicalCycloneModel()]}
     )
     results = calculate_impacts(
-        assets, hazard_model, vulnerability_models, scenario=scenario, year=year
+        assets, hazard_model, vulnerability_models, scenarios=[scenario], years=[year]
     )
     impact_distrib = results[(assets[0], Wind, scenario, year)][0].impact
     mean_impact = impact_distrib.mean_impact()

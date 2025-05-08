@@ -3269,6 +3269,44 @@
                 }
             ],
             "units": "millimetres/year"
+        },
+        {
+            "hazard_type": "Wind",
+            "group_id": "",
+            "path": "wind/wisc/v1/max_speed_{scenario}_{year}/max_speed",
+            "indicator_id": "wind_speed/3s",
+            "indicator_model_id": "wisc",
+            "indicator_model_gcm": "",
+            "params": {},
+            "display_name": "Max 3s gust wind speed (WISC)",
+            "display_groups": [],
+            "description": "\nMaximum 10 metre 3 second gust peak wind speed (note 3 second average; by default physrisk wind speeds are 1 minute average) for different return periods, inferred from the Copernicus WISC European storm event set. This allows events and return period maps to be used consistently.\n\nhttps://cds.climate.copernicus.eu/datasets/sis-european-wind-storm-synthetic-events?tab=overview\n\nThe WISC dataset contains a set of synthetic windstorm events consisting of 22,980 individual\nstorm footprints over Europe. These are a physically realistic set of plausible windstorm\nevents based on the modelled climatic conditions, calculated using the Met Office HadGEM3 model\n(Global Atmosphere 3 and Global Land 3 configurations).\nReturn period maps of peak gust wind speed are inferred from this data. ",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 50.0,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "m/s"
+                },
+                "path": "maps/wind/wisc/v1/max_speed_{scenario}_{year}/max_speed_map",
+                "bounds": [],
+                "bbox": [],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "store_netcdf_coords": true,
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        1999
+                    ]
+                }
+            ],
+            "units": "years"
         }
     ]
 }

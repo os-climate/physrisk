@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Dict, List, Mapping, MutableMapping, Optional, Sequence
 
-from physrisk.data.hazard_data_provider import SourcePath
+from physrisk.data.hazard_data_provider import SourcePaths
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.kernel.hazard_model import (
@@ -24,7 +24,7 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
         self,
         cache_store: H3BasedCache,
         credentials: CredentialsProvider,
-        source_paths: Dict[type, SourcePath],
+        source_paths: SourcePaths,
         store: Optional[MutableMapping] = None,
         reader: Optional[ZarrReader] = None,
     ):
@@ -35,7 +35,10 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
         self.reader = reader
 
     def hazard_model(
-        self, interpolation: str = "floor", provider_max_requests: Dict[str, int] = {}
+        self,
+        interpolation: str = "floor",
+        provider_max_requests: Dict[str, int] = {},
+        interpolate_years: bool = False,
     ):
         return CompositeHazardModel(
             self.cache_store,
@@ -45,6 +48,7 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
             reader=self.reader,
             interpolation=interpolation,
             provider_max_requests=provider_max_requests,
+            interpolate_years=interpolate_years,
         )
 
 
@@ -55,11 +59,12 @@ class CompositeHazardModel(HazardModel):
         self,
         cache_store: H3BasedCache,
         credentials: CredentialsProvider,
-        source_paths: Dict[type, SourcePath],
+        source_paths: SourcePaths,
         store: Optional[MutableMapping] = None,
         reader: Optional[ZarrReader] = None,
         interpolation: str = "floor",
         provider_max_requests: Dict[str, int] = {},
+        interpolate_years: bool = False,
     ):
         self.credentials = credentials
         self.max_jba_requests = provider_max_requests.get("jba", 0)
@@ -73,6 +78,7 @@ class CompositeHazardModel(HazardModel):
             reader=reader,
             store=store,
             interpolation=interpolation,
+            interpolate_years=interpolate_years,
         )
 
     def hazard_model(self, type):

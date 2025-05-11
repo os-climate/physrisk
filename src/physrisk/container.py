@@ -2,7 +2,7 @@ from typing import Dict, MutableMapping, Optional
 
 from dependency_injector import containers, providers
 
-from physrisk.data.hazard_data_provider import SourcePath
+from physrisk.data.hazard_data_provider import SourcePaths
 from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
@@ -20,7 +20,7 @@ from physrisk.requests import Requester, _create_inventory, create_source_paths
 class ZarrHazardModelFactory(HazardModelFactory):
     def __init__(
         self,
-        source_paths: Dict[type, SourcePath],
+        source_paths: SourcePaths,
         store: Optional[MutableMapping] = None,
         reader: Optional[ZarrReader] = None,
     ):
@@ -29,7 +29,10 @@ class ZarrHazardModelFactory(HazardModelFactory):
         self.reader = reader
 
     def hazard_model(
-        self, interpolation: str = "floor", provider_max_requests: Dict[str, int] = {}
+        self,
+        interpolation: str = "floor",
+        provider_max_requests: Dict[str, int] = {},
+        interpolate_years: bool = False,
     ):
         # this is done to allow interpolation to be set dynamically, e.g. different requests can have different
         # parameters.
@@ -38,6 +41,7 @@ class ZarrHazardModelFactory(HazardModelFactory):
             store=self.store,
             reader=self.reader,
             interpolation=interpolation,
+            interpolate_years=interpolate_years,
         )
 
 

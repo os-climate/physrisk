@@ -111,8 +111,12 @@ class ZarrStoreMocker:
         mat = np.array(inv_trans).reshape(3, 3)
         frac_image_coords = mat @ coords
         image_coords = np.floor(frac_image_coords).astype(int)
-        for j in range(len(x)):
-            z[:, image_coords[1, j], image_coords[0, j]] = intensities
+        if isinstance(intensities, np.ndarray) and len(np.array(intensities).shape) > 1:
+            for j in range(len(x)):
+                z[:, image_coords[1, j], image_coords[0, j]] = intensities[j, :]
+        else:
+            for j in range(len(x)):
+                z[:, image_coords[1, j], image_coords[0, j]] = intensities
 
     def _crs_shape_transform(
         self,

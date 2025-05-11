@@ -15,6 +15,17 @@ class HazardDataRequest:
     different event return periods. A chronic hazard on the other hand is a shift in a climate parameter
     and the parameter value is returned."""
 
+    __slots__ = (
+        "hazard_type",
+        "longitude",
+        "latitude",
+        "indicator_id",
+        "scenario",
+        "year",
+        "hint",
+        "buffer",
+    )
+
     def __init__(
         self,
         hazard_type: Type[Hazard],
@@ -61,14 +72,32 @@ class HazardDataRequest:
             )
         )
 
+    def __repr__(self) -> str:
+        return (
+            "HazardDataRequest("
+            + ",".join(
+                (
+                    getattr(self, a).__name__
+                    if a == "hazard_type"
+                    else str(getattr(self, a))
+                )
+                for a in HazardDataRequest.__slots__
+            )
+            + ")"
+        )
+
 
 class HazardDataResponse:
     pass
 
 
 class HazardDataFailedResponse(HazardDataResponse):
-    def __init__(self, err: Exception):
+    def __init__(self, err: Optional[Exception] = None, reason: Optional[str] = None):
         self.error = err
+        self.reason = reason
+
+    def __repr__(self):
+        return self.reason if self.reason is not None else str(self.error)
 
 
 class HazardEventDataResponse(HazardDataResponse):
@@ -93,6 +122,16 @@ class HazardEventDataResponse(HazardDataResponse):
         self.intensities = intensities
         self.units = sys.intern(units)
         self.path = sys.intern(path)
+
+    def __repr__(self) -> str:
+        return (
+            "HazardEventDataResponse("
+            + ",".join(
+                str(getattr(self, a))
+                for a in ["return_periods", "intensities", "units", "path"]
+            )
+            + ")"
+        )
 
 
 class HazardParameterDataResponse(HazardDataResponse):
@@ -131,10 +170,23 @@ class HazardParameterDataResponse(HazardDataResponse):
         """
         return self.parameters[0]
 
+    def __repr__(self) -> str:
+        return (
+            "HazardParameterDataResponse("
+            + ",".join(
+                str(getattr(self, a))
+                for a in ["parameters", "param_defns", "units", "path"]
+            )
+            + ")"
+        )
+
 
 class HazardModelFactory(Protocol):
     def hazard_model(
-        self, interpolation: str = "floor", provider_max_requests: Dict[str, int] = {}
+        self,
+        interpolation: str = "floor",
+        provider_max_requests: Dict[str, int] = {},
+        interpolate_years: bool = False,
     ):
         """Create a HazardModel instance based on a number of options.
 
@@ -143,6 +195,7 @@ class HazardModelFactory(Protocol):
             this is supported by hazard models).
             provider_max_requests (Dict[str, int]): The maximum permitted number of permitted
             requests to external providers.
+            interpolate_years (bool): If True, apply linear interpolation for hazard requests where exact match is not present.
         """
         ...
 

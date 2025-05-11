@@ -1,4 +1,3 @@
-import concurrent.futures
 from dataclasses import dataclass
 from typing import (
     Dict,
@@ -54,50 +53,17 @@ class RiskModel:
         include_histo: bool = False,
     ):
         # ensure "historical" is present, e.g. needed for risk measures
-        scenarios = (
+        scenarios = list(
             set(["historical"] + list(prosp_scens)) if include_histo else prosp_scens
         )
-        impact_results: Dict[ImpactKey, List[AssetImpactResult]] = {}
-
-        # in case of multiple calculation, run on separate threads
-        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-            # with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
-            tagged_futures = {
-                executor.submit(
-                    self._calculate_single_impact, assets, scenario, year
-                ): BatchId(scenario, None if scenario == "historical" else year)
-                for scenario in scenarios
-                for year in years
-            }
-            for future in concurrent.futures.as_completed(tagged_futures):
-                tag = tagged_futures[future]
-                try:
-                    res = future.result()
-                    # flatten to use single key
-                    for temp_key, value in res.items():
-                        key = ImpactKey(
-                            asset=temp_key.asset,
-                            hazard_type=temp_key.hazard_type,
-                            scenario=tag.scenario,
-                            key_year=tag.key_year,
-                        )
-                        impact_results[key] = value
-
-                except Exception as exc:
-                    print("%r generated an exception: %s" % (tag, exc))
-        return impact_results
-
-    def _calculate_single_impact(
-        self, assets: Sequence[Asset], scenario: str, year: int
-    ):
-        """Calculate impacts for a single scenario and year."""
-        return calculate_impacts(
+        impact_results = calculate_impacts(
             assets,
             self._hazard_model,
             self._vulnerability_models,
-            scenario=scenario,
-            year=year,
+            scenarios=scenarios,
+            years=years,
         )
+        return impact_results
 
 
 class MeasureKey(NamedTuple):

@@ -44,13 +44,6 @@ def load_credentials():
     from dotenv import load_dotenv
 
     load_dotenv("credentials.env")
-    # expected by physrisk: to remove when fixed
-    if "OSC_S3_BUCKET" not in os.environ:
-        os.environ["OSC_S3_BUCKET"] = ""
-    if "OSC_S3_ACCESS_KEY" not in os.environ:
-        os.environ["OSC_S3_ACCESS_KEY"] = ""
-    if "OSC_S3_SECRET_KEY" not in os.environ:
-        os.environ["OSC_S3_SECRET_KEY"] = ""
     return "loaded"
 
 

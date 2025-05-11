@@ -48,27 +48,45 @@ class TestDataRequests(TestWithCredentials):
     def test_generic_source_path(self):
         inventory = EmbeddedInventory()
         source_paths = get_default_source_paths(inventory)
-        result_heat = source_paths[ChronicHeat](
-            indicator_id="mean_degree_days/above/32c", scenario="rcp8p5", year=2050
+        result_heat = (
+            source_paths.resource_paths(
+                ChronicHeat,
+                indicator_id="mean_degree_days/above/32c",
+                scenarios=["ssp585"],
+            )[0]
+            .scenarios["ssp585"]
+            .path(2050)
         )
-        result_flood = source_paths[RiverineInundation](
-            indicator_id="flood_depth", scenario="rcp8p5", year=2050
+        result_flood = (
+            source_paths.resource_paths(
+                RiverineInundation, indicator_id="flood_depth", scenarios=["ssp585"]
+            )[0]
+            .scenarios["ssp585"]
+            .path(2050)
         )
-        result_flood_hist = source_paths[RiverineInundation](
-            indicator_id="flood_depth", scenario="historical", year=2080
+        result_flood_hist = (
+            source_paths.resource_paths(
+                RiverineInundation, indicator_id="flood_depth", scenarios=["historical"]
+            )[0]
+            .scenarios["historical"]
+            .path(2080)
         )
-        result_heat_hint = source_paths[ChronicHeat](
-            indicator_id="mean_degree_days/above/32c",
-            scenario="rcp8p5",
-            year=2050,
-            hint=HazardDataHint(
-                path="chronic_heat/osc/v2/mean_degree_days_v2_above_32c_CMCC-ESM2_{scenario}_{year}"
-            ),
+        result_heat_hint = (
+            source_paths.resource_paths(
+                ChronicHeat,
+                indicator_id="mean_degree_days/above/32c",
+                scenarios=["ssp585"],
+                hint=HazardDataHint(
+                    path="chronic_heat/osc/v2/mean_degree_days_v2_above_32c_CMCC-ESM2_{scenario}_{year}"
+                ),
+            )[0]
+            .scenarios["ssp585"]
+            .path(2050)
         )
 
         assert (
             result_heat
-            == "chronic_heat/osc/v2/mean_degree_days_v2_above_32c_ACCESS-CM2_rcp8p5_2050"
+            == "chronic_heat/osc/v2/mean_degree_days_v2_above_32c_ACCESS-CM2_ssp585_2050"
         )
         assert result_flood == "inundation/wri/v2/inunriver_rcp8p5_MIROC-ESM-CHEM_2050"
         assert (
@@ -77,7 +95,7 @@ class TestDataRequests(TestWithCredentials):
         )
         assert (
             result_heat_hint
-            == "chronic_heat/osc/v2/mean_degree_days_v2_above_32c_CMCC-ESM2_rcp8p5_2050"
+            == "chronic_heat/osc/v2/mean_degree_days_v2_above_32c_CMCC-ESM2_ssp585_2050"
         )
 
     def test_zarr_reading(self):

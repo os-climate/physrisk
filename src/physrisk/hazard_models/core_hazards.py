@@ -1,8 +1,13 @@
 from enum import Enum
-from typing import Dict, Iterable, List, NamedTuple, Optional, Protocol, Type
+from typing import Dict, Iterable, List, NamedTuple, Optional, Protocol, Sequence, Type
 
 from physrisk.api.v1.hazard_data import HazardResource
-from physrisk.data.hazard_data_provider import HazardDataHint, ScenarioPaths
+from physrisk.data.hazard_data_provider import (
+    HazardDataHint,
+    ResourcePaths,
+    ScenarioPaths,
+    SourcePaths,
+)
 from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.kernel import hazards
 from physrisk.kernel.hazards import (
@@ -62,7 +67,7 @@ class ResourceSelectorKey(NamedTuple):
     indicator_id: str
 
 
-class InventorySourcePaths:
+class InventorySourcePaths(SourcePaths):
     """Class used to generate SourcePaths by selecting the appropriate HazardResource from the
     Inventory of HazardResources.
     """
@@ -84,18 +89,22 @@ class InventorySourcePaths:
     def hazard_types(self):
         return [hazards.hazard_class(ht) for ht in self.all_hazards()]
 
-    def paths_set(
+    def resource_paths(
         self,
         hazard_type: Type[Hazard],
         indicator_id: str,
-        scenarios: List[str],
+        scenarios: Sequence[str],
         hint: Optional[HazardDataHint] = None,
-    ) -> List[Dict[str, ScenarioPaths]]:
-        # all matching resources in the inventory
+    ) -> List[ResourcePaths]:
         resources = self.get_resources(hazard_type, indicator_id, hint=hint)
         result = []
         for r in resources:
-            result.append({s: self._get_paths(r, s) for s in scenarios})
+            result.append(
+                ResourcePaths(
+                    resource_path=r.path,
+                    scenarios={s: self._get_paths(r, s) for s in scenarios},
+                )
+            )
         return result
 
     def _get_paths(self, resource: HazardResource, scenario_id: str):

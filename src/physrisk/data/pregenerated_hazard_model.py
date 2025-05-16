@@ -2,6 +2,7 @@ import asyncio
 import concurrent.futures
 from collections import defaultdict
 import logging
+import threading
 from typing import Dict, List, Mapping, MutableMapping, Optional, Sequence, Tuple, Type
 
 import numpy as np
@@ -54,11 +55,6 @@ class PregeneratedHazardModel(HazardModel):
         return responses
 
     def _get_cascading_hazard_data_batches(self, requests: Sequence[HazardDataRequest]):
-        # try:
-        #    loop = asyncio.get_event_loop()
-        # except Exception:
-        #    loop = asyncio.new_event_loop()
-        #    asyncio.set_event_loop(loop)
         responses: MutableMapping[HazardDataRequest, HazardDataResponse] = {}
         batches: Dict[Tuple[str, str], List[HazardDataRequest]] = defaultdict(list)
         # find the requests for the same indicator, but different scenarios and years
@@ -183,9 +179,17 @@ class PregeneratedHazardModel(HazardModel):
                     for (hazard_type, indicator_id, _), batch in batches.items()
                 )
             )
-
-        # loop.run_until_complete(all_requests())
-        asyncio.run(all_requests())
+        try:
+            asyncio.run(all_requests())
+        except:
+            # if there is an event loop running already
+            def run_all_requests():
+                asyncio.run(all_requests())
+            #t = threading.Thread(target=asyncio.run, args=(all_requests(),))
+            t = threading.Thread(target=run_all_requests)
+            t.start()
+            t.join()
+            
         return responses
 
     def log_response_issues(

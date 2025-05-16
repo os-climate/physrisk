@@ -179,17 +179,18 @@ class PregeneratedHazardModel(HazardModel):
                     for (hazard_type, indicator_id, _), batch in batches.items()
                 )
             )
+
         try:
             asyncio.run(all_requests())
-        except:
-            # if there is an event loop running already
+        except Exception:
+            # if there is an event loop running already, run is separate thread
             def run_all_requests():
                 asyncio.run(all_requests())
-            #t = threading.Thread(target=asyncio.run, args=(all_requests(),))
+
             t = threading.Thread(target=run_all_requests)
             t.start()
             t.join()
-            
+
         return responses
 
     def log_response_issues(

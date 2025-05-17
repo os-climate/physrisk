@@ -202,12 +202,28 @@ class HazardDataProvider(ABC):
         results: Dict[ScenarioYearRes, ScenarioYearResult] = {}
         max_dim = 0
         for i, resource_paths in enumerate(resource_paths_set):
-            _, p = next(iter(resource_paths.scenarios.items()))
-            if len(p.years) == 0:
+            # within a HazardResource the arrays have the same spatial coverage
+            # any array can therefore be used for checking bounds
+            p, y = next(
+                (
+                    (p, y)
+                    for p in resource_paths.scenarios.values()
+                    for y in p.years
+                    if y in years
+                ),
+                # use a matching yesr if there is one. This is done just to facilitate unit testing!
+                next(
+                    (
+                        (p, p.years[0])
+                        for p in resource_paths.scenarios.values()
+                        if len(p.years) > 0
+                    ),
+                    # otherwise any valid year; if there are none, no results can be returned.
+                    (None, None),
+                ),
+            )
+            if p is None or y is None:
                 continue
-            y = next(
-                (y for y in years if y in p.years), p.years[0]
-            )  # use match if there is one
             set_id = p.path(y)
             mask_in_bounds = await asyncio.to_thread(
                 self._reader.in_bounds,

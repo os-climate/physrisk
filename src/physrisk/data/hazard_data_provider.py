@@ -302,6 +302,8 @@ class HazardDataProvider(ABC):
         # Retrieve the data for all available years for the path in question.
         weights: Dict[ScenarioYear, WeightedSum] = {}
         for scenario, paths in resource_paths.scenarios.items():
+            if len(paths.years) == 0:
+                continue
             requested_years = [-1] if scenario == "historical" else years
             if interpolate_years:
                 year_weights = HazardDataProvider._weights(

@@ -1,4 +1,5 @@
 import json
+import json
 import unittest
 
 import numpy as np
@@ -259,6 +260,4 @@ class TestDataRequests(TestWithCredentials):
         static_info = requester.get(
             request_id="get_static_information", request_dict=None
         )
-        assert json.loads(static_info)["scenario_descriptions"]["ssp585"].startswith(
-            "The SSP585 scenario"
-        )
+        assert json.loads(static_info)["scenario_descriptions"]["ssp585"].startswith("The SSP585 scenario")

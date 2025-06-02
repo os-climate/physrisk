@@ -1,3 +1,4 @@
+import json
 import unittest
 
 import numpy as np
@@ -251,3 +252,11 @@ class TestDataRequests(TestWithCredentials):
         }
         response = requester.get(request_type="get_hazard_data", request_dict=request2)
         print(response)
+
+    def test_static_information(self):
+        container = Container()
+        requester = container.requester()
+        static_info = requester.get(
+            request_id="get_static_information", request_dict=None
+        )
+        assert json.loads(static_info)["scenario_descriptions"]["ssp585"].startswith("The SSP585 scenario")

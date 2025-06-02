@@ -204,6 +204,12 @@ class HazardDescriptionResponse(BaseModel):
     )
 
 
+class StaticInformationResponse(BaseModel):
+    scenario_descriptions: Dict[str, str] = Field(
+        description="For each scenario identifier (key, e.g. 'ssp585', 'rcp8p5'), the description markdown (value)."
+    )
+
+
 class HazardDataRequestItem(BaseModel):
     longitudes: List[float]
     latitudes: List[float]

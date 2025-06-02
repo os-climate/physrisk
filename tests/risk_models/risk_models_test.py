@@ -405,6 +405,7 @@ class TestRiskModels(TestWithCredentials):
             if ma.key.hazard_type == "RiverineInundation"
         )
         np.testing.assert_allclose(res.measures_0, [0.89306593179, 0.89306593179])
+
         # json_str = json.dumps(response.model_dump(), cls=NumpyArrayEncoder)
 
     def test_generic_model(self):

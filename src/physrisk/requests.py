@@ -19,6 +19,7 @@ from physrisk.api.v1.hazard_image import HazardImageRequest
 from physrisk.data.hazard_data_provider import HazardDataHint
 from physrisk.data.inventory import expand
 from physrisk.data.inventory_reader import InventoryReader
+from physrisk.data.static.scenarios import scenario_description
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.exposure import JupterExposureMeasure, calculate_exposures
@@ -49,6 +50,7 @@ from .api.v1.hazard_data import (
     HazardResource,
     IntensityCurve,
     Scenario,
+    StaticInformationResponse,
 )
 from .api.v1.impact_req_resp import (
     AcuteHazardCalculationDetails,
@@ -112,6 +114,8 @@ class Requester:
         elif request_id == "get_hazard_data_description":
             request = HazardDescriptionRequest(**request_dict)
             return json.dumps(self.get_hazard_data_description(request).model_dump())
+        elif request_id == "get_static_information":
+            return json.dumps(self.get_static_information().model_dump())
         elif request_id == "get_asset_exposure":
             request = AssetExposureRequest(**request_dict)
             return json.dumps(
@@ -137,6 +141,11 @@ class Requester:
 
     def get_hazard_data_description(self, request: HazardDescriptionRequest):
         return _get_hazard_data_description(request, self.inventory_reader)
+
+    def get_static_information(self):
+        return StaticInformationResponse(
+            scenario_descriptions=scenario_description.description()
+        )
 
     def get_asset_exposures(self, request: AssetExposureRequest):
         hazard_model = self.hazard_model_factory.hazard_model(

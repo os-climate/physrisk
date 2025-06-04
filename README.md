@@ -5,6 +5,8 @@
 <!-- prettier-ignore-end -->
 <!-- markdownlint-enable -->
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/os-climate/physrisk/badge)](https://scorecard.dev/viewer/?uri=github.com/os-climate/physrisk)
+
 # Physrisk
 Physical climate risk calculation engine.
 

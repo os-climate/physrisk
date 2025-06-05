@@ -35,8 +35,8 @@ from physrisk.kernel.hazards import Hazard, RiverineInundation
 from physrisk.requests import _get_hazard_data_availability
 
 # from pathlib import PurePosixPath
-from ..base_test import TestWithCredentials
-from .hazard_model_store_test import (
+from ..test_base import TestWithCredentials
+from .test_hazard_model_store import (
     ZarrStoreMocker,
     mock_hazard_model_store_inundation,
 )

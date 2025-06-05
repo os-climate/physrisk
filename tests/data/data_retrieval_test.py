@@ -2,7 +2,7 @@ from collections import defaultdict
 import logging
 import os
 import time
-from typing import Dict, List, Optional, Sequence, Type
+from typing import List, Optional, Sequence, Type
 import unittest
 
 # import fsspec.implementations.local as local  # type: ignore
@@ -388,27 +388,32 @@ class SourcePathsTest(SourcePaths):
     ) -> List[ResourcePaths]:
         # try Europe-specific first and then the whole-world
         result = [
-            ResourcePaths(resource_path="", scenarios={
-                "ssp585": ScenarioPaths(
-                    years=[2030, 2050, 2080],
-                    path=lambda f: "test_set_europe_only",
-                ),
-                "historical": ScenarioPaths(
-                    years=[-1], path=lambda f: "test_set_europe_only"
-                ),
-            })
+            ResourcePaths(
+                resource_path="",
+                scenarios={
+                    "ssp585": ScenarioPaths(
+                        years=[2030, 2050, 2080],
+                        path=lambda f: "test_set_europe_only",
+                    ),
+                    "historical": ScenarioPaths(
+                        years=[-1], path=lambda f: "test_set_europe_only"
+                    ),
+                },
+            )
         ]
         if self.cascade:
             result.append(
-                ResourcePaths(resource_path="", scenarios=
-                {
-                    "ssp585": ScenarioPaths(
-                        years=[2030, 2050, 2080], path=lambda f: "test_set_world"
-                    ),
-                    "historical": ScenarioPaths(
-                        years=[-1], path=lambda f: "test_set_world"
-                    ),
-                })
+                ResourcePaths(
+                    resource_path="",
+                    scenarios={
+                        "ssp585": ScenarioPaths(
+                            years=[2030, 2050, 2080], path=lambda f: "test_set_world"
+                        ),
+                        "historical": ScenarioPaths(
+                            years=[-1], path=lambda f: "test_set_world"
+                        ),
+                    },
+                )
             )
         return result
 
@@ -582,15 +587,18 @@ class SourcePathsYearsInterpolationTest(SourcePaths):
         hint: Optional[HazardDataHint] = None,
     ) -> List[ResourcePaths]:
         result = [
-            ResourcePaths(resource_path="", scenarios={
-                "ssp585": ScenarioPaths(
-                    years=[2030, 2050, 2080],
-                    path=lambda f: f"test_set_europe_only_{f}",
-                ),
-                "historical": ScenarioPaths(
-                    years=[-1], path=lambda f: "test_set_europe_only_historical"
-                ),
-            })
+            ResourcePaths(
+                resource_path="",
+                scenarios={
+                    "ssp585": ScenarioPaths(
+                        years=[2030, 2050, 2080],
+                        path=lambda f: f"test_set_europe_only_{f}",
+                    ),
+                    "historical": ScenarioPaths(
+                        years=[-1], path=lambda f: "test_set_europe_only_historical"
+                    ),
+                },
+            )
         ]
         return result
 
@@ -600,12 +608,16 @@ def test_end_to_end_interpolation_years():
     # Europe, Europe, not Europe, not Europe, Europe
     lons = [1.1, -0.31, 32.5, -84.0, 1.15]
     lats = [47.0, 52.0, 16.0, 38.0, 47.1]
-    years_data = [[1.0, 1.5, 2.0], # historical
-            [1.1, 1.6, 2.1], # 2030
-            [1.2, 1.7, 2.2], # 2040
-            [1.3, 1.8, 2.3]] # 2050
-    
-    filenames = ["test_set_europe_only_historical"] + [f"test_set_europe_only_{year}" for year in [2030, 2050, 2080]]
+    years_data = [
+        [1.0, 1.5, 2.0],  # historical
+        [1.1, 1.6, 2.1],  # 2030
+        [1.2, 1.7, 2.2],  # 2040
+        [1.3, 1.8, 2.3],
+    ]  # 2050
+
+    filenames = ["test_set_europe_only_historical"] + [
+        f"test_set_europe_only_{year}" for year in [2030, 2050, 2080]
+    ]
     for i, filename in enumerate(filenames):
         mocker._add_curves(
             filename,
@@ -622,56 +634,57 @@ def test_end_to_end_interpolation_years():
                 ]
             ),
         )
-    requests = [
-        HazardDataRequest(
-            hazard_type=RiverineInundation,
-            longitude=float(lon),
-            latitude=float(lat),
-            indicator_id="flood_depth",
-            scenario="ssp585",
-            year=2027,
-        )
-        for lat, lon in zip(lats[0:1], lons[0:1])
-    ] + [
-        HazardDataRequest(
-            hazard_type=RiverineInundation,
-            longitude=float(lon),
-            latitude=float(lat),
-            indicator_id="flood_depth",
-            scenario="ssp585",
-            year=2040,
-        )
-        for lat, lon in zip(lats[0:1], lons[0:1])
-    ] + [
-        HazardDataRequest(
-            hazard_type=RiverineInundation,
-            longitude=float(lon),
-            latitude=float(lat),
-            indicator_id="flood_depth",
-            scenario="ssp585",
-            year=2090,
-        )
-        for lat, lon in zip(lats[0:1], lons[:1])
-    ]
+    requests = (
+        [
+            HazardDataRequest(
+                hazard_type=RiverineInundation,
+                longitude=float(lon),
+                latitude=float(lat),
+                indicator_id="flood_depth",
+                scenario="ssp585",
+                year=2027,
+            )
+            for lat, lon in zip(lats[0:1], lons[0:1])
+        ]
+        + [
+            HazardDataRequest(
+                hazard_type=RiverineInundation,
+                longitude=float(lon),
+                latitude=float(lat),
+                indicator_id="flood_depth",
+                scenario="ssp585",
+                year=2040,
+            )
+            for lat, lon in zip(lats[0:1], lons[0:1])
+        ]
+        + [
+            HazardDataRequest(
+                hazard_type=RiverineInundation,
+                longitude=float(lon),
+                latitude=float(lat),
+                indicator_id="flood_depth",
+                scenario="ssp585",
+                year=2090,
+            )
+            for lat, lon in zip(lats[0:1], lons[:1])
+        ]
+    )
 
     source_paths = SourcePathsYearsInterpolationTest()
-    hazard_model = ZarrHazardModel(source_paths=source_paths, store=mocker.store, interpolate_years=True)
+    hazard_model = ZarrHazardModel(
+        source_paths=source_paths, store=mocker.store, interpolate_years=True
+    )
     response = hazard_model.get_hazard_data(requests)
-    expected_2027 = (3. / 5.) * np.array([1.0, 1.5, 2.0]) + (2. / 5.) * np.array([1.1, 1.6, 2.1])
+    expected_2027 = (3.0 / 5.0) * np.array([1.0, 1.5, 2.0]) + (2.0 / 5.0) * np.array(
+        [1.1, 1.6, 2.1]
+    )
     expected_2040 = 0.5 * np.array([1.1, 1.6, 2.1]) + 0.5 * np.array([1.2, 1.7, 2.2])
-    expected_2090 = np.array([1.3, 1.8, 2.3]) + 10. / 30. * (np.array([1.3, 1.8, 2.3]) - np.array([1.2, 1.7, 2.2]))
-    np.testing.assert_almost_equal(
-        response[requests[0]].intensities,
-        expected_2027
+    expected_2090 = np.array([1.3, 1.8, 2.3]) + 10.0 / 30.0 * (
+        np.array([1.3, 1.8, 2.3]) - np.array([1.2, 1.7, 2.2])
     )
-    np.testing.assert_almost_equal(
-        response[requests[1]].intensities,
-        expected_2040
-    )
-    np.testing.assert_almost_equal(
-        response[requests[2]].intensities,
-        expected_2090
-    )
+    np.testing.assert_almost_equal(response[requests[0]].intensities, expected_2027)
+    np.testing.assert_almost_equal(response[requests[1]].intensities, expected_2040)
+    np.testing.assert_almost_equal(response[requests[2]].intensities, expected_2090)
 
 
 def test_buffer_integration():

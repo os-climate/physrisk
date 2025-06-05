@@ -76,7 +76,7 @@ repos:
     rev: acc9d9de6369b76d22cb4167029d2035e8730b98 # frozen: v0.19.1
     hooks:
       - id: gitlint
-        # args: ["-c body-max-line-length=120", "-c title-max-length=120"]
+        args: ["-c body-max-line-length=120", "-c title-max-length=120"]
 
   - repo: https://github.com/openstack/bashate
     rev: 5798d24d571676fc407e81df574c1ef57b520f23 # frozen: 2.1.1
@@ -103,7 +103,7 @@ repos:
         args:
           [
             "-d",
-            "{rules: {line-length: {max: 100}}, ignore-from-file: [.gitignore],}",
+            "{rules: {line-length: {max: 120}}, ignore-from-file: [.gitignore],}",
           ]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit

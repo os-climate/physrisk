@@ -21,7 +21,7 @@ from physrisk.kernel.vulnerability_model import (
 )
 from physrisk.vulnerability_models.chronic_heat_models import ChronicHeatGZNModel
 
-from ..data.hazard_model_store_test import TestData, mock_hazard_model_store_heat
+from ..data.test_hazard_model_store import TestData, mock_hazard_model_store_heat
 
 
 class ExampleChronicHeatModel(VulnerabilityModelBase):

@@ -30,8 +30,8 @@ from physrisk.kernel.hazards import (
 )
 from physrisk.requests import Requester
 
-from ..base_test import TestWithCredentials
-from ..data.hazard_model_store_test import TestData, mock_hazard_model_store_path_curves
+from ..test_base import TestWithCredentials
+from ..data.test_hazard_model_store import TestData, mock_hazard_model_store_path_curves
 
 
 class TestExposureMeasures(TestWithCredentials):

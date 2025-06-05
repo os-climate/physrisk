@@ -3,7 +3,7 @@ from dependency_injector import containers, providers
 
 from physrisk.data.inventory_reader import InventoryReader
 
-from ..data.hazard_model_store_test import mock_hazard_model_store_heat
+from ..data.test_hazard_model_store import mock_hazard_model_store_heat
 
 
 class TestContainer(containers.DeclarativeContainer):

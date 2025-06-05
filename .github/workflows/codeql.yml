@@ -2,17 +2,18 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2025 The Linux Foundation
 
-name: "CodeQL Scan"
+name: 'CodeQL Advanced Scan'
+# Must be called codeql.yml NOT codeql.yaml or GitHub will ignore it
 
 on:
   workflow_dispatch:
   push:
-    branches: ["main", "master"]
+    branches: ['main', 'master']
     paths:
-      - "!.github/**"
-      - "!.docs/**"
+      - '!.github/**'
+      - '!.docs/**'
   schedule:
-    - cron: "40 4 * * 0"
+    - cron: '40 4 * * 0'
 
 concurrency:
   group: ${{ github.workflow }}
@@ -22,7 +23,7 @@ permissions: {}
 
 jobs:
   scan:
-    name: "CodeQL"
+    name: 'CodeQL Scan'
     # yamllint disable-line rule:line-length
     uses: lfit/releng-reusable-workflows/.github/workflows/reuse-python-codeql.yaml@fdcd10bc0fe174fe7d8834b2ba3a30159b4bf0bf # v0.2.14
     permissions:

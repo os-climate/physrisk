@@ -14,7 +14,12 @@ from physrisk.kernel.vulnerability_model import (
     VulnerabilityModels,
     VulnerabilityModelsFactory,
 )
-from physrisk.requests import Requester, _create_inventory, create_source_paths
+from physrisk.requests import (
+    PhysriskDefaultEncoder,
+    Requester,
+    _create_inventory,
+    create_source_paths,
+)
 
 
 class ZarrHazardModelFactory(HazardModelFactory):
@@ -61,6 +66,10 @@ class Container(containers.DeclarativeContainer):
         _create_inventory, reader=inventory_reader, sources=config.zarr_sources
     )
 
+    json_encoder_cls = providers.Object(PhysriskDefaultEncoder)
+
+    sig_figures = providers.Object(-1)
+
     source_paths = providers.Factory(create_source_paths, inventory=inventory)
 
     zarr_store = providers.Singleton(ZarrReader.create_s3_zarr_store)
@@ -86,4 +95,6 @@ class Container(containers.DeclarativeContainer):
         reader=zarr_reader,
         colormaps=colormaps,
         measures_factory=measures_factory,
+        json_encoder_cls=json_encoder_cls,
+        sig_figures=sig_figures,
     )

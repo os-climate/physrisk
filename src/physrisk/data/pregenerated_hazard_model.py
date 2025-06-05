@@ -8,7 +8,7 @@ from typing import Dict, List, Mapping, MutableMapping, Optional, Sequence, Tupl
 import numpy as np
 
 from physrisk.data.zarr_reader import ZarrReader
-from physrisk.kernel.hazards import Hazard, IndicatorData, indicator_data
+from physrisk.kernel.hazards import Hail, Hazard, IndicatorData, indicator_data
 
 from ..kernel.hazard_model import (
     HazardDataFailedResponse,
@@ -69,6 +69,11 @@ class PregeneratedHazardModel(HazardModel):
                 lat_lon_index: Dict[Tuple[float, float, Optional[int]], int] = {}
                 is_event = (
                     indicator_data(hazard_type, indicator_id) == IndicatorData.EVENT
+                )
+                # for some indicators nan is taken to be 0 for purposes of calculation
+                # (nan might indicate the quantity cannot be calculated)
+                nan_is_zero = (
+                    hazard_type == Hail and indicator_id == "months/spei3m/below/-2"
                 )
                 for req in batch:
                     lat_lon_index.setdefault(
@@ -153,10 +158,11 @@ class PregeneratedHazardModel(HazardModel):
                                     res.paths[index],
                                 )
                             else:
-                                valid = ~np.isnan(values)
+                                if nan_is_zero:
+                                    values[np.isnan(values)] = 0.0
                                 responses[req] = HazardParameterDataResponse(
-                                    values[valid].astype(dtype="float64"),
-                                    indices[valid],
+                                    values.astype(dtype="float64"),
+                                    indices,
                                     res.units,
                                     res.paths[index],
                                 )

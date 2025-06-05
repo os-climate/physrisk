@@ -854,3 +854,13 @@ class TestImpactRequests(TestWithCredentials):
             )
             label, description = helper.get_score_details(scores[0], measure_defns[0])
             print(label)
+
+
+def test_json_nan_protection():
+    test_array = np.array(
+        [[1.0, float("inf"), 3.0], [4.0, float("nan"), float("-inf")]]
+    )
+    test_list = test_array.tolist()
+    result = json.dumps(test_list, cls=requests.PhysriskDefaultEncoder)
+    result2 = json.dumps(test_array, cls=requests.PhysriskDefaultEncoder)
+    assert result == result2 == '[[1.0, "inf", 3.0], [4.0, null, "-inf"]]'

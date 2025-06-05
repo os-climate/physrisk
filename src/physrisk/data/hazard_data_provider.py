@@ -204,6 +204,8 @@ class HazardDataProvider(ABC):
         for i, resource_paths in enumerate(resource_paths_set):
             # within a HazardResource the arrays have the same spatial coverage
             # any array can therefore be used for checking bounds
+            if not np.any(mask_unprocessed):
+                break
             p, y = next(
                 (
                     (p, y)
@@ -211,7 +213,7 @@ class HazardDataProvider(ABC):
                     for y in p.years
                     if y in years
                 ),
-                # use a matching yesr if there is one. This is done just to facilitate unit testing!
+                # use a matching year if there is one. This is done just to facilitate unit testing!
                 next(
                     (
                         (p, p.years[0])

@@ -1,5 +1,4 @@
 import json
-import json
 import unittest
 
 import numpy as np

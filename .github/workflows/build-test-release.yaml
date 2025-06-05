@@ -150,7 +150,6 @@ jobs:
     runs-on: 'ubuntu-24.04'
     needs:
       - 'tag-validate'
-      - 'test-pypi'
     environment:
       name: 'production'
     permissions:

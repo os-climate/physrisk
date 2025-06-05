@@ -1,9 +1,9 @@
 from enum import Enum
-from typing import Annotated, Dict, List, Optional, Sequence, Union
+from typing import Dict, List, Optional, Sequence, Union
 
 import numpy as np
-import numpy.typing as npt
-from pydantic import BaseModel, ConfigDict, Field, PlainSerializer
+from numpy.typing import NDArray
+from pydantic import BaseModel, ConfigDict, Field
 
 
 # def deserialize_list(list: list) -> npt.NDArray:
@@ -11,16 +11,16 @@ from pydantic import BaseModel, ConfigDict, Field, PlainSerializer
 #     return np.array(list)
 
 
-def serialize_array(array: npt.NDArray) -> str:
-    """Serialize a numpy array into a list."""
-    return array.tolist()
+# def serialize_array(array: npt.NDArray):
+#     """Serialize a numpy array into a list."""
+#     return array.tolist()
 
 
-NDArray = Annotated[
-    npt.NDArray,
-    # AfterValidator(deserialize_list),
-    PlainSerializer(serialize_array, return_type=list),
-]
+# NDArray = Annotated[
+#     npt.NDArray,
+#     # AfterValidator(deserialize_list),
+#     PlainSerializer(serialize_array, return_type=list),
+# ]
 
 
 class HazardType(str, Enum):

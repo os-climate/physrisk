@@ -2,7 +2,7 @@ import importlib
 import json
 from importlib import import_module
 from pathlib import PosixPath
-from typing import Any, Dict, List, Optional, Sequence, Type, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union, cast
 
 import numpy as np
 
@@ -23,7 +23,7 @@ from physrisk.data.static.scenarios import scenario_description
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.exposure import JupterExposureMeasure, calculate_exposures
-from physrisk.kernel.hazards import Hazard, all_hazards
+from physrisk.kernel.hazards import Hazard
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey  # , ImpactKey
 from physrisk.kernel.impact_distrib import EmptyImpactDistrib
 from physrisk.kernel.risk import (
@@ -38,6 +38,8 @@ from physrisk.kernel.vulnerability_model import (
     VulnerabilityModels,
     VulnerabilityModelsFactory,
 )
+from physrisk.utils import encoder
+from physrisk.utils.encoder import PhysriskDefaultEncoder
 
 from .api.v1.hazard_data import (
     HazardAvailabilityRequest,
@@ -93,10 +95,14 @@ class Requester:
         reader: ZarrReader,
         colormaps: Colormaps,
         measures_factory: RiskMeasuresFactory,
+        json_encoder_cls: Type[json.JSONEncoder] = PhysriskDefaultEncoder,
+        sig_figures: int = -1,
     ):
         self.colormaps = colormaps
+        self.json_encoder_cls = json_encoder_cls
         self.hazard_model_factory = hazard_model_factory
         self.measures_factory = measures_factory
+        self.sig_figures = sig_figures
         self.vulnerability_models_factory = vulnerability_models_factory
         self.inventory = inventory
         self.inventory_reader = inventory_reader
@@ -105,27 +111,27 @@ class Requester:
     def get(self, *, request_id, request_dict):
         if request_id == "get_hazard_data":
             request = HazardDataRequest(**request_dict)
-            return json.dumps(
+            return self.dumps(
                 self.get_hazard_data(request).model_dump()  # , allow_nan=False)
             )
         elif request_id == "get_hazard_data_availability":
             request = HazardAvailabilityRequest(**request_dict)
-            return json.dumps(self.get_hazard_data_availability(request).model_dump())
+            return self.dumps(self.get_hazard_data_availability(request).model_dump())
         elif request_id == "get_hazard_data_description":
             request = HazardDescriptionRequest(**request_dict)
-            return json.dumps(self.get_hazard_data_description(request).model_dump())
+            return self.dumps(self.get_hazard_data_description(request).model_dump())
         elif request_id == "get_static_information":
-            return json.dumps(self.get_static_information().model_dump())
+            return self.dumps(self.get_static_information().model_dump())
         elif request_id == "get_asset_exposure":
             request = AssetExposureRequest(**request_dict)
-            return json.dumps(
+            return self.dumps(
                 self.get_asset_exposures(request).model_dump(exclude_none=True)
             )
         elif request_id == "get_asset_impact":
             request = AssetImpactRequest(**request_dict)
-            return dumps(self.get_asset_impacts(request).model_dump())
+            return self.dumps(self.get_asset_impacts(request).model_dump())
         elif request_id == "get_example_portfolios":
-            return dumps(_get_example_portfolios())
+            return self.dumps(_get_example_portfolios())
         else:
             raise ValueError(f"request type '{request_id}' not found")
 
@@ -134,7 +140,9 @@ class Requester:
             interpolation=request.interpolation,
             provider_max_requests=request.provider_max_requests,
         )
-        return _get_hazard_data(request, hazard_model=hazard_model)
+        return _get_hazard_data(
+            request, hazard_model=hazard_model, sig_figures=self.round_sig_figures
+        )
 
     def get_hazard_data_availability(self, request: HazardAvailabilityRequest):
         return _get_hazard_data_availability(request, self.inventory, self.colormaps)
@@ -162,7 +170,11 @@ class Requester:
         vulnerability_models = self.vulnerability_models_factory.vulnerability_models()
         measure_calculators = self.measures_factory.calculators(request.use_case_id)
         return _get_asset_impacts(
-            request, hazard_model, vulnerability_models, measure_calculators
+            request,
+            hazard_model,
+            vulnerability_models,
+            measure_calculators,
+            sig_figures=self.round_sig_figures,
         )
 
     def get_image(self, request_or_dict: Union[HazardImageRequest, Dict]):
@@ -204,6 +216,14 @@ class Requester:
             max_value=request.max_value,
         )
 
+    def dumps(self, dict):
+        return json.dumps(dict)  # , cls=self.json_encoder_cls)
+
+    def round_sig_figures(self, x: Union[np.ndarray, float]):
+        if self.sig_figures == -1:
+            return x
+        return encoder.sig_figures(x, self.sig_figures)
+
 
 def _create_inventory(
     reader: Optional[InventoryReader] = None, sources: Optional[List[str]] = None
@@ -226,17 +246,6 @@ def _create_inventory(
 
 def create_source_paths(inventory: Inventory):
     return get_default_source_paths(inventory)
-
-
-class NumpyArrayEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, np.ndarray):
-            return obj.tolist()
-        return json.JSONEncoder.default(self, obj)
-
-
-def dumps(dict):
-    return json.dumps(dict)  # , cls=NumpyArrayEncoder)
 
 
 def _read_permitted(group_ids: List[str], resource: HazardResource):
@@ -268,7 +277,11 @@ def _get_hazard_data_description(
     return HazardDescriptionResponse(descriptions=descriptions)
 
 
-def _get_hazard_data(request: HazardDataRequest, hazard_model: HazardModel):
+def _get_hazard_data(
+    request: HazardDataRequest,
+    hazard_model: HazardModel,
+    sig_figures: Callable[[Union[np.ndarray, float]], np.ndarray] = lambda x: x,
+):
     # if any(
     #     not _read_permitted(request.group_ids, inventory.resources_by_type_id[(i.event_type, i.model)][0])
     #     for i in request.items
@@ -324,16 +337,16 @@ def _get_hazard_data(request: HazardDataRequest, hazard_model: HazardModel):
         intensity_curves = [
             (
                 IntensityCurve(
-                    intensities=list(resp.intensities),
-                    index_values=list(resp.return_periods),
+                    intensities=list(sig_figures(resp.intensities)),
+                    index_values=list(sig_figures(resp.return_periods)),
                     index_name="return period",
                     return_periods=[],
                 )
                 if isinstance(resp, hmHazardEventDataResponse)
                 else (
                     IntensityCurve(
-                        intensities=list(resp.parameters),
-                        index_values=list(resp.param_defns),
+                        intensities=list(sig_figures(resp.parameters)),
+                        index_values=list(sig_figures(resp.param_defns)),
                         index_name="threshold",
                         return_periods=[],
                     )
@@ -421,6 +434,9 @@ def _get_asset_impacts(
     vulnerability_models: Optional[VulnerabilityModels] = None,
     measure_calculators: Optional[Dict[Type[Asset], RiskMeasureCalculator]] = None,
     assets: Optional[List[Asset]] = None,
+    sig_figures: Callable[
+        [Union[np.ndarray, float]], Union[np.ndarray, float]
+    ] = lambda x: x,
 ):
     vulnerability_models = (
         DictBasedVulnerabilityModels(calc.get_default_vulnerability_models())
@@ -459,18 +475,23 @@ def _get_asset_impacts(
         )
         # create object for API:
         risk_measures = _create_risk_measures(
-            measures, measure_ids_for_asset, definitions, _assets, scenarios, years
+            measures,
+            measure_ids_for_asset,
+            definitions,
+            _assets,
+            scenarios,
+            years,
+            sig_figures,
         )
     elif request.include_asset_level:
         impacts = risk_model.calculate_impacts(_assets, scenarios, years)
 
     if request.include_asset_level:
         asset_impacts = compile_asset_impacts(
-            impacts, _assets, request.include_calc_details
+            impacts, _assets, request.include_calc_details, sig_figures
         )
     else:
         asset_impacts = None
-
     return AssetImpactResponse(asset_impacts=asset_impacts, risk_measures=risk_measures)
 
 
@@ -478,6 +499,9 @@ def compile_asset_impacts(
     impacts: Dict[ImpactKey, List[AssetImpactResult]],
     assets: List[Asset],
     include_calc_details: bool,
+    sig_figures: Callable[
+        [Union[np.ndarray, float]], Union[np.ndarray, float]
+    ] = lambda x: x,
 ):
     """Convert (internal) list of AssetImpactResult objects to a list of AssetLevelImpact
     objects ready for serialization.
@@ -486,6 +510,7 @@ def compile_asset_impacts(
         impacts (Dict[ImpactKey, List[AssetImpactResult]]): Impact results.
         assets (List[Asset]): Assets: the list will be returned using this order.
         include_calc_details (bool): Include calculation details.
+        sig_figures: Function to round results.
 
     Returns:
         List[AssetLevelImpact]: AssetImpactResult objects for serialization.
@@ -503,18 +528,18 @@ def compile_asset_impacts(
                     hazard_exceedance = v.event.to_exceedance_curve()
 
                     vulnerability_distribution = VulnerabilityDistrib(
-                        intensity_bin_edges=v.vulnerability.intensity_bins,
-                        impact_bin_edges=v.vulnerability.impact_bins,
-                        prob_matrix=v.vulnerability.prob_matrix,
+                        intensity_bin_edges=sig_figures(v.vulnerability.intensity_bins),
+                        impact_bin_edges=sig_figures(v.vulnerability.impact_bins),
+                        prob_matrix=sig_figures(v.vulnerability.prob_matrix),
                     )
                     calc_details = AcuteHazardCalculationDetails(
                         hazard_exceedance=ExceedanceCurve(
-                            values=hazard_exceedance.values,
-                            exceed_probabilities=hazard_exceedance.probs,
+                            values=sig_figures(hazard_exceedance.values),
+                            exceed_probabilities=sig_figures(hazard_exceedance.probs),
                         ),
                         hazard_distribution=Distribution(
-                            bin_edges=v.event.intensity_bin_edges,
-                            probabilities=v.event.prob,
+                            bin_edges=sig_figures(v.event.intensity_bin_edges),
+                            probabilities=sig_figures(v.event.prob),
                         ),
                         vulnerability_distribution=vulnerability_distribution,
                         hazard_path=v.impact.path,
@@ -532,14 +557,15 @@ def compile_asset_impacts(
                 key=key,
                 impact_type=v.impact.impact_type.name,
                 impact_exceedance=ExceedanceCurve(
-                    values=impact_exceedance.values,
-                    exceed_probabilities=impact_exceedance.probs,
+                    values=sig_figures(impact_exceedance.values),
+                    exceed_probabilities=sig_figures(impact_exceedance.probs),
                 ),
                 impact_distribution=Distribution(
-                    bin_edges=v.impact.impact_bins, probabilities=v.impact.prob
+                    bin_edges=sig_figures(v.impact.impact_bins),
+                    probabilities=sig_figures(v.impact.prob),
                 ),
-                impact_mean=v.impact.mean_impact(),
-                impact_std_deviation=v.impact.stddev_impact(),
+                impact_mean=sig_figures(v.impact.mean_impact()),
+                impact_std_deviation=sig_figures(v.impact.stddev_impact()),
                 calc_details=None if v.event is None else calc_details,
             )
             ordered_impacts[k.asset].append(hazard_impacts)
@@ -557,6 +583,9 @@ def _create_risk_measures(
     assets: List[Asset],
     scenarios: Sequence[str],
     years: Sequence[int],
+    sig_figures: Callable[
+        [Union[np.ndarray, float]], Union[np.ndarray, float]
+    ] = lambda x: x,
 ) -> RiskMeasures:
     """Prepare RiskMeasures object for (JSON) output from measure results.
 
@@ -573,8 +602,10 @@ def _create_risk_measures(
     Returns:
         RiskMeasures: Output for writing to JSON.
     """
+
     nan_value = -9999.0  # Nan not part of JSON spec
-    hazard_types = all_hazards()
+    hazard_types = set(k.hazard_type for k in measures.keys())
+    # hazard_types = all_hazards()
     measure_set_id = "measure_set_0"
     measures_for_assets: List[RiskMeasuresForAssets] = []
     for hazard_type in hazard_types:
@@ -606,7 +637,7 @@ def _create_risk_measures(
                     RiskMeasuresForAssets(
                         key=score_key,
                         scores=scores,
-                        measures_0=measures_0,
+                        measures_0=sig_figures(measures_0),
                         measures_1=None,
                     )
                 )

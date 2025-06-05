@@ -389,6 +389,7 @@ class TestRiskModels(TestWithCredentials):
         )
         container.override_providers(inventory_reader=None)
         container.override_providers(zarr_reader=None)
+        container.override_providers(sig_figures=6)
 
         requester = container.requester()
         res = requester.get(request_id="get_asset_impact", request_dict=request_dict)
@@ -405,8 +406,6 @@ class TestRiskModels(TestWithCredentials):
             if ma.key.hazard_type == "RiverineInundation"
         )
         np.testing.assert_allclose(res.measures_0, [0.89306593179, 0.89306593179])
-
-        # json_str = json.dumps(response.model_dump(), cls=NumpyArrayEncoder)
 
     def test_generic_model(self):
         scenarios = ["ssp585"]

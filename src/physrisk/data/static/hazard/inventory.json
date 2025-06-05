@@ -3085,58 +3085,6 @@
         {
             "hazard_type": "RiverineInundation",
             "group_id": "",
-            "path": "inundation/river_tudelft/v2/flood_sop_{scenario}_{year}",
-            "indicator_id": "flood_sop",
-            "indicator_model_id": "tudelft",
-            "indicator_model_gcm": "CLMcom-CCLM4-8-17-EC-EARTH",
-            "params": {},
-            "display_name": "Standard of protection (TUDelft)",
-            "display_groups": [],
-            "description": "Maximum and minimum standards of protection for riverine floods occurring in Europe in the present and future climate.\nThis is derived from a data set of protected flood extent i.e. the minimum return period for which flood depth is non-zero.\n\nThe data set is [here](https://data.4tu.nl/datasets/df7b63b0-1114-4515-a562-117ca165dc5b), part of the\n[RAIN data set](https://data.4tu.nl/collections/1e84bf47-5838-40cb-b381-64d3497b3b36)\n(Risk Analysis of Infrastructure Networks in Response to Extreme Weather). The RAIN report is\n[here](http://rain-project.eu/wp-content/uploads/2016/09/D2.5_REPORT_final.pdf).\n\nThe 'River_flood_extent_X_Y_Z_with_protection' data set is obtained by applying FLOPROS database flood protection standards\non top of a data set of unprotected flood depth. That is, it provides information about flood protection for regions susceptible\nto flood. This data set is not simply based on FLOPROS database therefore.\n\nA minimum and maximum is provided to capture uncertainty in flood protection which vulnerability models may choose to take into\naccount. The protection bands are those of FLOPROS: 2\u201310 years, 10\u201330 years, 30\u2013100 years, 100\u2013300 years, 300\u20131000 years, 1000\u201310000 years.\n\nAs an example, if a region has a protected extent of 300 years, this is taken to imply that the area is protected against flood within the\nbounds 100-300 years. It is then a modelling choice as to whether protection is taken from the 100 or 300 year flood depth.\n",
-            "map": {
-                "colormap": {
-                    "min_index": 1,
-                    "min_value": 0.0,
-                    "max_index": 255,
-                    "max_value": 1500.0,
-                    "name": "flare",
-                    "nodata_index": 0,
-                    "units": "years"
-                },
-                "path": "maps/inundation/river_tudelft/v2/flood_sop_{scenario}_{year}_map",
-                "bounds": [],
-                "bbox": [],
-                "index_values": null,
-                "source": "map_array_pyramid"
-            },
-            "store_netcdf_coords": false,
-            "scenarios": [
-                {
-                    "id": "historical",
-                    "years": [
-                        1985
-                    ]
-                },
-                {
-                    "id": "rcp4p5",
-                    "years": [
-                        2035,
-                        2085
-                    ]
-                },
-                {
-                    "id": "rcp8p5",
-                    "years": [
-                        2035,
-                        2085
-                    ]
-                }
-            ],
-            "units": "years"
-        },
-        {
-            "hazard_type": "RiverineInundation",
-            "group_id": "",
             "path": "inundation/flopros_riverine/v1/flood_sop/sop",
             "indicator_id": "flood_sop",
             "indicator_model_id": "flopros",

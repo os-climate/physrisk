@@ -10,6 +10,13 @@ ssp585 = """The SSP585 scenario is based on ‘Fossil Fuelled Development’ pro
 radiative forcing of 8.5 W/m<sup>2</sup> and 5°C of projected warming by 2100. It can be understood as the
 RCP8.5 scenario combined with additional socio-economic assumptions."""
 
+historical = """The historical scenario is based on the current climate."""
+
 
 def description():
-    return {"ssp126": ssp126, "ssp245": ssp245, "ssp585": ssp585}
+    return {
+        "ssp126": ssp126,
+        "ssp245": ssp245,
+        "ssp585": ssp585,
+        "historical": historical,
+    }

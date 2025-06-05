@@ -15,7 +15,7 @@ from typing import (
 from physrisk.api.v1.impact_req_resp import Category, ScoreBasedRiskMeasureDefinition
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.hazard_model import HazardModel
-from physrisk.kernel.hazards import Hazard, all_hazards
+from physrisk.kernel.hazards import Hazard
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey, calculate_impacts
 from physrisk.kernel.vulnerability_model import VulnerabilityModels
 
@@ -162,7 +162,6 @@ class AssetLevelRiskModel(RiskModel):
     ) -> Tuple[
         Dict[Type[Hazard], List[str]], Dict[ScoreBasedRiskMeasureDefinition, str]
     ]:
-        hazards = all_hazards()
         # the identifiers of the score-based risk measures used for each asset, for each hazard type
         measure_ids_for_hazard: Dict[Type[Hazard], List[str]] = {}
         # one
@@ -174,6 +173,10 @@ class AssetLevelRiskModel(RiskModel):
         ]
         # match to specific asset and if no match then use the generic calculator assigned to Asset
         used_calcs = {c for c in calcs_by_asset if c is not None}
+
+        all_supported_hazards = set(
+            h for c in used_calcs for h in c.supported_hazards()
+        )
         # get all measures
         measure_id_lookup = {
             cal: f"measure_{i}"
@@ -182,7 +185,7 @@ class AssetLevelRiskModel(RiskModel):
                     item
                     for item in (
                         cal.get_definition(hazard_type=hazard_type)
-                        for hazard_type in hazards
+                        for hazard_type in all_supported_hazards
                         for cal in used_calcs
                     )
                     if item is not None
@@ -198,7 +201,7 @@ class AssetLevelRiskModel(RiskModel):
             measure = measure_calc.get_definition(hazard_type=hazard_type)
             return measure_id_lookup[measure] if measure is not None else "na"
 
-        for hazard_type in hazards:
+        for hazard_type in all_supported_hazards:
             measure_ids = [get_measure_id(calc, hazard_type) for calc in calcs_by_asset]
             measure_ids_for_hazard[hazard_type] = measure_ids
         return measure_ids_for_hazard, measure_id_lookup

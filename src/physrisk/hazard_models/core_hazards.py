@@ -265,7 +265,10 @@ class CoreInventorySourcePaths(InventorySourcePaths):
         candidates: ResourceSubset,
         hint: Optional[HazardDataHint] = None,
     ):
-        return candidates.with_model_id("tudelft").first()
+        return (
+            candidates.with_model_id("tudelft").first()
+            + candidates.with_model_gcm("MIROC-ESM-CHEM").first()
+        )
 
     @staticmethod
     def _select_wind(

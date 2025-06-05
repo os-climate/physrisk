@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2025 The Linux Foundation
 
-name: 'CodeQL Advanced Scan'
+name: 'CodeQL'
 # Must be called codeql.yml NOT codeql.yaml or GitHub will ignore it
 
 on:

@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: 2025 The Linux Foundation
 
 # Updates Python dependencies and raises a pull request with changes
-name: 'Python Dependencies Update ♻️'
+name: 'Dependencies Updates'
 
 # yamllint disable-line rule:truthy
 on:
@@ -28,7 +28,7 @@ permissions: {}
 
 jobs:
   python-dependencies:
-    name: 'Update Python Dependencies'
+    name: 'Dependencies Updates'
     runs-on: 'ubuntu-latest'
     permissions:
       # IMPORTANT: mandatory to raise the PR

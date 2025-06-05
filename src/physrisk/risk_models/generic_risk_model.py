@@ -72,7 +72,7 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
         # fmt: off
         self._bounds = {
             Wind: HazardIndicatorBounds(
-                categories=[Category.LOW, Category.MEDIUM, Category.HIGH, Category.REDFLAG], 
+                categories=[Category.LOW, Category.MEDIUM, Category.HIGH, Category.REDFLAG],
                 hazard_type=Wind,
                 indicator_id="max_speed",
                 indicator_return=100,
@@ -81,7 +81,7 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 upper=[90,            119, 178, float("inf")]
                 ), # noqa
             Hail: HazardIndicatorBounds(
-                categories=[Category.LOW, Category.MEDIUM, Category.HIGH, Category.REDFLAG], 
+                categories=[Category.LOW, Category.MEDIUM, Category.HIGH, Category.REDFLAG],
                 hazard_type=Hail,
                 indicator_id="days/above/5cm",
                 indicator_return=1,
@@ -90,7 +90,7 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 upper=[1,             2, 3, float("inf")]
                 ), # noqa
             Drought: HazardIndicatorBounds(
-                categories=[Category.LOW, Category.MEDIUM, Category.HIGH, Category.REDFLAG], 
+                categories=[Category.LOW, Category.MEDIUM, Category.HIGH, Category.REDFLAG],
                 hazard_type=Drought,
                 indicator_id="months/spei3m/below/-2",
                 indicator_return=1,
@@ -99,16 +99,16 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 upper=[0.25,          0.5,  1,   float("inf")]
                 ), # noqa
             Fire: HazardIndicatorBounds(
-                categories=[Category.LOW, Category.MEDIUM, Category.HIGH, Category.REDFLAG], 
+                categories=[Category.LOW, Category.MEDIUM, Category.HIGH, Category.REDFLAG],
                 hazard_type=Fire,
                 indicator_id="fire_probability",
                 indicator_return=1,
                 units="%",
                 lower=[float("-inf"), 20, 35, 50],
                 upper=[20,            35, 50, float("inf")]
-                ), # noqa        
+                ), # noqa
             Precipitation: HazardIndicatorBounds(
-                categories=[Category.LOW, Category.MEDIUM, Category.HIGH, Category.REDFLAG], 
+                categories=[Category.LOW, Category.MEDIUM, Category.HIGH, Category.REDFLAG],
                 hazard_type=Precipitation,
                 indicator_id="max/daily/water_equivalent",
                 indicator_return=100,
@@ -117,7 +117,7 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 upper=[100,           130, 160, float("inf")]
                 ), # noqa
             ChronicHeat: HazardIndicatorBounds(
-                categories=[Category.LOW, Category.MEDIUM, Category.HIGH, Category.REDFLAG], 
+                categories=[Category.LOW, Category.MEDIUM, Category.HIGH, Category.REDFLAG],
                 hazard_type=ChronicHeat,
                 indicator_id="days/above/35c",
                 indicator_return=1,
@@ -128,7 +128,7 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
         }
         acute_bounds = ImpactBoundsJoint(
             categories=[Category.LOW, Category.MEDIUM, Category.HIGH, Category.REDFLAG],
-            measure1=self._impact, 
+            measure1=self._impact,
             return1=100, # i.e. 1-in-100 year impact
             measure2=self._delta_impact,
             return2=100, # i.e. change in 1-in-100 year impact from historical to future scenario

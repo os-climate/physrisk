@@ -75,7 +75,7 @@ Physrisk is primarily designed to run 'bottom-up' calculations that model the im
 Hazard indicators, that is quantities that quantify a hazard, are on-boarded from public data sets or inferred from climate projections, e.g. from CMIP or CORDEX data sets. In both cases, indicator data is created from code in the
 `hazard repo <https://github.com/os-climate/hazard>`_, open-source to make the data lineage as transparent as possible.
 
-The `physrisk repo <https://github.com/os-climate/physrisk>`_ contains the main calculation engine. 
+The `physrisk repo <https://github.com/os-climate/physrisk>`_ contains the main calculation engine.
 
 Physrisk is also designed to be a hosted, e.g. to provide on-demand calculations; the project is a co-operative of members some of whom need to integrate physical risk calculation into other systems. `physrisk-api <https://github.com/os-climate/physrisk-api>`_ and `physrisk-ui <https://github.com/os-climate/physrisk-ui>`_ provide an example API and user interface.
 

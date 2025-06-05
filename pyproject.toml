@@ -58,9 +58,6 @@ Downloads = "https://github.com/os-climate/physrisk/releases"
 Documentation = "https://github.com/os-climate/physrisk/tree/main/docs"
 "Source Code" = "https://github.com/os-climate/physrisk"
 
-[metadata]
-license-files = ["LICENSE"]
-
 [build-system]
 requires = [
     "setuptools>=42",

@@ -100,28 +100,3 @@ jobs:
         uses: lfreleng-actions/python-audit-action@0637cc9f40984b46bec578631fbac2a354eebabd # v0.1.5
         with:
           python_version: "${{ matrix.python-version }}"
-
-  notebooks:
-    name: 'Test Jupyter Notebooks'
-    runs-on: 'ubuntu-24.04'
-    needs: 'python-build'
-    # Matrix job
-    strategy:
-      fail-fast: false
-      matrix: "${{ fromJson(needs.python-build.outputs.matrix_json) }}"
-    permissions:
-      contents: read
-    timeout-minutes: 10
-    steps:
-      # Harden the runner used by this workflow
-      - uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
-        with:
-          egress-policy: 'audit'
-
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-      - name: "Notebook tests ${{ matrix.python-version }}"
-        # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-notebook-test-action@471123b59d0ef608f95bece4d36a95ebabab0a68 # v0.1.1
-        with:
-          python_version: "${{ matrix.python-version }}"

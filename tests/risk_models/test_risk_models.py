@@ -41,8 +41,8 @@ from physrisk.vulnerability_models.real_estate_models import (
     RealEstateRiverineInundationModel,
 )
 
-from ..base_test import TestWithCredentials
-from ..data.hazard_model_store_test import (
+from ..test_base import TestWithCredentials
+from ..data.test_hazard_model_store import (
     TestData,
     ZarrStoreMocker,
     inundation_return_periods,

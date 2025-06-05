@@ -13,9 +13,9 @@ from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.hazards import ChronicHeat, RiverineInundation
 
-from ..api.container_test import TestContainer
-from ..base_test import TestWithCredentials
-from ..data.hazard_model_store_test import (
+from ..api.test_container import TestContainer
+from ..test_base import TestWithCredentials
+from ..data.test_hazard_model_store import (
     TestData,
     get_mock_hazard_model_store_single_curve,
     mock_hazard_model_store_heat,

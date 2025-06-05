@@ -6,7 +6,7 @@ from physrisk.data.static.world import (
     get_countries_json,
 )
 
-from ..data.hazard_model_store_test import TestData
+from ..data.test_hazard_model_store import TestData
 
 
 class TestStaticDate(unittest.TestCase):

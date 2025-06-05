@@ -68,7 +68,7 @@ class Container(containers.DeclarativeContainer):
 
     json_encoder_cls = providers.Object(PhysriskDefaultEncoder)
 
-    sig_figures = providers.Object(-1)
+    sig_figures = providers.Object(-1) # -1 indicates no rounding
 
     source_paths = providers.Factory(create_source_paths, inventory=inventory)
 

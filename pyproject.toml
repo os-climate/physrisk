@@ -7,7 +7,7 @@ description = "OS-Climate Physical Risk Library"
 authors = [
     {name = "Joe Moorhouse",email = "5102656+joemoorhouse@users.noreply.github.com"},
 ]
-requires-python = ">=3.9,<3.11"
+requires-python = ">=3.9"
 readme = "README.md"
 license = {file = "LICENSE"}
 keywords = ["Physical", "Climate", "Risk", "Finance"]
@@ -25,7 +25,6 @@ classifiers = [
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.8",
   "Topic :: Office/Business :: Financial",
   "Topic :: Scientific/Engineering",
   "Topic :: Software Development",

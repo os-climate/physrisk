@@ -3,6 +3,8 @@ name: Polish Notebook(s)
 about: Finalize notebooks prior to publishing or promoting
 ---
 
+# Polish Notebook(s)
+
 ## Related Issues and Dependencies
 
 …
@@ -10,7 +12,8 @@ about: Finalize notebooks prior to publishing or promoting
 ## The following checklist items have been completed for each notebook in this PR
 
 - [ ] Proofread by other team member for grammar and spelling
-- [ ] Proofread by other team member for coherence and reproducibility (does the analysis make sense as you read through the code and markdown from top to bottom?)
+- [ ] Proofread by other team member for coherence and reproducibility (does the analysis make sense as you read
+  through the code and markdown from top to bottom?)
 - [ ] Links checked and redirect correctly
 - [ ] There is a top markdown cell describing what the notebook does
 - [ ] There is a concluding markdown cell that summarizes the findings and outlines any next steps

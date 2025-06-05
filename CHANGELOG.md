@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.2] - 2022-04-01
 
-### Fixes
+### Bug Fixes
 
 - Add missing __init__.py file in src/physrisk/data_objects
 

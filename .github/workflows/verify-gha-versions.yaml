@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: 2025 The Linux Foundation
 
 # Verifies action/workflow calls are pinned to SHA commit values
-name: 'Check GitHub Actions/Workflows'
+name: "Check GitHub Workflows"
 
 # yamllint disable-line rule:truthy
 on:
@@ -15,18 +15,15 @@ on:
     paths: ['.github/**']
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: "${{ github.workflow }}-${{ github.ref }}"
   cancel-in-progress: true
 
 permissions: {}
 
 jobs:
-  check-actions:
-    name: 'Pinned Versions'
-    runs-on: 'ubuntu-latest'
+  verify:
+    name: Verify
+    # yamllint disable-line rule:line-length
+    uses: lfit/releng-reusable-workflows/.github/workflows/reuse-verify-github-actions.yaml@main
     permissions:
       contents: read
-    steps:
-      - name: 'Check Workflows'
-        # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/pinned-versions-action@cde1c07452cbfcc2bef79fd4b14e90e5efbd8fc2 # v0.1.0

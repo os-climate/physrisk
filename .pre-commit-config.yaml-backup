@@ -1,0 +1,46 @@
+---
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: cef0300fd0fc4d2a87a85fa2093c6b283ea36f4b  # frozen: v5.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: name-tests-test
+      - id: check-byte-order-marker
+      - id: check-case-conflict
+      - id: check-docstring-first
+      - id: check-json
+      - id: check-toml
+      - id: check-yaml
+      - id: check-symlinks
+      - id: detect-private-key
+
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    rev: a30f0d816e5062a67d87c8de753cfe499672b959  # frozen: v1.5.5
+    hooks:
+      - id: remove-tabs
+        exclude: ^.*(\.(tsv)|Makefile)$
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: d19233b89771be2d89273f163f5edc5a39bbc34a  # frozen: v0.11.12
+    hooks:
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix, --config=pyproject.toml]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: mypy-cache
+        name: "create mypy cache"
+        language: system
+        pass_filenames: false
+        entry: bash -c 'if [ ! -d .mypy_cache ];
+          then /bin/mkdir .mypy_cache; fi; exit 0'
+
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: "7010b10a09f65cd60a23c207349b539aa36dbec1"  # frozen: v1.16.0
+    hooks:
+      - id: mypy
+        verbose: true
+        args: ["--show-error-codes", "--install-types", "--non-interactive"]
+        additional_dependencies: ["pytest", "types-requests"]

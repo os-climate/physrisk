@@ -8,7 +8,14 @@ from typing import Dict, List, Mapping, MutableMapping, Optional, Sequence, Tupl
 import numpy as np
 
 from physrisk.data.zarr_reader import ZarrReader
-from physrisk.kernel.hazards import Hail, Hazard, IndicatorData, indicator_data
+from physrisk.kernel.hazards import (
+    Drought,
+    Fire,
+    Hail,
+    Hazard,
+    IndicatorData,
+    indicator_data,
+)
 
 from ..kernel.hazard_model import (
     HazardDataFailedResponse,
@@ -73,7 +80,12 @@ class PregeneratedHazardModel(HazardModel):
                 # for some indicators nan is taken to be 0 for purposes of calculation
                 # (nan might indicate the quantity cannot be calculated)
                 nan_is_zero = (
-                    hazard_type == Hail and indicator_id == "months/spei3m/below/-2"
+                    (
+                        hazard_type == Drought
+                        and indicator_id == "months/spei3m/below/-2"
+                    )
+                    or (hazard_type == Hail and indicator_id == "days/above/5cm")
+                    or (hazard_type == Fire and indicator_id == "fire_probability")
                 )
                 for req in batch:
                     lat_lon_index.setdefault(

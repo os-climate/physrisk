@@ -217,7 +217,7 @@ class Requester:
         )
 
     def dumps(self, dict):
-        return json.dumps(dict)  # , cls=self.json_encoder_cls)
+        return json.dumps(dict, cls=self.json_encoder_cls)
 
     def round_sig_figures(self, x: Union[np.ndarray, float]):
         if self.sig_figures == -1:

@@ -22,21 +22,21 @@
             "longitude": 20.1047
         },
         {
-            "asset_class": "PowerGeneratingAsset",
+            "asset_class": "ThermalPowerGeneratingAsset",
             "type": "Gas",
             "location": "Africa",
             "latitude": 36.8789,
             "longitude": 6.9366
         },
         {
-            "asset_class": "PowerGeneratingAsset",
+            "asset_class": "ThermalPowerGeneratingAsset",
             "type": "Gas",
             "location": "Africa",
             "latitude": 36.88,
             "longitude": 6.935
         },
         {
-            "asset_class": "PowerGeneratingAsset",
+            "asset_class": "ThermalPowerGeneratingAsset",
             "type": "Oil",
             "location": "Africa",
             "latitude": -12.4706,
@@ -57,7 +57,7 @@
             "longitude": 14.4809
         },
         {
-            "asset_class": "PowerGeneratingAsset",
+            "asset_class": "ThermalPowerGeneratingAsset",
             "type": "Oil",
             "location": "South America",
             "latitude": -39.2145,

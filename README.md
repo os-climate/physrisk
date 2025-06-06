@@ -5,7 +5,13 @@
 <!-- prettier-ignore-end -->
 <!-- markdownlint-enable -->
 
-[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/os-climate/physrisk/badge)](https://scorecard.dev/viewer/?uri=github.com/os-climate/physrisk)
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable-next-line MD013 -->
+[![OS-Climate](https://img.shields.io/badge/OS-Climate-blue)](https://os-climate.org/) [![Slack](https://img.shields.io/badge/slack-osclimate-blue.svg?logo=slack)](https://os-climate.slack.com) [![Source Code](https://img.shields.io/badge/GitHub-100000?logo=github&logoColor=white&color=blue)](https://github.com/os-climate/physrisk) [![PyPI](https://img.shields.io/pypi/v/physrisk?logo=python&logoColor=white&color=blue)](https://pypi.org/project/physrisk) [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+<!-- markdownlint-disable-next-line MD013 -->
+ [![pre-commit.ci status badge]][pre-commit.ci results page] [![TestPyPI](https://img.shields.io/pypi/v/physrisk?logo=python&label=TestPyPi&logoColor=white&color=32C955&pypiBaseUrl=https://test.pypi.org)](https://test.pypi.org/project/physrisk) [![🧪 GitHub Actions CI/CD workflow tests badge]][GHA workflow runs list] [![🔐 CodeQL](https://github.com/os-climate/physrisk/actions/workflows/codeql.yml/badge.svg)](https://github.com/os-climate/physrisk/actions/workflows/codeql.yml) [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/os-climate/physrisk/badge)](https://scorecard.dev/viewer/?uri=github.com/os-climate/physrisk)
+<!-- prettier-ignore-end -->
 
 # Physrisk
 
@@ -86,3 +92,8 @@ variables in a credentials.env file and do, for example:
 from dotenv import load_dotenv
 load_dotenv(dotenv_path=dotenv_path, override=True)
 ```
+
+[🧪 GitHub Actions CI/CD workflow tests badge]: https://github.com/os-climate/physrisk/actions/workflows/build-test.yaml/badge.svg
+[GHA workflow runs list]: https://github.com/os-climate/physrisk/actions/workflows/build-test.yaml
+[pre-commit.ci results page]: https://results.pre-commit.ci/latest/github/os-climate/physrisk/main
+[pre-commit.ci status badge]: https://results.pre-commit.ci/badge/github/os-climate/physrisk/main.svg

@@ -70,7 +70,6 @@ is a convenient way to browse data sets.
 
 A good place to start is the Getting Started section in the documentation site which has a number of walk-throughs.
 
-
 [🧪 GitHub Actions CI/CD workflow tests badge]: https://github.com/os-climate/physrisk/actions/workflows/build-test.yaml/badge.svg
 [GHA workflow runs list]: https://github.com/os-climate/physrisk/actions/workflows/build-test.yaml
 [pre-commit.ci results page]: https://results.pre-commit.ci/latest/github/os-climate/physrisk/main

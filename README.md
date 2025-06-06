@@ -17,7 +17,7 @@
 
 Physical climate risk calculation engine.
 
-![OS-Climate Logo](docs/images/OS-Climate-Logo.png)
+<img src="docs/images/OS-Climate-Logo.png" alt="drawing" width="150"/>
 
 ## About physrisk
 
@@ -25,8 +25,8 @@ An [OS-Climate](https://os-climate.org) project, physrisk is a library for
 assessing the physical effects of climate change and thereby the potential
 benefit of measures to improve resilience.
 
-An introduction and methodology is available in the
-[Physical Risk Methodology document](https://github.com/os-climate/physrisk/blob/main/methodology/PhysicalRiskMethodology.pdf).
+An introduction and methodology can be found in the
+[online documentation](https://physrisk.readthedocs.io/en/latest/).
 
 Physrisk is primarily designed to run 'bottom-up' calculations that model
 the impact of climate hazards on large numbers of individual assets
@@ -47,51 +47,28 @@ calculations.
 [physrisk-api](https://github.com/os-climate/physrisk-api) and
 [physrisk-ui](https://github.com/os-climate/physrisk-ui) provide an example
 API and user interface. A
-[development version of the UI](https://physrisk-ui-physrisk.apps.odh-cl2.apps.os-climate.org)
+[development version of the UI](https://physrisk-ui-physrisk.apps.osc-cl1.apps.os-climate.org)
 is hosted by OS-Climate.
 
 ## Using the library
 
-The library can be run locally, although access to the hazard indicator data
-is needed. The library is installed via:
+The library can be run locally. The library is installed via:
 
 ```bash
 pip install physrisk-lib
 ```
 
-Hazard indicator data is freely available. Members of the project are able to
-access OS-Climate S3 buckets. Credentials are available from the
-[OS-Climate S3 keys](https://console-openshift-console.apps.odh-cl2.apps.os-climate.org/k8s/ns/physrisk/secrets/physrisk-s3-keys).
+Hazard indicator data is freely available via the [Amazon Sustainability Data Initiative, here](https://registry.opendata.aws/os-climate-physrisk/).
 Information about the project is available via the
 [community-hub](https://github.com/os-climate/OS-Climate-Community-Hub).
-Non-members are able to download or copy hazard indicator data.
-
-Hazard indicator data can be downloaded or copied from the
-'os-climate-public-data' bucket. A list of the keys to copy is available from
-<https://os-climate-public-data.s3.amazonaws.com/hazard/keys.txt>
 
 An inventory of the hazard data is maintained in the
 [hazard inventory](https://github.com/os-climate/hazard/blob/main/src/inventories/hazard/inventory.json)
 (this is used by the physrisk library itself). The
-[UI hazard viewer](https://physrisk-ui-physrisk.apps.odh-cl2.apps.os-climate.org)
+[UI hazard viewer](https://physrisk-ui-physrisk.apps.osc-cl1.apps.os-climate.org)
 is a convenient way to browse data sets.
 
-Access to hazard event data requires setting of environment variables
-specifying the S3 Bucket, for example:
-
-```bash
-OSC_S3_BUCKET=physrisk-hazard-indicators
-OSC_S3_ACCESS_KEY=**********
-OSC_S3_SECRET_KEY=**********
-```
-
-For use in a Jupyter environment, it is recommended to put the environment
-variables in a credentials.env file and do, for example:
-
-```python
-from dotenv import load_dotenv
-load_dotenv(dotenv_path=dotenv_path, override=True)
-```
+A good place to start is the Getting Started section in the documentation site which has a number of walk-throughs.
 
 [🧪 GitHub Actions CI/CD workflow tests badge]: https://github.com/os-climate/physrisk/actions/workflows/build-test.yaml/badge.svg
 [GHA workflow runs list]: https://github.com/os-climate/physrisk/actions/workflows/build-test.yaml

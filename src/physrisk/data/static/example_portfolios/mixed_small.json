@@ -8,11 +8,11 @@
             "longitude": -68.5982
         },
         {
-            "asset_class": "PowerGeneratingAsset",
-            "type": "Hydro",
-            "location": "Europe",
-            "latitude": 39.9116,
-            "longitude": 20.1047
+            "asset_class": "ThermalPowerGeneratingAsset",
+            "type": "Gas",
+            "location": "Africa",
+            "latitude": 36.8789,
+            "longitude": 6.9366
         },
         {
             "asset_class": "RealEstateAsset",

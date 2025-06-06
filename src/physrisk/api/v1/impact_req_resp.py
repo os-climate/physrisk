@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Dict, List, NamedTuple, Optional, Sequence
+from typing import Any, Dict, List, NamedTuple, Optional, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field, computed_field
 
@@ -96,11 +96,11 @@ class RiskScoreValue(BaseModel):
         description="Full description of value including criteria, \
         e.g. change in fractional loss from 1-in-100 year event is greater than 10%.",
     )
-    lower_bound: Optional[List[float]] = Field(
+    lower_bound: Optional[List[Any]] = Field(
         default=None,
         description="Lower bound(s) of the measure(s) from which the score is derived",
     )
-    upper_bound: Optional[List[float]] = Field(
+    upper_bound: Optional[List[Any]] = Field(
         default=None,
         description="Upper bound(s) of the measure(s) from which the score is derived",
     )

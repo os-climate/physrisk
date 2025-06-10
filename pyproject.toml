@@ -143,7 +143,27 @@ ignore_missing_imports = true
 [tool.coverage.run]
 source = "src"
 omit = "tests/*"
-relative_files = true
+# relative_files = true
+
+[tool.coverage.report]
+# Note: Set low for this repository
+# Recommend setting a value > 90%
+fail_under = 25
+skip_empty = true
+ignore_errors = true
+show_missing = true
+exclude_lines = [
+  "pragma: no cover",
+  "def __repr__",
+  "if self.debug:",
+  "raise NotImplementedError",
+  "if __name__ == .__main__.:",
+  "pass",
+  "raise ImportError",
+]
+
+[tool.coverage.html]
+directory = "coverage_html_report"
 
 [tool.ruff]
 # Exclude a variety of commonly ignored directories.

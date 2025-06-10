@@ -129,26 +129,25 @@ all = {composite = ["pytest", "lint"]}
 
 [tool.pytest.ini_options]
 testpaths = "tests"
-addopts = "-v"
 log_cli = true
 log_cli_level = "INFO"
 log_cli_format = "%(asctime)s [%(levelname)s] %(message)s (%(filename)s:%(lineno)s)"
 log_cli_date_format = "%Y-%m-%d %H:%M:%S"
-#addopts = "--cov --cov-report html --cov-report term-missing --cov-fail-under 95"
+addopts = ["--cov", "-v", "--cov-report=html"]
 
 [tool.mypy]
 warn_unreachable = true
 ignore_missing_imports = true
 
 [tool.coverage.run]
-source = "src"
-omit = "tests/*"
+source = ["src"]
+omit = ["tests/*"]
 # relative_files = true
 
 [tool.coverage.report]
 # Note: Set low for this repository
 # Recommend setting a value > 90%
-fail_under = 25
+fail_under = 75
 skip_empty = true
 ignore_errors = true
 show_missing = true

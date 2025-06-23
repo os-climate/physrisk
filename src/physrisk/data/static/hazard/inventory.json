@@ -3255,6 +3255,61 @@
                 }
             ],
             "units": "years"
+        },
+        {
+            "hazard_type": "Fire",
+            "group_id": "fire_risk_indicators",
+            "path": "fire/ECB_fire_risk_indicators/v1_1/{scenario}_{year}",
+            "indicator_id": "fire_probability",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "FireRiskAlphaKlima",
+            "params": {},
+            "display_name": "Fire Probability (Alpha-Klima v1.1)",
+            "display_groups": [],
+            "description": "\n\n\nThis spatial dataset provides annual probabilities of fire occurrence across Europe under both historical\nconditions (2002\u20132022) and projected future climates (2023\u20132050) for two emissions pathways (RCP 4.5 and\nRCP 8.5). It builds upon the methodology presented in *\u201cClimate Change Risk Indicators for Central Banking:\nExplainable AI in Fire Risk Estimations\u201d* (https://dx.doi.org/10.2139/ssrn.4865384) and integrates a range of\nhigh-quality geospatial layers to deliver wall-to-wall coverage at ~2.5 km resolution.\n\n**Key input layers**\n\n* **Fire Weather Index (FWI) v2.0** \u2014 Copernicus Climate Data Store\n  <https://cds.climate.copernicus.eu/datasets/sis-tourism-fire-danger-indicators?tab=overview>\n* **Burned-area product (MCD64A1 v6.1)** \u2014 NASA/USGS LP DAAC\n  <https://lpdaac.usgs.gov/products/mcd64a1v061/>\n* **Land-cover product (MCD12Q1 v6)** \u2014 NASA/USGS LP DAAC\n  <https://lpdaac.usgs.gov/products/mcd12q1v006/>\n* **Critical infrastructure (HARCI-EU)** \u2014 Koks *et al.* (2019), *Scientific Data*\n  <https://www.nature.com/articles/s41597-019-0135-1>\n* **Urban centres & population** \u2014 Geoapify\n  <https://www.geoapify.com/>\n\n**Countries covered (ISO alpha-2 codes)**\nAL, AT, BE, BG, CH, CY, CZ, DE, DK, EE, ES, FI, FR, GB, GR, HR, HU, IE, IS, IT, LI, LT, LU, LV, ME, MK, MT, NL, NO, PL, PT, RO, RS, SE, SI, SK, TR\n",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 0.7,
+                    "name": "flare",
+                    "nodata_index": 0,
+                    "units": "probability"
+                },
+                "path": "maps/fire/ECB_fire_risk_indicators/v1_1/{scenario}_{year}_map",
+                "bounds": [],
+                "bbox": [
+                    -180.0,
+                    -85.0,
+                    180.0,
+                    85.0
+                ],
+                "index_values": null,
+                "source": "map_array_pyramid"
+            },
+            "store_netcdf_coords": false,
+            "scenarios": [
+                {
+                    "id": "historical",
+                    "years": [
+                        2010
+                    ]
+                },
+                {
+                    "id": "rcp4p5",
+                    "years": [
+                        2035
+                    ]
+                },
+                {
+                    "id": "rcp8p5",
+                    "years": [
+                        2035
+                    ]
+                }
+            ],
+            "units": "probability"
         }
     ]
 }

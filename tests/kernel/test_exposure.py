@@ -108,12 +108,12 @@ class TestExposureMeasures(TestWithCredentials):
         def path_curves():
             return dict(
                 (r.path.format(scenario="ssp585", year=2030), v)
-                for (r, v) in zip(resources, values)
+                for (r, v) in zip(resources, values, strict=False)
             )
 
         assets = [
             Asset(lat, lon)
-            for (lat, lon) in zip(TestData.latitudes, TestData.longitudes)
+            for (lat, lon) in zip(TestData.latitudes, TestData.longitudes, strict=False)
         ]
 
         store = mock_hazard_model_store_path_curves(

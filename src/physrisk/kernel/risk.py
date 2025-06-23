@@ -246,7 +246,7 @@ class AssetLevelRiskModel(RiskModel):
                                 hazard_type, base_impact, prosp_impact
                             )
                             for base_impact, prosp_impact in zip(
-                                base_impacts, fut_impacts
+                                base_impacts, fut_impacts, strict=False
                             )
                         ]
                         risk_ind = [

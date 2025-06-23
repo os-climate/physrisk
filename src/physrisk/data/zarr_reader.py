@@ -264,7 +264,7 @@ class ZarrReader:
                 if multipoint.is_empty
                 else multipoint
             )
-            for shape, multipoint in zip(transformed_shapes, multipoints)
+            for shape, multipoint in zip(transformed_shapes, multipoints, strict=False)
         ]
         multipoints = [
             MultiPoint([(point.x, point.y)]) if isinstance(point, Point) else point
@@ -298,7 +298,7 @@ class ZarrReader:
                     else MultiPoint(transformed_shape.exterior.coords)
                 )
                 for transformed_shape, multipoint in zip(
-                    transformed_shapes, multipoints
+                    transformed_shapes, multipoints, strict=False
                 )
             ]
             image_coords = np.array(
@@ -326,7 +326,9 @@ class ZarrReader:
             [
                 np.nanmax(curves[index - number_of_points_per_shape : index, :], axis=0)
                 for number_of_points_per_shape, index in zip(
-                    numbers_of_points_per_shape, numbers_of_points_per_shape_cumulated
+                    numbers_of_points_per_shape,
+                    numbers_of_points_per_shape_cumulated,
+                    strict=False,
                 )
             ]
         )

@@ -264,7 +264,7 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
     ):
         risk_score_values = []
         for category, lower, upper in zip(
-            bounds.categories, bounds.lower, bounds.upper
+            bounds.categories, bounds.lower, bounds.upper, strict=False
         ):
             label, description = label_description(bounds, lower, upper)
             rsv = RiskScoreValue(
@@ -436,6 +436,7 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 bounds.upper1,
                 bounds.lower2,
                 bounds.upper2,
+                strict=False,
             ):
                 if (
                     measure1 >= lower1

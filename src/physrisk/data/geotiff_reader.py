@@ -41,7 +41,7 @@ def dataset_read_bounded(dataset, longitudes, latitudes, window_half_width=0.01)
             points,
             [
                 [lon + offset[0], lat + offset[1]]
-                for (lon, lat) in zip(longitudes, latitudes)
+                for (lon, lat) in zip(longitudes, latitudes, strict=False)
             ],
         )
 
@@ -53,7 +53,7 @@ def dataset_read_bounded(dataset, longitudes, latitudes, window_half_width=0.01)
 
 
 def dataset_read_points(dataset, longitudes, latitudes, window_half_width=0.01):
-    points = [[lon, lat] for (lon, lat) in zip(longitudes, latitudes)]
+    points = [[lon, lat] for (lon, lat) in zip(longitudes, latitudes, strict=False)]
     samples = np.array(list(rasterio.sample.sample_gen(dataset, points)))
     return samples
 
@@ -62,7 +62,7 @@ def dataset_read_windows(dataset, longitudes, latitudes, window_half_width=0.01)
     # seem to need to do one window at a time: potentially slow
     hw = window_half_width
     samples = []
-    for lon, lat in zip(longitudes, latitudes):
+    for lon, lat in zip(longitudes, latitudes, strict=False):
         win = rasterio.windows.from_bounds(
             lon - hw, lat - hw, lon + hw, lat + hw, dataset.transform
         )  # left, bottom, right, top

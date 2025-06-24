@@ -205,7 +205,7 @@ class TestChronicAssetImpact(unittest.TestCase):
 
         assets = [
             IndustrialActivity(lat, lon, type="Construction")
-            for lon, lat in zip(TestData.longitudes, TestData.latitudes)
+            for lon, lat in zip(TestData.longitudes, TestData.latitudes, strict=False)
         ][:1]
 
         results = calculate_impacts(

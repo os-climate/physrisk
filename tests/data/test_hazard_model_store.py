@@ -343,7 +343,7 @@ def degree_day_heat_parameter_set():
             get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year)
         )
     parameters = [300, 300, 600, -200]
-    return dict(zip(paths, parameters))
+    return dict(zip(paths, parameters, strict=False))
 
 
 def wbgt_gzn_joint_parameter_set():
@@ -368,7 +368,7 @@ def wbgt_gzn_joint_parameter_set():
             get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year)
         )
     parameters = [300, 300, 600, -200, 0.05, 0.003, 0.11, 0.013]
-    return dict(zip(paths, parameters))
+    return dict(zip(paths, parameters, strict=False))
 
 
 def inundation_paths():

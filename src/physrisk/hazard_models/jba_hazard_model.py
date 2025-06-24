@@ -138,7 +138,9 @@ class JBAHazardModel(HazardModel):
             )
             group_country_codes = self.geocoder.get_countries(group_lats, group_lons)
 
-            for country_code, cache_key in zip(group_country_codes, groups.keys()):
+            for country_code, cache_key in zip(
+                group_country_codes, groups.keys(), strict=False
+            ):
                 request_groups[
                     RequestKey(
                         country_code=country_code, jba_scenario=cache_key.jba_scenario
@@ -230,7 +232,7 @@ class JBAHazardModel(HazardModel):
             "geometries": [
                 {"id": id, "wkt_geometry": f"POINT({lon} {lat})", "buffer": 10}
                 for id, lat, lon in zip(
-                    req_ids, api_request.latitudes, api_request.longitudes
+                    req_ids, api_request.latitudes, api_request.longitudes, strict=False
                 )
             ],
         }
@@ -262,7 +264,9 @@ class JBAHazardModel(HazardModel):
         # first checks cache
         cached_responses: Dict[JBACacheKey, Dict] = {
             cache_key: json.loads(item)
-            for cache_key, item in zip(cache_keys, self.cache_store.getitems(cache_ids))
+            for cache_key, item in zip(
+                cache_keys, self.cache_store.getitems(cache_ids), strict=False
+            )
             if item is not None
         }
         # we need to create requests for anything not in cache

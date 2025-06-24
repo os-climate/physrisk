@@ -40,7 +40,7 @@ class ImpactDistrib:
         self.__path = path
 
     def impact_bins_explicit(self):
-        return zip(self.__impact_bins[0:-1], self.__impact_bins[1:])
+        return zip(self.__impact_bins[0:-1], self.__impact_bins[1:], strict=False)
 
     def mean_impact(self):
         return np.sum(

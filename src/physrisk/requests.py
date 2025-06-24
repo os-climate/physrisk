@@ -319,7 +319,7 @@ def _get_hazard_data(
                 year=item.year,
                 hint=hint,
             )
-            for (lon, lat) in zip(item.longitudes, item.latitudes)
+            for (lon, lat) in zip(item.longitudes, item.latitudes, strict=False)
         ]
 
         all_requests.extend(data_requests)

@@ -25,7 +25,7 @@ def get_countries_json():
     countries = [
         Country(continent=continent, country=country, country_iso_a3=code)
         for (continent, country, code) in zip(
-            world["continent"], world["name"], world["iso_a3"]
+            world["continent"], world["name"], world["iso_a3"], strict=False
         )
     ]
 

@@ -84,7 +84,9 @@ class JupterExposureMeasure(ExposureMeasure):
 
     def get_exposures(self, asset: Asset, data_responses: Sequence[HazardDataResponse]):
         result: Dict[type, Tuple[Category, float, str]] = {}
-        for (k, v), resp in zip(self.exposure_bins.items(), data_responses):
+        for (k, v), resp in zip(
+            self.exposure_bins.items(), data_responses, strict=False
+        ):
             if isinstance(resp, HazardParameterDataResponse):
                 param = resp.parameter
                 hazard_path = resp.path

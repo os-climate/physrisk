@@ -5,29 +5,29 @@ name = "physrisk-lib"
 version = "1.0.12"
 description = "OS-Climate Physical Risk Library"
 authors = [
-    {name = "Joe Moorhouse",email = "5102656+joemoorhouse@users.noreply.github.com"},
+    { name = "Joe Moorhouse", email = "5102656+joemoorhouse@users.noreply.github.com" },
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 readme = "README.md"
-license = {file = "LICENSE"}
+license = { file = "LICENSE" }
 keywords = ["Physical", "Climate", "Risk", "Finance"]
 
 classifiers = [
-  "Intended Audience :: Developers",
-  "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: Apache Software License",
-  "Operating System :: MacOS",
-  "Operating System :: Microsoft :: Windows",
-  "Operating System :: Unix",
-  "Programming Language :: Python",
-  "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.9",
-  "Topic :: Office/Business :: Financial",
-  "Topic :: Scientific/Engineering",
-  "Topic :: Software Development",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: Unix",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.10",
+    "Topic :: Office/Business :: Financial",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Software Development",
 ]
 
 dependencies = [
@@ -59,11 +59,7 @@ Documentation = "https://github.com/os-climate/physrisk/tree/main/docs"
 "Source Code" = "https://github.com/os-climate/physrisk"
 
 [build-system]
-requires = [
-    "setuptools>=42",
-    "wheel",
-    "pdm"
-]
+requires = ["setuptools>=42", "wheel", "pdm"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
@@ -80,16 +76,11 @@ physrisk = [
     "data/static/*.json",
     "data/static/example_portfolios/*.json",
     "data/static/hazard/*.json",
-    "data/static/vulnerability/*.json"
+    "data/static/vulnerability/*.json",
 ]
 
 [tool.pdm.dev-dependencies]
-test = [
-    "pdm[pytest]",
-    "pytest",
-    "pytest-cov",
-    "openpyxl>=3.1.5",
-]
+test = ["pdm[pytest]", "pytest", "pytest-cov", "openpyxl>=3.1.5"]
 doc = [
     "numpydoc",
     "nbsphinx",
@@ -108,12 +99,7 @@ doc = [
     "graphviz",
     "plotly>=5.24.1",
 ]
-dev = [
-    "mypy",
-    "pre-commit",
-    "ruff",
-    "tox"
-]
+dev = ["mypy", "pre-commit", "ruff", "tox"]
 
 [tool.pdm.scripts]
 pre_release = "scripts/dev-versioning.sh"
@@ -125,7 +111,7 @@ docs = { shell = "cd docs && make html", help = "Start the dev server for doc pr
 open_docs = { shell = "open ./docs/_build/html/index.html", help = "Start the dev server for doc preview" }
 lint = "pre-commit run --all-files"
 complete = { call = "tasks.complete:main", help = "Create autocomplete files for bash and fish" }
-all = {composite = ["pytest", "lint"]}
+all = { composite = ["pytest", "lint"] }
 
 [tool.pytest.ini_options]
 testpaths = "tests"
@@ -152,13 +138,13 @@ skip_empty = true
 ignore_errors = true
 show_missing = true
 exclude_lines = [
-  "pragma: no cover",
-  "def __repr__",
-  "if self.debug:",
-  "raise NotImplementedError",
-  "if __name__ == .__main__.:",
-  "pass",
-  "raise ImportError",
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "pass",
+    "raise ImportError",
 ]
 
 [tool.coverage.html]
@@ -198,14 +184,17 @@ exclude = [
 [tool.ruff.lint]
 extend-fixable = [
     # Instead of trailing-whitespace
-    "W291", "W293"
-    ]
+    "W291",
+    "W293",
+]
 
 extend-select = [
     # Instead of pydocstyle
     "D",
     #Instead of flake8
-    "E", "F","B",
+    "E",
+    "F",
+    "B",
     # Instead of pep8-naming
     "N",
     # Instead of flake8-debugger or debug-statements
@@ -220,7 +209,11 @@ ignore = [
     "D213",
 
     # Ignore this rules so that precommit passes. Uncomment to start fixing them
-    "B006", "B008", "B904", "B012", "B024",
+    "B006",
+    "B008",
+    "B904",
+    "B012",
+    "B024",
     "D",
 ]
 

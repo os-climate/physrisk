@@ -72,7 +72,7 @@ def test_jba_hazard_model(load_credentials, hazard_dir, update_inputs):
                 scenario="ssp585",
                 year=2050,
             )
-            for lat, lon in zip(latitudes, longitudes, strict=False)
+            for lat, lon in zip(latitudes, longitudes)
         ]
         requests_pluv = [
             HazardDataRequest(
@@ -83,7 +83,7 @@ def test_jba_hazard_model(load_credentials, hazard_dir, update_inputs):
                 scenario="ssp585",
                 year=2050,
             )
-            for lat, lon in zip(latitudes, longitudes, strict=False)
+            for lat, lon in zip(latitudes, longitudes)
         ]
         response = model.get_hazard_data(requests_riv + requests_pluv)
         assert response is not None

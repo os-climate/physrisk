@@ -107,9 +107,7 @@ def expand(resources: List[HazardResource]) -> List[HazardResource]:
                     scenario.periods.append(Period(year=year, map_id=id))
                 # if a period was specified explicitly, we check that hash is the same: a build-in check
                 if test_periods is not None:
-                    for period, test_period in zip(
-                        scenario.periods, test_periods, strict=False
-                    ):
+                    for period, test_period in zip(scenario.periods, test_periods):
                         if period.map_id != test_period.map_id:
                             raise Exception(
                                 f"validation error: hash {period.map_id} different to specified hash {test_period.map_id}"  # noqa: E501

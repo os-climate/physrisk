@@ -260,7 +260,7 @@ class TestEventRetrieval(TestWithCredentials):
                     (x + 0.5 * delta_deg, y - 0.5 * delta_deg),
                 )
             )
-            for x, y in zip(longitudes, latitudes, strict=False)
+            for x, y in zip(longitudes, latitudes)
         ]
         store = mock_hazard_model_store_inundation(longitudes, latitudes, curve)
         zarr_reader = ZarrReader(store)
@@ -340,7 +340,7 @@ class TestEventRetrieval(TestWithCredentials):
                 scenario="ssp585",
                 year=2050,
             )
-            for lat, lon in zip(latitudes, longitudes, strict=False)
+            for lat, lon in zip(latitudes, longitudes)
         ]
         logger.info(f"{len(requests)} request objects created.")
         logger.info("Grouping request objects (just for comparison)")
@@ -450,7 +450,7 @@ def test_cascade():
                 scenario="ssp585",
                 year=2050,
             )
-            for lat, lon in zip(lats, lons, strict=False)
+            for lat, lon in zip(lats, lons)
         ]
         + [
             HazardDataRequest(
@@ -461,7 +461,7 @@ def test_cascade():
                 scenario="ssp585",
                 year=2080,
             )
-            for lat, lon in zip(lats, lons, strict=False)
+            for lat, lon in zip(lats, lons)
         ]
         + [
             HazardDataRequest(
@@ -472,7 +472,7 @@ def test_cascade():
                 scenario="ssp585",
                 year=2070,
             )
-            for lat, lon in zip(lats, lons, strict=False)
+            for lat, lon in zip(lats, lons)
         ]
         + [
             HazardDataRequest(
@@ -483,7 +483,7 @@ def test_cascade():
                 scenario="historical",
                 year=-1,
             )
-            for lat, lon in zip(lats, lons, strict=False)
+            for lat, lon in zip(lats, lons)
         ]
     )
 
@@ -543,7 +543,7 @@ def test_error_cases():
             scenario="ssp585",
             year=2050,
         )
-        for lat, lon in zip(lats, lons, strict=False)
+        for lat, lon in zip(lats, lons)
     ] + [
         HazardDataRequest(
             hazard_type=RiverineInundation,
@@ -553,7 +553,7 @@ def test_error_cases():
             scenario="ssp245",
             year=2050,
         )
-        for lat, lon in zip(lats[0:1], lons[0:1], strict=False)
+        for lat, lon in zip(lats[0:1], lons[0:1])
     ]
 
     source_paths = SourcePathsTest(cascade=False)
@@ -644,7 +644,7 @@ def test_end_to_end_interpolation_years():
                 scenario="ssp585",
                 year=2027,
             )
-            for lat, lon in zip(lats[0:1], lons[0:1], strict=False)
+            for lat, lon in zip(lats[0:1], lons[0:1])
         ]
         + [
             HazardDataRequest(
@@ -655,7 +655,7 @@ def test_end_to_end_interpolation_years():
                 scenario="ssp585",
                 year=2040,
             )
-            for lat, lon in zip(lats[0:1], lons[0:1], strict=False)
+            for lat, lon in zip(lats[0:1], lons[0:1])
         ]
         + [
             HazardDataRequest(
@@ -666,7 +666,7 @@ def test_end_to_end_interpolation_years():
                 scenario="ssp585",
                 year=2090,
             )
-            for lat, lon in zip(lats[0:1], lons[:1], strict=False)
+            for lat, lon in zip(lats[0:1], lons[:1])
         ]
     )
 
@@ -725,7 +725,7 @@ def test_buffer_integration():
             year=2050,
             buffer=10,
         )
-        for lat, lon in zip(lats, lons, strict=False)
+        for lat, lon in zip(lats, lons)
     ]
 
     source_paths = SourcePathsTest(cascade=False)

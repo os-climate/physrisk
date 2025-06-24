@@ -32,7 +32,7 @@ class HazardEventDistrib:
         self.__path = path
 
     def intensity_bins(self):
-        return zip(self.__intensity_bins[0:-1], self.__intensity_bins[1:], strict=False)
+        return zip(self.__intensity_bins[0:-1], self.__intensity_bins[1:])
 
     def to_exceedance_curve(self):
         return curve.to_exceedance_curve(self.__intensity_bins, self.__prob)

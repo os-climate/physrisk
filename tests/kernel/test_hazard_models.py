@@ -90,9 +90,7 @@ def test_using_point_based_hazard_model():
     year = 2080
     assets = [
         RealEstateAsset(lat, lon, location="Asia", type="Buildings/Industrial")
-        for lon, lat in zip(
-            hms.TestData.longitudes[0:1], hms.TestData.latitudes[0:1], strict=False
-        )
+        for lon, lat in zip(hms.TestData.longitudes[0:1], hms.TestData.latitudes[0:1])
     ]
     # fmt: off
     wind_return_periods = np.array([10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 200.0, 300.0, 400.0, 500.0, 600.0, 700.0, 800.0, 900.0, 1000.0]) # noqa

@@ -423,7 +423,7 @@ class HazardDataProvider(ABC):
                             )
                         )
                     )
-                    for longitude, latitude in zip(longitudes, latitudes, strict=False)
+                    for longitude, latitude in zip(longitudes, latitudes)
                 ],
                 self._interpolation,
             )  # type: ignore

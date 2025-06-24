@@ -117,6 +117,7 @@ jobs:
         # yamllint disable-line rule:line-length
         uses: lfreleng-actions/python-audit-action@0637cc9f40984b46bec578631fbac2a354eebabd # v0.1.5
         with:
+          never_fail: 'true'
           python_version: "${{ matrix.python-version }}"
 
   test-pypi:

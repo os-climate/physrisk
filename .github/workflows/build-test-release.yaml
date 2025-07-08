@@ -115,7 +115,7 @@ jobs:
 
       - name: 'Audit Python project'
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-audit-action@460d6fb9a7265bc880afc8c1f74721f3e158d669 # v0.2.0
+        uses: lfreleng-actions/python-audit-action@76b714cee4b17e6094075fd425d6769393d155a0 # v0.2.1
         with:
           permit_fail: 'true'
           python_version: "${{ matrix.python-version }}"

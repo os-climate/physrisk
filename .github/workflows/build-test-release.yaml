@@ -64,7 +64,7 @@ jobs:
         # yamllint disable-line rule:line-length
         # uses: modeseven-lfreleng-actions/python-build-action@update-action # Testing
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@a9d0ef8a2324ac76e798ad6dc306f08b83b5b213 # v0.1.11
+        uses: lfreleng-actions/python-build-action@2d578fdfc3de6aec561b189355353bb3ff028895 # v0.1.12
         with:
           sigstore_sign: true
           attestations: true

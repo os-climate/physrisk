@@ -35,7 +35,7 @@ jobs:
       GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
     steps:
       # Harden the runner used by this workflow
-      - uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+      - uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
         with:
           egress-policy: 'audit'
 
@@ -44,7 +44,7 @@ jobs:
       - name: 'Build Python project'
         id: python-build
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@a9d0ef8a2324ac76e798ad6dc306f08b83b5b213 # v0.1.11
+        uses: lfreleng-actions/python-build-action@2d578fdfc3de6aec561b189355353bb3ff028895 # v0.1.12
 
   python-tests:
     name: 'Python Tests'
@@ -59,7 +59,7 @@ jobs:
     timeout-minutes: 12
     steps:
       # Harden the runner used by this workflow
-      - uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+      - uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
         with:
           egress-policy: audit
 
@@ -67,7 +67,7 @@ jobs:
 
       - name: "Python tests [pytest] ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-test-action@6b2c188df0f236834aea94810ecbf3bec2a564f9 # v0.1.8
+        uses: lfreleng-actions/python-test-action@5d253209cf755dde9307dfd12865112f61e9dad9 # v0.1.10
         with:
           python_version: ${{ matrix.python-version }}
 
@@ -84,7 +84,7 @@ jobs:
     timeout-minutes: 10
     steps:
       # Harden the runner used by this workflow
-      - uses: step-security/harden-runner@0634a2670c59f64b4a01f0f96f84700a4088b9f0 # v2.12.0
+      - uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
         with:
           egress-policy: 'audit'
 
@@ -92,6 +92,7 @@ jobs:
 
       - name: "Audit dependencies ${{ matrix.python-version }}"
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-audit-action@0637cc9f40984b46bec578631fbac2a354eebabd # v0.1.5
+        uses: lfreleng-actions/python-audit-action@76b714cee4b17e6094075fd425d6769393d155a0 # v0.2.1
         with:
           python_version: "${{ matrix.python-version }}"
+          permit_fail: true

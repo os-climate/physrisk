@@ -1,4 +1,4 @@
-from typing import NamedTuple, Optional
+from typing import Any, List, NamedTuple, Optional
 
 from pydantic import BaseModel, Field
 
@@ -16,10 +16,19 @@ class Tile(NamedTuple):
     z: int
 
 
-class HazardImageRequest(BaseHazardRequest):
-    resource: str = Field(
-        description="Full path to the array; formed by '{path}/{id}'."
+class HazardImageInfoRequest(BaseHazardRequest):
+    resource: str = Field(description="Hazard resource path (unique identifier).")
+
+
+class HazardImageInfoResponse(BaseHazardRequest):
+    index_values: List[Any] = Field(
+        [], description="The values of the index dimension."
     )
+    index_units: str = Field("", description="The units of the index dimension.")
+
+
+class HazardImageRequest(BaseHazardRequest):
+    resource: str = Field(description="Hazard resource path (unique identifier).")
     scenario_id: str
     year: int
     colormap: Optional[str] = Field("heating")
@@ -27,6 +36,7 @@ class HazardImageRequest(BaseHazardRequest):
     min_value: Optional[float]
     max_value: Optional[float]
     tile: Optional[Tile]
+    index: Optional[int]
 
 
 class HazardImageResponse(BaseModel):

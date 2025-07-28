@@ -102,12 +102,18 @@ class InventorySourcePaths(SourcePaths):
             result.append(
                 ResourcePaths(
                     resource_path=r.path,
-                    scenarios={s: self._get_paths(r, s) for s in scenarios},
+                    scenarios={
+                        s: InventorySourcePaths.paths_for_resource(r, s)
+                        for s in scenarios
+                    },
                 )
             )
         return result
 
-    def _get_paths(self, resource: HazardResource, scenario_id: str):
+    @staticmethod
+    def paths_for_resource(
+        resource: HazardResource, scenario_id: str, map: bool = False
+    ):
         if scenario_id == "historical":
             # there are some cases where there is no historical scenario or -
             # more commonly - we do not want to use. We have seen cases where there is
@@ -140,14 +146,20 @@ class InventorySourcePaths(SourcePaths):
         scenario = next(
             iter(s for s in resource.scenarios if s.id == proxy_scenario_id), None
         )
+        if map:
+            assert resource.map is not None
+            path = resource.map.path
+        else:
+            path = resource.path
         if scenario is None:
             return ScenarioPaths([], lambda y: "")
         else:
             return ScenarioPaths(
                 scenario.years,
-                lambda y: resource.path.format(
+                lambda y: path.format(
                     id=resource.indicator_id, scenario=proxy_scenario_id, year=y
-                ),
+                )
+                + ("/indicator" if resource.store_netcdf_coords else ""),
             )
 
     def get_resources(

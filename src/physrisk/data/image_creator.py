@@ -2,14 +2,17 @@ import io
 import logging
 from functools import lru_cache
 from pathlib import PurePosixPath
-from typing import Callable, List, NamedTuple, Optional
+from typing import Callable, Dict, List, NamedTuple, Optional
 
 import numpy as np
 import PIL.Image as Image
 import zarr.storage
 
+from physrisk.api.v1.hazard_data import HazardResource
 from physrisk.data import colormap_provider
+from physrisk.data.hazard_data_provider import HazardDataProvider, SourcePaths
 from physrisk.data.zarr_reader import ZarrReader
+from physrisk.hazard_models.core_hazards import InventorySourcePaths
 
 logger = logging.getLogger(__name__)
 
@@ -25,8 +28,58 @@ class ImageCreator:
     Intended for arrays <~1500x1500 (otherwise, recommended to use Mapbox tiles - or similar).
     """
 
-    def __init__(self, reader: Optional[ZarrReader] = None):
-        self.reader = ZarrReader() if reader is None else reader
+    def __init__(self, source_paths: SourcePaths, reader: ZarrReader):
+        self.source_paths = source_paths
+        self.reader = reader
+
+    def convert_interpolate(
+        self,
+        hazard_resource: HazardResource,
+        scenario: str,
+        year: int,
+        format="PNG",
+        colormap: str = "heating",
+        tile: Optional[Tile] = None,
+        min_value: Optional[float] = None,
+        max_value: Optional[float] = None,
+        historical_year: int = 2025,
+        index: Optional[int] = None,
+    ):
+        try:
+            # historical might be needed for interpolation
+            scenario_paths = InventorySourcePaths.paths_for_resource(
+                hazard_resource, scenario, True
+            )
+            weighted_sum = next(
+                iter(
+                    HazardDataProvider._weights(
+                        scenario,
+                        scenario_paths.years,
+                        [year],
+                        historical_year,
+                    ).values()
+                )
+            )
+            image = self._to_image(
+                {scenario_paths.path(sy.year): w for sy, w in weighted_sum.weights},
+                colormap,
+                tile=tile,
+                index=index,
+                min_value=min_value,
+                max_value=max_value,
+            )
+        except Exception as e:
+            # if we are creating a whole image that does not exist, we log the error
+            # and return a empty image; but if creating a tile we let the error propagate
+            # because many map controls expect an HTTPException in such cases.
+            if tile is None:
+                logger.exception(e)
+                image = Image.fromarray(np.array([[0]]), mode="RGBA")
+            else:
+                raise
+        image_bytes = io.BytesIO()
+        image.save(image_bytes, format=format)
+        return image_bytes.getvalue()
 
     def convert(
         self,
@@ -51,7 +104,11 @@ class ImageCreator:
         """
         try:
             image = self._to_image(
-                path, colormap, tile=tile, min_value=min_value, max_value=max_value
+                {path: 1.0},
+                colormap,
+                tile=tile,
+                min_value=min_value,
+                max_value=max_value,
             )
         except Exception as e:
             # if we are creating a whole image that does not exist, we log the error
@@ -65,6 +122,11 @@ class ImageCreator:
         image_bytes = io.BytesIO()
         image.save(image_bytes, format=format)
         return image_bytes.getvalue()
+
+    def get_info(self, resource: str):
+        data = get_data(self.reader, resource)
+        index_values, index_units = self.reader.get_index_values(data)
+        return index_values, index_units
 
     def to_file(
         self,
@@ -85,12 +147,14 @@ class ImageCreator:
             min_value (Optional[float], optional): Min value. Defaults to None.
             max_value (Optional[float], optional): Max value. Defaults to None.
         """
-        image = self._to_image(path, colormap, min_value=min_value, max_value=max_value)
+        image = self._to_image(
+            {path: 1.0}, colormap, min_value=min_value, max_value=max_value
+        )
         image.save(filename, format=format)
 
     def _to_image(
         self,
-        path,
+        path_weights: Dict[str, float],
         colormap: str = "heating",
         tile: Optional[Tile] = None,
         index: Optional[int] = None,
@@ -98,24 +162,39 @@ class ImageCreator:
         max_value: Optional[float] = None,
     ) -> Image.Image:
         """Get image for path specified as array of bytes."""
-        tile_path = path if tile is None else str(PurePosixPath(path, f"{tile.z + 1}"))
-        data = get_data(self.reader, tile_path)
+
         tile_size = 512
+
         # data = self.reader.all_data(tile_path)
-        if len(data.shape) == 3:
-            index = (
-                len(self.reader.get_index_values(data)) - 1 if index is None else index
+        def get_array(data: zarr.Array, index: Optional[int]):
+            if len(data.shape) == 3:
+                index = (
+                    len(self.reader.get_index_values(data)[0]) - 1
+                    if index is None
+                    else index
+                )
+                if tile is None:
+                    # return whole array
+                    return data[index, :, :]  # .squeeze(axis=0)
+                else:
+                    # (from zarr 2.16.0 we can also use block indexing)
+                    return data[
+                        index,
+                        tile_size * tile.y : tile_size * (tile.y + 1),
+                        tile_size * tile.x : tile_size * (tile.x + 1),
+                    ]
+
+        data = sum(
+            weight
+            * get_array(
+                get_data(
+                    self.reader,
+                    path if tile is None else str(PurePosixPath(path, f"{tile.z + 1}")),
+                ),
+                index,
             )
-            if tile is None:
-                # return whole array
-                data = data[index, :, :]  # .squeeze(axis=0)
-            else:
-                # (from zarr 2.16.0 we can also use block indexing)
-                data = data[
-                    index,
-                    tile_size * tile.y : tile_size * (tile.y + 1),
-                    tile_size * tile.x : tile_size * (tile.x + 1),
-                ]
+            for path, weight in path_weights.items()
+        )
 
         if any(dim > 4000 for dim in data.shape):
             raise Exception("dimension too large (over 1500).")
@@ -232,5 +311,5 @@ class ImageCreator:
 
 
 @lru_cache(maxsize=32)
-def get_data(reader, path):
+def get_data(reader: ZarrReader, path: str):
     return reader.all_data(path)

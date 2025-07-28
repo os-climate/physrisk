@@ -94,6 +94,7 @@ class SourcePaths(Protocol):
         Returns:
             List[ResourcePaths]: List of ResourcePaths to be tried in order.
         """
+        ...
 
 
 class DataSourcingError(Exception):

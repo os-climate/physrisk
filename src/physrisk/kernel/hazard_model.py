@@ -6,6 +6,7 @@ from typing import Dict, Mapping, Optional, Protocol, Sequence, Tuple, Type
 import numpy as np
 
 from physrisk.data.hazard_data_provider import HazardDataHint
+from physrisk.data.image_creator import ImageCreator
 from physrisk.kernel.hazards import Hazard
 
 
@@ -87,14 +88,15 @@ class HazardDataRequest:
         )
 
 
-class HazardDataResponse:
-    pass
+class HazardDataResponse(Protocol):
+    path: str
 
 
 class HazardDataFailedResponse(HazardDataResponse):
     def __init__(self, err: Optional[Exception] = None, reason: Optional[str] = None):
         self.error = err
         self.reason = reason
+        self.path = ""
 
     def __repr__(self):
         return self.reason if self.reason is not None else str(self.error)
@@ -181,25 +183,6 @@ class HazardParameterDataResponse(HazardDataResponse):
         )
 
 
-class HazardModelFactory(Protocol):
-    def hazard_model(
-        self,
-        interpolation: str = "floor",
-        provider_max_requests: Dict[str, int] = {},
-        interpolate_years: bool = False,
-    ):
-        """Create a HazardModel instance based on a number of options.
-
-        Args:
-            interpolation (str): Interpolation type to use for sub-pixel raster interpolation (where
-            this is supported by hazard models).
-            provider_max_requests (Dict[str, int]): The maximum permitted number of permitted
-            requests to external providers.
-            interpolate_years (bool): If True, apply linear interpolation for hazard requests where exact match is not present.
-        """
-        ...
-
-
 class HazardModel(ABC):
     """Hazard model. The model accepts a set of HazardDataRequests and returns the corresponding
     HazardDataResponses."""
@@ -223,6 +206,29 @@ class HazardModel(ABC):
     ) -> Mapping[HazardDataRequest, HazardDataResponse]:
         """Deprecated: this has been renamed to get_hazard_data."""
         return self.get_hazard_data(requests)
+
+
+class HazardModelFactory(Protocol):
+    def hazard_model(
+        self,
+        interpolation: str = "floor",
+        provider_max_requests: Dict[str, int] = {},
+        interpolate_years: bool = False,
+    ) -> HazardModel:
+        """Create a HazardModel instance based on a number of options.
+
+        Args:
+            interpolation (str): Interpolation type to use for sub-pixel raster interpolation (where
+            this is supported by hazard models).
+            provider_max_requests (Dict[str, int]): The maximum permitted number of permitted
+            requests to external providers.
+            interpolate_years (bool): If True, apply linear interpolation for hazard requests where exact match is not present.
+        """
+        ...
+
+    def image_creator(
+        self,
+    ) -> ImageCreator: ...
 
 
 class DataSource(Protocol):

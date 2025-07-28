@@ -119,7 +119,7 @@ class ZarrReader:
         units: str = z.attrs.get("units", "default")
 
         # in the case of acute risks, index_values will contain the return periods
-        index_values = self.get_index_values(z)
+        index_values, _ = self.get_index_values(z)
         image_coords = self._get_coordinates(
             longitudes,
             latitudes,
@@ -195,9 +195,10 @@ class ZarrReader:
         # is the non-spatial one.
         index_dim_name = z.attrs.get("dimensions", ["index"])[0]
         index_values = z.attrs.get(index_dim_name + "_values", [0])
+        index_units = z.attrs.get(index_dim_name + "_units", "default")
         if index_values is None:
             index_values = [0]
-        return index_values
+        return index_values, index_units
 
     def get_max_curves(
         self, set_id: str, shapes: Sequence[Polygon], interpolation: str = "floor"
@@ -221,7 +222,7 @@ class ZarrReader:
         z = self._root[path]  # e.g. inundation/wri/v2/<filename>
 
         # in the case of acute risks, index_values will contain the return periods
-        index_values = self.get_index_values(z)
+        index_values, _ = self.get_index_values(z)
 
         t = z.attrs["transform_mat3x3"]  # type: ignore
         transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])

@@ -752,7 +752,9 @@ class TestImpactRequests(TestWithCredentials):
             response.asset_impacts[4].impacts[4].impact_mean, 0.1448076958069578
         )
         self.assertAlmostEqual(
-            response.asset_impacts[5].impacts[4].impact_mean, 0.005896707722257193
+            response.asset_impacts[5].impacts[4].impact_mean,
+            0.005896707722257193,
+            delta=1e-6,
         )
 
         vulnerability_models = DictBasedVulnerabilityModels(

@@ -3,6 +3,7 @@ from typing import Dict, MutableMapping, Optional
 from dependency_injector import containers, providers
 
 from physrisk.data.hazard_data_provider import SourcePaths
+from physrisk.data.image_creator import ImageCreator
 from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
@@ -48,6 +49,9 @@ class ZarrHazardModelFactory(HazardModelFactory):
             interpolation=interpolation,
             interpolate_years=interpolate_years,
         )
+
+    def image_creator(self):
+        return ImageCreator(self.source_paths, self.reader)
 
 
 class DictBasedVulnerabilityModelsFactory(VulnerabilityModelsFactory):

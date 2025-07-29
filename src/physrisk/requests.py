@@ -7,6 +7,7 @@ import numpy as np
 
 import physrisk.data.image_creator
 import physrisk.data.static.example_portfolios
+import physrisk.kernel.hazard_model
 from physrisk.api.v1.common import Distribution, ExceedanceCurve, VulnerabilityDistrib
 from physrisk.api.v1.exposure_req_resp import (
     AssetExposure,
@@ -76,7 +77,10 @@ from .api.v1.impact_req_resp import (
 from .data.inventory import EmbeddedInventory, Inventory
 from .kernel.assets import Asset
 from .kernel import calculation as calc
-from .kernel.hazard_model import HazardDataRequest as hmHazardDataRequest
+from .kernel.hazard_model import (
+    HazardDataRequest as hmHazardDataRequest,
+    HazardImageCreator,
+)
 from .kernel.hazard_model import HazardEventDataResponse as hmHazardEventDataResponse
 from .kernel.hazard_model import (
     HazardModel,
@@ -200,16 +204,15 @@ class Requester:
             if request.colormap is not None
             else (model.map.colormap.name if model.map.colormap is not None else "None")
         )
-        creator = self.hazard_model_factory.image_creator()
-        # creator = ImageCreator(zarr_reader)  # store=ImageCreator.test_store(path))
-        return creator.convert_interpolate(
-            model,
+        creator: HazardImageCreator = self.hazard_model_factory.image_creator()
+        return creator.create_image(
+            request.resource,
             request.scenario_id,
             request.year,
             colormap=colormap,
             tile=None
             if request.tile is None
-            else physrisk.data.image_creator.Tile(
+            else physrisk.kernel.hazard_model.Tile(
                 request.tile.x, request.tile.y, request.tile.z
             ),
             min_value=request.min_value,

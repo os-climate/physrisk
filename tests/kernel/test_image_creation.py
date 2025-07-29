@@ -12,8 +12,8 @@ import zarr.storage
 from physrisk.api.v1.hazard_data import HazardResource, Scenario, MapInfo
 from physrisk.container import Container
 from physrisk.data import colormap_provider
-from physrisk.data.hazard_data_provider import ResourcePaths, ScenarioPaths, SourcePaths
-from physrisk.data.image_creator import ImageCreator, Tile
+from physrisk.data.hazard_data_provider import ScenarioPaths, SourcePaths
+from physrisk.data.image_creator import ImageCreator
 from physrisk.data.inventory import Inventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
@@ -21,7 +21,7 @@ from physrisk.hazard_models.core_hazards import (
     InventorySourcePaths,
     get_default_source_paths,
 )
-from physrisk.kernel.hazard_model import HazardModelFactory
+from physrisk.kernel.hazard_model import HazardModelFactory, Tile
 
 from ..test_base import TestWithCredentials
 
@@ -33,19 +33,13 @@ class SourcePathsTest(SourcePaths):
     def resource_paths(self, hazard_type, indicator_id, scenarios, hint=None):
         pass
 
-    def resource_paths_explicit(self, path, scenarios):
-        return ResourcePaths(
-            resource_path=path,
-            scenarios={
-                "ssp585": ScenarioPaths(
-                    years=[2030, 2050, 2080],
-                    path=lambda y: f"test_array_585_{y}",
-                ),
-                "historical": ScenarioPaths(
-                    years=[-1], path=lambda f: "test_array_historical"
-                ),
-            },
-        )
+    def scenario_paths_for_id(self, resource_id, scenarios, map):
+        return {
+            s: ScenarioPaths(
+                years=[2030, 2050], path=lambda y, s=s: f"test_array_{s}_{y}"
+            )
+            for s in scenarios
+        }
 
 
 class TestImageCreation(TestWithCredentials):
@@ -78,9 +72,6 @@ class TestImageCreation(TestWithCredentials):
                 [2 + (0.5 - 0.4) * 253 / (1.2 - 0.4), 1],
             ]
         )
-        converter.convert(
-            path, colormap="test"
-        )  # check no error running through mocked example.
         np.testing.assert_equal(result, expected.astype(np.uint8))
 
     def _mock_inventory(self):
@@ -132,11 +123,8 @@ class TestImageCreation(TestWithCredentials):
         converter = ImageCreator(
             source_paths=SourcePathsTest(), reader=ZarrReader(store)
         )
-        hazard_resource = self._mock_inventory().resources[
-            "test_array_{scenario}_{year}"
-        ]
-        result = converter.convert_interpolate(
-            hazard_resource,
+        result = converter.create_image(
+            "test_array_{scenario}_{year}",
             "ssp585",
             2040,
             min_value=0,

@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Any, Dict, List, NamedTuple, Optional, Sequence
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field
 
 from physrisk.api.v1.common import (
     Assets,
@@ -138,7 +138,10 @@ class RiskMeasuresForAssets(BaseModel):
     key: RiskMeasureKey
     scores: List[int] = Field([0], description="Identifier for the risk measure.")
     measures_0: List[float]
-    measures_1: Optional[List[float]]
+    measures_1: Optional[List[float]] = Field(
+        [],
+        description="Underlying measures for case where there are multiple underlying measures.",
+    )
 
 
 class ScoreBasedRiskMeasureSetDefinition(BaseModel):
@@ -152,17 +155,26 @@ class RiskMeasures(BaseModel):
 
     measures_for_assets: List[RiskMeasuresForAssets]
     score_based_measure_set_defn: ScoreBasedRiskMeasureSetDefinition
-    measures_definitions: Optional[List[RiskMeasureDefinition]]
+    measures_definitions: Optional[List[RiskMeasureDefinition]] = Field(
+        [], description="Definitions of the risk measures."
+    )
     scenarios: List[Scenario]
     asset_ids: List[str]
 
 
-class AcuteHazardCalculationDetails(BaseModel):
-    """Details of an acute hazard calculation."""
+class CalculationDetails(BaseModel):
+    """Details of a calculation. hazard_exceedance, hazard_distribution and
+    vulnerability_distribution are only set in the case of an acute hazard calculation."""
 
-    hazard_exceedance: ExceedanceCurve
-    hazard_distribution: Distribution
-    vulnerability_distribution: VulnerabilityDistrib
+    hazard_exceedance: Optional[ExceedanceCurve] = Field(
+        None, description="Hazard data as exceedance curve."
+    )
+    hazard_distribution: Optional[Distribution] = Field(
+        None, description="Hazard data as probability distribution."
+    )
+    vulnerability_distribution: Optional[VulnerabilityDistrib] = Field(
+        None, description="Vulnerability distribution."
+    )
     hazard_path: List[str] = Field(
         ["unknown"], description="Path to the hazard indicator data source."
     )
@@ -177,28 +189,23 @@ class ImpactKey(BaseModel):
 class AssetSingleImpact(BaseModel):
     """Impact at level of single asset and single type of hazard."""
 
-    model_config = ConfigDict(arbitrary_types_allowed=True)
+    model_config = ConfigDict(arbitrary_types_allowed=True, ser_json_inf_nan="strings")
     key: ImpactKey
-
-    @computed_field  # deprecated: use key instead
-    def hazard_type(self) -> str:
-        return self.key.hazard_type
-
-    @computed_field  # deprecated: use key instead
-    def year(self) -> str:
-        return self.key.year
-
     impact_type: str = Field(
         "damage",
-        description="""'damage' or 'disruption'. Whether the impact is fractional damage to the asset
-        ('damage') or disruption to an operation, expressed as
-        fractional decrease to an equivalent cash amount.""",
+        description="""'damage' or 'disruption'. Whether the impact is fractional damage to the total insurable
+        value of the asset ('damage') or disruption, expressed as fractional decrease in the revenue attributable
+        to the asset.""",
     )
-    impact_distribution: Optional[Distribution]
-    impact_exceedance: Optional[ExceedanceCurve]
-    impact_mean: float
-    impact_std_deviation: float
-    calc_details: Optional[AcuteHazardCalculationDetails] = Field(
+    impact_distribution: Optional[Distribution] = Field(
+        None, description="Impact as probability distribution."
+    )
+    impact_exceedance: Optional[ExceedanceCurve] = Field(
+        None, description="Impact as exceedance curve."
+    )
+    impact_mean: Optional[float]
+    impact_std_deviation: Optional[float]
+    calc_details: Optional[CalculationDetails] = Field(
         None,
         description="""Details of impact calculation for acute hazard calculations.""",
     )

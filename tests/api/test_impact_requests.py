@@ -144,7 +144,7 @@ class TestImpactRequests(TestWithCredentials):
         )
 
         self.assertEqual(
-            response.asset_impacts[0].impacts[0].hazard_type, "CoastalInundation"
+            response.asset_impacts[0].impacts[0].key.hazard_type, "CoastalInundation"
         )
 
     def test_risk_model_impact_request(self):
@@ -205,7 +205,7 @@ class TestImpactRequests(TestWithCredentials):
         )
 
         self.assertEqual(
-            response.asset_impacts[0].impacts[0].hazard_type, "CoastalInundation"
+            response.asset_impacts[0].impacts[0].key.hazard_type, "CoastalInundation"
         )
 
     def test_thermal_power_generation(self):
@@ -790,7 +790,7 @@ class TestImpactRequests(TestWithCredentials):
             response.asset_impacts[5].impacts[0].impact_mean, 0.0005859470850072303
         )
 
-    @unittest.skip("example, not test")
+    @unittest.skip("example, not test: TOCHECK")
     def test_example_portfolios(self):
         example_portfolios = requests._get_example_portfolios()
         for assets in example_portfolios:

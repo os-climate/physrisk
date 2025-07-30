@@ -1,7 +1,17 @@
 import sys
 from abc import ABC, abstractmethod
 from collections import defaultdict
-from typing import Dict, Mapping, Optional, Protocol, Sequence, Tuple, Type
+from typing import (
+    Dict,
+    Mapping,
+    NamedTuple,
+    Optional,
+    Protocol,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+)
 
 import numpy as np
 
@@ -87,14 +97,15 @@ class HazardDataRequest:
         )
 
 
-class HazardDataResponse:
-    pass
+class HazardDataResponse(Protocol):
+    path: str
 
 
 class HazardDataFailedResponse(HazardDataResponse):
     def __init__(self, err: Optional[Exception] = None, reason: Optional[str] = None):
         self.error = err
         self.reason = reason
+        self.path = ""
 
     def __repr__(self):
         return self.reason if self.reason is not None else str(self.error)
@@ -181,25 +192,6 @@ class HazardParameterDataResponse(HazardDataResponse):
         )
 
 
-class HazardModelFactory(Protocol):
-    def hazard_model(
-        self,
-        interpolation: str = "floor",
-        provider_max_requests: Dict[str, int] = {},
-        interpolate_years: bool = False,
-    ):
-        """Create a HazardModel instance based on a number of options.
-
-        Args:
-            interpolation (str): Interpolation type to use for sub-pixel raster interpolation (where
-            this is supported by hazard models).
-            provider_max_requests (Dict[str, int]): The maximum permitted number of permitted
-            requests to external providers.
-            interpolate_years (bool): If True, apply linear interpolation for hazard requests where exact match is not present.
-        """
-        ...
-
-
 class HazardModel(ABC):
     """Hazard model. The model accepts a set of HazardDataRequests and returns the corresponding
     HazardDataResponses."""
@@ -223,6 +215,66 @@ class HazardModel(ABC):
     ) -> Mapping[HazardDataRequest, HazardDataResponse]:
         """Deprecated: this has been renamed to get_hazard_data."""
         return self.get_hazard_data(requests)
+
+
+class Tile(NamedTuple):
+    x: int
+    y: int
+    z: int
+
+
+class HazardImageCreator(Protocol):
+    """Alongside a HazardModel, it is possible to define a class that can generate image tiles."""
+
+    def create_image(
+        self,
+        resource_id: str,
+        scenario: str,
+        year: int,
+        format="PNG",
+        colormap: str = "heating",
+        tile: Optional[Tile] = None,
+        min_value: Optional[float] = None,
+        max_value: Optional[float] = None,
+        index_value: Optional[Union[str, float]] = None,
+    ):
+        """Creates an image Tile for display on maps.
+
+        Args:
+            resource_id (str): Unique identifier of the resource.
+            scenario (str): Scenario ID.
+            year (int): Year for future scenarios.
+            format (str, optional): Output format. Defaults to "PNG".
+            colormap (str, optional): Colormap ID. Defaults to "heating".
+            tile (Optional[Tile], optional): Tile for which image is requested. Defaults to None.
+            min_value (Optional[float], optional): Value of colormap minimum. Defaults to None.
+            max_value (Optional[float], optional): Value of colormap maximum. Defaults to None.
+            index_value (Optional[str | float], optional): Value of the non-spatial 'index' dimension. Defaults to None.
+        """
+        ...
+
+
+class HazardModelFactory(Protocol):
+    def hazard_model(
+        self,
+        interpolation: str = "floor",
+        provider_max_requests: Dict[str, int] = {},
+        interpolate_years: bool = False,
+    ) -> HazardModel:
+        """Create a HazardModel instance based on a number of options.
+
+        Args:
+            interpolation (str): Interpolation type to use for sub-pixel raster interpolation (where
+            this is supported by hazard models).
+            provider_max_requests (Dict[str, int]): The maximum permitted number of permitted
+            requests to external providers.
+            interpolate_years (bool): If True, apply linear interpolation for hazard requests where exact match is not present.
+        """
+        ...
+
+    def image_creator(
+        self,
+    ) -> HazardImageCreator: ...
 
 
 class DataSource(Protocol):

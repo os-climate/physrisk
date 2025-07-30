@@ -3,12 +3,12 @@ from typing import Annotated, Dict, List, Optional, Sequence, Union
 
 import numpy as np
 import numpy.typing as npt
-from pydantic import BaseModel, ConfigDict, Field, PlainSerializer
+from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, PlainSerializer
 
 
-# def deserialize_list(list: list) -> npt.NDArray:
-#     """Deserialize a list into a numpy array."""
-#     return np.array(list)
+def before_validator(list: list) -> npt.NDArray:
+    """Deserialize a list into a numpy array."""
+    return np.array(list)
 
 
 def serialize_array(array: npt.NDArray):
@@ -18,7 +18,7 @@ def serialize_array(array: npt.NDArray):
 
 NDArray = Annotated[
     npt.NDArray,
-    # AfterValidator(deserialize_list),
+    BeforeValidator(before_validator),
     PlainSerializer(serialize_array, return_type=list),
 ]
 
@@ -171,8 +171,6 @@ class VulnerabilityCurve(BaseModel):
     location: str = Field(...)
     event_type: str = Field(description="hazard event type, e.g. RiverineInundation")
     impact_type: str = Field(description="'Damage' or 'Disruption'")
-    # intensity: Array = Field(...)
-    # intensity: np.ndarray = np.zeros(1) #Field(default_factory=lambda: np.zeros(1))
     intensity: List[float] = Field(...)
     intensity_units: str = Field(description="units of the intensity")
     impact_mean: List[float] = Field(description="mean impact (damage or disruption)")

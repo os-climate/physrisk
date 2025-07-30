@@ -1,13 +1,13 @@
 import importlib
 import json
 from importlib import import_module
-from pathlib import PosixPath
 from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union, cast
 
 import numpy as np
 
 import physrisk.data.image_creator
 import physrisk.data.static.example_portfolios
+import physrisk.kernel.hazard_model
 from physrisk.api.v1.common import Distribution, ExceedanceCurve, VulnerabilityDistrib
 from physrisk.api.v1.exposure_req_resp import (
     AssetExposure,
@@ -15,7 +15,11 @@ from physrisk.api.v1.exposure_req_resp import (
     AssetExposureResponse,
     Exposure,
 )
-from physrisk.api.v1.hazard_image import HazardImageRequest
+from physrisk.api.v1.hazard_image import (
+    HazardImageInfoRequest,
+    HazardImageInfoResponse,
+    HazardImageRequest,
+)
 from physrisk.data.hazard_data_provider import HazardDataHint
 from physrisk.data.inventory import expand
 from physrisk.data.inventory_reader import InventoryReader
@@ -25,7 +29,7 @@ from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.exposure import JupterExposureMeasure, calculate_exposures
 from physrisk.kernel.hazards import Hazard
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey  # , ImpactKey
-from physrisk.kernel.impact_distrib import EmptyImpactDistrib
+from physrisk.kernel.impact_distrib import EmptyImpactDistrib, PlaceholderImpactDistrib
 from physrisk.kernel.risk import (
     AssetLevelRiskModel,
     Measure,
@@ -55,7 +59,7 @@ from .api.v1.hazard_data import (
     StaticInformationResponse,
 )
 from .api.v1.impact_req_resp import (
-    AcuteHazardCalculationDetails,
+    CalculationDetails,
     AssetImpactRequest,
     AssetImpactResponse,
     AssetLevelImpact,
@@ -70,11 +74,13 @@ from .api.v1.impact_req_resp import (
     ScoreBasedRiskMeasureDefinition,
     ScoreBasedRiskMeasureSetDefinition,
 )
-from .data.image_creator import ImageCreator
 from .data.inventory import EmbeddedInventory, Inventory
 from .kernel.assets import Asset
 from .kernel import calculation as calc
-from .kernel.hazard_model import HazardDataRequest as hmHazardDataRequest
+from .kernel.hazard_model import (
+    HazardDataRequest as hmHazardDataRequest,
+    HazardImageCreator,
+)
 from .kernel.hazard_model import HazardEventDataResponse as hmHazardEventDataResponse
 from .kernel.hazard_model import (
     HazardModel,
@@ -129,9 +135,13 @@ class Requester:
             )
         elif request_id == "get_asset_impact":
             request = AssetImpactRequest(**request_dict)
-            return self.dumps(self.get_asset_impacts(request).model_dump())
+            return self.dumps(
+                self.get_asset_impacts(request).model_dump(exclude_none=True)
+            )
         elif request_id == "get_example_portfolios":
             return self.dumps(_get_example_portfolios())
+        elif request_id == "get_image_info":
+            return self.dumps(self.get_image_info().model_dump())
         else:
             raise ValueError(f"request type '{request_id}' not found")
 
@@ -182,38 +192,39 @@ class Requester:
             request = HazardImageRequest(**request_or_dict)
         else:
             request = request_or_dict
-
         inventory = self.inventory
-        zarr_reader = self.zarr_reader
-
         if not _read_permitted(
             request.group_ids, inventory.resources[request.resource]
         ):
             raise PermissionError()
         model = inventory.resources[request.resource]
         assert model.map is not None
-        len(PosixPath(model.map.path).parts)
-        path = (
-            str(PosixPath(model.path).with_name(model.map.path))
-            if len(PosixPath(model.map.path).parts) == 1
-            else model.map.path
-        ).format(scenario=request.scenario_id, year=request.year)
         colormap = (
             request.colormap
             if request.colormap is not None
             else (model.map.colormap.name if model.map.colormap is not None else "None")
         )
-        creator = ImageCreator(zarr_reader)  # store=ImageCreator.test_store(path))
-        return creator.convert(
-            path,
+        creator: HazardImageCreator = self.hazard_model_factory.image_creator()
+        return creator.create_image(
+            request.resource,
+            request.scenario_id,
+            request.year,
             colormap=colormap,
             tile=None
             if request.tile is None
-            else physrisk.data.image_creator.Tile(
+            else physrisk.kernel.hazard_model.Tile(
                 request.tile.x, request.tile.y, request.tile.z
             ),
             min_value=request.min_value,
             max_value=request.max_value,
+        )
+
+    def get_image_info(self, request: HazardImageInfoRequest):
+        zarr_reader = self.zarr_reader
+        z = physrisk.data.image_creator.get_data(zarr_reader, request.resource)
+        index_values, index_units = zarr_reader.get_index_values(z)
+        return HazardImageInfoResponse(
+            index_values=index_values, index_units=index_units
         )
 
     def dumps(self, dict):
@@ -375,7 +386,7 @@ def _get_hazard_data(
     return response
 
 
-def create_assets(api_assets: Assets, assets: Optional[List[Asset]] = None):  # noqa: max-complexity=11
+def create_assets(api_assets: Assets, assets: Optional[List[Asset]] = None):
     """Create list of Asset objects from the Assets API object:"""
     if assets is not None:
         if len(api_assets.items) != 0:
@@ -522,17 +533,28 @@ def compile_asset_impacts(
         for v in value:
             if isinstance(v.impact, EmptyImpactDistrib):
                 continue
-
+            calc_details = None
             if include_calc_details:
-                if v.event is not None and v.vulnerability is not None:
-                    hazard_exceedance = v.event.to_exceedance_curve()
+                if isinstance(v.impact, PlaceholderImpactDistrib):
+                    # if the impact is a placeholder, measures are calculated based
+                    # only on hazard indicators. Still populate the hazard_path field in this case.
+                    calc_details = CalculationDetails(
+                        hazard_exceedance=None,
+                        hazard_distribution=None,
+                        vulnerability_distribution=None,
+                        hazard_path=[]
+                        if v.hazard_data is None
+                        else [h.path for h in v.hazard_data],
+                    )
 
+                elif v.event is not None and v.vulnerability is not None:
+                    hazard_exceedance = v.event.to_exceedance_curve()
                     vulnerability_distribution = VulnerabilityDistrib(
                         intensity_bin_edges=sig_figures(v.vulnerability.intensity_bins),
                         impact_bin_edges=sig_figures(v.vulnerability.impact_bins),
                         prob_matrix=sig_figures(v.vulnerability.prob_matrix),
                     )
-                    calc_details = AcuteHazardCalculationDetails(
+                    calc_details = CalculationDetails(
                         hazard_exceedance=ExceedanceCurve(
                             values=sig_figures(hazard_exceedance.values),
                             exceed_probabilities=sig_figures(hazard_exceedance.probs),
@@ -544,32 +566,43 @@ def compile_asset_impacts(
                         vulnerability_distribution=vulnerability_distribution,
                         hazard_path=v.impact.path,
                     )
-            else:
-                calc_details = None
 
-            impact_exceedance = v.impact.to_exceedance_curve()
             key = APIImpactKey(
                 hazard_type=k.hazard_type.__name__,
                 scenario_id=k.scenario,
                 year=str(k.key_year),
             )
-            hazard_impacts = AssetSingleImpact(
-                key=key,
-                impact_type=v.impact.impact_type.name,
-                impact_exceedance=ExceedanceCurve(
-                    values=sig_figures(impact_exceedance.values),
-                    exceed_probabilities=sig_figures(impact_exceedance.probs),
-                ),
-                impact_distribution=Distribution(
-                    bin_edges=sig_figures(v.impact.impact_bins),
-                    probabilities=sig_figures(v.impact.prob),
-                ),
-                impact_mean=sig_figures(v.impact.mean_impact()),
-                impact_std_deviation=sig_figures(v.impact.stddev_impact()),
-                calc_details=None if v.event is None else calc_details,
-            )
+            if isinstance(v.impact, PlaceholderImpactDistrib):
+                # only calc_details relevant here:
+                hazard_impacts = AssetSingleImpact(
+                    key=key,
+                    impact_type="n/a",
+                    impact_distribution=None,
+                    impact_exceedance=None,
+                    impact_mean=float("nan"),
+                    impact_std_deviation=float("nan"),
+                    calc_details=calc_details,
+                )
+            else:
+                impact_exceedance = v.impact.to_exceedance_curve()
+                hazard_impacts = AssetSingleImpact(
+                    key=key,
+                    impact_type=v.impact.impact_type.name,
+                    impact_exceedance=ExceedanceCurve(
+                        values=sig_figures(impact_exceedance.values),
+                        exceed_probabilities=sig_figures(impact_exceedance.probs),
+                    ),
+                    impact_distribution=Distribution(
+                        bin_edges=sig_figures(v.impact.impact_bins),
+                        probabilities=sig_figures(v.impact.prob),
+                    ),
+                    impact_mean=sig_figures(v.impact.mean_impact()),
+                    impact_std_deviation=sig_figures(v.impact.stddev_impact()),
+                    calc_details=None if v.event is None else calc_details,
+                )
+            # note that this does rely on ordering of dictionary (post 3.6)
             ordered_impacts[k.asset].append(hazard_impacts)
-        # note that this does rely on ordering of dictionary (post 3.6)
+
     return [
         AssetLevelImpact(asset_id=k.id if k.id is not None else "", impacts=v)
         for k, v in ordered_impacts.items()

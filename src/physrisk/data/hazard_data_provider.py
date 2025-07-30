@@ -94,6 +94,13 @@ class SourcePaths(Protocol):
         Returns:
             List[ResourcePaths]: List of ResourcePaths to be tried in order.
         """
+        ...
+
+    def scenario_paths_for_id(
+        self, resource_id: str, scenarios: Sequence[str], map: bool = False
+    ) -> Dict[str, ScenarioPaths]:
+        """Returns the ScenarioPaths when a unique ID is specified."""
+        ...
 
 
 class DataSourcingError(Exception):
@@ -445,6 +452,12 @@ class HazardDataProvider(ABC):
         weights: List[Tuple[ScenarioYear, float]] = []
         indices = np.searchsorted(available_with_current, requested_years, side="left")
         result: Dict[ScenarioYear, WeightedSum] = {}
+
+        if scenario == "historical":
+            result[ScenarioYear("historical", -1)] = WeightedSum(
+                weights=[(ScenarioYear("historical", -1), 1.0)]
+            )
+            return result
 
         def scenario_year(scenario: str, year: int):
             return (

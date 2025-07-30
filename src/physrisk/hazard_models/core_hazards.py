@@ -1,4 +1,5 @@
 from enum import Enum
+from pathlib import PosixPath
 from typing import Dict, Iterable, List, NamedTuple, Optional, Protocol, Sequence, Type
 
 from physrisk.api.v1.hazard_data import HazardResource
@@ -102,12 +103,34 @@ class InventorySourcePaths(SourcePaths):
             result.append(
                 ResourcePaths(
                     resource_path=r.path,
-                    scenarios={s: self._get_paths(r, s) for s in scenarios},
+                    scenarios={
+                        s: InventorySourcePaths.scenario_paths_for_resource(r, s)
+                        for s in scenarios
+                    },
                 )
             )
         return result
 
-    def _get_paths(self, resource: HazardResource, scenario_id: str):
+    def scenario_paths_for_id(
+        self, resource_id: str, scenarios: Sequence[str], map: bool = False
+    ):
+        r = self._inventory.resources[resource_id]
+        return {s: self.scenario_paths_for_resource(r, s, map) for s in scenarios}
+
+    @staticmethod
+    def scenario_paths_for_resource(
+        resource: HazardResource, scenario_id: str, map: bool = False
+    ):
+        if map:
+            assert resource.map is not None
+            path = (
+                str(PosixPath(resource.path).with_name(resource.map.path))
+                if len(PosixPath(resource.map.path).parts) == 1
+                else resource.map.path
+            )
+        else:
+            path = resource.path
+
         if scenario_id == "historical":
             # there are some cases where there is no historical scenario or -
             # more commonly - we do not want to use. We have seen cases where there is
@@ -125,7 +148,7 @@ class InventorySourcePaths(SourcePaths):
             year = min(scenario.years)
             return ScenarioPaths(
                 [-1],
-                lambda y: resource.path.format(
+                lambda y: path.format(
                     id=resource.indicator_id,
                     scenario=scenario.id,  # type:ignore
                     year=year,
@@ -145,9 +168,10 @@ class InventorySourcePaths(SourcePaths):
         else:
             return ScenarioPaths(
                 scenario.years,
-                lambda y: resource.path.format(
+                lambda y: path.format(
                     id=resource.indicator_id, scenario=proxy_scenario_id, year=y
-                ),
+                )
+                + ("/indicator" if resource.store_netcdf_coords else ""),
             )
 
     def get_resources(

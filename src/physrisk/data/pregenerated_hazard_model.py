@@ -198,10 +198,17 @@ class PregeneratedHazardModel(HazardModel):
                 )
             )
 
-        try:
+        def is_event_loop_running():
+            try:
+                asyncio.get_running_loop()
+                return True
+            except RuntimeError:
+                return False
+
+        if not is_event_loop_running():
             asyncio.run(all_requests())
-        except Exception:
-            # if there is an event loop running already, run is separate thread
+        else:
+
             def run_all_requests():
                 asyncio.run(all_requests())
 

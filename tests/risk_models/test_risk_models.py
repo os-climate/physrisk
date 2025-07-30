@@ -28,8 +28,12 @@ from physrisk.kernel.hazards import (
     Wind,
 )
 from physrisk.kernel.impact_distrib import ImpactType
-from physrisk.kernel.risk import AssetLevelRiskModel, MeasureKey
-from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels
+from physrisk.kernel.risk import AssetLevelRiskModel, MeasureKey, RiskMeasuresFactory
+from physrisk.kernel.vulnerability_model import (
+    DictBasedVulnerabilityModels,
+    VulnerabilityModels,
+    VulnerabilityModelsFactory,
+)
 from physrisk.requests import _create_risk_measures
 from physrisk.risk_models.generic_risk_model import GenericScoreBasedRiskMeasures
 from physrisk.risk_models.risk_models import RealEstateToyRiskMeasures
@@ -47,6 +51,25 @@ from ..data.test_hazard_model_store import (
     ZarrStoreMocker,
     inundation_return_periods,
 )
+
+
+def _vulnerability_models():
+    model_set = [
+        RealEstateCoastalInundationModel(),
+        RealEstateRiverineInundationModel(),
+        RealEstatePluvialInundationModel(),
+        GenericTropicalCycloneModel(),
+        PlaceholderVulnerabilityModel("fire_probability", Fire, ImpactType.damage),
+        PlaceholderVulnerabilityModel("days/above/35c", ChronicHeat, ImpactType.damage),
+        PlaceholderVulnerabilityModel("days/above/5cm", Hail, ImpactType.damage),
+        PlaceholderVulnerabilityModel(
+            "months/spei3m/below/-2", Drought, ImpactType.damage
+        ),
+        PlaceholderVulnerabilityModel(
+            "max/daily/water_equivalent", Precipitation, ImpactType.damage
+        ),
+    ]
+    return {Asset: model_set, RealEstateAsset: model_set}
 
 
 class TestRiskModels(TestWithCredentials):
@@ -351,7 +374,7 @@ class TestRiskModels(TestWithCredentials):
             source_paths=get_default_source_paths(), store=mocker.store
         )
 
-    def test_via_requests(self):
+    def test_generic_model_via_requests_default_vulnerability(self):
         scenarios = ["ssp585", "historical"]
         years = [2050]
 
@@ -363,12 +386,10 @@ class TestRiskModels(TestWithCredentials):
             "assets": self._create_assets_json(assets),
             "include_asset_level": False,
             "include_measures": True,
-            "include_calc_details": False,
+            "include_calc_details": True,
             "years": years,
             "scenarios": scenarios,
         }
-
-        # request = requests.AssetImpactRequest(**request_dict)
 
         container = Container()
 
@@ -395,11 +416,6 @@ class TestRiskModels(TestWithCredentials):
         res = requester.get(request_id="get_asset_impact", request_dict=request_dict)
         response = AssetImpactResponse.model_validate_json(res)
 
-        # response = requests._get_asset_impacts(
-        #     request,
-        #     hazard_model,
-        #     vulnerability_models=DictBasedVulnerabilityModels(get_default_vulnerability_models()),
-        # )
         res = next(
             ma
             for ma in response.risk_measures.measures_for_assets
@@ -418,30 +434,10 @@ class TestRiskModels(TestWithCredentials):
         # assets = [RealEstateAsset(TestData.latitudes[0], TestData.longitudes[0], location="Asia", type="Buildings/Industrial") for i in range(2)]
         hazard_model = self._create_hazard_model(scenarios, years)
 
-        model_set = [
-            RealEstateCoastalInundationModel(),
-            RealEstateRiverineInundationModel(),
-            RealEstatePluvialInundationModel(),
-            GenericTropicalCycloneModel(),
-            PlaceholderVulnerabilityModel("fire_probability", Fire, ImpactType.damage),
-            PlaceholderVulnerabilityModel(
-                "days/above/35c", ChronicHeat, ImpactType.damage
-            ),
-            PlaceholderVulnerabilityModel("days/above/5cm", Hail, ImpactType.damage),
-            PlaceholderVulnerabilityModel(
-                "months/spei3m/below/-2", Drought, ImpactType.damage
-            ),
-            PlaceholderVulnerabilityModel(
-                "max/daily/water_equivalent", Precipitation, ImpactType.damage
-            ),
-        ]
-
-        vulnerability_models = {Asset: model_set, RealEstateAsset: model_set}
-
         generic_measures = GenericScoreBasedRiskMeasures()
         model = AssetLevelRiskModel(
             hazard_model,
-            DictBasedVulnerabilityModels(vulnerability_models),
+            DictBasedVulnerabilityModels(_vulnerability_models()),
             {Asset: generic_measures, RealEstateAsset: generic_measures},
         )
         measure_ids_for_asset, definitions = model.populate_measure_definitions(assets)
@@ -456,3 +452,67 @@ class TestRiskModels(TestWithCredentials):
             measures[MeasureKey(assets[0], scenarios[0], years[0], Drought)].score,
             Category.HIGH,
         )
+
+    def test_generic_model_via_requests_custom(self):
+        scenarios = ["ssp585", "historical"]
+        years = [2050]
+
+        assets = self._create_assets()
+        # hazard_model = ZarrHazardModel(source_paths=get_default_source_paths())
+        hazard_model = self._create_hazard_model(scenarios, years)
+
+        request_dict = {
+            "assets": self._create_assets_json(assets),
+            "include_asset_level": True,
+            "include_measures": True,
+            "include_calc_details": True,
+            "years": years,
+            "scenarios": scenarios,
+        }
+
+        container = Container()
+
+        class TestHazardModelFactory(HazardModelFactory):
+            def hazard_model(
+                self,
+                interpolation: str = "floor",
+                provider_max_requests: Dict[str, int] = {},
+                interpolate_years: bool = False,
+            ):
+                return hazard_model
+
+        class TestVulnerabilityModelsFactory(VulnerabilityModelsFactory):
+            def vulnerability_models(self) -> VulnerabilityModels:
+                return DictBasedVulnerabilityModels(_vulnerability_models())
+
+        class TestMeasuresFactory(RiskMeasuresFactory):
+            def calculators(self, use_case_id: str):
+                return {RealEstateAsset: GenericScoreBasedRiskMeasures()}
+
+        container.override_providers(
+            hazard_model_factory=providers.Factory(TestHazardModelFactory)
+        )
+        container.override_providers(
+            vulnerability_models_factory=providers.Factory(
+                TestVulnerabilityModelsFactory
+            )
+        )
+        container.override_providers(
+            measures_factory=providers.Factory(TestMeasuresFactory)
+        )
+        container.override_providers(
+            config=providers.Configuration(default={"zarr_sources": ["embedded"]})
+        )
+        container.override_providers(inventory_reader=None)
+        container.override_providers(zarr_reader=None)
+        container.override_providers(sig_figures=6)
+
+        requester = container.requester()
+        res = requester.get(request_id="get_asset_impact", request_dict=request_dict)
+        # check 'round-trip' validation:
+        response = AssetImpactResponse.model_validate_json(res, strict=False)
+        # check that when there is a placeholder vulnerability model with no impact, the calculation details are still returned.
+        impact_for_placeholder = next(
+            i for i in response.asset_impacts[0].impacts if i.key.hazard_type == "Fire"
+        )
+        assert impact_for_placeholder.calc_details.hazard_path is not None

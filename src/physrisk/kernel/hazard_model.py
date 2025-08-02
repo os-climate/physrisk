@@ -2,6 +2,7 @@ import sys
 from abc import ABC, abstractmethod
 from collections import defaultdict
 from typing import (
+    Any,
     Dict,
     Mapping,
     NamedTuple,
@@ -250,6 +251,24 @@ class HazardImageCreator(Protocol):
             min_value (Optional[float], optional): Value of colormap minimum. Defaults to None.
             max_value (Optional[float], optional): Value of colormap maximum. Defaults to None.
             index_value (Optional[str | float], optional): Value of the non-spatial 'index' dimension. Defaults to None.
+        """
+        ...
+
+    def get_info(
+            self,
+            resource_id: str,
+            scenario: str,
+            year: int
+    ) -> Sequence[Union[float, str]]:
+        """Provides additional image information required to create an image.
+
+        Args:
+            resource_id (str): Unique identifier of the resource.
+            scenario (str): Scenario ID.
+            year (int): Year for future scenarios.
+
+        Returns:
+            Tuple[Sequence[Any], Sequence[Any]]: Sequences of non-spatial ('index') dimension values for which data exists.
         """
         ...
 

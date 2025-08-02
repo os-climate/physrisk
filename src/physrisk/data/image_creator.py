@@ -2,7 +2,7 @@ import io
 import logging
 from functools import lru_cache
 from pathlib import PurePosixPath
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, List, Optional, Sequence, Union
 
 import numpy as np
 import PIL.Image as Image
@@ -77,6 +77,21 @@ class ImageCreator(HazardImageCreator):
         image_bytes = io.BytesIO()
         image.save(image_bytes, format=format)
         return image_bytes.getvalue()
+
+    def get_info(
+            self,
+            resource_id: str,
+            scenario: str,
+            year: int
+    ) -> Sequence[Union[float, str]]:
+        # in principle, depends on the scenario and year, although we assume here that
+        # all years have the same index valuea available.
+        scenario_paths = self.source_paths.scenario_paths_for_id(
+                resource_id, [scenario], True
+            )[scenario]
+        path = scenario_paths.path[scenario_paths.years[0]]
+        index_values, index_units = self.reader.get_index_values(path)
+        return index_values, index_units
 
     def get_info(self, resource: str):
         data = get_data(self.reader, resource)

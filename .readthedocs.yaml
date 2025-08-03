@@ -5,24 +5,15 @@
 # Required
 version: 2
 
-# Set the OS, Python version and other tools you might need
+# Specify os and python version
 build:
-  os: ubuntu-22.04
+  os: "ubuntu-24.04"
   tools:
-    python: "3.9"
+    python: "3.12"
+  commands:
+    - pip install uv
+    - uv run python -m sphinx docs $READTHEDOCS_OUTPUT/html -b html -W
 
-# Build documentation in the "docs/" directory with Sphinx
+# Build documentation in the docs/ directory with Sphinx
 sphinx:
-   configuration: docs/conf.py
-
-# Optionally build your docs in additional formats such as PDF and ePub
-#formats:
-#   - pdf
-#   - epub
-
-# Optional but recommended, declare the Python requirements required
-# to build your documentation
-# See https://docs.readthedocs.io/en/stable/guides/reproducible-builds.html
-python:
-   install:
-   - requirements: docs/requirements-docs.txt
+  configuration: docs/conf.py

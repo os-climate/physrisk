@@ -53,8 +53,8 @@ Other checks are then run with Actions within GitHub.
 For those using VS Code, configure tests ('Python: Configure Tests') to
 use 'pytest' to allow running of tests within the IDE.
 
-
 ## Building documentation
+
 Building of the documentation relies on Pandoc which must be [installed]((https://pandoc.org/installing.html)) in order to build the documentation locally. One this is done, to build:
 
 ```bash
@@ -65,7 +65,7 @@ make html
 and to open in a browser:
 
 ```bash
-open ./_build/html/index.html 
+open ./_build/html/index.html
 ```
 
 ## Releasing

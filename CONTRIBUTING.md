@@ -94,30 +94,23 @@ This is a useful clarification of the forking workflow:
 
 ```text
 ├── LICENSE
-    ├── pdm.lock           <- pdm.lock stating a pinned down software stack
-    │                         as used by pdm.
+    ├── uv.lock            <- uv.lock providing a pinned set of dependencies
+    │                         (used by uv tool).
+    ├── CONTRIBUTING.md    <- Information for developers.
+    │
     ├── README.md          <- The top-level README for developers using this project.
     │
     ├── methodology        <- Contains LaTeX methodology document.
     │    └── literature    <- Literature review.
     │
-    ├── docs               <- A default Sphinx project; see sphinx-doc.org
+    ├── docs               <- A Sphinx project; see sphinx-doc.org
     │                         for details.
-    │
-    ├── notebooks          <- Jupyter notebooks. These comprise notebooks used
-    │                         for on-boarding hazard data, on-boarding
-    │                         vulnerability models and tutorial.
-    │
-    ├── setup.py           <- makes project pip installable (pip install -e .)
-    │                         so src can be imported.
     │
     ├── src                <- Source code for use in this project.
     │   └── physrisk       <- physrisk source code.
     │    
     ├── tests              <- physrisk tests; follows same folder structure as physrisk.
     │
-    ├── pyproject.toml     <- central location of project settings.
-    │
-    └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io.
+    └── pyproject.toml     <- central location of project settings.
 
 ---

@@ -22,9 +22,10 @@ classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.9",
   "Topic :: Office/Business :: Financial",
   "Topic :: Scientific/Engineering",
   "Topic :: Software Development",
@@ -124,18 +125,6 @@ dev = [
     "ruff",
     "tox"
 ]
-
-[tool.pdm.scripts]
-pre_release = "scripts/dev-versioning.sh"
-release = "scripts/release-versioning.sh"
-test = "pytest"
-tox = "tox"
-docs_requirements = { shell = "pdm export -o docs/requirements-docs.txt --no-hashes", help = "Update requirements-docs.txt" }
-docs = { shell = "cd docs && make html", help = "Start the dev server for doc preview" }
-open_docs = { shell = "open ./docs/_build/html/index.html", help = "Start the dev server for doc preview" }
-lint = "pre-commit run --all-files"
-complete = { call = "tasks.complete:main", help = "Create autocomplete files for bash and fish" }
-all = {composite = ["pytest", "lint"]}
 
 [tool.pytest.ini_options]
 testpaths = "tests"

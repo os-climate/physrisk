@@ -55,7 +55,8 @@ use 'pytest' to allow running of tests within the IDE.
 
 ## Building documentation
 
-Building of the documentation relies on Pandoc which must be [installed]((https://pandoc.org/installing.html)) in order to build the documentation locally. One this is done, to build:
+Building of the documentation relies on Pandoc which must be [installed]((https://pandoc.org/installing.html))
+in order to build the documentation locally. One this is done, to build:
 
 ```bash
 cd docs

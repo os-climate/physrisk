@@ -5,37 +5,30 @@
 To get set up, clone and enter the repo.
 
 ```bash
-git clone git@github.com:os-climate/physrisk.git
+git clone https://github.com/os-climate/physrisk.git
 cd physrisk
 ```
 
-We recommend using [pdm](https://pdm-project.org/latest/) for a
-consistent working environment. Install via, e.g.:
+We recommend using [uv](https://docs.astral.sh/uv/) for maintaining a consistent working environment.
+There are a number of [installation options](https://docs.astral.sh/uv/getting-started/installation/).
+Note that an advantage of uv is that it can also be used to maintain python installations
+(via ```uv python install```) and select the Python installation be be used for the creation of the
+project's virtual environment, e.g. ```uv python pin 3.11```.
+
+The command
 
 ```bash
-pip install pdm
+uv sync
 ```
 
-For ease of using Jupyter notebooks (e.g. in VS Code) the config can be used:
-
-```bash
-pdm config venv.with_pip True
-```
-
-The command:
-
-```bash
-pdm install
-```
-
-will create a virtual environment (typically .venv folder in the project
+will create a virtual environment (.venv folder in the project
 folder) and install the dependencies.
-We recommend that the IDE workspace uses this virtual environment when
+We recommend that the IDE workspace use this virtual environment when
 developing.
 
 When adding a package for use in new or improved functionality,
-`pdm add <package-name>`. Or, when adding something helpful for
-testing or development, `pdm add -dG <group> <package-name>`.
+`uv add <package-name>`. Or, when adding something for
+development, `uv add --dev <package-name>`.
 
 ## Development
 
@@ -43,52 +36,38 @@ Patches may be contributed via pull requests to
 <https://github.com/os-climate/physrisk>.
 
 All changes must pass the automated test suite, along with various static
-checks.
-
-[Black](https://black.readthedocs.io/) code style and
-[isort](https://pycqa.github.io/isort/) import ordering are enforced
-and enabling automatic formatting via [pre-commit](https://pre-commit.com/)
-is recommended:
+checks. Tests and static checks can be run via the commands:
 
 ```bash
-pre-commit install
+uv run pytest
 ```
-
-or
 
 ```bash
-pre-commit run --all-files
+uv run pre-commit run --all-files
 ```
 
-To ensure compliance with static check tools, developers may wish to run
-black and isort against modified files.
-
-E.g.,
-
-```bash
-# auto-sort imports
-isort .
-# auto-format code
-black .
-```
-
-Code can then be tested using tox.
-
-```bash
-# run static checks and unit tests
-tox
-# run only tests
-tox -e py3
-# run only static checks
-tox -e static
-# run unit tests and produce an HTML code coverage report (/htmlcov)
-tox -e cov
-```
+Other checks are then run with Actions within GitHub.
 
 ## IDE set-up
 
 For those using VS Code, configure tests ('Python: Configure Tests') to
 use 'pytest' to allow running of tests within the IDE.
+
+## Building documentation
+
+Building of the documentation relies on Pandoc which must be [installed]((https://pandoc.org/installing.html))
+in order to build the documentation locally. One this is done, to build:
+
+```bash
+cd docs
+make html
+```
+
+and to open in a browser:
+
+```bash
+open ./_build/html/index.html
+```
 
 ## Releasing
 
@@ -109,36 +88,35 @@ git push --follow-tags
 This is a useful clarification of the forking workflow:
 <https://gist.github.com/Chaser324/ce0505fbed06b947d962>
 
+To add remote 'upstream', the command would be:
+
+```bash
+git remote add upstream https://github.com/os-climate/physrisk.git
+```
+
 ## Project Organization
 
 ---
 
 ```text
 ├── LICENSE
-    ├── pdm.lock           <- pdm.lock stating a pinned down software stack
-    │                         as used by pdm.
+    ├── uv.lock            <- uv.lock providing a pinned set of dependencies
+    │                         (used by uv tool).
+    ├── CONTRIBUTING.md    <- Information for developers.
+    │
     ├── README.md          <- The top-level README for developers using this project.
     │
     ├── methodology        <- Contains LaTeX methodology document.
     │    └── literature    <- Literature review.
     │
-    ├── docs               <- A default Sphinx project; see sphinx-doc.org
+    ├── docs               <- A Sphinx project; see sphinx-doc.org
     │                         for details.
-    │
-    ├── notebooks          <- Jupyter notebooks. These comprise notebooks used
-    │                         for on-boarding hazard data, on-boarding
-    │                         vulnerability models and tutorial.
-    │
-    ├── setup.py           <- makes project pip installable (pip install -e .)
-    │                         so src can be imported.
     │
     ├── src                <- Source code for use in this project.
     │   └── physrisk       <- physrisk source code.
     │    
     ├── tests              <- physrisk tests; follows same folder structure as physrisk.
     │
-    ├── pyproject.toml     <- central location of project settings.
-    │
-    └── tox.ini            <- tox file with settings for running tox; see tox.readthedocs.io.
+    └── pyproject.toml     <- central location of project settings.
 
 ---

@@ -7,7 +7,7 @@ description = "OS-Climate Physical Risk Library"
 authors = [
     {name = "Joe Moorhouse",email = "5102656+joemoorhouse@users.noreply.github.com"},
 ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 readme = "README.md"
 license = {file = "LICENSE"}
 keywords = ["Physical", "Climate", "Risk", "Finance"]
@@ -22,9 +22,10 @@ classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.9",
   "Topic :: Office/Business :: Financial",
   "Topic :: Scientific/Engineering",
   "Topic :: Software Development",
@@ -32,22 +33,22 @@ classifiers = [
 
 dependencies = [
     "affine>=2.4.0",
-    "dependency-injector>=4.41.0",
-    "numba>=0.56.4",
-    "numpy>=1.22.0",
-    "pint",
-    "pillow>=10.2.0",
-    "pydantic>=2.4.2",
-    "pyproj>=3.5.0",
-    "python-dotenv>=0.19.2",
-    "requests>=2.27.1",
-    "scipy>=1.7.3",
-    "shapely>=2.0.1",
-    "s3fs>=2022.1.0",
-    "zarr>=2.10.3,<3.0.0",
-    "geopandas>=0.14.4",
-    "h3>=3.7.7",
+    "dependency-injector>=4.48.0",
+    "geopandas>=1.1.0",
+    "h3>=4.3.0",
     "lmdbm>=0.0.6",
+    "numba>=0.61.0",
+    "numpy>=2.2.0",
+    "pint>=0.24.0",
+    "pillow>=11.3.0",
+    "pydantic>=2.11.0",
+    "pyproj>=3.7.0",
+    "python-dotenv>=1.1.0",
+    "requests>=2.32.0",
+    "scipy>=1.15.0",
+    "shapely>=2.1.0",
+    "s3fs>=2025.7.0",
+    "zarr>=2.18.0,<3.0.0",
 ]
 
 [project.urls]
@@ -61,8 +62,7 @@ Documentation = "https://github.com/os-climate/physrisk/tree/main/docs"
 [build-system]
 requires = [
     "setuptools>=42",
-    "wheel",
-    "pdm"
+    "wheel"
 ]
 build-backend = "setuptools.build_meta"
 
@@ -83,30 +83,41 @@ physrisk = [
     "data/static/vulnerability/*.json"
 ]
 
-[tool.pdm.dev-dependencies]
+[dependency-groups]
 test = [
-    "pdm[pytest]",
     "pytest",
     "pytest-cov",
     "openpyxl>=3.1.5",
 ]
 doc = [
-    "numpydoc",
-    "nbsphinx",
-    "myst-nb",
-    "pandoc",
-    "pydata-sphinx-theme",
-    "sphinx",
-    "sphinxcontrib-details-directive",
-    "sphinxcontrib-bibtex",
-    "sphinx-copybutton",
-    "sphinx-simplepdf",
-    "sphinx-toolbox",
-    "sphinx_toggleprompt",
-    "sphinx_design",
-    "sphinx_rtd_theme",
-    "graphviz",
-    "plotly>=5.24.1",
+    "graphviz==0.21",
+    "myst-nb==1.3.0",
+    "nbsphinx==0.9.5",
+    "numpydoc==1.9.0",
+    "pandoc==2.4",
+    "plotly>=6.0.0",
+    "pydata-sphinx-theme==0.15.4",
+    "setuptools<81",
+    "sphinx==7.4.7",
+    "sphinx-autodoc-typehints==2.3.0",
+    "sphinx-copybutton==0.5.2",
+    "sphinx-design==0.6.1",
+    "sphinx-jinja2-compat==0.3.0",
+    "sphinx-prompt==1.8.0",
+    "sphinx-rtd-theme==2.0.0",
+    "sphinx-simplepdf==1.6.0",
+    "sphinx-tabs==3.4.5",
+    "sphinx-toggleprompt==0.5.2",
+    "sphinx-toolbox==3.8.0",
+    "sphinxcontrib-applehelp==2.0.0",
+    "sphinxcontrib-bibtex==2.6.3",
+    "sphinxcontrib-details-directive==0.1.0",
+    "sphinxcontrib-devhelp==2.0.0",
+    "sphinxcontrib-htmlhelp==2.1.0",
+    "sphinxcontrib-jquery==4.1",
+    "sphinxcontrib-jsmath==1.0.1",
+    "sphinxcontrib-qthelp==2.0.0",
+    "sphinxcontrib-serializinghtml==2.0.0",
 ]
 dev = [
     "mypy",
@@ -114,18 +125,6 @@ dev = [
     "ruff",
     "tox"
 ]
-
-[tool.pdm.scripts]
-pre_release = "scripts/dev-versioning.sh"
-release = "scripts/release-versioning.sh"
-test = "pytest"
-tox = "tox"
-docs_requirements = { shell = "pdm export -o docs/requirements-docs.txt --no-hashes", help = "Update requirements-docs.txt" }
-docs = { shell = "cd docs && make html", help = "Start the dev server for doc preview" }
-open_docs = { shell = "open ./docs/_build/html/index.html", help = "Start the dev server for doc preview" }
-lint = "pre-commit run --all-files"
-complete = { call = "tasks.complete:main", help = "Create autocomplete files for bash and fish" }
-all = {composite = ["pytest", "lint"]}
 
 [tool.pytest.ini_options]
 testpaths = "tests"
@@ -212,6 +211,7 @@ extend-select = [
 ]
 
 ignore = [
+    "B905",
     "E203",
     "E501",
     # Avoid incompatible rules
@@ -237,3 +237,6 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 docstring-code-format = true
 docstring-code-line-length = "dynamic"
+
+[tool.uv]
+default-groups = ["dev", "test", "doc"]

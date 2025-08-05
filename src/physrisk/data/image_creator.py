@@ -1,15 +1,17 @@
+from importlib import import_module
 import io
 import logging
 from functools import lru_cache
-from pathlib import PurePosixPath
-from typing import Callable, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import PIL.Image as Image
 import zarr.storage
 
+from physrisk.kernel.hazards import HazardKind
 from physrisk.data import colormap_provider
 from physrisk.data.hazard_data_provider import HazardDataProvider, SourcePaths
+from physrisk.data.inventory import Inventory
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.kernel.hazard_model import HazardImageCreator, Tile
 
@@ -22,8 +24,13 @@ class ImageCreator(HazardImageCreator):
     """
 
     def __init__(
-        self, source_paths: SourcePaths, reader: ZarrReader, historical_year: int = 2025
+        self,
+        inventory: Inventory,
+        source_paths: SourcePaths,
+        reader: ZarrReader,
+        historical_year: int = 2025,
     ):
+        self.inventory = inventory
         self.source_paths = source_paths
         self.reader = reader
         self.historical_year = historical_year  # might be needed for interpolation
@@ -42,7 +49,10 @@ class ImageCreator(HazardImageCreator):
     ):
         try:
             scenario_paths = self.source_paths.scenario_paths_for_id(
-                resource_id, ["historical", scenario], True
+                resource_id,
+                ["historical", scenario],
+                True,
+                map_zoom=tile.z + 1 if tile is not None else None,
             )
             weighted_sum = next(
                 iter(
@@ -78,9 +88,27 @@ class ImageCreator(HazardImageCreator):
         image.save(image_bytes, format=format)
         return image_bytes.getvalue()
 
-    def get_info(self, resource: str):
-        data = get_data(self.reader, resource)
-        index_values, index_units = self.reader.get_index_values(data)
+    def get_info(
+        self, resource_id: str, scenario: str, year: int
+    ) -> Tuple[Sequence[Any], str]:
+        resource = self.inventory.resources[resource_id]
+        # in principle, depends on the scenario and year, although we assume here that
+        # all years have the same index values available.
+        scenario_paths = self.source_paths.scenario_paths_for_id(
+            resource_id, [scenario], True, map_zoom=1
+        )[scenario]
+        path = scenario_paths.path(scenario_paths.years[0])
+        z = self.reader.all_data(path)
+        all_index_values, index_units = self.reader.get_index_values(z)
+        if resource.map and resource.map.index_values:
+            index_values = resource.map.index_values
+        else:
+            index_values = all_index_values
+        physrisk_hazards = import_module("physrisk.kernel.hazards")
+        if index_units == "default":
+            hazard_class = getattr(physrisk_hazards, resource.hazard_type)
+            if hazard_class.kind == HazardKind.ACUTE:
+                index_units = "years"
         return index_values, index_units
 
     def to_file(
@@ -121,7 +149,6 @@ class ImageCreator(HazardImageCreator):
         tile_size = 512
         index = None
 
-        # data = self.reader.all_data(tile_path)
         def get_array(data: zarr.Array, index: Optional[int]):
             if len(data.shape) == 3:
                 index_values, _ = self.reader.get_index_values(data)
@@ -146,7 +173,7 @@ class ImageCreator(HazardImageCreator):
             * get_array(
                 get_data(
                     self.reader,
-                    path if tile is None else str(PurePosixPath(path, f"{tile.z + 1}")),
+                    path,
                 ),
                 index,
             )

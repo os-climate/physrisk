@@ -1,6 +1,7 @@
 from collections import defaultdict
 from typing import Dict, List, Mapping, MutableMapping, Optional, Sequence
 
+from build.lib.physrisk.data.inventory import Inventory
 from physrisk.data.hazard_data_provider import SourcePaths
 from physrisk.data.image_creator import ImageCreator
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
@@ -25,6 +26,7 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
         self,
         cache_store: H3BasedCache,
         credentials: CredentialsProvider,
+        inventory: Inventory,
         source_paths: SourcePaths,
         store: Optional[MutableMapping] = None,
         reader: Optional[ZarrReader] = None,
@@ -32,6 +34,7 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
         self.source_paths = source_paths
         self.cache_store = cache_store
         self.credentials = credentials
+        self.inventory = inventory
         self.store = store
         self.reader = reader
 
@@ -53,7 +56,7 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
         )
 
     def image_creator(self):
-        return ImageCreator(self.source_paths, self.reader)
+        return ImageCreator(self.inventory, self.source_paths, self.reader)
 
 
 class CompositeHazardModel(HazardModel):

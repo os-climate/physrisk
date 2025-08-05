@@ -18,6 +18,8 @@ class Tile(NamedTuple):
 
 class HazardImageInfoRequest(BaseHazardRequest):
     resource: str = Field(description="Hazard resource path (unique identifier).")
+    scenario_id: str
+    year: int
 
 
 class HazardImageInfoResponse(BaseHazardRequest):

@@ -4,7 +4,7 @@ from dependency_injector import containers, providers
 
 from physrisk.data.hazard_data_provider import SourcePaths
 from physrisk.data.image_creator import ImageCreator
-from physrisk.data.inventory import EmbeddedInventory
+from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
@@ -26,10 +26,12 @@ from physrisk.requests import (
 class ZarrHazardModelFactory(HazardModelFactory):
     def __init__(
         self,
+        inventory: Inventory,
         source_paths: SourcePaths,
         store: Optional[MutableMapping] = None,
         reader: Optional[ZarrReader] = None,
     ):
+        self.inventory = inventory
         self.source_paths = source_paths
         self.store = store
         self.reader = reader
@@ -51,7 +53,7 @@ class ZarrHazardModelFactory(HazardModelFactory):
         )
 
     def image_creator(self):
-        return ImageCreator(self.source_paths, self.reader)
+        return ImageCreator(self.inventory, self.source_paths, self.reader)
 
 
 class DictBasedVulnerabilityModelsFactory(VulnerabilityModelsFactory):
@@ -81,7 +83,10 @@ class Container(containers.DeclarativeContainer):
     zarr_reader = providers.Singleton(ZarrReader, store=zarr_store)
 
     hazard_model_factory = providers.Factory(
-        ZarrHazardModelFactory, reader=zarr_reader, source_paths=source_paths
+        ZarrHazardModelFactory,
+        inventory=inventory,
+        reader=zarr_reader,
+        source_paths=source_paths,
     )
 
     measures_factory = providers.Factory(calc.DefaultMeasuresFactory)

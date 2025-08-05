@@ -25,7 +25,7 @@ jobs:
       tag: "${{ steps.tag-validate.outputs.tag }}"
     steps:
       # Harden the runner used by this workflow
-      - uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
+      - uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
         with:
           egress-policy: 'audit'
 
@@ -53,7 +53,7 @@ jobs:
       GH_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
     steps:
       # Harden the runner used by this workflow
-      - uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
+      - uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
         with:
           egress-policy: 'audit'
 
@@ -64,7 +64,7 @@ jobs:
         # yamllint disable-line rule:line-length
         # uses: modeseven-lfreleng-actions/python-build-action@update-action # Testing
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-build-action@2d578fdfc3de6aec561b189355353bb3ff028895 # v0.1.12
+        uses: lfreleng-actions/python-build-action@8febd88cda1d708cf5066c175f7ac165c6b3bcf3 # v0.1.14
         with:
           sigstore_sign: true
           attestations: true
@@ -82,7 +82,7 @@ jobs:
     timeout-minutes: 12
     steps:
       # Harden the runner used by this workflow
-      - uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
+      - uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
         with:
           egress-policy: 'audit'
 
@@ -90,7 +90,7 @@ jobs:
 
       - name: 'Test Python project [PYTEST]'
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-test-action@5d253209cf755dde9307dfd12865112f61e9dad9 # v0.1.10
+        uses: lfreleng-actions/python-test-action@bdde9e4e6221e858359f9036bd4f41ab3b1af90e # v0.1.11
         with:
           python_version: "${{ matrix.python-version }}"
 
@@ -107,7 +107,7 @@ jobs:
     timeout-minutes: 10
     steps:
       # Harden the runner used by this workflow
-      - uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
+      - uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
         with:
           egress-policy: 'audit'
 
@@ -115,7 +115,7 @@ jobs:
 
       - name: 'Audit Python project'
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/python-audit-action@76b714cee4b17e6094075fd425d6769393d155a0 # v0.2.1
+        uses: lfreleng-actions/python-audit-action@bab5316468c108870eb759ef0de622bae9239aad # v0.2.2
         with:
           permit_fail: 'true'
           python_version: "${{ matrix.python-version }}"
@@ -135,7 +135,7 @@ jobs:
     timeout-minutes: 5
     steps:
       # Harden the runner used by this workflow
-      - uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
+      - uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
         with:
           egress-policy: 'audit'
 
@@ -162,7 +162,7 @@ jobs:
     timeout-minutes: 5
     steps:
       # Harden the runner used by this workflow
-      - uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
+      - uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
         with:
           egress-policy: 'audit'
 
@@ -193,7 +193,7 @@ jobs:
     steps:
       # Harden the runner used by this workflow
       # yamllint disable-line rule:line-length
-      - uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
+      - uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
         with:
           egress-policy: 'audit'
 
@@ -224,7 +224,7 @@ jobs:
     timeout-minutes: 5
     steps:
       # Harden the runner used by this workflow
-      - uses: step-security/harden-runner@6c439dc8bdf85cadbbce9ed30d1c7b959517bc49 # v2.12.2
+      - uses: step-security/harden-runner@ec9f2d5744a09debf3a187a3f4f675c53b671911 # v2.13.0
         with:
           egress-policy: 'audit'
 

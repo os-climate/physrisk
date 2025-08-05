@@ -97,7 +97,11 @@ class SourcePaths(Protocol):
         ...
 
     def scenario_paths_for_id(
-        self, resource_id: str, scenarios: Sequence[str], map: bool = False, map_zoom: Optional[int] = None
+        self,
+        resource_id: str,
+        scenarios: Sequence[str],
+        map: bool = False,
+        map_zoom: Optional[int] = None,
     ) -> Dict[str, ScenarioPaths]:
         """Returns the ScenarioPaths when a unique ID is specified."""
         ...

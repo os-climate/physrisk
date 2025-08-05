@@ -112,19 +112,28 @@ class InventorySourcePaths(SourcePaths):
         return result
 
     def scenario_paths_for_id(
-        self, resource_id: str, scenarios: Sequence[str], map: bool = False, map_zoom: Optional[int] = None
+        self,
+        resource_id: str,
+        scenarios: Sequence[str],
+        map: bool = False,
+        map_zoom: Optional[int] = None,
     ):
         r = self._inventory.resources[resource_id]
-        return {s: self.scenario_paths_for_resource(r, s, map, map_zoom) for s in scenarios}
+        return {
+            s: self.scenario_paths_for_resource(r, s, map, map_zoom) for s in scenarios
+        }
 
     @staticmethod
     def scenario_paths_for_resource(
-        resource: HazardResource, scenario_id: str, map: bool = False, map_zoom: Optional[int] = None
+        resource: HazardResource,
+        scenario_id: str,
+        map: bool = False,
+        map_zoom: Optional[int] = None,
     ):
         if map:
             assert resource.map is not None
             # is this a pyramid of tiles?
-            is_pyramid = resource.map.source == "map_array_pyramid"
+            is_pyramid = resource.map.source != "map_array"
             path = (
                 str(PosixPath(resource.path).with_name(resource.map.path))
                 if len(PosixPath(resource.map.path).parts) == 1

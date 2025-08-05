@@ -120,8 +120,11 @@ class TestExposureMeasures(TestWithCredentials):
             TestData.longitudes, TestData.latitudes, path_curves()
         )
 
+        inventory = EmbeddedInventory()
         hazard_model_factory = ZarrHazardModelFactory(
-            source_paths=get_default_source_paths(EmbeddedInventory()), store=store
+            inventory=inventory,
+            source_paths=get_default_source_paths(inventory),
+            store=store,
         )
 
         return assets, store, hazard_model_factory, expected

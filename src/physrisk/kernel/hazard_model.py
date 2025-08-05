@@ -255,11 +255,8 @@ class HazardImageCreator(Protocol):
         ...
 
     def get_info(
-            self,
-            resource_id: str,
-            scenario: str,
-            year: int
-    ) -> Sequence[Union[float, str]]:
+        self, resource_id: str, scenario: str, year: int
+    ) -> Tuple[Sequence[Any], str]:
         """Provides additional image information required to create an image.
 
         Args:
@@ -268,7 +265,7 @@ class HazardImageCreator(Protocol):
             year (int): Year for future scenarios.
 
         Returns:
-            Tuple[Sequence[Any], Sequence[Any]]: Sequences of non-spatial ('index') dimension values for which data exists.
+            Tuple[Sequence[Any], str]: Sequences of non-spatial ('index') dimension values for which data exists and units.
         """
         ...
 

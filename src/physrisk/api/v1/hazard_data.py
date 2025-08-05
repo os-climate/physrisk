@@ -1,5 +1,5 @@
 from enum import Flag, auto
-from typing import Dict, Iterable, List, Optional, Tuple
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from pydantic import BaseModel, Field
 
@@ -39,13 +39,18 @@ class MapInfo(BaseModel):
         [(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
         description="Bounds (top/left, top/right, bottom/right, bottom/left) as degrees. Note applied to map reprojected into Web Mercator CRS.",  # noqa
     )
+    bbox: Optional[List[float]] = Field(default=[-180.0, -85.0, 180.0, 85.0])
+    index_values: Optional[Sequence[Union[float, int, str]]] = Field(
+        default=None,
+        description="Index values to include in maps. If None, the last index value only is included.",
+    )
     # note that the bounds should be consistent with the array attributes
     source: Optional[str] = Field(
         description="""Source of map image. These are
                             'map_array': single Mercator projection array at path above
                             'map_array_pyramid': pyramid of Mercator projection arrays
                             'mapbox'.
-                                  """
+                            """
     )
 
 

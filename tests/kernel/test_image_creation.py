@@ -33,10 +33,10 @@ class SourcePathsTest(SourcePaths):
     def resource_paths(self, hazard_type, indicator_id, scenarios, hint=None):
         pass
 
-    def scenario_paths_for_id(self, resource_id, scenarios, map):
+    def scenario_paths_for_id(self, resource_id, scenarios, map, map_zoom):
         return {
             s: ScenarioPaths(
-                years=[2030, 2050], path=lambda y, s=s: f"test_array_{s}_{y}"
+                years=[2030, 2050], path=lambda y, s=s: f"test_array_{s}_{y}/{map_zoom}"
             )
             for s in scenarios
         }
@@ -57,7 +57,9 @@ class TestImageCreation(TestWithCredentials):
         )
         z[0, :, :] = im
         converter = ImageCreator(
-            reader=ZarrReader(store), source_paths=get_default_source_paths()
+            inventory=self._mock_inventory(),
+            reader=ZarrReader(store),
+            source_paths=get_default_source_paths(),
         )
         colormap = colormap_provider.colormap("test")
 
@@ -121,7 +123,9 @@ class TestImageCreation(TestWithCredentials):
     def test_interpolation(self):
         store = self._store()
         converter = ImageCreator(
-            source_paths=SourcePathsTest(), reader=ZarrReader(store)
+            inventory=self._mock_inventory(),
+            source_paths=SourcePathsTest(),
+            reader=ZarrReader(store),
         )
         result = converter.create_image(
             "test_array_{scenario}_{year}",
@@ -166,7 +170,7 @@ class TestImageCreation(TestWithCredentials):
                 return ZarrHazardModel(source_paths=source_paths, store=store)
 
             def image_creator(self):
-                return ImageCreator(source_paths, ZarrReader(store=store))
+                return ImageCreator(inventory, source_paths, ZarrReader(store=store))
 
         container.override_providers(
             hazard_model_factory=providers.Factory(TestHazardModelFactory)

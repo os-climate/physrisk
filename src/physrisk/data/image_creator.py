@@ -42,7 +42,7 @@ class ImageCreator(HazardImageCreator):
     ):
         try:
             scenario_paths = self.source_paths.scenario_paths_for_id(
-                resource_id, ["historical", scenario], True
+                resource_id, ["historical", scenario], True, map_zoom=tile.z + 1 if tile is not None else None
             )
             weighted_sum = next(
                 iter(
@@ -87,15 +87,11 @@ class ImageCreator(HazardImageCreator):
         # in principle, depends on the scenario and year, although we assume here that
         # all years have the same index valuea available.
         scenario_paths = self.source_paths.scenario_paths_for_id(
-                resource_id, [scenario], True
+                resource_id, [scenario], True, map_zoom=1
             )[scenario]
-        path = scenario_paths.path[scenario_paths.years[0]]
-        index_values, index_units = self.reader.get_index_values(path)
-        return index_values, index_units
-
-    def get_info(self, resource: str):
-        data = get_data(self.reader, resource)
-        index_values, index_units = self.reader.get_index_values(data)
+        path = scenario_paths.path(scenario_paths.years[0])
+        z = self.reader.all_data(path)
+        index_values, index_units = self.reader.get_index_values(z)
         return index_values, index_units
 
     def to_file(
@@ -161,7 +157,7 @@ class ImageCreator(HazardImageCreator):
             * get_array(
                 get_data(
                     self.reader,
-                    path if tile is None else str(PurePosixPath(path, f"{tile.z + 1}")),
+                    path,
                 ),
                 index,
             )

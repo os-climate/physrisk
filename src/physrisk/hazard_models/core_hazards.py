@@ -1,5 +1,5 @@
 from enum import Enum
-from pathlib import PosixPath
+from pathlib import PosixPath, PurePosixPath
 from typing import Dict, Iterable, List, NamedTuple, Optional, Protocol, Sequence, Type
 
 from physrisk.api.v1.hazard_data import HazardResource
@@ -112,22 +112,26 @@ class InventorySourcePaths(SourcePaths):
         return result
 
     def scenario_paths_for_id(
-        self, resource_id: str, scenarios: Sequence[str], map: bool = False
+        self, resource_id: str, scenarios: Sequence[str], map: bool = False, map_zoom: Optional[int] = None
     ):
         r = self._inventory.resources[resource_id]
-        return {s: self.scenario_paths_for_resource(r, s, map) for s in scenarios}
+        return {s: self.scenario_paths_for_resource(r, s, map, map_zoom) for s in scenarios}
 
     @staticmethod
     def scenario_paths_for_resource(
-        resource: HazardResource, scenario_id: str, map: bool = False
+        resource: HazardResource, scenario_id: str, map: bool = False, map_zoom: Optional[int] = None
     ):
         if map:
             assert resource.map is not None
+            # is this a pyramid of tiles?
+            is_pyramid = resource.map.source == "map_array_pyramid"
             path = (
                 str(PosixPath(resource.path).with_name(resource.map.path))
                 if len(PosixPath(resource.map.path).parts) == 1
                 else resource.map.path
             )
+            if is_pyramid:
+                path = str(PurePosixPath(path, str(map_zoom)))
         else:
             path = resource.path
 

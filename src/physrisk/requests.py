@@ -221,7 +221,7 @@ class Requester:
 
     def get_image_info(self, request: HazardImageInfoRequest):
         creator: HazardImageCreator = self.hazard_model_factory.image_creator()
-        index_values, index_units = creator.get_info(request.resource, request.scenario, request.year)
+        index_values, index_units = creator.get_info(request.resource, request.scenario_id, request.year)
         return HazardImageInfoResponse(
             index_values=index_values, index_units=index_units
         )

@@ -2,7 +2,7 @@
 name = "physrisk-lib"
 # Could test changing the below to be sourced "dynamically"
 # dynamic = ['version']
-version = "1.1.0"
+version = "1.1.1"
 description = "OS-Climate Physical Risk Library"
 authors = [
     {name = "Joe Moorhouse",email = "5102656+joemoorhouse@users.noreply.github.com"},

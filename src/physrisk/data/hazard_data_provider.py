@@ -47,7 +47,7 @@ class ScenarioPaths:
     scenario cannot be matched), this will be an empty list.
     """
 
-    years: List[int]
+    years: Sequence[int]
     path: Callable[[int], str]
 
 
@@ -377,6 +377,23 @@ class HazardDataProvider(ABC):
             if len(sum.weights) > 1:
                 r2, w2 = targets[sum.weights[1][0]], sum.weights[1][1]
                 values = values + r2.values * w2
+                # important edge-case: if this is an extrapolation then the result may be non-monotonic
+                # if the inputs are either non-decreasing or non-increasing we ensure the same is true
+                # for the outputs
+                if r1.values.shape[0] > 1 and (
+                    (w1 > 0 and w2 < 0) or (w1 < 0 and w2 > 0)
+                ):
+                    if np.all(np.diff(r1.values) >= 0) and np.all(
+                        np.diff(r2.values) >= 0
+                    ):
+                        if not np.all(np.diff(values) >= 0):
+                            values[:, 1:] -= np.minimum(np.diff(values), 0.0)
+                    elif np.all(np.diff(r1.values) <= 0) and np.all(
+                        np.diff(r1.values) <= 0
+                    ):
+                        if not np.all(np.diff(values) <= 0):
+                            values[:, 1:] -= np.maximum(np.diff(values), 0.0)
+
             result[item] = ScenarioYearResult(
                 values=values,
                 indices=r1.indices,

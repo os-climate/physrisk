@@ -31,7 +31,7 @@ from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.kernel.hazard_model import HazardDataFailedResponse, HazardDataRequest
-from physrisk.kernel.hazards import Hazard, RiverineInundation
+from physrisk.kernel.hazards import Hazard, RiverineInundation, Wind
 from physrisk.requests import _get_hazard_data_availability
 
 # from pathlib import PurePosixPath
@@ -576,8 +576,11 @@ def test_error_cases():
 
 
 class SourcePathsYearsInterpolationTest(SourcePaths):
+    def __init__(self, years: Sequence[int] = [2030, 2050, 2080]):
+        self.years = years
+
     def hazard_types(self):
-        return [RiverineInundation]
+        return [RiverineInundation, Wind]
 
     def resource_paths(
         self,
@@ -591,7 +594,7 @@ class SourcePathsYearsInterpolationTest(SourcePaths):
                 resource_path="",
                 scenarios={
                     "ssp585": ScenarioPaths(
-                        years=[2030, 2050, 2080],
+                        years=self.years,
                         path=lambda f: f"test_set_europe_only_{f}",
                     ),
                     "historical": ScenarioPaths(
@@ -685,6 +688,127 @@ def test_end_to_end_interpolation_years():
     np.testing.assert_almost_equal(response[requests[0]].intensities, expected_2027)
     np.testing.assert_almost_equal(response[requests[1]].intensities, expected_2040)
     np.testing.assert_almost_equal(response[requests[2]].intensities, expected_2090)
+
+
+def test_interpolation_monotonic():
+    mocker = ZarrStoreMocker()
+    # Europe, Europe, not Europe, not Europe, Europe
+    lons = [1.1, -0.31]
+    lats = [47.0, 52.0]
+
+    filenames = ["test_set_europe_only_historical", "test_set_europe_only_2050"]
+    returns = np.array(
+        [
+            10.000000,
+            20.000000,
+            30.000000,
+            40.000000,
+            50.000000,
+            60.000000,
+            70.000000,
+            80.000000,
+            90.000000,
+            100.00000,
+            200.00000,
+            300.00000,
+            400.00000,
+            500.00000,
+            600.00000,
+            700.00000,
+            800.00000,
+            900.00000,
+            1000.0000,
+        ]
+    )
+    intensity_hist = np.array(
+        [
+            34.176250,
+            40.599998,
+            44.558750,
+            46.993752,
+            48.593750,
+            49.993752,
+            51.293751,
+            52.243752,
+            52.826248,
+            53.522499,
+            57.445000,
+            59.906250,
+            61.062500,
+            61.812500,
+            62.488750,
+            62.75,
+            62.90625,
+            63.5625,
+            64.625,
+        ]
+    )
+    intensity_2050 = np.array(
+        [
+            36.793751,
+            44.150002,
+            48.468750,
+            51.331249,
+            53.543751,
+            55.131248,
+            56.174999,
+            57.043751,
+            57.656250,
+            58.238750,
+            62.423752,
+            64.107498,
+            65.552498,
+            66.650002,
+            67.269997,
+            67.335,
+            67.5,
+            67.8125,
+            68.6875,
+        ]
+    )
+    years_data = [intensity_hist, intensity_2050]
+    intensity_2080_test = intensity_2050 + (intensity_2050 - intensity_hist) * (
+        2080 - 2050
+    ) / (2050 - 2025)
+
+    for i, filename in enumerate(filenames):
+        mocker._add_curves(
+            filename,
+            lons[0:2],
+            lats[0:2],
+            "epsg:3035",
+            [19, 39420, 38371],
+            [100.0, 0.0, 2648100.0, 0.0, -100.0, 5404500],
+            list(returns),
+            np.array(
+                [
+                    years_data[i],
+                    years_data[i],
+                ]
+            ),
+        )
+    requests = [
+        HazardDataRequest(
+            hazard_type=Wind,
+            longitude=float(lon),
+            latitude=float(lat),
+            indicator_id="max_speed",
+            scenario="ssp585",
+            year=2080,
+        )
+        for lat, lon in zip(lats[0:2], lons[0:2])
+    ]
+
+    source_paths = SourcePathsYearsInterpolationTest(years=[2050])
+    hazard_model = ZarrHazardModel(
+        source_paths=source_paths, store=mocker.store, interpolate_years=True
+    )
+    response = hazard_model.get_hazard_data(requests)
+    np.testing.assert_almost_equal(
+        response[requests[0]].intensities[0:13], intensity_2080_test[0:13], decimal=5
+    )
+    assert not np.all(np.diff(intensity_2080_test) >= 0)
+    assert np.all(np.diff(response[requests[0]].intensities) >= 0)
 
 
 def test_buffer_integration():

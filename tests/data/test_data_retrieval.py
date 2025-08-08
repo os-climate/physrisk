@@ -576,7 +576,7 @@ def test_error_cases():
 
 
 class SourcePathsYearsInterpolationTest(SourcePaths):
-    def __init__(self, years: Sequence[int] = [2030, 2040, 2050]):
+    def __init__(self, years: Sequence[int] = [2030, 2050, 2080]):
         self.years = years
 
     def hazard_types(self):

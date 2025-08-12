@@ -38,9 +38,8 @@ class HazardImageRequest(BaseHazardRequest):
     min_value: Optional[float]
     max_value: Optional[float]
     tile: Optional[Tile]
-    index: Optional[int] = Field(
-        None, description="(Non-spatial) index of the array to view."
-    )
+    index: Optional[Any] = Field(
+        None, description="(Non-spatial) index of the array to view.")
 
 
 class HazardImageResponse(BaseModel):

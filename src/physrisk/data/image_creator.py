@@ -45,7 +45,7 @@ class ImageCreator(HazardImageCreator):
         tile: Optional[Tile] = None,
         min_value: Optional[float] = None,
         max_value: Optional[float] = None,
-        index_value: Optional[Union[str, float]] = None,
+        index: Optional[Union[str, float]] = None,
     ):
         try:
             scenario_paths = self.source_paths.scenario_paths_for_id(
@@ -71,7 +71,7 @@ class ImageCreator(HazardImageCreator):
                 },
                 colormap,
                 tile=tile,
-                index_value=index_value,
+                index_value=index,
                 min_value=min_value,
                 max_value=max_value,
             )
@@ -140,7 +140,7 @@ class ImageCreator(HazardImageCreator):
         path_weights: Dict[str, float],
         colormap: str = "heating",
         tile: Optional[Tile] = None,
-        index_value: Optional[Union[str, float]] = None,
+        index_value: Optional[Union[str, float, int]] = None,
         min_value: Optional[float] = None,
         max_value: Optional[float] = None,
     ) -> Image.Image:
@@ -152,10 +152,17 @@ class ImageCreator(HazardImageCreator):
         def get_array(data: zarr.Array, index: Optional[int]):
             if len(data.shape) == 3:
                 index_values, _ = self.reader.get_index_values(data)
+                if index_value is not None:
+                    if isinstance(index_values[0], float):
+                        _index_value = float(index_value)
+                    elif isinstance(index_values[0], int):
+                        _index_value = int(index_value)
+                    else:
+                        _index_value = index_value
                 index = (
                     len(index_values) - 1
                     if index_value is None
-                    else index_values.index(index_value)
+                    else index_values.index(_index_value)
                 )
                 if tile is None:
                     # return whole array

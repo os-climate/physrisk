@@ -380,7 +380,7 @@ class HazardDataProvider(ABC):
                 # important edge-case: if this is an extrapolation then the result may be non-monotonic
                 # if the inputs are either non-decreasing or non-increasing we ensure the same is true
                 # for the outputs
-                if r1.values.shape[0] > 1 and (
+                if r1.values.shape[1] > 1 and (
                     (w1 > 0 and w2 < 0) or (w1 < 0 and w2 > 0)
                 ):
                     if np.all(np.diff(r1.values) >= 0) and np.all(

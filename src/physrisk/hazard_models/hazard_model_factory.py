@@ -1,7 +1,7 @@
 from collections import defaultdict
 from typing import Dict, List, Mapping, MutableMapping, Optional, Sequence
 
-from build.lib.physrisk.data.inventory import Inventory
+from physrisk.data.inventory import Inventory
 from physrisk.data.hazard_data_provider import SourcePaths
 from physrisk.data.image_creator import ImageCreator
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel

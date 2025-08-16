@@ -343,25 +343,25 @@ class ZarrReader:
         n_grid=5,
     ):
         """Get maximal intensity curve for a grid around a given latitude and longitude coordinate pair.
-        It is almost equivalent to:
-        ```
-        self.get_max_curves
-        (
-            set_id,
-            [
-                Polygon(
-                    (
-                        (x - 0.5 * delta_deg, y - 0.5 * delta_deg),
-                        (x - 0.5 * delta_deg, y + 0.5 * delta_deg),
-                        (x + 0.5 * delta_deg, y + 0.5 * delta_deg),
-                        (x + 0.5 * delta_deg, y - 0.5 * delta_deg)
+        It is almost equivalent to::
+
+            self.get_max_curves
+            (
+                set_id,
+                [
+                    Polygon(
+                        (
+                            (x - 0.5 * delta_deg, y - 0.5 * delta_deg),
+                            (x - 0.5 * delta_deg, y + 0.5 * delta_deg),
+                            (x + 0.5 * delta_deg, y + 0.5 * delta_deg),
+                            (x + 0.5 * delta_deg, y - 0.5 * delta_deg)
+                        )
                     )
-                )
-                for x, y in zip(longitudes, latitudes)
-            ]
-            interpolation
-        )
-        ```
+                    for x, y in zip(longitudes, latitudes)
+                ]
+                interpolation
+            )
+
 
         Args:
             set_id: string or tuple representing data set, converted into path by path_provider.

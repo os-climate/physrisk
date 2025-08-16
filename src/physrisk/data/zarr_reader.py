@@ -344,7 +344,7 @@ class ZarrReader:
     ):
         """Get maximal intensity curve for a grid around a given latitude and longitude coordinate pair.
         It is almost equivalent to::
-        
+
             self.get_max_curves
             (
                 set_id,
@@ -361,7 +361,7 @@ class ZarrReader:
                 ]
                 interpolation
             )
-        
+
 
         Args:
             set_id: string or tuple representing data set, converted into path by path_provider.

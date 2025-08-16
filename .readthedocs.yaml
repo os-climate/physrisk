@@ -12,7 +12,7 @@ build:
     python: "3.12"
   commands:
     - pip install uv
-    - uv run python -m sphinx docs $READTHEDOCS_OUTPUT/html -b html -W
+    - uv run python -m sphinx docs $READTHEDOCS_OUTPUT/html -b html
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:

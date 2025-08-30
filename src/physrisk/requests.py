@@ -222,11 +222,14 @@ class Requester:
 
     def get_image_info(self, request: HazardImageInfoRequest):
         creator: HazardImageCreator = self.hazard_model_factory.image_creator()
-        index_values, index_units = creator.get_info(
-            request.resource, request.scenario_id, request.year
+        all_index_values, available_index_values, index_display_name, index_units = (
+            creator.get_info(request.resource, request.scenario_id, request.year)
         )
         return HazardImageInfoResponse(
-            index_values=index_values, index_units=index_units
+            all_index_values=all_index_values,
+            available_index_values=available_index_values,
+            index_display_name=index_display_name,
+            index_units=index_units,
         )
 
     def dumps(self, dict):

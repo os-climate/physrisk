@@ -23,8 +23,15 @@ class HazardImageInfoRequest(BaseHazardRequest):
 
 
 class HazardImageInfoResponse(BaseHazardRequest):
-    index_values: List[Any] = Field(
-        [], description="The values of the index dimension."
+    all_index_values: List[Any] = Field(
+        [], description="The coordinate values of the index dimension."
+    )
+    available_index_values: List[Any] = Field(
+        [],
+        description="The coordinate values of the index dimension for which maps are available.",
+    )
+    index_display_name: str = Field(
+        "index", description="The name of the index dimension."
     )
     index_units: str = Field("", description="The units of the index dimension.")
 
@@ -39,7 +46,8 @@ class HazardImageRequest(BaseHazardRequest):
     max_value: Optional[float]
     tile: Optional[Tile]
     index: Optional[Any] = Field(
-        None, description="(Non-spatial) index of the array to view.")
+        None, description="(Non-spatial) index of the array to view."
+    )
 
 
 class HazardImageResponse(BaseModel):

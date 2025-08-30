@@ -107,7 +107,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -179,7 +179,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -251,7 +251,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -323,7 +323,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -395,7 +395,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -467,7 +467,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -529,7 +529,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -601,7 +601,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -673,7 +673,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -745,7 +745,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -807,7 +807,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -879,7 +879,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -951,7 +951,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -2950,8 +2950,8 @@
         {
             "hazard_type": "Drought",
             "group_id": "",
-            "path": "drought/osc/v1/months_spei12m_below_index_{gcm}_{scenario}_{year}",
-            "indicator_id": "months/spei12m/below/index",
+            "path": "drought/osc/v1/months_spei12m_below_threshold_{gcm}_{scenario}_{year}",
+            "indicator_id": "months/spei12m/below/threshold",
             "indicator_model_id": null,
             "indicator_model_gcm": "{gcm}",
             "params": {
@@ -2964,9 +2964,9 @@
                     "NorESM2-MM"
                 ]
             },
-            "display_name": "Drought SPEI index",
+            "display_name": "Months 12m SPEI below threshold/{gcm}",
             "display_groups": [
-                "Drought SPEI index"
+                "Months 12m SPEI below threshold"
             ],
             "description": "",
             "map": {
@@ -2979,7 +2979,7 @@
                     "nodata_index": 0,
                     "units": "months/year"
                 },
-                "path": "maps/drought/osc/v1/months_spei12m_below_index_{gcm}_{scenario}_{year}_map",
+                "path": "maps/drought/osc/v1/months_spei12m_below_threshold_{gcm}_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -3015,7 +3015,7 @@
                 ],
                 "source": "map_array_pyramid"
             },
-            "store_netcdf_coords": false,
+            "store_netcdf_coords": true,
             "scenarios": [
                 {
                     "id": "ssp585",

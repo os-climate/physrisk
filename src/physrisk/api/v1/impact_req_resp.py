@@ -13,9 +13,14 @@ from physrisk.api.v1.hazard_data import Scenario
 
 
 class CalcSettings(BaseModel):
-    hazard_interp: str = Field(
-        "floor",
+    hazard_interp: Optional[str] = Field(
+        default=None,  # previously "floor",
         description="Method used for interpolation of hazards: 'floor' or 'bilinear'.",
+    )
+    hazard_scope: Optional[str] = Field(
+        default=None,
+        description="Comma separated list of hazards to include in analysis.",
+        examples=["RiverineInundation,Wind", "Hail,Fire"],
     )
 
 

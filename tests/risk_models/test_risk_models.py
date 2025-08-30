@@ -1,10 +1,11 @@
 """Test asset impact calculations."""
 
-from typing import Dict, Sequence
+from typing import Dict, Optional, Sequence, Set, Type
 
 import numpy as np
 from dependency_injector import providers
 
+from physrisk.kernel.hazards import Hazard
 from physrisk.api.v1.impact_req_resp import (
     AssetImpactResponse,
     Category,
@@ -396,7 +397,7 @@ class TestRiskModels(TestWithCredentials):
         class TestHazardModelFactory(HazardModelFactory):
             def hazard_model(
                 self,
-                interpolation: str = "floor",
+                interpolation: Optional[str] = "floor",
                 provider_max_requests: Dict[str, int] = {},
                 interpolate_years: bool = False,
             ):
@@ -475,14 +476,16 @@ class TestRiskModels(TestWithCredentials):
         class TestHazardModelFactory(HazardModelFactory):
             def hazard_model(
                 self,
-                interpolation: str = "floor",
+                interpolation: Optional[str] = "floor",
                 provider_max_requests: Dict[str, int] = {},
                 interpolate_years: bool = False,
             ):
                 return hazard_model
 
         class TestVulnerabilityModelsFactory(VulnerabilityModelsFactory):
-            def vulnerability_models(self) -> VulnerabilityModels:
+            def vulnerability_models(
+                self, hazard_scope: Optional[Set[Type[Hazard]]] = None
+            ) -> VulnerabilityModels:
                 return DictBasedVulnerabilityModels(_vulnerability_models())
 
         class TestMeasuresFactory(RiskMeasuresFactory):

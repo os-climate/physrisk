@@ -184,7 +184,7 @@ class InventorySourcePaths(SourcePaths):
                 lambda y: path.format(
                     id=resource.indicator_id, scenario=proxy_scenario_id, year=y
                 )
-                + ("/indicator" if resource.store_netcdf_coords else ""),
+                + ("/indicator" if (resource.store_netcdf_coords and not map) else ""),
             )
 
     def get_resources(

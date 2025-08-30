@@ -49,3 +49,27 @@ def test_live_impacts():  # "latitude": 34.556, "longitude": 69.4787
     }
     result = requests.post(url + "/api/get_asset_impact", json=request)
     print(result.json())
+
+
+@pytest.mark.skip("only as example")
+def test_live_hazard_data():
+    request = {
+        "items": [
+            {
+                "longitudes": [-101.731],
+                "latitudes": [38.65],
+                "request_item_id": "my_drought_request",
+                "hazard_type": "Drought",
+                "indicator_id": "months/spei12m/below/threshold",
+                "scenario": "ssp585",
+                "path": "drought/osc/v1/months_spei12m_below_index_MIROC6_{scenario}_{year}",
+                "year": 2050,
+            },
+        ]
+    }
+    from physrisk.container import Container
+
+    container = Container()
+    requester = container.requester()
+    result = requester.get(request_id="get_hazard_data", request_dict=request)
+    print(result)

@@ -2979,7 +2979,7 @@
                     "nodata_index": 0,
                     "units": "months/year"
                 },
-                "path": "maps/drought/osc/v1/months_spei12m_below_threshold_{gcm}_{scenario}_{year}_map",
+                "path": "maps/drought/osc/v1/months_spei12m_below_index_{gcm}_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,

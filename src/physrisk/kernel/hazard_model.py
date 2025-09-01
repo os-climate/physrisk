@@ -237,7 +237,7 @@ class HazardImageCreator(Protocol):
         tile: Optional[Tile] = None,
         min_value: Optional[float] = None,
         max_value: Optional[float] = None,
-        index: Optional[Union[str, float]] = None,
+        index_value: Optional[Union[str, float]] = None,
     ):
         """Creates an image Tile for display on maps.
 

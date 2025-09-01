@@ -4,10 +4,13 @@ from pydantic import BaseModel, Field
 
 from physrisk.api.v1.common import BaseHazardRequest
 
-# class Tile(BaseHazardRequest):
-#     x: int
-#     y: int
-#     z: int
+
+class TileNotAvailableError(KeyError):
+    """Raised if the requested tile is not available, most commonly because
+    the zoom level requested is not present.
+    """
+
+    pass
 
 
 class Tile(NamedTuple):
@@ -45,7 +48,7 @@ class HazardImageRequest(BaseHazardRequest):
     min_value: Optional[float]
     max_value: Optional[float]
     tile: Optional[Tile]
-    index: Optional[Any] = Field(
+    index_value: Optional[Any] = Field(
         None, description="(Non-spatial) index of the array to view."
     )
 

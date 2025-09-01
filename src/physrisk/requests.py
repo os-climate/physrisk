@@ -217,7 +217,7 @@ class Requester:
             ),
             min_value=request.min_value,
             max_value=request.max_value,
-            index=request.index,
+            index_value=request.index_value,
         )
 
     def get_image_info(self, request: HazardImageInfoRequest):

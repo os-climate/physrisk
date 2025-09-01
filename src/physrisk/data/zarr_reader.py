@@ -511,8 +511,8 @@ class ZarrReader:
         else:
             x, y = longitudes, latitudes
         coords = np.vstack((x, y, np.ones(len(longitudes))))  # type: ignore
-        # check if transform convention
-        if shape is not None:
+        # check a special legacy case:
+        if shape is not None and crs.lower() == "epsg:4236":
             if ((transform * (shape[2], shape[1]))[0] > 180) and (
                 (transform * (0, 0))[0] >= 0.0
             ):

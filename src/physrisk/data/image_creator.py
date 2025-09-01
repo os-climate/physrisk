@@ -8,6 +8,7 @@ import numpy as np
 import PIL.Image as Image
 import zarr.storage
 
+from physrisk.api.v1.hazard_image import TileNotAvailableError
 from physrisk.kernel.hazards import Hazard, HazardKind
 from physrisk.data import colormap_provider
 from physrisk.data.hazard_data_provider import HazardDataProvider, SourcePaths
@@ -45,7 +46,7 @@ class ImageCreator(HazardImageCreator):
         tile: Optional[Tile] = None,
         min_value: Optional[float] = None,
         max_value: Optional[float] = None,
-        index: Optional[Union[str, float]] = None,
+        index_value: Optional[Union[str, float]] = None,
     ):
         try:
             scenario_paths = self.source_paths.scenario_paths_for_id(
@@ -71,7 +72,7 @@ class ImageCreator(HazardImageCreator):
                 },
                 colormap,
                 tile=tile,
-                index_value=index,
+                index_value=index_value,
                 min_value=min_value,
                 max_value=max_value,
             )
@@ -83,7 +84,10 @@ class ImageCreator(HazardImageCreator):
                 logger.exception(e)
                 image = Image.fromarray(np.array([[0]]), mode="RGBA")
             else:
-                raise
+                if isinstance(e, KeyError):
+                    raise TileNotAvailableError(e.args[0]) from e
+                else:
+                    raise
         image_bytes = io.BytesIO()
         image.save(image_bytes, format=format)
         return image_bytes.getvalue()
@@ -111,21 +115,23 @@ class ImageCreator(HazardImageCreator):
 
         # the attribute requires cleaning before use: do not use for now
         # index_display_name = z.attrs.get(index_dim_name + "_name", index_dim_name.replace("_", " "))
-        index_display_name = self._infer_index_display_name(
+        index_display_name = self._default_index_display_name(
             hazard_class, resource.indicator_id
         )
 
         if index_units == "default":
-            index_units = self._infer_index_units(hazard_class, resource.indicator_id)
+            index_units = self._default_index_units(hazard_class, resource.indicator_id)
         return all_index_values, available_index_values, index_display_name, index_units
 
-    def _infer_index_display_name(self, hazard_class: Type[Hazard], indicator_id: str):
+    def _default_index_display_name(
+        self, hazard_class: Type[Hazard], indicator_id: str
+    ):
         if hazard_class.kind == HazardKind.ACUTE:
             return "return period"
         else:
             return "threshold"
 
-    def _infer_index_units(self, hazard_class: Type[Hazard], indicator_id: str):
+    def _default_index_units(self, hazard_class: Type[Hazard], indicator_id: str):
         if hazard_class.kind == HazardKind.ACUTE:
             return "years"
         if indicator_id in [

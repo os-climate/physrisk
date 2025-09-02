@@ -1,7 +1,7 @@
 import pytest
 import requests
 
-url = "https://physrisk-api2-sandbox.apps.odh-cl1.apps.os-climate.org"
+url = "https://physrisk-api-physrisk.apps.osc-cl1.apps.os-climate.org"
 # url = "http://127.0.0.1:5000"
 
 

@@ -602,7 +602,10 @@ def compile_asset_impacts(
                         probabilities=sig_figures(v.impact.prob),
                     ),
                     impact_mean=sig_figures(v.impact.mean_impact()),
-                    impact_std_deviation=sig_figures(v.impact.stddev_impact()),
+                    impact_std_deviation=sig_figures(v.impact.standard_deviation()),
+                    impact_semi_std_deviation=sig_figures(
+                        v.impact.semi_standard_deviation()
+                    ),
                     calc_details=None if v.event is None else calc_details,
                 )
             # note that this does rely on ordering of dictionary (post 3.6)

@@ -209,7 +209,14 @@ class AssetSingleImpact(BaseModel):
         None, description="Impact as exceedance curve."
     )
     impact_mean: Optional[float]
-    impact_std_deviation: Optional[float]
+    impact_std_deviation: Optional[float] = Field(
+        default=None,
+        description="""Impact standard deviation.""",
+    )
+    impact_semi_std_deviation: Optional[float] = Field(
+        default=None,
+        description="""Impact semi standard deviation: dispersion above the mean.""",
+    )
     calc_details: Optional[CalculationDetails] = Field(
         None,
         description="""Details of impact calculation for acute hazard calculations.""",

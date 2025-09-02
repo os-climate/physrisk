@@ -107,7 +107,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -179,7 +179,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -251,7 +251,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -323,7 +323,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -395,7 +395,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -467,7 +467,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -529,7 +529,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -601,7 +601,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -673,7 +673,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -745,7 +745,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -807,7 +807,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -879,7 +879,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -951,7 +951,7 @@
                     85.0
                 ],
                 "index_values": [
-                    8
+                    1000
                 ],
                 "source": "map_array_pyramid"
             },
@@ -2964,9 +2964,9 @@
                     "NorESM2-MM"
                 ]
             },
-            "display_name": "Drought SPEI index",
+            "display_name": "Months 12m SPEI below threshold/{gcm}",
             "display_groups": [
-                "Drought SPEI index"
+                "Months 12m SPEI below threshold"
             ],
             "description": "",
             "map": {

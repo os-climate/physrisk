@@ -1,6 +1,7 @@
+import logging
 import os
 from pathlib import PurePosixPath
-from typing import Callable, MutableMapping, Optional, Sequence, Union
+from typing import Any, Callable, List, MutableMapping, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import s3fs
@@ -9,6 +10,8 @@ import zarr
 from affine import Affine
 from pyproj import Transformer
 from shapely import MultiPoint, Point, affinity, Polygon
+
+logger = logging.getLogger(__name__)
 
 
 def get_env(key: str, default: Optional[str] = None) -> str:
@@ -126,6 +129,7 @@ class ZarrReader:
             crs,
             transform,
             pixel_is_area=interpolation != "floor",
+            shape=z.shape,
         )
         in_bounds = (image_coords[0, :] < z.shape[2]) & (
             image_coords[0, :] >= -0.5
@@ -180,7 +184,7 @@ class ZarrReader:
         transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
         crs = z.attrs.get("crs", "epsg:4326")
         image_coords = self._get_coordinates(
-            longitudes, latitudes, crs, transform, pixel_is_area=True
+            longitudes, latitudes, crs, transform, pixel_is_area=True, shape=z.shape
         )
         in_bounds = (image_coords[0, :] < z.shape[2]) & (
             image_coords[0, :] >= -0.5
@@ -190,14 +194,14 @@ class ZarrReader:
         )  # y/lat coords
         return in_bounds
 
-    def get_index_values(self, z: zarr.Array):
+    def get_index_values(self, z: zarr.Array) -> Tuple[List[Any], str]:
         # if dimensions attribute is present, assume that the first index
         # is the non-spatial one.
         index_dim_name = z.attrs.get("dimensions", ["index"])[0]
-        index_values = z.attrs.get(index_dim_name + "_values", [0])
+        index_values: List[Any] = z.attrs.get(index_dim_name + "_values", [0])
         index_units = z.attrs.get(index_dim_name + "_units", "default")
         if index_values is None:
-            index_values = [0]
+            index_values = [0]  # type: ignore
         return index_values, index_units
 
     def get_max_curves(
@@ -494,7 +498,12 @@ class ZarrReader:
 
     @staticmethod
     def _get_coordinates(
-        longitudes, latitudes, crs: str, transform: Affine, pixel_is_area: bool
+        longitudes,
+        latitudes,
+        crs: str,
+        transform: Affine,
+        pixel_is_area: bool,
+        shape: Optional[Tuple[int, int, int]] = None,
     ):
         if crs.lower() != "epsg:4236":
             transproj = Transformer.from_crs("epsg:4326", crs, always_xy=True)
@@ -502,6 +511,16 @@ class ZarrReader:
         else:
             x, y = longitudes, latitudes
         coords = np.vstack((x, y, np.ones(len(longitudes))))  # type: ignore
+        # check a special legacy case:
+        if shape is not None and crs.lower() == "epsg:4236":
+            if ((transform * (shape[2], shape[1]))[0] > 180) and (
+                (transform * (0, 0))[0] >= 0.0
+            ):
+                # detect if transform convention expects longitude in range [0, 360]
+                coords = np.vstack((x + 180.0, y, np.ones(len(longitudes))))
+                logger.warning(
+                    "Detected transform convention with longitude in range [0, 360]. Adjusting input longitudes accordingly."
+                )
         inv_trans = ~transform
         mat = np.array(inv_trans).reshape(3, 3)
         frac_image_coords = mat @ coords

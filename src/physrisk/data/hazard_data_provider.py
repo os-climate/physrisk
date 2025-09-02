@@ -464,7 +464,9 @@ class HazardDataProvider(ABC):
         requested_years: Sequence[int],
         historical_year: int,
     ) -> Dict[ScenarioYear, WeightedSum]:
-        available_with_current = np.array([historical_year] + list(available_years))
+        available_with_current = sorted(
+            np.array([historical_year] + list(available_years))
+        )
         # return i such that a[i-1] < v <= a[i]
         # e.g. with available years: 2025, 2040, 2050, 2060
         # 2045 gives index 2, need 1 and 2

@@ -1,6 +1,6 @@
 import io
 import os
-from typing import Dict
+from typing import Dict, Optional
 import unittest
 
 from dependency_injector import providers
@@ -152,7 +152,7 @@ class TestImageCreation(TestWithCredentials):
             "min_value": 0.0,
             "max_value": 2.0,
             "tile": Tile(0, 0, 0),
-            "index": 2,
+            "index": 0,
         }
 
         container = Container()
@@ -163,7 +163,7 @@ class TestImageCreation(TestWithCredentials):
         class TestHazardModelFactory(HazardModelFactory):
             def hazard_model(
                 self,
-                interpolation: str = "floor",
+                interpolation: Optional[str] = "floor",
                 provider_max_requests: Dict[str, int] = {},
                 interpolate_years: bool = False,
             ):
@@ -177,6 +177,7 @@ class TestImageCreation(TestWithCredentials):
         )
         container.override_providers(source_paths=providers.Factory(SourcePathsTest))
         container.override_providers(inventory=providers.Singleton(lambda: inventory))
+        container.override_providers(zarr_reader=ZarrReader(store=store))
         requester = container.requester()
         res = requester.get_image(request_dict)
         rgba = np.array(

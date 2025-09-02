@@ -1,4 +1,4 @@
-from typing import Dict, MutableMapping, Optional
+from typing import Dict, MutableMapping, Optional, Set, Type
 
 from dependency_injector import containers, providers
 
@@ -10,6 +10,7 @@ from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.kernel import calculation as calc
 from physrisk.kernel.hazard_model import HazardModelFactory
+from physrisk.kernel.hazards import Hazard
 from physrisk.kernel.vulnerability_model import (
     DictBasedVulnerabilityModels,
     VulnerabilityModels,
@@ -30,15 +31,17 @@ class ZarrHazardModelFactory(HazardModelFactory):
         source_paths: SourcePaths,
         store: Optional[MutableMapping] = None,
         reader: Optional[ZarrReader] = None,
+        default_interpolation: str = "floor",
     ):
         self.inventory = inventory
         self.source_paths = source_paths
         self.store = store
         self.reader = reader
+        self.default_interpolation = default_interpolation
 
     def hazard_model(
         self,
-        interpolation: str = "floor",
+        interpolation: Optional[str] = None,
         provider_max_requests: Dict[str, int] = {},
         interpolate_years: bool = False,
     ):
@@ -48,7 +51,9 @@ class ZarrHazardModelFactory(HazardModelFactory):
             source_paths=self.source_paths,
             store=self.store,
             reader=self.reader,
-            interpolation=interpolation,
+            interpolation=interpolation
+            if interpolation is not None
+            else self.default_interpolation,
             interpolate_years=interpolate_years,
         )
 
@@ -57,7 +62,9 @@ class ZarrHazardModelFactory(HazardModelFactory):
 
 
 class DictBasedVulnerabilityModelsFactory(VulnerabilityModelsFactory):
-    def vulnerability_models(self) -> VulnerabilityModels:
+    def vulnerability_models(
+        self, hazard_scope: Optional[Set[Type[Hazard]]] = None
+    ) -> VulnerabilityModels:
         return DictBasedVulnerabilityModels(calc.get_default_vulnerability_models())
 
 

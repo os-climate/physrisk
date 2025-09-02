@@ -10,6 +10,7 @@ from physrisk.kernel.hazard_event_distrib import HazardEventDistrib
 from physrisk.kernel.hazard_model import HazardDataRequest
 from physrisk.kernel.hazards import RiverineInundation
 from physrisk.kernel.impact import ImpactDistrib
+from physrisk.kernel.impact_distrib import ImpactType
 from physrisk.kernel.vulnerability_distrib import VulnerabilityDistrib
 from physrisk.vulnerability_models.real_estate_models import (
     RealEstateCoastalInundationModel,
@@ -62,6 +63,79 @@ class TestAssetImpact(unittest.TestCase):
 
         mean = np.sum((impact_bins[1:] + impact_bins[:-1]) * probs / 2)  # type: ignore
         self.assertAlmostEqual(mean, 4.8453897)
+
+    def test_standard_deviations(self):
+        impact_bins = np.array([0.0, 0.5, 1.0, 1.5])
+        probs = np.array([0.1, 0.2, 0.15])
+        impact = ImpactDistrib(
+            RiverineInundation, impact_bins, probs, [""], ImpactType.damage
+        )
+        stddev = impact.standard_deviation()
+        semi_stddev = impact.semi_standard_deviation()
+        mean = impact.mean_impact()
+        stddev_exp = ((0.5 - mean) ** 3 - (0.0 - mean) ** 3) * 0.1 / (3 * (0.5 - 0.0))
+        stddev_exp += ((1.0 - mean) ** 3 - (0.5 - mean) ** 3) * 0.2 / (3 * (1.0 - 0.5))
+        stddev_exp += ((1.5 - mean) ** 3 - (1.0 - mean) ** 3) * 0.15 / (3 * (1.5 - 1.0))
+        stddev_exp += (1.0 - (0.1 + 0.2 + 0.15)) * mean**2
+        stddev_exp = np.sqrt(stddev_exp)
+        self.assertAlmostEqual(stddev, stddev_exp)
+        # We have two bins above mean and one straddling it
+        # one from 0.3625 to 0.5 with adjusted prob
+        # prob = 0.1 * (0.5 - 0.3625) / (0.5 - 0.0) = 0.0275
+        # one from 0.5 to 1.0
+        # one from 1.0 to 1.5
+        # stddev contribution from first bin is ((0.5-mean)^3 - (0.3625-mean)^3) * adjusted_prob / (3*(0.5 - 0.3625))
+        semi_stddev_exp = (
+            ((0.5 - mean) ** 3 - (0.3625 - mean) ** 3) * 0.0275 / (3 * (0.5 - 0.3625))
+        )
+        semi_stddev_exp += (
+            ((1.0 - mean) ** 3 - (0.5 - mean) ** 3) * 0.2 / (3 * (1.0 - 0.5))
+        )
+        semi_stddev_exp += (
+            ((1.5 - mean) ** 3 - (1.0 - mean) ** 3) * 0.15 / (3 * (1.5 - 1.0))
+        )
+        semi_stddev_exp = np.sqrt(semi_stddev_exp)
+        self.assertAlmostEqual(semi_stddev, semi_stddev_exp)
+
+        impact_bins = np.array([0.7, 0.7])
+        probs = np.array([0.02])
+        impact = ImpactDistrib(RiverineInundation, impact_bins, probs, ["unknown"])
+        mean = impact.mean_impact()
+        stddev = impact.standard_deviation()
+        semi_stddev = impact.semi_standard_deviation()
+        stddev_exp = np.sqrt((0.7 - mean) ** 2 * 0.02 + mean**2 * 0.98)
+        semi_stddev_exp = np.sqrt((0.7 - mean) ** 2 * 0.02)
+        self.assertAlmostEqual(stddev, stddev_exp)
+        self.assertAlmostEqual(semi_stddev, semi_stddev_exp)
+
+        # check potential edge cases relevant to semi standard deviation
+        impact_bins = np.array([0.3, 0.3, 0.7, 0.8])
+        probs = np.array([0.02, 0, 0.03])
+        impact = ImpactDistrib(RiverineInundation, impact_bins, probs, ["unknown"])
+        mean = impact.mean_impact()
+        stddev = impact.standard_deviation()
+        semi_stddev = impact.semi_standard_deviation()
+        semi_stddev_exp = (0.3 - mean) ** 2 * 0.02
+        semi_stddev_exp += (
+            ((0.8 - mean) ** 3 - (0.7 - mean) ** 3) * 0.03 / (3 * (0.8 - 0.7))
+        )
+        semi_stddev_exp = np.sqrt(semi_stddev_exp)
+        # in this case stddev and semi_stddev should be the same
+        # self.assertAlmostEqual(stddev, semi_stddev_exp)
+        semi_stddev = impact.semi_standard_deviation()
+        self.assertAlmostEqual(semi_stddev, semi_stddev_exp)
+
+        impact_bins = np.array([0.1, 0.2, 0.5, 0.5, 0.8, 0.9])
+        probs = np.array([1.0 / 3.0, 0, 1.0 / 3.0, 0, 1.0 / 3.0])
+        impact = ImpactDistrib(RiverineInundation, impact_bins, probs, ["unknown"])
+        mean = impact.mean_impact()
+        stddev = impact.standard_deviation()
+        semi_stddev = impact.semi_standard_deviation()
+        semi_stddev_exp = (
+            ((0.9 - mean) ** 3 - (0.8 - mean) ** 3) * (1.0 / 3.0) / (3 * (0.9 - 0.8))
+        )
+        semi_stddev_exp = np.sqrt(semi_stddev_exp)
+        self.assertAlmostEqual(semi_stddev, semi_stddev_exp)
 
     def test_protection_level(self):
         return_periods = np.array(

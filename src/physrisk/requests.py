@@ -217,15 +217,19 @@ class Requester:
             ),
             min_value=request.min_value,
             max_value=request.max_value,
+            index_value=request.index_value,
         )
 
     def get_image_info(self, request: HazardImageInfoRequest):
         creator: HazardImageCreator = self.hazard_model_factory.image_creator()
-        index_values, index_units = creator.get_info(
-            request.resource, request.scenario_id, request.year
+        all_index_values, available_index_values, index_display_name, index_units = (
+            creator.get_info(request.resource, request.scenario_id, request.year)
         )
         return HazardImageInfoResponse(
-            index_values=index_values, index_units=index_units
+            all_index_values=all_index_values,
+            available_index_values=available_index_values,
+            index_display_name=index_display_name,
+            index_units=index_units,
         )
 
     def dumps(self, dict):
@@ -598,7 +602,10 @@ def compile_asset_impacts(
                         probabilities=sig_figures(v.impact.prob),
                     ),
                     impact_mean=sig_figures(v.impact.mean_impact()),
-                    impact_std_deviation=sig_figures(v.impact.stddev_impact()),
+                    impact_std_deviation=sig_figures(v.impact.standard_deviation()),
+                    impact_semi_std_deviation=sig_figures(
+                        v.impact.semi_standard_deviation()
+                    ),
                     calc_details=None if v.event is None else calc_details,
                 )
             # note that this does rely on ordering of dictionary (post 3.6)

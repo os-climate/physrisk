@@ -2,13 +2,14 @@ from importlib import import_module
 import io
 import logging
 from functools import lru_cache
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
 
 import numpy as np
 import PIL.Image as Image
 import zarr.storage
 
-from physrisk.kernel.hazards import HazardKind
+from physrisk.api.v1.hazard_image import TileNotAvailableError
+from physrisk.kernel.hazards import Hazard, HazardKind
 from physrisk.data import colormap_provider
 from physrisk.data.hazard_data_provider import HazardDataProvider, SourcePaths
 from physrisk.data.inventory import Inventory
@@ -83,14 +84,17 @@ class ImageCreator(HazardImageCreator):
                 logger.exception(e)
                 image = Image.fromarray(np.array([[0]]), mode="RGBA")
             else:
-                raise
+                if isinstance(e, KeyError):
+                    raise TileNotAvailableError(e.args[0]) from e
+                else:
+                    raise
         image_bytes = io.BytesIO()
         image.save(image_bytes, format=format)
         return image_bytes.getvalue()
 
     def get_info(
         self, resource_id: str, scenario: str, year: int
-    ) -> Tuple[Sequence[Any], str]:
+    ) -> Tuple[Sequence[Any], Sequence[Any], str, str]:
         resource = self.inventory.resources[resource_id]
         # in principle, depends on the scenario and year, although we assume here that
         # all years have the same index values available.
@@ -100,16 +104,44 @@ class ImageCreator(HazardImageCreator):
         path = scenario_paths.path(scenario_paths.years[0])
         z = self.reader.all_data(path)
         all_index_values, index_units = self.reader.get_index_values(z)
+        index_dim_name = z.attrs.get("dimensions", ["index"])[0]
+        assert isinstance(index_dim_name, str)
         if resource.map and resource.map.index_values:
-            index_values = resource.map.index_values
+            available_index_values = resource.map.index_values
         else:
-            index_values = all_index_values
+            available_index_values = all_index_values
         physrisk_hazards = import_module("physrisk.kernel.hazards")
+        hazard_class = getattr(physrisk_hazards, resource.hazard_type)
+
+        # the attribute requires cleaning before use: do not use for now
+        # index_display_name = z.attrs.get(index_dim_name + "_name", index_dim_name.replace("_", " "))
+        index_display_name = self._default_index_display_name(
+            hazard_class, resource.indicator_id
+        )
+
         if index_units == "default":
-            hazard_class = getattr(physrisk_hazards, resource.hazard_type)
-            if hazard_class.kind == HazardKind.ACUTE:
-                index_units = "years"
-        return index_values, index_units
+            index_units = self._default_index_units(hazard_class, resource.indicator_id)
+        return all_index_values, available_index_values, index_display_name, index_units
+
+    def _default_index_display_name(
+        self, hazard_class: Type[Hazard], indicator_id: str
+    ):
+        if hazard_class.kind == HazardKind.ACUTE:
+            return "return period"
+        else:
+            return "threshold"
+
+    def _default_index_units(self, hazard_class: Type[Hazard], indicator_id: str):
+        if hazard_class.kind == HazardKind.ACUTE:
+            return "years"
+        if indicator_id in [
+            "days_wbgt_above",
+            "mean_degree_days/above/index",
+            "weeks_water_temp_above",
+        ]:
+            return "°C"
+        else:
+            return ""
 
     def to_file(
         self,
@@ -140,7 +172,7 @@ class ImageCreator(HazardImageCreator):
         path_weights: Dict[str, float],
         colormap: str = "heating",
         tile: Optional[Tile] = None,
-        index_value: Optional[Union[str, float]] = None,
+        index_value: Optional[Union[str, float, int]] = None,
         min_value: Optional[float] = None,
         max_value: Optional[float] = None,
     ) -> Image.Image:
@@ -152,10 +184,17 @@ class ImageCreator(HazardImageCreator):
         def get_array(data: zarr.Array, index: Optional[int]):
             if len(data.shape) == 3:
                 index_values, _ = self.reader.get_index_values(data)
+                if index_value is not None:
+                    if isinstance(index_values[0], float):
+                        _index_value = float(index_value)
+                    elif isinstance(index_values[0], int):
+                        _index_value = int(index_value)
+                    elif isinstance(index_values[0], str):
+                        _index_value = str(index_value)  # type:ignore
                 index = (
                     len(index_values) - 1
                     if index_value is None
-                    else index_values.index(index_value)
+                    else index_values.index(_index_value)
                 )
                 if tile is None:
                     # return whole array

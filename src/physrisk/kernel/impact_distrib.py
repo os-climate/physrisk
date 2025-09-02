@@ -45,30 +45,58 @@ class ImpactDistrib:
     def mean_impact(self):
         return np.sum((self._impact_bins[:-1] + self._impact_bins[1:]) * self._prob / 2)
 
-    def stddev_impact(self):
-        mean = self.mean_impact()
-        bin_mids = (self._impact_bins[:-1] + self._impact_bins[1:]) / 2
-        return np.sqrt(np.sum(self._prob * (bin_mids - mean) * (bin_mids - mean)))
+    def standard_deviation(self):
+        return self._standard_deviation(
+            self._impact_bins, self._prob, include_zero=True
+        )
 
-    def above_mean_stddev_impact(self):
+    def semi_standard_deviation(self):
         mean = self.mean_impact()
-        bin_mids = (self._impact_bins[:-1] + self._impact_bins[1:]) / 2
-        above_mean_bins = bin_mids[mean <= bin_mids]
-        if len(above_mean_bins) == 0:
-            return 0.0
-        if len(above_mean_bins) == len(self._prob):
-            return self.stddev_impact()
-        above_mean_probs = self._prob[-len(above_mean_bins) :] / np.sum(
-            self._prob[-len(above_mean_bins) :]
-        )
-        above_mean_mean = np.sum(above_mean_bins * above_mean_probs / 2)
-        return np.sqrt(
-            np.sum(
-                above_mean_probs
-                * (above_mean_bins - above_mean_mean)
-                * (above_mean_bins - above_mean_mean)
+        # we may have one bin that straddles the mean
+        index = np.searchsorted(self._impact_bins, mean, "right")
+        # straddling bin is the one from index-1 to index
+        # if this bin has zero width, we only keep the bins above the mean
+        # if not, we split the bin
+        if index == 0:
+            bins = self._impact_bins
+            prob = self._prob
+        elif self._impact_bins[index - 1] == mean:
+            bins = self._impact_bins[index:]
+            prob = self._prob[index:]
+        else:
+            bins = np.insert(self._impact_bins[index:], 0, mean)
+            prob_frac = (self._impact_bins[index] - mean) / (
+                self._impact_bins[index] - self._impact_bins[index - 1]
             )
+            prob = np.insert(self._prob[index:], 0, self._prob[index - 1] * prob_frac)
+        return self._standard_deviation(bins, prob, include_zero=False)
+
+    def _standard_deviation(
+        self, impact_bins: np.ndarray, prob: np.ndarray, include_zero: bool = True
+    ):
+        """The impact bins only give the probabilities for impacts > 0.
+        If include_zero is True, the zero impact is included.
+        """
+        bins_lower = impact_bins[:-1]
+        bins_upper = impact_bins[1:]
+        zero_width = bins_lower == bins_upper
+        std_contrib = np.zeros_like(bins_lower)
+        mean = self.mean_impact()
+        std_contrib[~zero_width] = (
+            (
+                (bins_upper[~zero_width] - mean) ** 3
+                - (bins_lower[~zero_width] - mean) ** 3
+            )
+            * prob[~zero_width]
+            / (3.0 * (bins_upper[~zero_width] - bins_lower[~zero_width]))
         )
+        std_contrib[zero_width] = (bins_lower[zero_width] - mean) ** 2 * prob[
+            zero_width
+        ]
+        zero_contrib = 0.0
+        if include_zero:
+            zero_contrib = (1.0 - sum(prob)) * (mean**2)
+        return np.sqrt(np.sum(std_contrib) + zero_contrib)
 
     def to_exceedance_curve(self):
         return to_exceedance_curve(self._impact_bins, self._prob)

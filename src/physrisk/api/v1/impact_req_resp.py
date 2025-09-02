@@ -13,9 +13,14 @@ from physrisk.api.v1.hazard_data import Scenario
 
 
 class CalcSettings(BaseModel):
-    hazard_interp: str = Field(
-        "floor",
+    hazard_interp: Optional[str] = Field(
+        default=None,  # previously "floor",
         description="Method used for interpolation of hazards: 'floor' or 'bilinear'.",
+    )
+    hazard_scope: Optional[str] = Field(
+        default=None,
+        description="Comma separated list of hazards to include in analysis.",
+        examples=["RiverineInundation,Wind", "Hail,Fire"],
     )
 
 
@@ -204,7 +209,14 @@ class AssetSingleImpact(BaseModel):
         None, description="Impact as exceedance curve."
     )
     impact_mean: Optional[float]
-    impact_std_deviation: Optional[float]
+    impact_std_deviation: Optional[float] = Field(
+        default=None,
+        description="""Impact standard deviation.""",
+    )
+    impact_semi_std_deviation: Optional[float] = Field(
+        default=None,
+        description="""Impact semi standard deviation: dispersion above the mean.""",
+    )
     calc_details: Optional[CalculationDetails] = Field(
         None,
         description="""Details of impact calculation for acute hazard calculations.""",

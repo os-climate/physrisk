@@ -30,6 +30,7 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
         source_paths: SourcePaths,
         store: Optional[MutableMapping] = None,
         reader: Optional[ZarrReader] = None,
+        default_interpolation: str = "floor",
     ):
         self.source_paths = source_paths
         self.cache_store = cache_store
@@ -37,10 +38,11 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
         self.inventory = inventory
         self.store = store
         self.reader = reader
+        self.default_interpolation = default_interpolation
 
     def hazard_model(
         self,
-        interpolation: str = "floor",
+        interpolation: Optional[str] = None,
         provider_max_requests: Dict[str, int] = {},
         interpolate_years: bool = False,
     ):
@@ -50,7 +52,9 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
             self.source_paths,
             store=self.store,
             reader=self.reader,
-            interpolation=interpolation,
+            interpolation=interpolation
+            if interpolation is not None
+            else self.default_interpolation,
             provider_max_requests=provider_max_requests,
             interpolate_years=interpolate_years,
         )

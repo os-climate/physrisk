@@ -255,6 +255,8 @@ class TestDataRequests(TestWithCredentials):
 
     def test_static_information(self):
         container = Container()
+        container.override_providers(inventory_reader=None)
+        container.override_providers(zarr_reader=None)
         requester = container.requester()
         static_info = requester.get(
             request_id="get_static_information", request_dict=None

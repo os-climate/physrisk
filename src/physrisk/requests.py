@@ -611,6 +611,10 @@ def compile_asset_impacts(
             # note that this does rely on ordering of dictionary (post 3.6)
             ordered_impacts[k.asset].append(hazard_impacts)
 
+    for a, imps in ordered_impacts.items():
+        ordered_impacts[a] = sorted(
+            imps, key=lambda x: x.key.hazard_type + x.key.scenario_id + x.key.year
+        )
     return [
         AssetLevelImpact(asset_id=k.id if k.id is not None else "", impacts=v)
         for k, v in ordered_impacts.items()

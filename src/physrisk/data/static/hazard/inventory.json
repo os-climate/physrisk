@@ -1894,15 +1894,10 @@
             "indicator_model_gcm": "{gcm}",
             "params": {
                 "gcm": [
-                    "ACCESS-CM2",
-                    "CMCC-ESM2",
-                    "CNRM-CM6-1",
-                    "MPI-ESM1-2-LR",
-                    "MIROC6",
-                    "NorESM2-MM"
+                    "ACCESS-CM2"
                 ]
             },
-            "display_name": "Mean degree days above index value/{gcm}",
+            "display_name": "Mean degree days above threshold/{gcm}",
             "display_groups": [
                 "Mean degree days"
             ],
@@ -1918,105 +1913,6 @@
                     "units": "degree days"
                 },
                 "path": "mean_degree_days_above_index_{gcm}_{scenario}_{year}_map",
-                "bounds": [
-                    [
-                        -180.0,
-                        85.0
-                    ],
-                    [
-                        180.0,
-                        85.0
-                    ],
-                    [
-                        180.0,
-                        -60.0
-                    ],
-                    [
-                        -180.0,
-                        -60.0
-                    ]
-                ],
-                "bbox": [
-                    -180.0,
-                    -85.0,
-                    180.0,
-                    85.0
-                ],
-                "index_values": [
-                    16,
-                    20,
-                    24
-                ],
-                "source": "map_array"
-            },
-            "store_netcdf_coords": false,
-            "scenarios": [
-                {
-                    "id": "historical",
-                    "years": [
-                        2005
-                    ]
-                },
-                {
-                    "id": "ssp126",
-                    "years": [
-                        2030,
-                        2040,
-                        2050
-                    ]
-                },
-                {
-                    "id": "ssp245",
-                    "years": [
-                        2030,
-                        2040,
-                        2050
-                    ]
-                },
-                {
-                    "id": "ssp585",
-                    "years": [
-                        2030,
-                        2040,
-                        2050
-                    ]
-                }
-            ],
-            "units": "degree days"
-        },
-        {
-            "hazard_type": "ChronicHeat",
-            "group_id": "",
-            "path": "chronic_heat/osc/v2/mean_degree_days_below_index_{gcm}_{scenario}_{year}",
-            "indicator_id": "mean_degree_days/below/index",
-            "indicator_model_id": null,
-            "indicator_model_gcm": "{gcm}",
-            "params": {
-                "gcm": [
-                    "ACCESS-CM2",
-                    "CMCC-ESM2",
-                    "CNRM-CM6-1",
-                    "MPI-ESM1-2-LR",
-                    "MIROC6",
-                    "NorESM2-MM"
-                ]
-            },
-            "display_name": "Mean degree days below index value/{gcm}",
-            "display_groups": [
-                "Mean degree days"
-            ],
-            "description": "Degree days indicators are calculated by integrating over time the absolute difference in temperature\nof the medium over a reference temperature. The exact method of calculation may vary;\nhere the daily maximum near-surface temperature 'tasmax' is used to calculate an annual indicator:\n\n$$\nI^\\text{dd} = \\frac{365}{n_y} \\sum_{i = 1}^{n_y} |  T^\\text{max}_i - T^\\text{ref} | \\nonumber\n$$\n\n$I^\\text{dd}$ is the indicator, $T^\\text{max}$ is the daily maximum near-surface temperature, $n_y$ is the number of days in the year and $i$ is the day index.\nand $T^\\text{ref}$ is the reference temperature of 32\u00b0C.\n",
-            "map": {
-                "colormap": {
-                    "min_index": 1,
-                    "min_value": 0.0,
-                    "max_index": 255,
-                    "max_value": 4000.0,
-                    "name": "heating",
-                    "nodata_index": 0,
-                    "units": "degree days"
-                },
-                "path": "mean_degree_days_below_index_{gcm}_{scenario}_{year}_map",
                 "bounds": [
                     [
                         -180.0,
@@ -2979,31 +2875,9 @@
                     "nodata_index": 0,
                     "units": "months/year"
                 },
-                "path": "maps/drought/osc/v1/months_spei12m_below_index_{gcm}_{scenario}_{year}_map",
-                "bounds": [
-                    [
-                        -180.0,
-                        85.0
-                    ],
-                    [
-                        180.0,
-                        85.0
-                    ],
-                    [
-                        180.0,
-                        -60.0
-                    ],
-                    [
-                        -180.0,
-                        -60.0
-                    ]
-                ],
-                "bbox": [
-                    -180.0,
-                    -60.0,
-                    180.0,
-                    85.0
-                ],
+                "path": "maps/drought/osc/v1/months_spei12m_below_index_{gcm}_{scenario}_{year}_map/exclude",
+                "bounds": [],
+                "bbox": [],
                 "index_values": [
                     0,
                     -1,

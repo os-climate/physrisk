@@ -505,19 +505,19 @@ class ZarrReader:
         pixel_is_area: bool,
         shape: Optional[Tuple[int, int, int]] = None,
     ):
-        if crs.lower() != "epsg:4236":
+        if crs.lower() != "epsg:4326":
             transproj = Transformer.from_crs("epsg:4326", crs, always_xy=True)
             x, y = transproj.transform(longitudes, latitudes)
         else:
             x, y = longitudes, latitudes
         coords = np.vstack((x, y, np.ones(len(longitudes))))  # type: ignore
         # check a special legacy case:
-        if shape is not None and crs.lower() == "epsg:4236":
+        if shape is not None and crs.lower() == "epsg:4326":
             if ((transform * (shape[2], shape[1]))[0] > 180) and (
                 (transform * (0, 0))[0] >= 0.0
             ):
                 # detect if transform convention expects longitude in range [0, 360]
-                coords = np.vstack((x + 180.0, y, np.ones(len(longitudes))))
+                coords = np.vstack((x % 360.0, y, np.ones(len(longitudes))))
                 logger.warning(
                     "Detected transform convention with longitude in range [0, 360]. Adjusting input longitudes accordingly."
                 )

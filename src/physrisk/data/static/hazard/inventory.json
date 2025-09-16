@@ -1897,7 +1897,7 @@
                     "ACCESS-CM2"
                 ]
             },
-            "display_name": "Mean degree days above threshold/{gcm}",
+            "display_name": "Mean degree days above index value/{gcm}",
             "display_groups": [
                 "Mean degree days"
             ],
@@ -2875,7 +2875,7 @@
                     "nodata_index": 0,
                     "units": "months/year"
                 },
-                "path": "maps/drought/osc/v1/months_spei12m_below_index_{gcm}_{scenario}_{year}_map/exclude",
+                "path": "maps/drought/osc/v1/months_spei12m_below_index_{gcm}_{scenario}_{year}_map",
                 "bounds": [],
                 "bbox": [],
                 "index_values": [
@@ -2890,6 +2890,64 @@
                 "source": "map_array_pyramid"
             },
             "store_netcdf_coords": false,
+            "scenarios": [
+                {
+                    "id": "ssp585",
+                    "years": [
+                        2005,
+                        2030,
+                        2040,
+                        2050,
+                        2080
+                    ]
+                }
+            ],
+            "units": "months/year"
+        },
+        {
+            "hazard_type": "Drought",
+            "group_id": "",
+            "path": "drought/osc/v1/months_spei12m_below_threshold_{gcm}_{scenario}_{year}",
+            "indicator_id": "months/spei12m/below/index",
+            "indicator_model_id": null,
+            "indicator_model_gcm": "{gcm}",
+            "params": {
+                "gcm": [
+                    "ACCESS-CM2",
+                    "CNRM-CM6-1",
+                    "MIROC6"
+                ]
+            },
+            "display_name": "Months 12m SPEI below threshold new/{gcm}",
+            "display_groups": [
+                "Months 12m SPEI below threshold new"
+            ],
+            "description": "",
+            "map": {
+                "colormap": {
+                    "min_index": 1,
+                    "min_value": 0.0,
+                    "max_index": 255,
+                    "max_value": 12.0,
+                    "name": "heating",
+                    "nodata_index": 0,
+                    "units": "months/year"
+                },
+                "path": "maps/drought/osc/v1/months_spei12m_below_threshold_{gcm}_{scenario}_{year}_map",
+                "bounds": [],
+                "bbox": [],
+                "index_values": [
+                    0,
+                    -1,
+                    -1.5,
+                    -2,
+                    -2.5,
+                    -3,
+                    -3.6
+                ],
+                "source": "map_array_pyramid"
+            },
+            "store_netcdf_coords": true,
             "scenarios": [
                 {
                     "id": "ssp585",

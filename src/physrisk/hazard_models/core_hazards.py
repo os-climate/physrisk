@@ -165,7 +165,8 @@ class InventorySourcePaths(SourcePaths):
                     id=resource.indicator_id,
                     scenario=scenario.id,  # type:ignore
                     year=year,
-                ),
+                )
+                + ("/indicator" if (resource.store_netcdf_coords and not map) else ""),
             )
         proxy_scenario_id = (
             cmip6_scenario_to_rcp(scenario_id)

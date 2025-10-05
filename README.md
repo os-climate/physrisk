@@ -17,7 +17,7 @@
 
 Physical climate risk calculation engine.
 
-<img src="docs/images/OS-Climate-Logo.png" alt="drawing" width="150"/>
+<img src="https://raw.githubusercontent.com/os-climate/physrisk/main/docs/images/OS-Climate-Logo.png" alt="drawing" width="150"/>
 
 ## About physrisk
 

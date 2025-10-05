@@ -107,7 +107,7 @@ repos:
           ]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 60ef368a6f48dfb4317651017f66dbb055241a6c  # frozen: v0.12.12
+    rev: a113f03edeabb71305f025e6e14bd2cd68660e29  # frozen: v0.13.1
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --config=pyproject.toml]
@@ -153,7 +153,7 @@ repos:
         entry: bash -c 'if [ ! -d .mypy_cache ]; then /bin/mkdir .mypy_cache; fi; exit 0'
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "412de98d50e846f31ea6f4b0ad036f2c24a7a024"  # frozen: v1.17.1
+    rev: "9f70dc58c23dfcca1b97af99eaeee3140a807c7e"  # frozen: v1.18.2
     hooks:
       - id: mypy
         verbose: true

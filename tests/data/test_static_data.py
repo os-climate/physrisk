@@ -42,7 +42,8 @@ class TestStaticDate(unittest.TestCase):
             "mean_work_loss/medium": "Mean work loss for medium intensity work",
             "mean_work_loss/high": "Mean work loss for high intensity work",
             "months/spei3m/below/-2": "Months with 3 month SPEI below -2",
-            "months/spei12m/below/index": "Months with 12 month SPEI below threshold",
+            "months/spei12m/below/index": "Months with 12 month SPEI below threshold",  # legacy
+            "months/spei12m/below/threshold": "Months with 12 month SPEI below threshold",
             "max/daily/water_equivalent": "Max daily water-equivalent precipitation",
             "mean_degree_days/above/32C": "Mean degree days above 32°C",
             "mean_degree_days/below/index": "Mean degree days below threshold",

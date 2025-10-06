@@ -62,7 +62,7 @@ def test_live_hazard_data():
                 "hazard_type": "Drought",
                 "indicator_id": "months/spei12m/below/threshold",
                 "scenario": "ssp585",
-                "path": "drought/osc/v1/months_spei12m_below_index_MIROC6_{scenario}_{year}",
+                "path": "drought/osc/v2/months_spei12m_below_threshold_multi_model_0_{scenario}_{year}",
                 "year": 2050,
             },
         ]

@@ -165,7 +165,8 @@ class InventorySourcePaths(SourcePaths):
                     id=resource.indicator_id,
                     scenario=scenario.id,  # type:ignore
                     year=year,
-                ),
+                )
+                + ("/indicator" if (resource.store_netcdf_coords and not map) else ""),
             )
         proxy_scenario_id = (
             cmip6_scenario_to_rcp(scenario_id)
@@ -249,7 +250,12 @@ class CoreInventorySourcePaths(InventorySourcePaths):
         self.add_selector(
             ChronicHeat, "mean/degree/days/above/32c", self._select_chronic_heat
         )
-        self.add_selector(Drought, "months/spei12m/below/index", self._select_drought)
+        self.add_selector(
+            Drought, "months/spei12m/below/index", self._select_drought
+        )  # legacy
+        self.add_selector(
+            Drought, "months/spei12m/below/threshold", self._select_drought
+        )
         self.add_selector(
             RiverineInundation,
             "flood_depth",
@@ -286,7 +292,7 @@ class CoreInventorySourcePaths(InventorySourcePaths):
         candidates: ResourceSubset,
         hint: Optional[HazardDataHint] = None,
     ):
-        return candidates.with_model_gcm("MIROC6").first()
+        return candidates.with_model_gcm("multi_model_0").first()
 
     @staticmethod
     def _select_riverine_inundation(

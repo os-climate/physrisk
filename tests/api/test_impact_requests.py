@@ -315,7 +315,7 @@ class TestImpactRequests(TestWithCredentials):
             root,
             longitudes,
             latitudes,
-            "drought/osc/v1/months_spei12m_below_index_MIROC6_ssp585_2050",
+            "drought/osc/v2/months_spei12m_below_threshold_multi_model_0_ssp585_2050/indicator",
             shape,
             np.array(
                 [

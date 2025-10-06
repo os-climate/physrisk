@@ -1077,7 +1077,7 @@
                     "min_index": 1,
                     "min_value": 0.0,
                     "max_index": 255,
-                    "max_value": 4000.0,
+                    "max_value": 2000.0,
                     "name": "heating",
                     "nodata_index": 0,
                     "units": "degree days"
@@ -1110,7 +1110,7 @@
                 "index_values": null,
                 "source": "map_array"
             },
-            "resolution": "1800 m",
+            "resolution": "0.25\u00b0",
             "store_netcdf_coords": false,
             "scenarios": [
                 {
@@ -1247,7 +1247,7 @@
                     "min_index": 10,
                     "min_value": 0.0,
                     "max_index": 245,
-                    "max_value": 4.0,
+                    "max_value": 3.0,
                     "name": "heating",
                     "nodata_index": 0,
                     "units": "months/year"
@@ -1328,7 +1328,7 @@
                     "min_index": 1,
                     "min_value": 0.0,
                     "max_index": 255,
-                    "max_value": 1000.0,
+                    "max_value": 500.0,
                     "name": "heating",
                     "nodata_index": 0,
                     "units": "mm"
@@ -2036,7 +2036,7 @@
                     "min_index": 1,
                     "min_value": 0.0,
                     "max_index": 255,
-                    "max_value": 4000.0,
+                    "max_value": 2000.0,
                     "name": "heating",
                     "nodata_index": 0,
                     "units": "degree days"
@@ -2480,7 +2480,7 @@
                     "min_index": 1,
                     "min_value": 0.0,
                     "max_index": 255,
-                    "max_value": 100.0,
+                    "max_value": 75.0,
                     "name": "flare",
                     "nodata_index": 0,
                     "units": "centimeters/year"
@@ -2571,7 +2571,7 @@
                     "min_index": 1,
                     "min_value": 0.0,
                     "max_index": 255,
-                    "max_value": 2000.0,
+                    "max_value": 1500.0,
                     "name": "flare",
                     "nodata_index": 0,
                     "units": "centimeters/year"
@@ -3347,14 +3347,14 @@
         {
             "hazard_type": "Fire",
             "group_id": "fire_risk_indicators",
-            "path": "fire/probabilistic_pan_european_wildfire/{scenario}_{year}",
+            "path": "fire/ECB_fire_risk_indicators/v1_1/{scenario}_{year}",
             "indicator_id": "fire_probability",
             "indicator_model_id": null,
             "indicator_model_gcm": "FireRiskAlphaKlima",
             "params": {},
             "display_name": "Probabilistic Pan-European Wildfire Map",
             "display_groups": [],
-            "description": "\n\n\n[![Logo](https://alpha-klima.com/wp-content/uploads/2025/06/Logo-ALPHA-KLIMA-con-texto.png)](https://alpha-klima.com/)\n\n\nThis spatial dataset provides annual probabilities of fire occurrence across Europe under both historical\nconditions (2002\u20132022) and projected future climates (2023\u20132050) for two emissions pathways (RCP 4.5 and\nRCP 8.5). It builds upon the methodology presented in **\u201cClimate Change Risk Indicators for Central Banking:\nExplainable AI in Fire Risk Estimations\u201d** (https://dx.doi.org/10.2139/ssrn.4865384) and integrates a range of\nhigh-quality geospatial layers to deliver wall-to-wall coverage at ~2.5 km resolution.\n\nAnnual probabilities were estimated by training XGBoost models with monotonic constraints on FWI-related features,\nusing historical fire occurrence as the target, followed by probability calibration and spatial application\nto each year's input layers.\n\n**Key input layers**\n\n* **Fire Weather Index (FWI) v1.0** \u2014 [Copernicus Climate Data Store](\n  https://cds.climate.copernicus.eu/datasets/sis-tourism-fire-danger-indicators?tab=overview)\n* **Burned-area product (MCD64A1 v6.1)** \u2014 [NASA/USGS LP DAAC](https://lpdaac.usgs.gov/products/mcd64a1v061/)\n* **Land-cover product (MCD12Q1 v6)** \u2014 [NASA/USGS LP DAAC](https://lpdaac.usgs.gov/products/mcd12q1v006/)\n* **Critical infrastructure (HARCI-EU)** \u2014 Koks et al. (2019), *Scientific Data*\n  <https://www.nature.com/articles/s41597-019-0135-1>\n* **Urban centres & population** \u2014 [Geoapify](https://www.geoapify.com/)\n\nFor implementing the processing pipeline, we also leveraged the [CLAIMED library](https://github.com/claimed-framework/component-library), developed by IBM. CLAIMED provides a fully modular,\nscalable architecture in which each stage of the workflow is encapsulated as a decoupled component; this greatly simplifies maintenance,\nparallel execution, and automatic versioning. By using CLAIMED, we can natively integrate distributed-processing engines (e.g. Dask)\nand orchestrators like Airflow, ensuring full transparency, reproducibility, and rapid adaptability whenever data sources\nor model requirements evolve.\n\n**Countries covered (ISO alpha-2 codes)**\nAL, AT, BE, BG, CH, CY, CZ, DE, DK, EE, ES, FI, FR, GB, GR, HR, HU, IE, IS, IT, LI, LT, LU, LV, ME, MK, MT, NL, NO, PL, PT, RO, RS, SE, SI, SK, TR\n\nAuthors: [Carlos San Mill\u00e1n](https://github.com/csanmillan) and [Virginia Morales](https://github.com/VMarfima)\nProperty of Arfima Financial Services (https://afs-services.com/)\nLicense: CC BY-NC 4.0\n(Arfima: https://afs-services.com/; CLAIMED: https://github.com/claimed-framework/component-library; Alpha Klima: https://alpha-klima.com/)\n\nDisclaimer: These data are not intended for use in emergency response, public safety operations, or any context where physical safety or property risk is involved. If you require higher-resolution datasets built with the latest methodologies, subject to rigorous validation, and designed for detailed bottom-up risk analysis, please contact [Alpha-Klima](https://alpha-klima.com/).\n",
+            "description": "\nThis spatial dataset provides annual probabilities of fire occurrence across Europe under both historical\nconditions (2002\u20132022) and projected future climates (2023\u20132050) for two emissions pathways (RCP 4.5 and\nRCP 8.5). It builds upon the methodology presented in **\u201cClimate Change Risk Indicators for Central Banking:\nExplainable AI in Fire Risk Estimations\u201d** (https://dx.doi.org/10.2139/ssrn.4865384) and integrates a range of\nhigh-quality geospatial layers to deliver wall-to-wall coverage at ~2.5 km resolution.\n\nAnnual probabilities were estimated by training XGBoost models with monotonic constraints on FWI-related features,\nusing historical fire occurrence as the target, followed by probability calibration and spatial application\nto each year's input layers.\n\n**Key input layers**\n\n* **Fire Weather Index (FWI) v1.0** \u2014 [Copernicus Climate Data Store](\n  https://cds.climate.copernicus.eu/datasets/sis-tourism-fire-danger-indicators?tab=overview)\n* **Burned-area product (MCD64A1 v6.1)** \u2014 [NASA/USGS LP DAAC](https://lpdaac.usgs.gov/products/mcd64a1v061/)\n* **Land-cover product (MCD12Q1 v6)** \u2014 [NASA/USGS LP DAAC](https://lpdaac.usgs.gov/products/mcd12q1v006/)\n* **Critical infrastructure (HARCI-EU)** \u2014 Koks et al. (2019), *Scientific Data*\n  <https://www.nature.com/articles/s41597-019-0135-1>\n* **Urban centres & population** \u2014 [Geoapify](https://www.geoapify.com/)\n\nFor implementing the processing pipeline, we also leveraged the [CLAIMED library](https://github.com/claimed-framework/component-library), developed by IBM. CLAIMED provides a fully modular,\nscalable architecture in which each stage of the workflow is encapsulated as a decoupled component; this greatly simplifies maintenance,\nparallel execution, and automatic versioning. By using CLAIMED, we can natively integrate distributed-processing engines (e.g. Dask)\nand orchestrators like Airflow, ensuring full transparency, reproducibility, and rapid adaptability whenever data sources\nor model requirements evolve.\n\n**Countries covered (ISO alpha-2 codes)**\nAL, AT, BE, BG, CH, CY, CZ, DE, DK, EE, ES, FI, FR, GB, GR, HR, HU, IE, IS, IT, LI, LT, LU, LV, ME, MK, MT, NL, NO, PL, PT, RO, RS, SE, SI, SK, TR\n\nAuthors: [Carlos San Mill\u00e1n](https://github.com/csanmillan) and [Virginia Morales](https://github.com/VMarfima)\nProperty of Arfima Financial Services (https://afs-services.com/)\nLicense: CC BY-NC 4.0\n(Arfima: https://afs-services.com/; CLAIMED: https://github.com/claimed-framework/component-library; Alpha Klima: https://alpha-klima.com/)\n\nDisclaimer: These data are not intended for use in emergency response, public safety operations, or any context where physical safety or property risk is involved. If you require higher-resolution datasets built with the latest methodologies, subject to rigorous validation, and designed for detailed bottom-up risk analysis, please contact [Alpha-Klima](https://alpha-klima.com/).\n",
             "license": "Commercial",
             "source": "Alpha Klima",
             "attribution": "",
@@ -3369,7 +3369,7 @@
                     "nodata_index": 0,
                     "units": "probability"
                 },
-                "path": "maps/fire/probabilistic_pan_european_wildfire/{scenario}_{year}_map",
+                "path": "maps/fire/ECB_fire_risk_indicators/v1_1/{scenario}_{year}_map",
                 "bounds": [],
                 "bbox": [
                     -180.0,

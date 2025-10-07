@@ -3182,7 +3182,7 @@
                 "source": "map_array_pyramid"
             },
             "resolution": null,
-            "store_netcdf_coords": true,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",
@@ -3225,7 +3225,7 @@
                 "source": "map_array_pyramid"
             },
             "resolution": null,
-            "store_netcdf_coords": true,
+            "store_netcdf_coords": false,
             "scenarios": [
                 {
                     "id": "historical",

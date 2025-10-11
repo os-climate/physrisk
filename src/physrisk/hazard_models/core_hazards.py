@@ -348,3 +348,4 @@ def get_default_source_path_provider(inventory: Inventory = EmbeddedInventory())
 
 def get_default_source_paths(inventory: Inventory = EmbeddedInventory()):
     return CoreInventorySourcePaths(inventory)
+

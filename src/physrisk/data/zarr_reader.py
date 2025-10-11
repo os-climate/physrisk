@@ -148,6 +148,7 @@ class ZarrReader:
             ix = np.repeat(image_coords[0, :], len(index_values))
 
             data = z.get_coordinate_selection((iz, iy, ix))  # type: ignore
+            data = ZarrReader._handle_legacy_nans(data)
             res[in_bounds] = data.reshape(
                 [len(longitudes[in_bounds]), len(index_values)]
             )
@@ -444,11 +445,8 @@ class ZarrReader:
 
         data = z.get_coordinate_selection((iz, iy, ix))  # type: ignore # index, row, column
 
-        # nodata in the zarr files are considered to be
-        # 1) float("nan") (which Zarr supports) or 2) nan_value of -9999.0
-        # 2 is legacy behaviour: for Zarr better to use float("nan")
-        nan_input_value_legacy = -9999.0
-        data = np.where(data == nan_input_value_legacy, np.nan, data)
+        data = ZarrReader._handle_legacy_nans(data)
+
         # retain ability to output arbitrary NaN value, although might be no longer needed as
         # physrisk deals separately, e.g. with removing NaNs before passing back via JSON
         nan_output_value = float("nan")
@@ -547,3 +545,12 @@ class ZarrReader:
         if 0.0 < cosinus:
             buffer_in_arc_degrees /= np.sqrt(cosinus)
         return buffer_in_arc_degrees
+
+    @staticmethod
+    def _handle_legacy_nans(data: np.ndarray):
+        # nodata in the zarr files are considered to be
+        # 1) float("nan") (which Zarr supports) or 2) nan_value of -9999.0
+        # 2 is legacy behaviour: for Zarr better to use float("nan")
+        nan_input_value_legacy = -9999.0
+        data = np.where(data == nan_input_value_legacy, np.nan, data)
+        return data

@@ -178,10 +178,15 @@ class Requester:
             provider_max_requests=request.provider_max_requests,
         )
         if request.calc_settings.hazard_scope is not None:
-            hazard_scope = set(hazard_class(h.strip()) for h in request.calc_settings.hazard_scope.split(","))
+            hazard_scope = set(
+                hazard_class(h.strip())
+                for h in request.calc_settings.hazard_scope.split(",")
+            )
         else:
             hazard_scope = None
-        vulnerability_models = self.vulnerability_models_factory.vulnerability_models(hazard_scope=hazard_scope)
+        vulnerability_models = self.vulnerability_models_factory.vulnerability_models(
+            hazard_scope=hazard_scope
+        )
         measure_calculators = self.measures_factory.calculators(request.use_case_id)
         return _get_asset_impacts(
             request,

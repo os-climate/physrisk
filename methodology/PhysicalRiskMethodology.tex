@@ -136,7 +136,7 @@
     The views expressed in this paper are those of the authors and do not necessarily reflect the views and policies of their respective employers.}
     }
 
-\date{Feb 2024 [Draft]}
+\date{Oct 2025 [Draft]}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -165,6 +165,11 @@
 
 \clearpage
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{framed}
+This document describes the OS-Climate physical climate risk methodology, although additional implementation detail is found in the \href{https://physrisk.readthedocs.io/en/latest/}{physrisk library documentation} -- along with code-library-specific topics. This is done where it is more convenient to document certain details via runnable Jupyter notebooks which support interactive features. Sources of hazard and vulnerability functions are examples of this.
+\end{framed}
+
 \section{Introduction}
 \label{Sec:Introduction}
 
@@ -212,7 +217,7 @@ livelihoods, service provision, ecosystems, and environmental resources (see Ann
 
 The authors of \cite{RangerEtAl:2022} argue that sudden accute events are the most likely to generate \emph{`material shocks to the financial sector in the near-term'} and note that techniques to generate probabilistic scenarios to inform financial decision making is well-developed in the insurance industry. This is taken as a guiding principle, that a methodology for the measurement of physical climate risk should be adapted from the techniques developed by catastrophe modellers. The authors also note that \emph{`the financial risks from physical climate shocks cannot be approximated by considering only average annual costs of weather extremes, even on long timescales. Larger, rarer events can cause significant damage and disruption and have long-lived impacts.'}. Another guiding principle is this handling of rare events.
 
-A model designed to quantify physical risk must take into account: a) hazard likelihood of occurrence  b) the damage or disruption caused c) the consequence of this damage/disruption. Damage/disruption caused by a hazard is determined by the \emph{vulnerability} of the asset that is exposed\footnote{\emph{Exposure} of an asset to a hazard is defined after \cite{MaskreyEtAl:2011}; for most purposes this is determined by asset location.}. With a focus on financial risk, damage/disruption refers to damage of financial assets and disruption to business activities. More generally, damage can refer to natural assets and disruption to populations and ecosystems. Hereafter we use the word `asset' to describe both physical assets and business activities. As an example, the physical infrastructure of a power generating asset may be damaged by inundation and its electricity production may be disrupted, leading to a loss in revenue.
+A model designed to quantify physical risk must take into account: a) hazard likelihood of occurrence  b) the damage or disruption caused c) the consequence of this damage/disruption. Damage/disruption caused by a hazard is determined by the \emph{vulnerability} of the asset that is exposed\footnote{\emph{Exposure} of an asset to a hazard is defined after \cite{MaskreyEtAl:2011}; for most purposes this is determined by asset location.}. With a focus on financial risk, damage/disruption refers to damage of financial assets and disruption to business activities. More generally, damage can refer to natural assets and disruption to populations and ecosystems. As an example, the physical infrastructure of a power generating asset may be damaged by inundation and its electricity production may be disrupted, leading to a loss in revenue.
 
 We assign explicit names to these three components, a), b) and c) for the financial risk case:
 \begin{enumerate}[a)]
@@ -229,7 +234,7 @@ Such precise models of physical risk can be complex and may rely on information 
 
 The purpose of this paper is to present the methodology of a framework that is sufficiently generic to be used for a wide range of physical climate risk models, both precise and approximate as required. The ability to perform precise, fine-grained calculations is an important requirement therefore. This paper serves as a specification for use in the \emph{`physrisk'} OS-Climate (OS-C) \cite{OSC} physical climate risk calculation module.
 
-OS-C aims to provide a platform unconstrained by any one particular methodology choice, but takes inspiration from natural catastrophe modelling \cite{MitchellEtAl:2017} and in particular the \emph{Oasis Loss Modelling Framework} \cite{OasisLMF} (henceforth \emph{Oasis LMF}), which was designed to accommodate a wide range of catastrophe models and analyse physical risk in the context of the insurance market. Similarly to \emph{Oasis LMF}, we adopt a modular approach. This approach allows the user to change easily a particular modelling method, whilst maintaining the integration of the components.
+OS-C aims to provide a platform unconstrained by any one particular methodology choice, but takes inspiration from natural catastrophe modelling \cite{MitchellEtAl:2017} and in particular the \emph{Oasis Loss Modelling Framework} \cite{OasisLMF} (henceforth \emph{Oasis LMF}), which was designed to accommodate a wide range of catastrophe models and analyse physical risk in the context of the insurance market. Similarly to \emph{Oasis LMF}, the library adopts a modular approach. This approach allows the user to change easily a particular modelling method, whilst maintaining the integration of the components.
 
 In the following, models of hazards, vulnerability and financial impact are discussed in more detail. In a later section these are presented more formally.
 
@@ -239,7 +244,7 @@ As noted above, hazard models come in two varieties: models of acute hazards -- 
 \item{\emph{Accute hazard models.}}
 
 Accute hazard models may be \emph{event-based} or \emph{return-period-based}.
-\emph{Event-based hazard models} are models of individual events and are common in natural catastrophe modelling. Typically, for a large number of events, a model provides spatial distributions (i.e. a map) of the probabilities of occurrence of different event intensities. These distributions are sometimes called `hazard footprints' \cite{OasisFinancialModule}. As an example, in the case of inundation, the hazard footprint would provide for different locations the probability of occurrence of different inundation depths -- associated with one particular inundation event.
+\emph{Event-based hazard models} are models of individual events and are common in natural catastrophe modelling. Typically, for a large number of events, a model provides spatial distributions (i.e. a map) of the probabilities of occurrence of different event intensities. These distributions are sometimes called `hazard footprints' \cite{OasisFinancialModule} or `hazard maps'. As an example, in the case of inundation, the hazard footprint would provide for different locations the probability of occurrence of different inundation depths -- associated with one particular inundation event.
 
 Event-based hazard models are important when the \emph{correlation} of hazards to which assets are exposed is material to the analysis being performed. For example, if one house on a street is exposed to an inundation it is likely that the house two doors down will also be exposed. This is captured by event-based hazard models: both houses might well appear in the same hazard footprint. The models are therefore important in reinsurance risk calculations, say, where the ability to calculate accurately `worst-case' losses is highly desirable.
 
@@ -852,23 +857,31 @@ For pixel-is-area data, `floor' interpolation typically means that the value of 
 \subsection{Financial model}
 
 \subsubsection{Types of calculation.}
-Vulnerability models were described in \ref{SubSec:VulnerabilityModel} as a means to calculate the damage and disruption to a portfolio of assets for different hazard models. How the resulting probability distributions of impact are then used in a financial model depends on the intent of the analysis. We distinguish between \emph{stress test} and \emph{portfolio analysis} use cases.
+Vulnerability models were described in \ref{SubSec:VulnerabilityModel} as a means to calculate the damage and disruption to a portfolio of assets for different hazard models. The damage is given as a fraction of the total insurable value (TIV) of the asset. The disruption is given as a fraction of the revenue generation that is attributable to the asset. How the resulting probability distributions of impact are then used in a financial model depends on the intent of the analysis. We distinguish between \emph{scenario analyses} and \emph{operational monitoring} use cases.
 
-\emph{Stress tests} make use of climate-related shocks -- severe acute events -- in order to assess an impact. This might for example be the impact on a financial institution. Stress tests may make use of narrative scenarios or may take the approach of simulating large number of extreme but plausible events in order to identify a worst-case which is \emph{a priori} unknown. Indeed the two approaches may be combined, assessing the impact of a severe acute event coupled with other aggravating factors.
+\emph{Scenario analyses}, of which stress tests are an example, make use of climate-related shocks in order to assess financial impact. This might be the impact on a financial institution. Stress tests may make use of narrative scenarios or may take the approach of simulating large number of extreme but plausible events in order to identify a worst-case which is \emph{a priori} unknown. Indeed the two approaches may be combined, assessing the impact of a severe acute event coupled with other aggravating factors.
 
-In a \emph{portfolio analysis}, the aim is to assess which parts of a portfolio of assets are most subject to physical climate risk.
+\emph{Operational monitoring}, can take several forms, for example assessing which parts of a portfolio of assets are most subject to physical climate risk. Or identifying \emph{ex ante} if a particular asset is subject to elevated risk.
 
 \subsubsection{Climate risk measures and importance of change.}
 Climate risk models generally differ from catastrophe models in more than their use of climate-conditioned and projected hazard models. In particular, physical climate risk arises from \emph{changes} in climate.
 
-We take as an example a real estate asset that is collateral for a loan. The hypothetical asset is exposed to both hurricane and flood hazards today, however it is covered by an insurance policy and its current valuation takes into account both historical occurrence of hazards and the policy details. Risk managers concerned with climate risk are likely to be interested in potential changes in value of the asset over the full term of the loan:
+One important question for financial institutions is how changes in climate can affect the credit risk of market participants. Two main channels by which this can occur:
+\begin{enumerate}
+    \item changes in the value of assets that are collateral for loans;
+    \item changes in the probability of damage to assets or disruption to revenue generation of institutions' counterparties which can lead to changes in financial health.
+\end{enumerate}
+
+The first of these is likely to manifest in a change of loss given default (LGD) and the second in a change of probability of default (PD).
+
+We take as an example of the first case a real estate asset that is collateral for a loan. The hypothetical asset is exposed to both topical cyclone and flood hazards today, however it is covered by an insurance policy and its current valuation takes into account both historical occurrence of hazards and the policy details. Risk managers concerned with climate risk are likely to be interested in potential changes in value of the asset over the full term of the loan:
 
 \begin{enumerate}
     \item if acute events become more frequent and severe, assets may become more expensive to insure and less desirable {\textcolor{red}{\emph{[Citation]}}} \footnote{For example, to a resident of a house subject to regular flooding.}, which can decrease the asset value;
     \item if an extremely severe and widespread event occurs, default may lead to a distressed sale and/or the full insurance payout may not be made.
 \end{enumerate}
 
-For a portfolio analysis, it is therefore likely to be the change in frequency of events and the change in probability of extremely severe events that is particularly of interest; these are the risk drivers.
+For operational monitoring, it is therefore likely to be the change in frequency of events and the change in probability of extremely severe events that is particularly of interest; these are the risk drivers.
 
 \paragraph{Definition of measures.} For a portfolio, distributions of annual impacts, typically damage and disruption, can be aggregated and converted into distributions of change in portfolio value in a given reporting currency. Measures describing the loss of value are:
 
@@ -879,18 +892,18 @@ For a portfolio analysis, it is therefore likely to be the change in frequency o
 
 From the argument above, a change in AEP for moderate and severe loss cases can be a useful indicator of risk. The change is from historical baseline to a climate-conditioned projection.
 
-\subsubsection{Structural models of credit risk}
-Changes in asset value can be used to model changes in the credit quality of market participants. Financial risk modules for physical risk may then use distributions of asset value changes in order to model changes of credit quality over time as a result of climate change, for example estimates of default probability and loss given default.
+\subsubsection{Incorporating physical risk into models of credit risk}
+This section gives a brief introduction to the incorporation of physical climate risk into credit risk models. Credit models come in a variety of forms and financial institutions often have pre-existing models; the aim of this section is therefore to identify the requirements of physical risk models that allow climate risk factors to be incorporated rather than to define an end-to-end approach.
 
-The intention of this section is not to specify any particular model, but rather to give a brief introduction. Particularly of interest is the question of what inputs credit risk models require.
+Taking the first case of changes in the value of assets that are collateral for loans, it is necessary to model how climate change can affect the value of assets and hence LGD. This can be done in several ways. One can take a \emph{hedonic pricing} approach, and model the changes in value from external factors such as likelihood of a flood. Alternatively one can attempt to set a fair price for the additional hazard exposure by estimating the cost of mitigation, either adapting a property or insuring it. It is worth nothing that in either approach significant assumptions are required. It may be argued that such calculations are therefore more appropriate for stress tests or to give a bounding calculation intended to estimate provisions, rather than as an adjustment to LGD in existing credit models.
 
-For medium and large cap firms, a credit default event typically occurs when a firm is not able to meet its debt servicing obligations. Under an important class of credit risk models called `structural models', it is assumed that a default event occurs for a firm when its assets are sufficiently low compared to its liabilities.
+{\textcolor{red}{\emph{[Add hedonic pricing refs, e.g. Kousky]}}}
 
-A number of different structural models exist which make various assumptions about how a firm's assets change over time, how its capital is structured and the nature of its debt.
+In the second case, the focus is on how climate change impacts the financial health of counterparties. Impacts can take the form of damage to assets. Restoring assets to their original condition may require capital expenditure, depending on mitigating factors such as the presence of insurance. Asset restoration may also lead to downtime and loss of revenue. Other impacts of climate change affect revenue generation directly, for example heat-related loss of productivity. The net effect of the impacts can be an increase in debt and decrease in equity of a counterparty with potential impact on PD.
 
-The earliest structural model was described by Merton in 1974 \cite{Merton:1974} based on an extremely simple debt structure. Black and Cox \cite{BlackCox:1976} introduced an important refinement to the Merton model in 1976. Practical implementations were subsequently created as a result of this foundational work. A notable one of these is the `KMV' model, named after Kealhofer, McQuown and Vasiek, now owned by Moody's Investors Service, Inc.
+The aggregate amount required to restore assets and aggregate loss of revenue are therefore likely to be important. Integrating these into credit models can be done in several ways. Some types of credit model are based on sets of financial ratios, e.g. debt to equity; here it might be appropriate to shock the ratios based on the physical risk model outputs. {\textcolor{red}{\emph{Refs for financial-ratio-based approaches}}}. A class of credit risk models called `structural models' are also of interest. For medium and large cap firms, a credit default event typically occurs when a firm is not able to meet its debt servicing obligations and it may be assumed that a default event occurs for a firm when its assets are sufficiently low compared to its liabilities. A number of different structural models exist which make various assumptions about how a firm's assets change over time, how its capital is structured and the nature of its debt.
 
-Use of such credit models, may provide a mechanism for incorporation of physical risk into financial institutions existing risk models\cite{KenyonEtAl:2021}.
+The earliest structural model was described by Merton in 1974 \cite{Merton:1974} based on an extremely simple debt structure. Black and Cox \cite{BlackCox:1976} introduced an important refinement to the Merton model in 1976. Practical implementations were subsequently created as a result of this foundational work. A notable one of these is the `KMV' model, named after Kealhofer, McQuown and Vasiek, now owned by Moody's Investors Service, Inc. Such credit models, provide a mathematical framework for incorporating of physical risk \cite{KenyonEtAl:2021} and are a likely candidate for an illustrative end-to-end approach.
 
 \subsection{Uncertainties in the calculation}
 

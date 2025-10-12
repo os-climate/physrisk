@@ -27,7 +27,7 @@ from physrisk.data.static.scenarios import scenario_description
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.exposure import JupterExposureMeasure, calculate_exposures
-from physrisk.kernel.hazards import Hazard
+from physrisk.kernel.hazards import Hazard, hazard_class
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey  # , ImpactKey
 from physrisk.kernel.impact_distrib import EmptyImpactDistrib, PlaceholderImpactDistrib
 from physrisk.kernel.risk import (
@@ -177,7 +177,16 @@ class Requester:
             interpolation=request.calc_settings.hazard_interp,
             provider_max_requests=request.provider_max_requests,
         )
-        vulnerability_models = self.vulnerability_models_factory.vulnerability_models()
+        if request.calc_settings.hazard_scope is not None:
+            hazard_scope = set(
+                hazard_class(h.strip())
+                for h in request.calc_settings.hazard_scope.split(",")
+            )
+        else:
+            hazard_scope = None
+        vulnerability_models = self.vulnerability_models_factory.vulnerability_models(
+            hazard_scope=hazard_scope
+        )
         measure_calculators = self.measures_factory.calculators(request.use_case_id)
         return _get_asset_impacts(
             request,

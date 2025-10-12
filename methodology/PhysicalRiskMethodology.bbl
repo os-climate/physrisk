@@ -1,21 +1,27 @@
 \begin{thebibliography}{10}
 
+\bibitem{arias2020impacts}
+{\sc Arias, M.~E., Farinosi, F., Lee, E., Livino, A., Briscoe, J., and Moorcroft, P.~R.}
+\newblock Impacts of climate change and deforestation on hydropower planning in the brazilian amazon.
+\newblock {\em Nature Sustainability 3}, 6 (2020), 430--436.
+
 \bibitem{BavandiEtAl:2022}
 {\sc Bavandi, A., Berrais, D., Dolk, M., and Mahul, O.}
-\newblock Physical climate risk assessment: Practical lessons for the
-  development of climate scenarios with extreme weather events from emerging
-  markets and developing economies.
+\newblock Physical climate risk assessment: Practical lessons for the development of climate scenarios with extreme weather events from emerging markets and developing economies.
 \newblock Tech. rep., Network for Greening the Financial System, 2022.
 
+\bibitem{begueria2014standardized}
+{\sc Beguer{\'\i}a, S., Vicente-Serrano, S.~M., Reig, F., and Latorre, B.}
+\newblock Standardized precipitation evapotranspiration index (spei) revisited: parameter fitting, evapotranspiration models, tools, datasets and drought monitoring.
+\newblock {\em International journal of climatology 34}, 10 (2014), 3001--3023.
+
 \bibitem{BertramEtAl:2020}
-{\sc Bertram, C., Hilaire, J., Kriegler, E., Beck, T., Bresch, D., Clarke, L.,
-  Cui, R., Edmonds, J., Min, J., Piontek, F., et~al.}
+{\sc Bertram, C., Hilaire, J., Kriegler, E., Beck, T., Bresch, D., Clarke, L., Cui, R., Edmonds, J., Min, J., Piontek, F., et~al.}
 \newblock Ngfs climate scenarios database: Technical documentation.
 
 \bibitem{BlackCox:1976}
 {\sc Black, F., and Cox, J.~C.}
-\newblock Valuing corporate securities: some effects of bond indenture
-  provisions.
+\newblock Valuing corporate securities: some effects of bond indenture provisions.
 \newblock {\em Journal of Finance 31}, 2 (1976), 351--367.
 
 \bibitem{ChauvetEtAl:2024}
@@ -24,15 +30,12 @@
 
 \bibitem{Christidis:2021}
 {\sc Christidis, N.}
-\newblock Using {CMIP6} multi-model ensembles for near real-time attribution of
-  extreme events.
+\newblock Using {CMIP6} multi-model ensembles for near real-time attribution of extreme events.
 \newblock {\em Hadley Centre Technical Note 107\/} (2019).
 
 \bibitem{Christidis:2013}
-{\sc Christidis, N., Stott, P.~A., Scaife, A.~A., Arribas, A., Jones, G.~S.,
-  Copsey, D., Knight, J.~R., and Tennant, W.~J.}
-\newblock A new {HadGEM3-A}-based system for attribution of weather-and
-  climate-related extreme events.
+{\sc Christidis, N., Stott, P.~A., Scaife, A.~A., Arribas, A., Jones, G.~S., Copsey, D., Knight, J.~R., and Tennant, W.~J.}
+\newblock A new {HadGEM3-A}-based system for attribution of weather-and climate-related extreme events.
 \newblock {\em Journal of Climate 26}, 9 (2013), 2756--2783.
 
 \bibitem{DosioEtAl:2018}
@@ -42,80 +45,66 @@
 
 \bibitem{HuizingaEtAl:2017}
 {\sc Huizinga, J., De~Moel, H., Szewczyk, W., et~al.}
-\newblock Global flood depth-damage functions: Methodology and the database
-  with guidelines.
+\newblock Global flood depth-damage functions: Methodology and the database with guidelines.
 \newblock Tech. rep., Joint Research Centre (Seville site), 2017.
 
 \bibitem{KenyonEtAl:2021}
 {\sc Kenyon, C., and Berrahouia, M.}
-\newblock Climate change valuation adjustment (ccva) using parameterized
-  climate change impacts.
+\newblock Climate change valuation adjustment (ccva) using parameterized climate change impacts.
 \newblock {\em Risk\/} (2021).
 
 \bibitem{KuzmaEtAl:2023}
-{\sc Kuzma, S., Bierkens, M.~F., S.~Lakshman, S., Luo, T., Saccoccia, L.,
-  Sutanudjaja, E.~H., and Van~Beek, R.}
+{\sc Kuzma, S., Bierkens, M.~F., S.~Lakshman, S., Luo, T., Saccoccia, L., Sutanudjaja, E.~H., and Van~Beek, R.}
 \newblock Aqueduct 4.0: Updated decision-relevant global water risk indicators.
 \newblock {\em World Resources Institute\/} (2023).
 
 \bibitem{LuoEtAl:2021}
-{\sc Luo, T., Zhou, L., Falzon, J., Cheng, Y., Christianson, G., Wu, Y., and
-  Habchi, A.}
-\newblock Assessing physical climate risks for the european bank for
-  reconstruction and development's power generation project investment
-  portfolio.
+{\sc Luo, T., Zhou, L., Falzon, J., Cheng, Y., Christianson, G., Wu, Y., and Habchi, A.}
+\newblock Assessing physical climate risks for the european bank for reconstruction and development's power generation project investment portfolio.
 
 \bibitem{LuoEtAl:2023}
-{\sc Luo, T., Zhou, L., Falzon, J., Cheng, Y., Christianson, G., Wu, Y., and
-  Habchi, A.}
-\newblock A framework to assess multi-hazard physical climate risk for power
-  generation projects from publicly-accessible sources.
+{\sc Luo, T., Zhou, L., Falzon, J., Cheng, Y., Christianson, G., Wu, Y., and Habchi, A.}
+\newblock A framework to assess multi-hazard physical climate risk for power generation projects from publicly-accessible sources.
 \newblock {\em Communications Earth \& Environment 4}, 117 (2023).
 
+\bibitem{marzi2021assessing}
+{\sc Marzi, S., Mysiak, J., Essenfelder, A.~H., Pal, J.~S., Vernaccini, L., Mistry, M.~N., Alfieri, L., Poljansek, K., Marin-Ferrer, M., and Vousdoukas, M.}
+\newblock Assessing future vulnerability and risk of humanitarian crises using climate change and population projections within the inform framework.
+\newblock {\em Global Environmental Change 71\/} (2021), 102393.
+
 \bibitem{MaskreyEtAl:2011}
-{\sc Maskrey, A., Peduzzi, P., Chatenoux, B., Herold, C., Dao, Q.-H., and
-  Giuliani, G.}
-\newblock Revealing risk, redefining development, global assessment report on
-  disaster risk reduction.
-\newblock {\em United Nations Strategy for Disaster Reduction\/} (2011),
-  17--51.
+{\sc Maskrey, A., Peduzzi, P., Chatenoux, B., Herold, C., Dao, Q.-H., and Giuliani, G.}
+\newblock Revealing risk, redefining development, global assessment report on disaster risk reduction.
+\newblock {\em United Nations Strategy for Disaster Reduction\/} (2011), 17--51.
 
 \bibitem{MazdiyasniEtAl:2019}
 {\sc Mazdiyasni, O., Sadegh, M., Chiang, F., and AghaKouchak, A.}
-\newblock Heat wave intensity duration frequency curve: A multivariate approach
-  for hazard and attribution analysis.
+\newblock Heat wave intensity duration frequency curve: A multivariate approach for hazard and attribution analysis.
 \newblock {\em Scientific reports 9}, 1 (2019), 1--8.
 
 \bibitem{MentaschiEtAl:2016}
-{\sc Mentaschi, L., Vousdoukas, M., Voukouvalas, E., Sartini, L., Feyen, L.,
-  Besio, G., and Alfieri, L.}
-\newblock The transformed-stationary approach: a generic and simplified
-  methodology for non-stationary extreme value analysis.
+{\sc Mentaschi, L., Vousdoukas, M., Voukouvalas, E., Sartini, L., Feyen, L., Besio, G., and Alfieri, L.}
+\newblock The transformed-stationary approach: a generic and simplified methodology for non-stationary extreme value analysis.
 \newblock {\em Hydrology and Earth System Sciences 20}, 9 (2016), 3527--3547.
 
 \bibitem{Merton:1974}
 {\sc Merton, R.~C.}
-\newblock On the pricing of corporate debt: the risk structure of interest
-  rates.
+\newblock On the pricing of corporate debt: the risk structure of interest rates.
 \newblock {\em Journal of Finance 29}, 2 (1974), 449--470.
 
 \bibitem{MitchellEtAl:2017}
 {\sc Mitchell-Wallace, K., Jones, M., Hillier, J., and Foote, M.}
-\newblock {\em Natural catastrophe risk management and modelling: A
-  practitioner's guide}.
+\newblock {\em Natural catastrophe risk management and modelling: A practitioner's guide}.
 \newblock John Wiley \& Sons, 2017.
 
 \bibitem{NeidellEtAl:2014}
 {\sc Neidell, M., and Graff~Zivin, J.}
-\newblock Temperature and the allocation of time: Implications for climate
-  change.
+\newblock Temperature and the allocation of time: Implications for climate change.
 \newblock {\em Journal of Labor Economics 32}, 1 (2006), 1--26.
 
 \bibitem{NeidellEtAl:2021}
-{\sc Neidell, M., Graff~Zivin, J., Sheahan, M., Willwerth, J., Fant, C.,
-  Sarofim, M., and Martinich, J.}
-\newblock Temperature and work: Time allocated to work under varying climate
-  and labor market conditions.
+{\sc Neidell, M., Graff~Zivin, J., Sheahan, M., Willwerth, J., Fant, C., Sarofim, M., and Martinich, J.}
+\newblock Temperature and work: Time allocated to work under varying climate and labor market conditions.
 \newblock {\em PloS one 16}, 8 (2021), e0254224.
 
 \bibitem{Nelsen:2007}
@@ -125,8 +114,7 @@
 
 \bibitem{OasisLMF}
 {\sc Oasis}.
-\newblock Oasis loss modelling framework: open source catastrophe modelling
-  platform, 2021.
+\newblock Oasis loss modelling framework: open source catastrophe modelling platform, 2021.
 
 \bibitem{OSC}
 {\sc OS-C}.
@@ -134,12 +122,15 @@
 
 \bibitem{PaprotnyEtAl:2016}
 {\sc Paprotny, D., and Morales~Nápoles, O.~O.}
-\newblock Pan-european data sets of river flood probability of occurrence under
-  present and future climate, 2016.
+\newblock Pan-european data sets of river flood probability of occurrence under present and future climate, 2016.
+
+\bibitem{inform2022climate}
+{\sc Poljansek, K., Marzi, S., Galimberti, L., Dalla~Valle, D., Pal, J., Essenfelder, A., Mysiak, J., and Corbane, C.}
+\newblock Inform climate change risk index.
+\newblock {\em Publications Office of the European Union\/} (2022).
 
 \bibitem{PortnerEtAl:2022}
-{\sc P{\"o}rtner, H.-O., Roberts, D.~C., Adams, H., Adler, C., Aldunce, P.,
-  Ali, E., Begum, R.~A., Betts, R., Kerr, R.~B., Biesbroek, R., et~al.}
+{\sc P{\"o}rtner, H.-O., Roberts, D.~C., Adams, H., Adler, C., Aldunce, P., Ali, E., Begum, R.~A., Betts, R., Kerr, R.~B., Biesbroek, R., et~al.}
 \newblock {\em Climate change 2022: Impacts, adaptation and vulnerability}.
 \newblock IPCC Geneva, Switzerland:, 2022.
 
@@ -150,13 +141,11 @@
 \bibitem{RaschkeEtAl:2022}
 {\sc Raschke, M.}
 \newblock About the return period of a catastrophe.
-\newblock {\em Natural Hazards and Earth System Sciences 22}, 1 (2022),
-  245--263.
+\newblock {\em Natural Hazards and Earth System Sciences 22}, 1 (2022), 245--263.
 
 \bibitem{ReisingerEtAl:2020}
 {\sc Reisinger, A., Howden, M., Vera, C., et~al.}
-\newblock {\em The Concept of Risk in the IPCC Sixth Assessment Report: A
-  Summary of Cross-Working Group Discussions}.
+\newblock {\em The Concept of Risk in the IPCC Sixth Assessment Report: A Summary of Cross-Working Group Discussions}.
 \newblock IPCC Geneva, Switzerland:, 2020.
 
 \bibitem{RichtersEtAl:2022}
@@ -165,72 +154,66 @@
 \newblock Tech. rep., Network for Greening the Financial System, 2022.
 
 \bibitem{ScawthornEtAl:2006}
-{\sc Scawthorn, C., Blais, N., Seligson, H., Tate, E., Mifflin, E., Thomas, W.,
-  Murphy, J., and Jones, C.}
-\newblock {HAZUS-MH} flood loss estimation methodology. i: Overview and flood
-  hazard characterization.
+{\sc Scawthorn, C., Blais, N., Seligson, H., Tate, E., Mifflin, E., Thomas, W., Murphy, J., and Jones, C.}
+\newblock {HAZUS-MH} flood loss estimation methodology. i: Overview and flood hazard characterization.
 \newblock {\em Natural Hazards Review 7}, 2 (2006), 60--71.
 
+\bibitem{smirnov2016relative}
+{\sc Smirnov, O., Zhang, M., Xiao, T., Orbell, J., Lobben, A., and Gordon, J.}
+\newblock The relative importance of climate change and population growth for exposure to future extreme droughts.
+\newblock {\em Climatic Change 138\/} (2016), 41--53.
+
 \bibitem{StottEtAl:2016}
-{\sc Stott, P.~A., Christidis, N., Otto, F.~E., Sun, Y., Vanderlinden, J.-P.,
-  van Oldenborgh, G.~J., Vautard, R., von Storch, H., Walton, P., Yiou, P.,
-  et~al.}
+{\sc Stott, P.~A., Christidis, N., Otto, F.~E., Sun, Y., Vanderlinden, J.-P., van Oldenborgh, G.~J., Vautard, R., von Storch, H., Walton, P., Yiou, P., et~al.}
 \newblock Attribution of extreme weather and climate-related events.
-\newblock {\em Wiley Interdisciplinary Reviews: Climate Change 7}, 1 (2016),
-  23--41.
+\newblock {\em Wiley Interdisciplinary Reviews: Climate Change 7}, 1 (2016), 23--41.
+
+\bibitem{tanguy2018historical}
+{\sc Tanguy, M., Prudhomme, C., Smith, K., and Hannaford, J.}
+\newblock Historical gridded reconstruction of potential evapotranspiration for the uk.
+\newblock {\em Earth System Science Data 10}, 2 (2018), 951--968.
 
 \bibitem{Taylor:2015}
 {\sc Taylor, P.}
 \newblock Calculating financial loss from catastrophes.
-\newblock In {\em SECED 2015 Conference: Earthquake risk and engineering
-  towards a resilient world\/} (2015), Society for earthquake and civil
-  engineering dynamics.
+\newblock In {\em SECED 2015 Conference: Earthquake risk and engineering towards a resilient world\/} (2015), Society for earthquake and civil engineering dynamics.
 
 \bibitem{OasisFinancialModule}
 {\sc Taylor, P., and Carter, J.}
 \newblock Oasis financial module, 2020.
 
 \bibitem{ThrasherEtAl:2022}
-{\sc Thrasher, B., Wang, W., Michaelis, A., Melton, F., Lee, T., and Nemani,
-  R.}
+{\sc Thrasher, B., Wang, W., Michaelis, A., Melton, F., Lee, T., and Nemani, R.}
 \newblock Nasa global daily downscaled projections, {CMIP6}.
 \newblock {\em Scientific Data 9}, 1 (2022), 1--6.
 
 \bibitem{VicenteSerranoEtAl:2010}
 {\sc Vicente-Serrano, S., Begueria, S., and Lopez-Moreno, J.~I.}
-\newblock A multiscalar drought index sensitive to global warming: the
-  standardized precipitation evapotranspiration index.
+\newblock A multiscalar drought index sensitive to global warming: the standardized precipitation evapotranspiration index.
 \newblock {\em Journal of Climate 23}, 7 (2010), 1696--1718.
 
 \bibitem{WardEtAl:2011}
 {\sc Ward, P.~J., De~Moel, H., and Aerts, J.}
-\newblock How are flood risk estimates affected by the choice of
-  return-periods?
-\newblock {\em Natural Hazards and Earth System Sciences 11}, 12 (2011),
-  3181--3195.
+\newblock How are flood risk estimates affected by the choice of return-periods?
+\newblock {\em Natural Hazards and Earth System Sciences 11}, 12 (2011), 3181--3195.
 
 \bibitem{WardEtAl:2013}
-{\sc Ward, P.~J., Jongman, B., Weiland, F.~S., Bouwman, A., van Beek, R.,
-  Bierkens, M.~F., Ligtvoet, W., and Winsemius, H.~C.}
-\newblock Assessing flood risk at the global scale: model setup, results, and
-  sensitivity.
+{\sc Ward, P.~J., Jongman, B., Weiland, F.~S., Bouwman, A., van Beek, R., Bierkens, M.~F., Ligtvoet, W., and Winsemius, H.~C.}
+\newblock Assessing flood risk at the global scale: model setup, results, and sensitivity.
 \newblock {\em Environmental research letters 8}, 4 (2013), 044019.
 
 \bibitem{WardEtAl:2020}
-{\sc Ward, P.~J., Winsemius, H.~C., Kuzma, S., Bierkens, M.~F., Bouwman, A.,
-  De~Moel, H., Loaiza, A.~D., Eilander, D., Englhardt, J., Erkens, G., et~al.}
+{\sc Ward, P.~J., Winsemius, H.~C., Kuzma, S., Bierkens, M.~F., Bouwman, A., De~Moel, H., Loaiza, A.~D., Eilander, D., Englhardt, J., Erkens, G., et~al.}
 \newblock Aqueduct floods methodology.
 \newblock {\em World Resources Institute\/} (2020), 1--28.
 
 \bibitem{WoetzelEtAl:2020}
 {\sc Woetzel, J., Pinner, D., and Samandari, H.}
-\newblock Climate risk and response: Physical hazards and socioeconomic
-  impacts.
+\newblock Climate risk and response: Physical hazards and socioeconomic impacts.
 
 \bibitem{ZhangAndShindell:2021}
 {\sc Zhang, Y., and Shindell, D.~T.}
-\newblock Costs from labor losses due to extreme heat in the usa attributable
-  to climate change.
+\newblock Costs from labor losses due to extreme heat in the usa attributable to climate change.
 \newblock {\em Climatic change 164}, 3 (2021), 1--18.
 
 \end{thebibliography}

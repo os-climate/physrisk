@@ -105,7 +105,7 @@ Contents
   methodology
   user_guide/user_guide.rst
   api/physrisk
-  references
+  references.rst
 
 Indices and tables
 ==================

@@ -91,7 +91,7 @@ repos:
         args: ["-x"] # Check external files
 
   - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
-    rev: f999ae59ac949d9b57aaa5569c2d60eb846b3a00  # frozen: v1.7.7.24
+    rev: 2773c7d04be5d0ceb075f215b6d0a4eacd4a432b  # frozen: v1.7.8.24
     hooks:
       - id: actionlint
 
@@ -107,7 +107,7 @@ repos:
           ]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 9c89adb347f6b973f4905a4be0051eb2ecf85dea  # frozen: v0.13.3
+    rev: f9351c924055bf6c7b4a4670237d3ce141e9f57c  # frozen: v0.14.0
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --config=pyproject.toml]

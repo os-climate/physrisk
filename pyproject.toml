@@ -129,7 +129,7 @@ dev = [
     "tox"
 ]
 
-[tool.pytest.ini_options]
+[tool.pytest]
 testpaths = "tests"
 log_cli = true
 log_cli_level = "INFO"

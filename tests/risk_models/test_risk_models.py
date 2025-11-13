@@ -29,7 +29,15 @@ from physrisk.kernel.hazards import (
     Wind,
 )
 from physrisk.kernel.impact_distrib import ImpactType
-from physrisk.kernel.risk import AssetLevelRiskModel, MeasureKey, RiskMeasuresFactory
+from physrisk.kernel.risk import (
+    AssetLevelRiskModel,
+    MeasureKey,
+    NullAssetBasedPortfolioRiskMeasureCalculator,
+    RiskMeasuresFactory,
+)
+from physrisk.risk_models.portfolio_risk_model import (
+    AveragingAssetBasedPortfolioRiskMeasureCalculator,
+)
 from physrisk.kernel.vulnerability_model import (
     DictBasedVulnerabilityModels,
     VulnerabilityModels,
@@ -85,6 +93,7 @@ class TestRiskModels(TestWithCredentials):
             hazard_model,
             DictBasedVulnerabilityModels(get_default_vulnerability_models()),
             {RealEstateAsset: RealEstateToyRiskMeasures()},
+            NullAssetBasedPortfolioRiskMeasureCalculator(),
         )
         measure_ids_for_asset, definitions = model.populate_measure_definitions(assets)
         _, measures = model.calculate_risk_measures(
@@ -440,6 +449,7 @@ class TestRiskModels(TestWithCredentials):
             hazard_model,
             DictBasedVulnerabilityModels(_vulnerability_models()),
             {Asset: generic_measures, RealEstateAsset: generic_measures},
+            NullAssetBasedPortfolioRiskMeasureCalculator(),
         )
         measure_ids_for_asset, definitions = model.populate_measure_definitions(assets)
         _, measures = model.calculate_risk_measures(
@@ -489,8 +499,11 @@ class TestRiskModels(TestWithCredentials):
                 return DictBasedVulnerabilityModels(_vulnerability_models())
 
         class TestMeasuresFactory(RiskMeasuresFactory):
-            def calculators(self, use_case_id: str):
+            def asset_calculators(self, use_case_id: str):
                 return {RealEstateAsset: GenericScoreBasedRiskMeasures()}
+
+            def portfolio_calculator(self, use_case_id: str):
+                return AveragingAssetBasedPortfolioRiskMeasureCalculator()
 
         container.override_providers(
             hazard_model_factory=providers.Factory(TestHazardModelFactory)

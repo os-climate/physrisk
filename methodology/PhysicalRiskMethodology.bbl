@@ -43,6 +43,14 @@
 \newblock Extreme heat waves under {1.5 C} and {2 C} global warming.
 \newblock {\em Environmental Research Letters 13}, 5 (2018), 054006.
 
+\bibitem{DottoriEtAl:2016}
+{\sc Dottori, F., et~al.}
+\newblock Flood hazard maps at european and global scale, 2016.
+
+\bibitem{Hazus}
+{\sc FEMA}.
+\newblock Fema hazus, 2025.
+
 \bibitem{HuizingaEtAl:2017}
 {\sc Huizinga, J., De~Moel, H., Szewczyk, W., et~al.}
 \newblock Global flood depth-damage functions: Methodology and the database with guidelines.
@@ -134,6 +142,11 @@
 \newblock {\em Climate change 2022: Impacts, adaptation and vulnerability}.
 \newblock IPCC Geneva, Switzerland:, 2022.
 
+\bibitem{Multicoloured:2025}
+{\sc Priest, S., et~al.}
+\newblock {\em Flood and coastal erosian risk management: handbook for economic appraisal}.
+\newblock 2025.
+
 \bibitem{RangerEtAl:2022}
 {\sc Ranger, N.~A., Mahul, O., and Monasterolo, I.}
 \newblock Assessing financial risks from physical climate shocks.
@@ -152,11 +165,6 @@
 {\sc Richters, O., et~al.}
 \newblock Climate scenarios database: Technical documentation v3.1.
 \newblock Tech. rep., Network for Greening the Financial System, 2022.
-
-\bibitem{ScawthornEtAl:2006}
-{\sc Scawthorn, C., Blais, N., Seligson, H., Tate, E., Mifflin, E., Thomas, W., Murphy, J., and Jones, C.}
-\newblock {HAZUS-MH} flood loss estimation methodology. i: Overview and flood hazard characterization.
-\newblock {\em Natural Hazards Review 7}, 2 (2006), 60--71.
 
 \bibitem{smirnov2016relative}
 {\sc Smirnov, O., Zhang, M., Xiao, T., Orbell, J., Lobben, A., and Gordon, J.}

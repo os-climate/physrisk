@@ -5,7 +5,6 @@ from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union, c
 
 import numpy as np
 
-import physrisk.data.image_creator
 import physrisk.data.static.example_portfolios
 import physrisk.kernel.hazard_model
 from physrisk.api.v1.common import Distribution, ExceedanceCurve, VulnerabilityDistrib
@@ -37,6 +36,10 @@ from physrisk.kernel.risk import (
     RiskMeasureCalculator,
     RiskMeasuresFactory,
 )
+from physrisk.kernel.risk import PortfolioRiskMeasureCalculator
+from physrisk.kernel.risk import (
+    NullAssetBasedPortfolioRiskMeasureCalculator,
+)
 from physrisk.kernel.vulnerability_model import (
     DictBasedVulnerabilityModels,
     VulnerabilityModels,
@@ -65,6 +68,7 @@ from .api.v1.impact_req_resp import (
     AssetLevelImpact,
     Assets,
     AssetSingleImpact,
+    RiskMeasure,
 )
 from .api.v1.impact_req_resp import ImpactKey as APIImpactKey
 from .api.v1.impact_req_resp import (
@@ -187,12 +191,18 @@ class Requester:
         vulnerability_models = self.vulnerability_models_factory.vulnerability_models(
             hazard_scope=hazard_scope
         )
-        measure_calculators = self.measures_factory.calculators(request.use_case_id)
+        measure_calculators = self.measures_factory.asset_calculators(
+            request.use_case_id
+        )
+        portfolio_measure_calculator = self.measures_factory.portfolio_calculator(
+            request.use_case_id
+        )
         return _get_asset_impacts(
             request,
             hazard_model,
             vulnerability_models,
             measure_calculators,
+            portfolio_measure_calculator,
             sig_figures=self.round_sig_figures,
         )
 
@@ -458,6 +468,7 @@ def _get_asset_impacts(
     hazard_model: HazardModel,
     vulnerability_models: Optional[VulnerabilityModels] = None,
     measure_calculators: Optional[Dict[Type[Asset], RiskMeasureCalculator]] = None,
+    portfolio_measure_calculator: Optional[PortfolioRiskMeasureCalculator] = None,
     assets: Optional[List[Asset]] = None,
     sig_figures: Callable[
         [Union[np.ndarray, float]], Union[np.ndarray, float]
@@ -476,8 +487,16 @@ def _get_asset_impacts(
         if measure_calculators is None
         else measure_calculators
     )
+    portfolio_measure_calculator = (
+        NullAssetBasedPortfolioRiskMeasureCalculator()
+        if portfolio_measure_calculator is None
+        else portfolio_measure_calculator
+    )
     risk_model = AssetLevelRiskModel(
-        hazard_model, vulnerability_models, measure_calculators
+        hazard_model,
+        vulnerability_models,
+        measure_calculators,
+        portfolio_measure_calculator,
     )
 
     scenarios = (
@@ -662,12 +681,13 @@ def _create_risk_measures(
     # hazard_types = all_hazards()
     measure_set_id = "measure_set_0"
     measures_for_assets: List[RiskMeasuresForAssets] = []
+    measures_for_portfolio: List[RiskMeasure] = []
     for hazard_type in hazard_types:
         for scenario_id in scenarios:
             for year in [None] if scenario_id == "historical" else years:
                 # we calculate and tag results for each scenario, year and hazard
                 score_key = RiskMeasureKey(
-                    hazard_type=hazard_type.__name__,
+                    hazard_type=hazard_type.__name__ if hazard_type is not None else "",
                     scenario_id=scenario_id,
                     year=str(year),
                     measure_id=measure_set_id,
@@ -695,6 +715,28 @@ def _create_risk_measures(
                         measures_1=None,
                     )
                 )
+                portfolio_measure_key = MeasureKey(
+                    asset=None,
+                    prosp_scen=scenario_id,
+                    year=year,
+                    hazard_type=hazard_type,
+                )
+                if portfolio_measure_key in measures:
+                    measure = measures[portfolio_measure_key]
+                    measures_for_portfolio.append(
+                        RiskMeasure(
+                            key=RiskMeasureKey(
+                                hazard_type="",
+                                scenario_id=scenario_id,
+                                year=str(year),
+                                measure_id=measure_set_id,
+                            ),
+                            score=int(measure.score),
+                            measure_0=sig_figures(measure.measure_0),
+                            measure_1=None,
+                        )
+                    )
+
     score_based_measure_set_defn = ScoreBasedRiskMeasureSetDefinition(
         measure_set_id=measure_set_id,
         asset_measure_ids_for_hazard={
@@ -702,8 +744,10 @@ def _create_risk_measures(
         },
         score_definitions={v: k for (k, v) in definitions.items()},
     )
+
     return RiskMeasures(
         measures_for_assets=measures_for_assets,
+        measures_for_portfolio=measures_for_portfolio,
         score_based_measure_set_defn=score_based_measure_set_defn,
         measures_definitions=None,
         scenarios=[Scenario(id=scenario, years=list(years)) for scenario in scenarios],

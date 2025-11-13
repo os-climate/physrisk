@@ -139,7 +139,24 @@ class RiskMeasureKey(BaseModel):
     measure_id: str
 
 
+class RiskMeasure(BaseModel):
+    """A single risk measure, most commonly for a portfolio."""
+
+    key: RiskMeasureKey
+    score: int = Field([0], description="Identifier for the risk measure.")
+    measure_0: float
+    measure_1: Optional[float] = Field(
+        None,
+        description="Underlying measures for case where there are multiple underlying measures.",
+    )
+
+
 class RiskMeasuresForAssets(BaseModel):
+    """Risk measures for multiple assets. Results returned in this form, i.e. using an
+    array for asset scores, for compactness (keep response size down).
+    List-based version of RiskMeasure.
+    """
+
     key: RiskMeasureKey
     scores: List[int] = Field([0], description="Identifier for the risk measure.")
     measures_0: List[float]
@@ -159,6 +176,7 @@ class RiskMeasures(BaseModel):
     """Risk measures"""
 
     measures_for_assets: List[RiskMeasuresForAssets]
+    measures_for_portfolio: List[RiskMeasure]
     score_based_measure_set_defn: ScoreBasedRiskMeasureSetDefinition
     measures_definitions: Optional[List[RiskMeasureDefinition]] = Field(
         [], description="Definitions of the risk measures."

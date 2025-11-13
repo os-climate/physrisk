@@ -1,6 +1,8 @@
 from collections import defaultdict
 from dataclasses import dataclass
+from enum import Enum
 from typing import (
+    Any,
     Dict,
     List,
     NamedTuple,
@@ -12,6 +14,9 @@ from typing import (
     Type,
     Union,
 )
+
+import numpy as np
+import numpy.typing as npt
 
 from physrisk.api.v1.impact_req_resp import Category, ScoreBasedRiskMeasureDefinition
 from physrisk.kernel.assets import Asset
@@ -30,6 +35,82 @@ Impact = Dict[Tuple[Asset, type], AssetImpactResult]  # the key is (Asset, Hazar
 class BatchId(NamedTuple):
     scenario: str
     key_year: Optional[int]
+
+
+class QuantityType(str, Enum):
+    DAMAGE = "damage"
+    REVENUE_LOSS = "revenue_loss"
+    COSTS = "costs"
+    TIV = "tiv"
+    REVENUE = "revenue"
+
+
+class RiskQuantityKey(NamedTuple):
+    quantity_type: Optional[QuantityType] = None
+    agg_id: Optional[str] = None
+    hazard_type: Optional[str] = None
+
+
+class RiskQuantity(NamedTuple):
+    quantity_type: Optional[QuantityType] = None
+    agg_id: Optional[str] = None
+    hazard_type: Optional[str] = None
+
+
+@dataclass(frozen=True)
+class Quantity:
+    values: npt.NDArray[np.floating[Any]]
+    percentiles: npt.NDArray[np.floating[Any]]
+    percentile_values: npt.NDArray[np.floating[Any]]
+    mean: float
+
+
+class MeasureKey(NamedTuple):
+    asset: Optional[Asset]
+    prosp_scen: str  # prospective scenario
+    year: Optional[int]
+    hazard_type: Optional[Type[Hazard]]
+
+
+@dataclass
+class Measure:
+    score: Category
+    measure_0: float
+    definition: ScoreBasedRiskMeasureDefinition  # reference to single instance of ScoreBasedRiskMeasureDefinition
+
+
+class PortfolioRiskMeasureCalculator(Protocol):
+    """Class to calculate portfolio-level score-based risk measures, either
+    from a set of asset-level score-based risk measures or from portfolio-level
+
+    """
+
+    def calculate_risk_measures(
+        self,
+        asset_level_measures: dict[MeasureKey, Measure] = {},
+        portfolio_quantities: dict[RiskQuantityKey, RiskQuantity] = {},
+    ) -> dict[MeasureKey, Measure]: ...
+
+    def asset_level_measures_required(self) -> bool: ...
+
+    def portfolio_quantities_required(self) -> bool: ...
+
+
+class NullAssetBasedPortfolioRiskMeasureCalculator:
+    """Calculates portfolio score-based risk measures from asset-level score-based risk measures only."""
+
+    def calculate_risk_measures(
+        self,
+        asset_level_measures: dict[MeasureKey, Measure] = {},
+        portfolio_quantities: dict[RiskQuantityKey, RiskQuantity] = {},
+    ) -> dict[MeasureKey, Measure]:
+        return {}
+
+    def asset_level_measures_required(self) -> bool:
+        return True
+
+    def portfolio_quantities_required(self) -> bool:
+        return False
 
 
 class RiskModel:
@@ -65,20 +146,6 @@ class RiskModel:
             years=years,
         )
         return impact_results
-
-
-class MeasureKey(NamedTuple):
-    asset: Asset
-    prosp_scen: str  # prospective scenario
-    year: Optional[int]
-    hazard_type: type
-
-
-@dataclass
-class Measure:
-    score: Category
-    measure_0: float
-    definition: ScoreBasedRiskMeasureDefinition  # reference to single instance of ScoreBasedRiskMeasureDefinition
 
 
 class RiskMeasureCalculator(Protocol):
@@ -130,7 +197,12 @@ class RiskMeasureCalculator(Protocol):
 
 
 class RiskMeasuresFactory(Protocol):
-    def calculators(self, use_case_id: str) -> Dict[Type[Asset], RiskMeasureCalculator]:
+    def asset_calculators(
+        self, use_case_id: str
+    ) -> Dict[Type[Asset], RiskMeasureCalculator]:
+        pass
+
+    def portfolio_calculator(self, use_case_id: str) -> PortfolioRiskMeasureCalculator:
         pass
 
 
@@ -140,6 +212,7 @@ class AssetLevelRiskModel(RiskModel):
         hazard_model: HazardModel,
         vulnerability_models: VulnerabilityModels,
         measure_calculators: Dict[type, RiskMeasureCalculator],
+        portfolio_measure_calculator: PortfolioRiskMeasureCalculator = NullAssetBasedPortfolioRiskMeasureCalculator(),
     ):
         """Risk model that calculates risk measures at the asset level for a sequence
         of assets.
@@ -150,7 +223,14 @@ class AssetLevelRiskModel(RiskModel):
             measure_calculators (Dict[type, RiskMeasureCalculator]): Risk measure calculators for asset types.
         """
         super().__init__(hazard_model, vulnerability_models)
-        self._measure_calculators = measure_calculators
+        self.asset_level_measures_required = (
+            portfolio_measure_calculator.asset_level_measures_required
+        )
+        self.portfolio_quantities_required = (
+            portfolio_measure_calculator.portfolio_quantities_required
+        )
+        self._asset_level_measure_calculators = measure_calculators
+        self._portfolio_measure_calculator = portfolio_measure_calculator
 
     def calculate_impacts(
         self, assets: Sequence[Asset], prosp_scens: Sequence[str], years: Sequence[int]
@@ -167,8 +247,8 @@ class AssetLevelRiskModel(RiskModel):
         measure_ids_for_hazard: Dict[Type[Hazard], List[str]] = {}
         # one
         calcs_by_asset = [
-            self._measure_calculators.get(
-                type(asset), self._measure_calculators.get(Asset, None)
+            self._asset_level_measure_calculators.get(
+                type(asset), self._asset_level_measure_calculators.get(Asset, None)
             )
             for asset in assets
         ]
@@ -219,9 +299,9 @@ class AssetLevelRiskModel(RiskModel):
             list
         )
         for asset in assets:
-            if type(asset) not in self._measure_calculators:
+            if type(asset) not in self._asset_level_measure_calculators:
                 continue
-            measure_calc = self._measure_calculators[type(asset)]
+            measure_calc = self._asset_level_measure_calculators[type(asset)]
             measure_calc_assets[measure_calc].append(asset)
         for measure_calc, assets_for_calc in measure_calc_assets.items():
             for asset in assets_for_calc:
@@ -269,4 +349,8 @@ class AssetLevelRiskModel(RiskModel):
             aggregated_measures.update(
                 measure_calc.aggregate_risk_measures(measures, assets, scenarios, years)
             )
+        portfolio_measures = self._portfolio_measure_calculator.calculate_risk_measures(
+            aggregated_measures
+        )
+        aggregated_measures.update(portfolio_measures)
         return impacts, aggregated_measures

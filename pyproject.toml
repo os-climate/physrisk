@@ -129,8 +129,9 @@ dev = [
     "tox"
 ]
 
-[tool.pytest]
-testpaths = "tests"
+[tool.pytest.ini_options]
+testpaths = ["tests",
+]
 log_cli = true
 log_cli_level = "INFO"
 log_cli_format = "%(asctime)s [%(levelname)s] %(message)s (%(filename)s:%(lineno)s)"

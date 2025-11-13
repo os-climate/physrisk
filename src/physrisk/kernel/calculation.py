@@ -4,8 +4,15 @@ from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.hazards import ChronicHeat, Drought, Fire, Hail, Precipitation
 from physrisk.kernel.impact_distrib import ImpactType
-from physrisk.kernel.risk import RiskMeasureCalculator, RiskMeasuresFactory
+from physrisk.kernel.risk import (
+    PortfolioRiskMeasureCalculator,
+    RiskMeasureCalculator,
+    RiskMeasuresFactory,
+)
 from physrisk.risk_models.generic_risk_model import GenericScoreBasedRiskMeasures
+from physrisk.kernel.risk import (
+    NullAssetBasedPortfolioRiskMeasureCalculator,
+)
 from physrisk.risk_models.risk_models import RealEstateToyRiskMeasures
 from physrisk.vulnerability_models import power_generating_asset_models as pgam
 from physrisk.vulnerability_models.chronic_heat_models import ChronicHeatGZNModel
@@ -89,7 +96,12 @@ def get_default_risk_measure_calculators() -> Dict[Type[Asset], RiskMeasureCalcu
 
 
 class DefaultMeasuresFactory(RiskMeasuresFactory):
-    def calculators(self, use_case_id: str) -> Dict[Type[Asset], RiskMeasureCalculator]:
+    def asset_calculators(
+        self, use_case_id: str
+    ) -> Dict[Type[Asset], RiskMeasureCalculator]:
         if use_case_id == "generic":
             return {Asset: GenericScoreBasedRiskMeasures()}
         return get_default_risk_measure_calculators()
+
+    def portfolio_calculator(self, use_case_id: str) -> PortfolioRiskMeasureCalculator:
+        return NullAssetBasedPortfolioRiskMeasureCalculator()

@@ -682,39 +682,44 @@ def _create_risk_measures(
     measure_set_id = "measure_set_0"
     measures_for_assets: List[RiskMeasuresForAssets] = []
     measures_for_portfolio: List[RiskMeasure] = []
-    for hazard_type in hazard_types:
-        for scenario_id in scenarios:
-            for year in [None] if scenario_id == "historical" else years:
+    for hazard_type in sorted(
+        hazard_types, key=lambda x: x.__name__ if x is not None else ""
+    ):
+        for scenario_id in sorted(scenarios):
+            for year in [None] if scenario_id == "historical" else sorted(years):
                 # we calculate and tag results for each scenario, year and hazard
-                score_key = RiskMeasureKey(
-                    hazard_type=hazard_type.__name__ if hazard_type is not None else "",
-                    scenario_id=scenario_id,
-                    year=str(year),
-                    measure_id=measure_set_id,
-                )
-                scores = [-1] * len(assets)
-                # measures_0 = [float("nan")] * len(assets)
-                measures_0 = [nan_value] * len(assets)
-                for i, asset in enumerate(assets):
-                    # look up result using the MeasureKey:
-                    measure_key = MeasureKey(
-                        asset=asset,
-                        prosp_scen=scenario_id,
-                        year=year,
-                        hazard_type=hazard_type,
+                if hazard_type is not None:
+                    score_key = RiskMeasureKey(
+                        hazard_type=hazard_type.__name__
+                        if hazard_type is not None
+                        else "",
+                        scenario_id=scenario_id,
+                        year=str(year),
+                        measure_id=measure_set_id,
                     )
-                    measure = measures.get(measure_key, None)
-                    if measure is not None:
-                        scores[i] = measure.score
-                        measures_0[i] = measure.measure_0
-                measures_for_assets.append(
-                    RiskMeasuresForAssets(
-                        key=score_key,
-                        scores=scores,
-                        measures_0=sig_figures(measures_0),
-                        measures_1=None,
+                    scores = [-1] * len(assets)
+                    # measures_0 = [float("nan")] * len(assets)
+                    measures_0 = [nan_value] * len(assets)
+                    for i, asset in enumerate(assets):
+                        # look up result using the MeasureKey:
+                        measure_key = MeasureKey(
+                            asset=asset,
+                            prosp_scen=scenario_id,
+                            year=year,
+                            hazard_type=hazard_type,
+                        )
+                        measure = measures.get(measure_key, None)
+                        if measure is not None:
+                            scores[i] = measure.score
+                            measures_0[i] = measure.measure_0
+                    measures_for_assets.append(
+                        RiskMeasuresForAssets(
+                            key=score_key,
+                            scores=scores,
+                            measures_0=sig_figures(measures_0),
+                            measures_1=None,
+                        )
                     )
-                )
                 portfolio_measure_key = MeasureKey(
                     asset=None,
                     prosp_scen=scenario_id,
@@ -729,7 +734,7 @@ def _create_risk_measures(
                                 hazard_type="",
                                 scenario_id=scenario_id,
                                 year=str(year),
-                                measure_id=measure_set_id,
+                                measure_id=definitions.get(measure.definition, ""),
                             ),
                             score=int(measure.score),
                             measure_0=sig_figures(measure.measure_0),
@@ -740,7 +745,10 @@ def _create_risk_measures(
     score_based_measure_set_defn = ScoreBasedRiskMeasureSetDefinition(
         measure_set_id=measure_set_id,
         asset_measure_ids_for_hazard={
-            k.__name__: v for k, v in measure_ids_for_asset.items()
+            k.__name__: v
+            for k, v in sorted(
+                measure_ids_for_asset.items(), key=lambda x: x[0].__name__
+            )
         },
         score_definitions={v: k for (k, v) in definitions.items()},
     )

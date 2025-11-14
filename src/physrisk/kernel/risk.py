@@ -82,8 +82,11 @@ class Measure:
 class PortfolioRiskMeasureCalculator(Protocol):
     """Class to calculate portfolio-level score-based risk measures, either
     from a set of asset-level score-based risk measures or from portfolio-level
-
     """
+
+    def get_definition(
+        self, hazard_type: Optional[type[Hazard]] = None
+    ) -> ScoreBasedRiskMeasureDefinition: ...
 
     def calculate_risk_measures(
         self,
@@ -96,8 +99,13 @@ class PortfolioRiskMeasureCalculator(Protocol):
     def portfolio_quantities_required(self) -> bool: ...
 
 
-class NullAssetBasedPortfolioRiskMeasureCalculator:
+class NullAssetBasedPortfolioRiskMeasureCalculator(PortfolioRiskMeasureCalculator):
     """Calculates portfolio score-based risk measures from asset-level score-based risk measures only."""
+
+    def get_definition(self, hazard_type: Optional[Type[Hazard]] = None):
+        return ScoreBasedRiskMeasureDefinition(
+            hazard_types=[], values=[], underlying_measures=[]
+        )
 
     def calculate_risk_measures(
         self,
@@ -262,17 +270,28 @@ class AssetLevelRiskModel(RiskModel):
         measure_id_lookup = {
             cal: f"measure_{i}"
             for (i, cal) in enumerate(
-                set(
-                    item
-                    for item in (
-                        cal.get_definition(hazard_type=hazard_type)
-                        for hazard_type in all_supported_hazards
-                        for cal in used_calcs
-                    )
-                    if item is not None
+                sorted(
+                    set(
+                        item
+                        for item in (
+                            cal.get_definition(hazard_type=hazard_type)
+                            for hazard_type in all_supported_hazards
+                            for cal in used_calcs
+                        )
+                        if item is not None
+                    ),
+                    key=lambda c: list(sorted(c.hazard_types))[0],
                 )
             )
         }
+
+        if not isinstance(
+            self._portfolio_measure_calculator,
+            NullAssetBasedPortfolioRiskMeasureCalculator,
+        ):
+            measure_id_lookup[self._portfolio_measure_calculator.get_definition()] = (
+                "portfolio_measure_0"
+            )
 
         def get_measure_id(
             measure_calc: Union[RiskMeasureCalculator, None], hazard_type: type

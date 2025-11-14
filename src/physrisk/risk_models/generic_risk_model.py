@@ -253,6 +253,8 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 )
             ],
         )
+        self._definition_lookup[CoastalInundation] = acute_definition
+        self._definition_lookup[PluvialInundation] = acute_definition
         self._definition_lookup[RiverineInundation] = acute_definition
 
     def _definition_values(

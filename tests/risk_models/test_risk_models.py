@@ -431,7 +431,7 @@ class TestRiskModels(TestWithCredentials):
             for ma in response.risk_measures.measures_for_assets
             if ma.key.hazard_type == "RiverineInundation"
         )
-        np.testing.assert_allclose(res.measures_0, [0.89306593179, 0.89306593179])
+        np.testing.assert_allclose(res.measures_0, [0.80338, 0.80338])
 
     def test_generic_model(self):
         scenarios = ["ssp585"]

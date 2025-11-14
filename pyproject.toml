@@ -6,7 +6,7 @@ description = "OS-Climate Physical Risk Library"
 authors = [
     {name = "Joe Moorhouse",email = "5102656+joemoorhouse@users.noreply.github.com"},
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.10,<3.14"
 readme = "README.md"
 license = {file = "LICENSE"}
 keywords = ["Physical", "Climate", "Risk", "Finance"]

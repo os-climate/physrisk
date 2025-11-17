@@ -107,7 +107,7 @@ repos:
           ]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 3b4bc031619cde2e0a9f3c4441ac7cc8227245a4  # frozen: v0.14.1
+    rev: 488940d9de1b658fac229e34c521d75a6ea476f2  # frozen: v0.14.5
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --config=pyproject.toml]

@@ -1,6 +1,10 @@
+import base64
 from dataclasses import dataclass
 from enum import Enum
+import hashlib
 from typing import Optional
+
+import shapely.wkt
 
 
 # 'primary_fuel' entries in Global Power Plant Database v1.3.0 (World Resources Institute)
@@ -87,33 +91,76 @@ class Asset:
     """
 
     def __init__(
-        self, latitude: float, longitude: float, id: Optional[str] = None, **kwargs
+        self,
+        latitude: Optional[float] = None,
+        longitude: Optional[float] = None,
+        wkt: Optional[str] = None,
+        id: Optional[str] = None,
+        **kwargs,
     ):
-        self.latitude = latitude
-        self.longitude = longitude
         self.id = id
+        if latitude is None or longitude is None:
+            if wkt is None:
+                raise ValueError("either latitude/longitude or wkt must be provided")
+        else:
+            self.latitude = latitude
+            self.longitude = longitude
+        if wkt is not None:
+            self.geom = shapely.wkt.loads(wkt).normalize()
+            centroid = self.geom.centroid
+            self.latitude = centroid.y
+            self.longitude = centroid.x
+            # create a hash of the wkt, using SHA256 but truncating to 20 characters for brevity
+            # collision probability still extremely low
+            digest = hashlib.sha256(self.geom.wkb).digest()
+            self.wkt_hash = (
+                base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")[0:20]
+            )
+
         self.__dict__.update(kwargs)
 
 
-class AgricultureAsset(Asset):
+class OEDAsset(Asset):
     def __init__(
-        self, latitude: float, longitude: float, *, location: str, type: str, **kwargs
+        self,
+        latitude: Optional[float] = None,
+        longitude: Optional[float] = None,
+        occupancy_code: int = 1000,
+        wkt: Optional[str] = None,
+        number_of_storeys: int = 0,  # -1 = unknown No. storeys - low rise, -2 = unknown No. storeys - mid rise, -3 = Unknown no. storeys = high rise).
+        basement: int = 0,  # 0 = unknown / default, 1 = unfinished, 2 = 100% finished
+        construction_code: int = 5000,
+        first_floor_height: float = 0.305,
+        **kwargs,
     ):
-        super().__init__(latitude, longitude, **kwargs)
+        super().__init__(latitude=latitude, longitude=longitude, wkt=wkt, **kwargs)
+        self.occupancy_code = occupancy_code
+        self.number_of_storeys = number_of_storeys
+        self.basement = basement
+        self.construction_code = construction_code
+        self.first_floor_height = first_floor_height
+
+
+class SimpleTypeLocationAsset(Asset):
+    def __init__(
+        self, *, location: Optional[str] = None, type: Optional[str] = None, **kwargs
+    ):
+        super().__init__(**kwargs)
         self.location = location
         self.type = type
 
 
-class ConstructionAsset(Asset):
-    def __init__(
-        self, latitude: float, longitude: float, *, location: str, type: str, **kwargs
-    ):
-        super().__init__(latitude, longitude, **kwargs)
-        self.location = location
-        self.type = type
+class AgricultureAsset(OEDAsset, SimpleTypeLocationAsset):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 
-class IndustrialActivity(Asset):
+class ConstructionAsset(OEDAsset, SimpleTypeLocationAsset):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+class IndustrialActivity(OEDAsset, SimpleTypeLocationAsset):
     """To be deprecated. Preferred model is that loss for Assets is calculated both on the asset value
     (i.e. loss from damage) and the revenue-generation associated with the Asset. That is, revenue-generation
     is not separated out as it is here.
@@ -121,86 +168,51 @@ class IndustrialActivity(Asset):
 
     def __init__(
         self,
-        latitude: float,
-        longitude: float,
-        *,
-        location: Optional[str] = None,
-        type: str,
         **kwargs,
     ):
-        super().__init__(latitude, longitude, **kwargs)
-        self.location = location
-        self.type = type
+        super().__init__(**kwargs)
 
 
-class ManufacturingAsset(Asset):
+class ManufacturingAsset(OEDAsset, SimpleTypeLocationAsset):
     def __init__(
         self,
-        latitude: float,
-        longitude: float,
-        *,
-        location: Optional[str] = None,
-        type: Optional[str] = None,
         **kwargs,
     ):
-        super().__init__(latitude, longitude, **kwargs)
-        self.location = location
-        self.type = type
+        super().__init__(**kwargs)
 
 
-class OilGasAsset(Asset):
+class OilGasAsset(OEDAsset, SimpleTypeLocationAsset):
     def __init__(
         self,
-        latitude: float,
-        longitude: float,
-        *,
-        location: Optional[str] = None,
-        type: Optional[str] = None,
         **kwargs,
     ):
-        super().__init__(latitude, longitude, **kwargs)
-        self.location = location
-        self.type = type
+        super().__init__(**kwargs)
 
 
-class PowerGeneratingAsset(Asset):
+class PowerGeneratingAsset(OEDAsset, SimpleTypeLocationAsset):
     def __init__(
         self,
-        latitude: float,
-        longitude: float,
-        *,
-        type: Optional[str] = None,
-        location: Optional[str] = None,
         capacity: Optional[float] = None,
         **kwargs,
     ):
-        super().__init__(latitude, longitude, **kwargs)
-
-        self.type: Optional[str] = type
-        self.location: Optional[str] = location
+        super().__init__(**kwargs)
         self.capacity: Optional[float] = capacity
         self.primary_fuel: Optional[FuelKind] = None
 
-        if type is not None:
-            archetypes = type.split("/")
+        if self.type is not None:
+            archetypes = self.type.split("/")
             if 0 < len(archetypes):
                 self.primary_fuel = FuelKind[archetypes[0]]
 
 
-class RealEstateAsset(Asset):
-    def __init__(
-        self, latitude: float, longitude: float, *, location: str, type: str, **kwargs
-    ):
-        super().__init__(latitude, longitude, **kwargs)
-        self.location = location
-        self.type = type
+class RealEstateAsset(OEDAsset, SimpleTypeLocationAsset):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 
 class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
     def __init__(
         self,
-        latitude: float,
-        longitude: float,
         *,
         type: Optional[str] = None,
         location: Optional[str] = None,
@@ -208,8 +220,6 @@ class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
         **kwargs,
     ):
         super().__init__(
-            latitude,
-            longitude,
             type=type,
             location=location,
             capacity=capacity,
@@ -219,8 +229,8 @@ class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
         self.turbine: Optional[TurbineKind] = None
         self.cooling: Optional[CoolingKind] = None
 
-        if type is not None:
-            archetypes = type.split("/")
+        if self.type is not None:
+            archetypes = self.type.split("/")
             if 1 < len(archetypes):
                 self.turbine = TurbineKind[archetypes[1]]
                 if 2 < len(archetypes):
@@ -241,22 +251,14 @@ class TestAsset(Asset):
     pass
 
 
-class TransportationAsset(Asset):
-    def __init__(
-        self, latitude: float, longitude: float, *, location: str, type: str, **kwargs
-    ):
-        super().__init__(latitude, longitude, **kwargs)
-        self.location = location
-        self.type = type
+class TransportationAsset(OEDAsset, SimpleTypeLocationAsset):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 
-class UtilityAsset(Asset):
-    def __init__(
-        self, latitude: float, longitude: float, *, location: str, type: str, **kwargs
-    ):
-        super().__init__(latitude, longitude, **kwargs)
-        self.location = location
-        self.type = type
+class UtilityAsset(OEDAsset, SimpleTypeLocationAsset):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
 
 @dataclass

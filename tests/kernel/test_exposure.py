@@ -29,6 +29,9 @@ from physrisk.kernel.hazards import (
     Wind,
 )
 from physrisk.requests import Requester
+from physrisk.vulnerability_models.configuration.asset_factory import (
+    DefaultAssetFactory,
+)
 
 from ..test_base import TestWithCredentials
 from ..data.test_hazard_model_store import TestData, mock_hazard_model_store_path_curves
@@ -39,6 +42,7 @@ class TestExposureMeasures(TestWithCredentials):
         assets, store, hazard_model_factory, expected = self._get_components()
         inventory = EmbeddedInventory()
         requester = Requester(
+            asset_factory=DefaultAssetFactory(),
             hazard_model_factory=hazard_model_factory,
             vulnerability_models_factory=None,
             inventory=inventory,

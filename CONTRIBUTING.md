@@ -59,14 +59,13 @@ Building of the documentation relies on Pandoc which must be [installed]((https:
 in order to build the documentation locally. One this is done, to build:
 
 ```bash
-cd docs
-make html
+uv run python -m sphinx docs docs/_build/html -b html
 ```
 
 and to open in a browser:
 
 ```bash
-open ./_build/html/index.html
+open ./docs/_build/html/index.html
 ```
 
 ## Releasing

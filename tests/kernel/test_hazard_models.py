@@ -89,7 +89,9 @@ def test_using_point_based_hazard_model():
     scenario = "rcp8p5"
     year = 2080
     assets = [
-        RealEstateAsset(lat, lon, location="Asia", type="Buildings/Industrial")
+        RealEstateAsset(
+            latitude=lat, longitude=lon, location="Asia", type="Buildings/Industrial"
+        )
         for lon, lat in zip(hms.TestData.longitudes[0:1], hms.TestData.latitudes[0:1])
     ]
     # fmt: off

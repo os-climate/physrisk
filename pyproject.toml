@@ -33,6 +33,7 @@ classifiers = [
 
 dependencies = [
     "affine>=2.4.0",
+    "aiohttp>=3.13.3",
     "dependency-injector>=4.48.0",
     "geopandas>=1.1.0",
     "h3>=4.3.0",
@@ -48,9 +49,9 @@ dependencies = [
     "scipy>=1.15.0",
     "shapely>=2.1.0",
     "s3fs>=2025.7.0",
-    "zarr>=2.18.0,<3.0.0",
     "urllib3>=2.6.3",
-    "aiohttp>=3.13.3",
+    "virtualenv>=20.36.1", 
+    "zarr>=2.18.0,<3.0.0",
 ]
 
 [project.urls]
@@ -64,6 +65,9 @@ Documentation = "https://github.com/os-climate/physrisk/tree/main/docs"
 [project.optional-dependencies]
 dev = [
     "click>=8.2.3",
+]
+test = [
+    "openpyxl>=3.1.5",
 ]
 
 [build-system]
@@ -91,7 +95,9 @@ physrisk = [
     "data/static/*.json",
     "data/static/example_portfolios/*.json",
     "data/static/hazard/*.json",
-    "data/static/vulnerability/*.json"
+    "data/static/vulnerability/*.json",
+    "data/static/vulnerability/vulnerability_config.csv",
+    "data/static/vulnerability/oed_hazus/*.csv"
 ]
 
 [dependency-groups]
@@ -253,3 +259,6 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 docstring-code-format = true
 docstring-code-line-length = "dynamic"
+
+[tool.uv]
+default-groups = ["test", "doc", "dev"]

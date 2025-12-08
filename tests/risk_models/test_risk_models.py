@@ -16,7 +16,7 @@ from physrisk.container import Container
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import Asset, RealEstateAsset
-from physrisk.kernel.calculation import get_default_vulnerability_models
+from physrisk.kernel.calculation import default_vulnerability_models_scores
 from physrisk.kernel.hazard_model import HazardModelFactory
 from physrisk.kernel.hazards import (
     ChronicHeat,
@@ -91,7 +91,7 @@ class TestRiskModels(TestWithCredentials):
 
         model = AssetLevelRiskModel(
             hazard_model,
-            DictBasedVulnerabilityModels(get_default_vulnerability_models()),
+            DictBasedVulnerabilityModels(default_vulnerability_models_scores()),
             {RealEstateAsset: RealEstateToyRiskMeasures()},
             NullAssetBasedPortfolioRiskMeasureCalculator(),
         )
@@ -135,8 +135,8 @@ class TestRiskModels(TestWithCredentials):
     def _create_assets(self):
         assets = [
             RealEstateAsset(
-                TestData.latitudes[0],
-                TestData.longitudes[0],
+                latitude=TestData.latitudes[0],
+                longitude=TestData.longitudes[0],
                 location="Asia",
                 type="Buildings/Industrial",
                 id=f"unique_asset_{i}",
@@ -154,10 +154,7 @@ class TestRiskModels(TestWithCredentials):
                     "location": asset.location,
                     "longitude": asset.longitude,
                     "latitude": asset.latitude,
-                    "attributes": {
-                        "number_of_storeys": "2",
-                        "structure_type": "concrete",
-                    },
+                    "number_of_storeys": 2,
                 }
                 for asset in assets
             ],

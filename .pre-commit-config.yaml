@@ -67,7 +67,7 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: 192ad822316c3a22fb3d3cc8aa6eafa0b8488360  # frozen: v0.45.0
+    rev: 76b3d32d3f4b965e1d6425253c59407420ae2c43  # frozen: v0.47.0
     hooks:
       - id: markdownlint
         args: ["--fix"]
@@ -91,7 +91,7 @@ repos:
         args: ["-x"] # Check external files
 
   - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
-    rev: 2773c7d04be5d0ceb075f215b6d0a4eacd4a432b  # frozen: v1.7.8.24
+    rev: 85c37735ea69e5baf0681530e57e63deee0ce733  # frozen: v1.7.10.24
     hooks:
       - id: actionlint
 
@@ -107,7 +107,7 @@ repos:
           ]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 488940d9de1b658fac229e34c521d75a6ea476f2  # frozen: v0.14.5
+    rev: 6ce4b4fc349b8881cbce40207dac3bf78824a88e  # frozen: v0.14.11
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --config=pyproject.toml]
@@ -153,7 +153,7 @@ repos:
         entry: bash -c 'if [ ! -d .mypy_cache ]; then /bin/mkdir .mypy_cache; fi; exit 0'
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "9f70dc58c23dfcca1b97af99eaeee3140a807c7e"  # frozen: v1.18.2
+    rev: "a66e98df7b4aeeb3724184b332785976d062b92e"  # frozen: v1.19.1
     hooks:
       - id: mypy
         verbose: true

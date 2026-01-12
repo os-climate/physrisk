@@ -27,6 +27,7 @@ class ImpactDistrib:
     ):
         """Create a new impact distribution.
         Args:
+        ----
             hazard_type: Type of hazard.
             impact_bins: Non-decreasing impact bin bounds.
             prob: Probabilities with size [len(impact_bins) - 1].

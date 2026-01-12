@@ -1,6 +1,8 @@
 from enum import Enum
-from pathlib import PosixPath, PurePosixPath
 from typing import Dict, Iterable, List, NamedTuple, Optional, Protocol, Sequence, Type
+import re
+from collections import deque
+from pathlib import PosixPath, PurePosixPath
 
 from physrisk.api.v1.hazard_data import HazardResource
 from physrisk.data.hazard_data_provider import (
@@ -18,6 +20,11 @@ from physrisk.kernel.hazards import (
     Hazard,
     RiverineInundation,
     Wind,
+    ChronicWind,
+    Fire,
+    WaterRisk,
+    Landslide,
+    Subsidence,
 )
 
 
@@ -30,6 +37,9 @@ class ResourceSubset:
 
     def first(self):
         return [next(r for r in self.resources)]
+
+    def last(self):
+        return [deque(self.resources, maxlen=1)[0]]
 
     def match(self, hint: HazardDataHint):
         return [next(r for r in self.resources if r.path == hint.path)]
@@ -47,6 +57,11 @@ class ResourceSubset:
     def with_model_id(self, model_id: str):
         return ResourceSubset(
             r for r in self.resources if r.indicator_model_id == model_id
+        )
+
+    def with_display_name(self, display_name: str):
+        return ResourceSubset(
+            r for r in self.resources if r.display_name == display_name
         )
 
 
@@ -161,12 +176,18 @@ class InventorySourcePaths(SourcePaths):
             year = min(scenario.years)
             return ScenarioPaths(
                 [-1],
-                lambda y: path.format(
-                    id=resource.indicator_id,
-                    scenario=scenario.id,  # type:ignore
-                    year=year,
-                )
-                + ("/indicator" if (resource.store_netcdf_coords and not map) else ""),
+                lambda y: (
+                    path.format(
+                        id=resource.indicator_id,
+                        scenario=scenario.id,  # type:ignore
+                        year=year,
+                    )
+                    + (
+                        "/indicator"
+                        if (resource.store_netcdf_coords and not map)
+                        else ""
+                    )
+                ),
             )
         proxy_scenario_id = (
             cmip6_scenario_to_rcp(scenario_id)
@@ -182,10 +203,16 @@ class InventorySourcePaths(SourcePaths):
         else:
             return ScenarioPaths(
                 scenario.years,
-                lambda y: path.format(
-                    id=resource.indicator_id, scenario=proxy_scenario_id, year=y
-                )
-                + ("/indicator" if (resource.store_netcdf_coords and not map) else ""),
+                lambda y: (
+                    path.format(
+                        id=resource.indicator_id, scenario=proxy_scenario_id, year=y
+                    )
+                    + (
+                        "/indicator"
+                        if (resource.store_netcdf_coords and not map)
+                        else ""
+                    )
+                ),
             )
 
     def get_resources(
@@ -205,12 +232,14 @@ class InventorySourcePaths(SourcePaths):
         resources = self._inventory.resources_by_type_id[
             (hazard_type.__name__, indicator_id)
         ]
+
         if len(resources) == 0:
             raise RuntimeError(
                 f"unable to find any resources for hazard {hazard_type.__name__} "
                 f"and indicator ID {indicator_id}"
             )
         candidates = ResourceSubset(resources)
+
         try:
             if hint is not None:
                 resources = candidates.match(hint)
@@ -231,14 +260,22 @@ class InventorySourcePaths(SourcePaths):
         return candidates.first()
 
 
-class CoreFloodModels(Enum):
+class CoreModels(Enum):
     WRI = 1
     TUDelft = 2
+    IRIS = 3
+    RAIN_PROJ = 4
+    AK_FIRE = 5
+    JUPITER_FIRE = 6
 
 
 class CoreInventorySourcePaths(InventorySourcePaths):
     def __init__(
-        self, inventory: Inventory, flood_model: CoreFloodModels = CoreFloodModels.WRI
+        self,
+        inventory: Inventory,
+        flood_model: CoreModels = CoreModels.WRI,
+        # wind_model: CoreModels = CoreModels.IRIS,
+        fire_model: CoreModels = CoreModels.AK_FIRE,
     ):
         super().__init__(inventory)
         for indicator_id in [
@@ -247,26 +284,41 @@ class CoreInventorySourcePaths(InventorySourcePaths):
             "mean_work_loss/high",
         ]:
             self.add_selector(ChronicHeat, indicator_id, self._select_chronic_heat)
-        self.add_selector(
-            ChronicHeat, "mean/degree/days/above/32c", self._select_chronic_heat
-        )
-        self.add_selector(
-            Drought, "months/spei12m/below/index", self._select_drought
-        )  # legacy
-        self.add_selector(
-            Drought, "months/spei12m/below/threshold", self._select_drought
-        )
+        # self.add_selector(
+        #     ChronicHeat, "mean/degree/days/above/32c", self._select_chronic_heat
+        # )
+        self.add_selector(Drought, "months/spei12m/below/index", self._select_drought)
         self.add_selector(
             RiverineInundation,
             "flood_depth",
             self._select_riverine_inundation
-            if flood_model == CoreFloodModels.WRI
+            if flood_model == CoreModels.WRI
             else self._select_riverine_inundation_tudelft,
         )
         self.add_selector(
             CoastalInundation, "flood_depth", self._select_coastal_inundation
         )
-        self.add_selector(Wind, "max_speed", self._select_wind)
+
+        self.add_selector(
+            ChronicWind, "extreme_windstorm_probability", self._select_chronicwind
+        )
+        self.add_selector(Fire, "daily_probability_fwi20", self._select_fire)
+        self.add_selector(WaterRisk, "water_stress_category", self._select_water_stress)
+        self.add_selector(Landslide, "landslide_susceptability", self._select_landslide)
+        self.add_selector(
+            Subsidence, "subsidence_susceptability", self._select_subsidence
+        )
+        self.add_selector(Wind, "max_speed", self._select_wind_iris)
+
+        self.add_selector(Wind, "wind_speed/3s", self._select_wind_max_speed_3s)
+
+        self.add_selector(
+            Fire,
+            "fire_probability",
+            self._select_ak_fire
+            if fire_model == CoreModels.AK_FIRE
+            else self._select_jupiter_fire,
+        )
 
     def resources_with(self, *, hazard_type: type, indicator_id: str):
         return ResourceSubset(
@@ -275,39 +327,44 @@ class CoreInventorySourcePaths(InventorySourcePaths):
 
     @staticmethod
     def _select_chronic_heat(
+        *,
         candidates: ResourceSubset,
         hint: Optional[HazardDataHint] = None,
-    ):
+    ) -> List[HazardResource]:
         return candidates.with_model_gcm("ACCESS-CM2").first()
 
     @staticmethod
     def _select_coastal_inundation(
+        *,
         candidates: ResourceSubset,
         hint: Optional[HazardDataHint] = None,
-    ):
+    ) -> list[HazardResource]:
         return candidates.with_model_id("wtsub/95").first()
 
     @staticmethod
     def _select_drought(
+        *,
         candidates: ResourceSubset,
         hint: Optional[HazardDataHint] = None,
-    ):
-        return candidates.with_model_gcm("multi_model_0").first()
+    ) -> List[HazardResource]:
+        return candidates.with_model_gcm("MIROC6").first()
 
     @staticmethod
     def _select_riverine_inundation(
+        *,
         candidates: ResourceSubset,
         hint: Optional[HazardDataHint] = None,
-    ):
+    ) -> List[HazardResource]:
         # we use this GCM, even for the historical scenario, where the earliest year is used.
         # because of noted discontinuities between baseline and GCM data sets.
         return candidates.with_model_gcm("MIROC-ESM-CHEM").first()
 
     @staticmethod
     def _select_riverine_inundation_tudelft(
+        *,
         candidates: ResourceSubset,
         hint: Optional[HazardDataHint] = None,
-    ):
+    ) -> List[HazardResource]:
         return (
             candidates.with_model_id("tudelft").first()
             + candidates.with_model_gcm("MIROC-ESM-CHEM").first()
@@ -315,10 +372,94 @@ class CoreInventorySourcePaths(InventorySourcePaths):
 
     @staticmethod
     def _select_wind(
+        *,
         candidates: ResourceSubset,
         hint: Optional[HazardDataHint] = None,
-    ):
+    ) -> List[HazardResource]:
         return candidates.prefer_group_id("iris_osc").first()
+
+    @staticmethod
+    def _select_chronicwind(
+        *,
+        candidates: ResourceSubset,
+        hint: Optional[HazardDataHint] = None,
+    ) -> List[HazardResource]:
+        return candidates.with_group_id("wind_tudelft").first()
+
+    @staticmethod
+    def _select_fire(
+        *,
+        candidates: ResourceSubset,
+        hint: Optional[HazardDataHint] = None,
+    ) -> List[HazardResource]:
+        return candidates.with_group_id("fire_tudelft").first()
+
+    @staticmethod
+    def _select_ak_fire(
+        *,
+        candidates: ResourceSubset,
+        hint: Optional[HazardDataHint] = None,
+    ) -> List[HazardResource]:
+        return candidates.with_display_name(
+            "Probabilistic Pan-European Wildfire Map"
+        ).first()
+
+    @staticmethod
+    def _select_jupiter_fire(
+        *,
+        candidates: ResourceSubset,
+        hint: Optional[HazardDataHint] = None,
+    ) -> List[HazardResource]:
+        return candidates.with_group_id("jupiter_osc").first()
+
+    @staticmethod
+    def _select_water_stress(
+        *,
+        candidates: ResourceSubset,
+        hint: Optional[HazardDataHint] = None,
+    ) -> List[HazardResource]:
+        return candidates.first()
+
+    @staticmethod
+    def _select_landslide(
+        *,
+        candidates: ResourceSubset,
+        hint: Optional[HazardDataHint] = None,
+    ) -> List[HazardResource]:
+        return candidates.with_group_id("landslide_jrc").first()
+
+    @staticmethod
+    def _select_subsidence(
+        *,
+        candidates: ResourceSubset,
+        hint: Optional[HazardDataHint] = None,
+    ) -> List[HazardResource]:
+        # return candidates.with_group_id("subsidence_jrc").first()
+        return candidates.with_group_id("subsidence_jrc").last()
+
+    @staticmethod
+    def _select_wind_iris(
+        *,
+        candidates: ResourceSubset,
+        hint: Optional[HazardDataHint] = None,
+    ) -> List[HazardResource]:
+        return candidates.with_model_id("iris").first()
+
+    @staticmethod
+    def _select_wind_max_speed_3s(
+        *,
+        candidates: ResourceSubset,
+        hint: Optional[HazardDataHint] = None,
+    ) -> List[HazardResource]:
+        return candidates.with_model_id("wisc").first()
+
+    @staticmethod
+    def _select_groundshaking(
+        *,
+        candidates: ResourceSubset,
+        hint: Optional[HazardDataHint] = None,
+    ) -> List[HazardResource]:
+        return candidates.first()
 
 
 def cmip6_scenario_to_rcp(scenario: str):
@@ -330,14 +471,25 @@ def cmip6_scenario_to_rcp(scenario: str):
     RCP-4.5: 'rcp4p5'
     RCP-8.5: 'rcp8p5' etc.
     """
-    if scenario == "ssp126":
-        return "rcp2p6"
-    elif scenario == "ssp245":
-        return "rcp4p5"
-    elif scenario == "ssp585":
-        return "rcp8p5"
+    match = re.fullmatch(r"ssp([1-5])(\d)(\d)", scenario)
+    if match:
+        first, second, third = match.groups()
+        return f"rcp{second}p{third}"
     else:
-        if scenario not in ["rcp2p6", "rcp4p5", "rcp6p0", "rcp8p5", "historical"]:
+        # Handle scenarios that do not match the SSP pattern but are valid RCPs or historical
+        valid_scenarios = [
+            "rcp2p6",
+            "rcp4p5",
+            "rcp6p0",
+            "rcp8p5",
+            "historical",
+            "rcp26",
+            "rcp45",
+            "rcp60",
+            "rcp7p0",
+            "rcp85",
+        ]
+        if scenario not in valid_scenarios:
             raise ValueError(f"unexpected scenario {scenario}")
         return scenario
 
@@ -347,4 +499,4 @@ def get_default_source_path_provider(inventory: Inventory = EmbeddedInventory())
 
 
 def get_default_source_paths(inventory: Inventory = EmbeddedInventory()):
-    return CoreInventorySourcePaths(inventory)
+    return CoreInventorySourcePaths(inventory, fire_model=CoreModels.JUPITER_FIRE)

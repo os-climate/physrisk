@@ -35,6 +35,16 @@ def indicator_data(hazard_type: Type[Hazard], indicator_id: str):
 
 class ChronicHeat(Hazard):
     kind = HazardKind.CHRONIC
+    indicator_data = {
+        "mean_degree_days/above/32c": IndicatorData.PARAMETERS,
+        "days/above/35c": IndicatorData.PARAMETERS,
+        "mean_work_loss": IndicatorData.PARAMETERS,
+        "days_tas/above/": IndicatorData.PARAMETERS,
+        "mean_degree_days/above/index": IndicatorData.PARAMETERS,
+        "mean_degree_days/below/index": IndicatorData.PARAMETERS,
+        "weeks_water_temp_above": IndicatorData.PARAMETERS,
+        "days_wbgt_above": IndicatorData.PARAMETERS,
+    }
     pass
 
 
@@ -43,6 +53,7 @@ class Inundation(Hazard):
     indicator_data = {
         "flood_depth": IndicatorData.EVENT,
         "flood_sop": IndicatorData.PARAMETERS,
+        "flood_depth_unprot": IndicatorData.EVENT,
     }
     pass
 
@@ -57,26 +68,44 @@ class CoastalInundation(Inundation):
 
 class ChronicWind(Hazard):
     kind = HazardKind.CHRONIC
+    indicator_data = {
+        "severe_windstorm_probability": IndicatorData.PARAMETERS,
+        "extreme_windstorm_probability": IndicatorData.PARAMETERS,
+    }
     pass
 
 
 class CombinedInundation(Hazard):
     kind = HazardKind.CHRONIC
+    indicator_data = {
+        "flooded_fraction": IndicatorData.PARAMETERS,
+    }
     pass
 
 
 class Drought(Hazard):
     kind = HazardKind.CHRONIC
+    indicator_data = {
+        "months/spei12m/below/index": IndicatorData.PARAMETERS,
+        "months/spei3m/below/-2": IndicatorData.PARAMETERS,
+        "cdd": IndicatorData.PARAMETERS,
+        "spi6": IndicatorData.PARAMETERS,
+    }
     pass
 
 
 class Fire(Hazard):
     kind = HazardKind.CHRONIC
+    indicator_data = {
+        "fire_probability": IndicatorData.PARAMETERS,
+        "daily_probability_fwi20": IndicatorData.PARAMETERS,
+    }
     pass
 
 
 class Hail(Hazard):
     kind = HazardKind.CHRONIC
+    indicator_data = {"days/above/5cm": IndicatorData.PARAMETERS}
     pass
 
 
@@ -86,6 +115,7 @@ class PluvialInundation(Inundation):
 
 class Precipitation(Hazard):
     kind = HazardKind.CHRONIC
+    indicator_data = {"max/daily/water_equivalent": IndicatorData.PARAMETERS}
     pass
 
 
@@ -95,6 +125,14 @@ class RiverineInundation(Inundation):
 
 class WaterRisk(Hazard):
     kind = HazardKind.CHRONIC
+    indicator_data = {
+        "water_demand": IndicatorData.PARAMETERS,
+        "water_supply": IndicatorData.PARAMETERS,
+        "water_stress": IndicatorData.PARAMETERS,
+        "water_depletion": IndicatorData.PARAMETERS,
+        "water_stress_category": IndicatorData.PARAMETERS,
+        "water_depletion_category": IndicatorData.PARAMETERS,
+    }
     pass
 
 
@@ -104,11 +142,19 @@ class WaterTemperature(ChronicHeat):
 
 class Wind(Hazard):
     kind = HazardKind.ACUTE
+    indicator_data = {"max_speed": IndicatorData.EVENT}
     pass
 
 
 class Subsidence(Hazard):
     kind = HazardKind.CHRONIC
+    indicator_data = {"subsidence_susceptability": IndicatorData.PARAMETERS}
+    pass
+
+
+class Landslide(Hazard):
+    kind = HazardKind.ACUTE
+    indicator_data = {"susceptability": IndicatorData.EVENT}
     pass
 
 

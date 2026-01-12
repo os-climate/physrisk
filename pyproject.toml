@@ -102,7 +102,7 @@ doc = [
     "pydata-sphinx-theme==0.15.4",
     "setuptools<81",
     "sphinx==7.4.7",
-    "sphinx-autodoc-typehints==2.3.0",
+    "sphinx-autodoc-typehints==3.0.1",
     "sphinx-copybutton==0.5.2",
     "sphinx-design==0.6.1",
     "sphinx-jinja2-compat==0.3.0",

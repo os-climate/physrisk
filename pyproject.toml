@@ -6,21 +6,22 @@ description = "OS-Climate Physical Risk Library"
 authors = [
     {name = "Joe Moorhouse",email = "5102656+joemoorhouse@users.noreply.github.com"},
 ]
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.10"
 readme = "README.md"
-license = {file = "LICENSE"}
+license = "Apache-2.0"
+license-files = ["LICENSE"]
 keywords = ["Physical", "Climate", "Risk", "Finance"]
 
 classifiers = [
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
-  "License :: OSI Approved :: Apache Software License",
   "Operating System :: MacOS",
   "Operating System :: Microsoft :: Windows",
   "Operating System :: Unix",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.11",
@@ -48,6 +49,8 @@ dependencies = [
     "shapely>=2.1.0",
     "s3fs>=2025.7.0",
     "zarr>=2.18.0,<3.0.0",
+    "urllib3>=2.6.3",
+    "aiohttp>=3.13.3",
 ]
 
 [project.urls]
@@ -57,6 +60,11 @@ Downloads = "https://github.com/os-climate/physrisk/releases"
 "Bug Tracker" = "https://github.com/os-climate/physrisk/issues"
 Documentation = "https://github.com/os-climate/physrisk/tree/main/docs"
 "Source Code" = "https://github.com/os-climate/physrisk"
+
+[project.optional-dependencies]
+dev = [
+    "click>=8.2.3",
+]
 
 [build-system]
 requires = [
@@ -121,12 +129,16 @@ doc = [
     "sphinxcontrib-jsmath==1.0.1",
     "sphinxcontrib-qthelp==2.0.0",
     "sphinxcontrib-serializinghtml==2.0.0",
+    "brotli>=1.2.0",
+    "fonttools>=4.60.2",
 ]
 dev = [
     "mypy",
     "pre-commit",
     "ruff",
-    "tox"
+    "tox",
+    "filelock>=3.20.1",
+    "click>=8.3.0",
 ]
 
 [tool.pytest.ini_options]
@@ -241,6 +253,3 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 docstring-code-format = true
 docstring-code-line-length = "dynamic"
-
-[tool.uv]
-default-groups = ["dev", "test", "doc"]

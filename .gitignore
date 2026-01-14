@@ -1,3 +1,10 @@
+# SPDX-License-Identifier: Apache-2.0
+# SPDX-FileCopyrightText: 2026 The Linux Foundation
+
+# SBOM outputs
+sbom-output/sbom-cyclonedx.*
+sbom-output/grype-results.txt
+
 # Credentials / Secrets
 credentials.env
 

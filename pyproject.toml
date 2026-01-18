@@ -50,7 +50,7 @@ dependencies = [
     "shapely>=2.1.0",
     "s3fs>=2025.7.0",
     "urllib3>=2.6.3",
-    "virtualenv>=20.36.1", 
+    "virtualenv>=20.36.1",
     "zarr>=2.18.0,<3.0.0",
 ]
 

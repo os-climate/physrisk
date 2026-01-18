@@ -58,7 +58,7 @@ class TestAssetImpact(unittest.TestCase):
         financial_model = FinancialModel(data_provider)
 
         assets = [
-            PowerGeneratingAsset(lat, lon)
+            PowerGeneratingAsset(latitude=lat, longitude=lon)
             for lon, lat in zip(TestData.longitudes, TestData.latitudes)
         ]
         measures = model.get_financial_impacts(

@@ -1,13 +1,25 @@
 import importlib
 import json
-from importlib import import_module
-from typing import Any, Callable, Dict, List, Optional, Sequence, Type, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Type,
+    Union,
+)
 
 import numpy as np
 
 import physrisk.data.static.example_portfolios
 import physrisk.kernel.hazard_model
-from physrisk.api.v1.common import Distribution, ExceedanceCurve, VulnerabilityDistrib
+from physrisk.api.v1.common import (
+    Distribution,
+    ExceedanceCurve,
+    VulnerabilityDistrib,
+)
 from physrisk.api.v1.exposure_req_resp import (
     AssetExposure,
     AssetExposureRequest,
@@ -47,6 +59,10 @@ from physrisk.kernel.vulnerability_model import (
 )
 from physrisk.utils import encoder
 from physrisk.utils.encoder import PhysriskDefaultEncoder
+from physrisk.vulnerability_models.configuration.asset_factory import (
+    AssetFactory,
+    DefaultAssetFactory,
+)
 
 from .api.v1.hazard_data import (
     HazardAvailabilityRequest,
@@ -92,12 +108,14 @@ from .kernel.hazard_model import (
     HazardParameterDataResponse,
 )
 
+
 Colormaps = Dict[str, Any]
 
 
 class Requester:
     def __init__(
         self,
+        asset_factory: AssetFactory,
         hazard_model_factory: HazardModelFactory,
         vulnerability_models_factory: VulnerabilityModelsFactory,
         inventory: Inventory,
@@ -108,6 +126,7 @@ class Requester:
         json_encoder_cls: Type[json.JSONEncoder] = PhysriskDefaultEncoder,
         sig_figures: int = -1,
     ):
+        self.asset_factory = asset_factory
         self.colormaps = colormaps
         self.json_encoder_cls = json_encoder_cls
         self.hazard_model_factory = hazard_model_factory
@@ -174,7 +193,9 @@ class Requester:
             interpolation=request.calc_settings.hazard_interp,
             provider_max_requests=request.provider_max_requests,
         )
-        return _get_asset_exposures(request, hazard_model)
+        return _get_asset_exposures(
+            request, hazard_model, asset_factory=self.asset_factory
+        )
 
     def get_asset_impacts(self, request: AssetImpactRequest) -> AssetImpactResponse:
         hazard_model = self.hazard_model_factory.hazard_model(
@@ -200,9 +221,10 @@ class Requester:
         return _get_asset_impacts(
             request,
             hazard_model,
-            vulnerability_models,
-            measure_calculators,
-            portfolio_measure_calculator,
+            asset_factory=self.asset_factory,
+            vulnerability_models=vulnerability_models,
+            measure_calculators=measure_calculators,
+            portfolio_measure_calculator=portfolio_measure_calculator,
             sig_figures=self.round_sig_figures,
         )
 
@@ -410,7 +432,11 @@ def _get_hazard_data(
     return response
 
 
-def create_assets(api_assets: Assets, assets: Optional[List[Asset]] = None):
+def create_assets(
+    api_assets: Assets,
+    assets: Optional[List[Asset]] = None,
+    asset_factory: AssetFactory = DefaultAssetFactory(),
+):
     """Create list of Asset objects from the Assets API object:"""
     if assets is not None:
         if len(api_assets.items) != 0:
@@ -419,32 +445,16 @@ def create_assets(api_assets: Assets, assets: Optional[List[Asset]] = None):
             )
         return assets
     else:
-        module = import_module("physrisk.kernel.assets")
-        asset_objs = []
-        for item in api_assets.items:
-            if hasattr(module, item.asset_class):
-                init = getattr(module, item.asset_class)
-                kwargs = {}
-                kwargs.update(item.__dict__)
-                if item.model_extra is not None:
-                    kwargs.update(item.model_extra)
-                del kwargs["asset_class"], kwargs["latitude"], kwargs["longitude"]
-                asset_obj = cast(
-                    Asset,
-                    init(item.latitude, item.longitude, **kwargs),
-                )
-                asset_objs.append(asset_obj)
-            else:
-                raise ValueError(f"asset type '{item.asset_class}' not found")
-        return asset_objs
+        return [asset_factory.create_asset(i) for i in api_assets.items]
 
 
 def _get_asset_exposures(
     request: AssetExposureRequest,
     hazard_model: HazardModel,
     assets: Optional[List[Asset]] = None,
+    asset_factory: AssetFactory = DefaultAssetFactory(),
 ):
-    _assets = create_assets(request.assets, assets)
+    _assets = create_assets(request.assets, assets, asset_factory)
     measure = JupterExposureMeasure()
     results = calculate_exposures(
         _assets, hazard_model, measure, scenario="ssp585", year=2030
@@ -466,6 +476,7 @@ def _get_asset_exposures(
 def _get_asset_impacts(
     request: AssetImpactRequest,
     hazard_model: HazardModel,
+    asset_factory: AssetFactory = DefaultAssetFactory(),
     vulnerability_models: Optional[VulnerabilityModels] = None,
     measure_calculators: Optional[Dict[Type[Asset], RiskMeasureCalculator]] = None,
     portfolio_measure_calculator: Optional[PortfolioRiskMeasureCalculator] = None,
@@ -475,13 +486,13 @@ def _get_asset_impacts(
     ] = lambda x: x,
 ):
     vulnerability_models = (
-        DictBasedVulnerabilityModels(calc.get_default_vulnerability_models())
+        DictBasedVulnerabilityModels(calc.default_vulnerability_models_scores())
         if vulnerability_models is None
         else vulnerability_models
     )
     # we keep API definition of asset separate from internal Asset class; convert by reflection
     # based on asset_class:
-    _assets = create_assets(request.assets, assets)
+    _assets = create_assets(request.assets, assets, asset_factory)
     measure_calculators = (
         calc.get_default_risk_measure_calculators()
         if measure_calculators is None

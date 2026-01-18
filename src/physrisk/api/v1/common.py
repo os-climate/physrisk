@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Annotated, Dict, List, Optional, Sequence, Union
+from typing import Annotated, List, Optional, Sequence, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -40,30 +40,68 @@ class HazardType(str, Enum):
 class Asset(BaseModel):
     """Defines an asset.
 
-    An asset is identified first by its asset_class and then by its type within the class.
+    Assets can be specified in two ways
+    1) 'asset_class' set explicitly. This must correspond to a physrisk Asset subclass, e.g. PowerGeneratingAsset',
+    ManufacturingAsset, or the parent Asset. physrisk will create an instance of the asset and set its
+    attributes from the other fields provided (which can therefore be specific to the class).
+    2) Inferred from 'occupancy_code'.
+
+    https://github.com/OasisLMF/ODS_OpenExposureData/blob/main/OpenExposureData/OEDInputFields.csv
+
     An asset's value may be impacted through damage or through disruption
     disruption being reduction of an asset's ability to generate cashflows
-    (or equivalent value, e.g. by reducing expenses or increasing sales).
+    (or equivalent value, e.g. by increased expense or reduced sales).
     """
 
-    # model_config = ConfigDict(extra="allow")
-
-    asset_class: str = Field(
-        description="name of asset class; corresponds to physrisk class names, e.g. PowerGeneratingAsset"
+    asset_class: Optional[str] = Field(
+        default=None,
+        description="name of asset class; corresponds to physrisk class names, e.g. PowerGeneratingAsset. If not provided, "
+        "physrisk will infer the class from 'occupancy_code'.",
     )
-    latitude: float = Field(description="Latitude in degrees")
-    longitude: float = Field(description="Longitude in degrees")
+    latitude: Optional[float] = Field(default=None, description="Latitude in degrees")
+    longitude: Optional[float] = Field(default=None, description="Longitude in degrees")
+    wkt: Optional[str] = Field(
+        default=None, description="Well Known Text representation of location"
+    )
     type: Optional[str] = Field(
-        None, description="Type of the asset <level_1>/<level_2>/<level_3>"
+        None,
+        description="Type of the asset <level_1>/<level_2>/<level_3>. This is free-text that matches lines in the vulnerability config, or"
+        " programmatic vulnerability models",
     )
     location: Optional[str] = Field(
-        None,
-        description="Location (e.g. Africa, Asia, Europe, North America, Oceania, South America); ",
+        default=None,
+        description="Location (e.g. Africa, Asia, Europe, North America, Oceania, South America); this is used to select location-specific"
+        "vulnerability functions where available.",
     )
-    capacity: Optional[float] = Field(None, description="Power generation capacity")
-    attributes: Optional[Dict[str, str]] = Field(
-        None,
-        description="Bespoke attributes (e.g. number of storeys, structure type, occupancy type)",
+    occupancy_code: int = Field(
+        default=1000,
+        description="Occupancy code. This is Open Exposure Data occupancy code, unless otherwise specified. Defaults"
+        "to None, rather than 1000 (unknown) to indicate that asset_class field is to be used.",
+    )
+    number_of_storeys: Optional[int] = Field(
+        default=-1,
+        description="Number of storeys. Can also take special values: "
+        "-1 = unknown number of storeys - low rise, -2 = unknown number of storeys - mid rise, -3 = Unknown number of storeys = high rise)",
+    )
+    basement: int = Field(
+        default=0,
+        description="0 = unknown / default, 1 = unfinished, 2 = completely finished, 6 = no basement",
+    )
+    construction_code: int = Field(
+        default=5000,
+        description="Construction code. This is Open Exposure Data construction code, unless otherwise specified.",
+    )
+    first_floor_height: float = Field(
+        default=0.305,
+        description="First floor height in metres above grade (local ground level). A basement, if present,"
+        "is not considered to be the first floor in this definition. Default is 0.305 m (1 foot). In the US, a crawl-space foundation is commonly 4 foot for"
+        "example.",
+    )
+    # see https://www.fema.gov/sites/default/files/documents/fema_hazus-inventory-technical-manual-6.1.pdf for information about first floor heights in US
+    capacity: Optional[float] = Field(
+        default=None,
+        description="Power generation capacity in MW for power generating assets.",
+        kw_only=True,
     )
 
     model_config = {
@@ -72,7 +110,7 @@ class Asset(BaseModel):
             "examples": [
                 {
                     "asset_class": "RealEstateAsset",
-                    "type": "Buildings/Industrial",
+                    "type": "Buildings/Commercial",
                     "latitude": 22.2972,
                     "longitude": 91.8062,
                     "location": "Asia",

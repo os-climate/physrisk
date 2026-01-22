@@ -1,7 +1,5 @@
-import base64
 from dataclasses import dataclass
 from enum import Enum
-import hashlib
 from typing import Optional
 
 import shapely.wkt
@@ -94,28 +92,24 @@ class Asset:
         self,
         latitude: Optional[float] = None,
         longitude: Optional[float] = None,
-        wkt: Optional[str] = None,
+        wkt_geometry: Optional[str] = None,
         id: Optional[str] = None,
         **kwargs,
     ):
         self.id = id
         if latitude is None or longitude is None:
-            if wkt is None:
+            if wkt_geometry is None:
                 raise ValueError("either latitude/longitude or wkt must be provided")
         else:
             self.latitude = latitude
             self.longitude = longitude
-        if wkt is not None:
-            self.geom = shapely.wkt.loads(wkt).normalize()
-            centroid = self.geom.centroid
+        if wkt_geometry is not None:
+            self.geometry = shapely.wkt.loads(wkt_geometry).normalize()
+            centroid = self.geometry.centroid
             self.latitude = centroid.y
             self.longitude = centroid.x
-            # create a hash of the wkt, using SHA256 but truncating to 20 characters for brevity
-            # collision probability still extremely low
-            digest = hashlib.sha256(self.geom.wkb).digest()
-            self.wkt_hash = (
-                base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")[0:20]
-            )
+        else:
+            self.geometry = None
 
         self.__dict__.update(kwargs)
 
@@ -126,14 +120,16 @@ class OEDAsset(Asset):
         latitude: Optional[float] = None,
         longitude: Optional[float] = None,
         occupancy_code: int = 1000,
-        wkt: Optional[str] = None,
+        wkt_geometry: Optional[str] = None,
         number_of_storeys: int = 0,  # -1 = unknown No. storeys - low rise, -2 = unknown No. storeys - mid rise, -3 = Unknown no. storeys = high rise).
         basement: int = 0,  # 0 = unknown / default, 1 = unfinished, 2 = 100% finished
         construction_code: int = 5000,
         first_floor_height: float = 0.305,
         **kwargs,
     ):
-        super().__init__(latitude=latitude, longitude=longitude, wkt=wkt, **kwargs)
+        super().__init__(
+            latitude=latitude, longitude=longitude, wkt_geometry=wkt_geometry, **kwargs
+        )
         self.occupancy_code = occupancy_code
         self.number_of_storeys = number_of_storeys
         self.basement = basement

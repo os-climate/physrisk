@@ -1,5 +1,11 @@
+import json
+from pydantic import TypeAdapter
 import pytest
 import requests
+
+from physrisk.api.v1.impact_req_resp import RiskMeasures, RiskMeasuresHelper
+from physrisk.container import Container
+import physrisk.requests
 
 url = "https://physrisk-api-physrisk.apps.osc-cl1.apps.os-climate.org"
 # url = "http://127.0.0.1:5000"
@@ -73,3 +79,68 @@ def test_live_hazard_data():
     requester = container.requester()
     result = requester.get(request_id="get_hazard_data", request_dict=request)
     print(result)
+
+
+@pytest.mark.skip("only as example")
+def test_example_portfolios():
+    example_portfolios = physrisk.requests._get_example_portfolios()
+    for assets in example_portfolios:
+        request_dict = {
+            "assets": assets,
+            "include_asset_level": True,
+            "include_calc_details": False,
+            "years": [2030, 2040, 2050],
+            "scenarios": ["ssp585"],
+        }
+        container = Container()
+        requester = container.requester()
+        response = requester.get(
+            request_id="get_asset_impact", request_dict=request_dict
+        )
+        with open("out.json", "w") as f:
+            f.write(response)
+        assert response is not None
+
+
+@pytest.mark.skip("only as example")
+def test_example_portfolios_risk_measures():
+    assets = {
+        "items": [
+            {
+                "asset_class": "RealEstateAsset",
+                "type": "Buildings/Commercial",
+                "location": "Europe",
+                "longitude": 11.5391,
+                "latitude": 48.1485,
+            }
+        ],
+    }
+    # 48.1485°, 11.5391°
+    # 48.1537°, 11.5852°
+    request_dict = {
+        "assets": assets,
+        "include_asset_level": True,
+        "include_calc_details": True,
+        "include_measures": True,
+        "years": [2030, 2040, 2050],
+        "scenarios": ["ssp245", "ssp585"],  # ["ssp126", "ssp245", "ssp585"],
+    }
+    container = Container()
+    requester = container.requester()
+    response = requester.get(request_id="get_asset_impact", request_dict=request_dict)
+    response = requester.get(request_id="get_asset_impact", request_dict=request_dict)
+    risk_measures_dict = json.loads(response)["risk_measures"]
+    helper = RiskMeasuresHelper(
+        TypeAdapter(RiskMeasures).validate_python(risk_measures_dict)
+    )
+    for hazard_type in [
+        "RiverineInundation",
+        "CoastalInundation",
+        "ChronicHeat",
+        "Wind",
+    ]:
+        scores, measure_values, measure_defns = helper.get_measure(
+            hazard_type, "ssp585", 2050
+        )
+        label, description = helper.get_score_details(scores[0], measure_defns[0])
+        print(label)

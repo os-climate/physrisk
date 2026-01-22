@@ -17,14 +17,14 @@ from physrisk.kernel.hazard_model import (
 from physrisk.kernel.hazards import PluvialInundation, RiverineInundation
 
 from physrisk.hazard_models.credentials_provider import CredentialsProvider
-from physrisk.hazard_models.hazard_cache import H3BasedCache
+from physrisk.hazard_models.hazard_cache import GeometryH3BasedCache
 from physrisk.hazard_models.jba_hazard_model import JBAHazardModel
 
 
 class HazardModelFactory(HazardModelFactoryPhysrisk):
     def __init__(
         self,
-        cache_store: H3BasedCache,
+        cache_store: GeometryH3BasedCache,
         credentials: CredentialsProvider,
         inventory: Inventory,
         source_paths: SourcePaths,
@@ -68,7 +68,7 @@ class CompositeHazardModel(HazardModel):
 
     def __init__(
         self,
-        cache_store: H3BasedCache,
+        cache_store: GeometryH3BasedCache,
         credentials: CredentialsProvider,
         source_paths: SourcePaths,
         store: Optional[MutableMapping] = None,

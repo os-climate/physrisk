@@ -13,7 +13,6 @@ from physrisk.risk_models.generic_risk_model import GenericScoreBasedRiskMeasure
 from physrisk.kernel.risk import (
     NullAssetBasedPortfolioRiskMeasureCalculator,
 )
-from physrisk.risk_models.risk_models import RealEstateToyRiskMeasures
 from physrisk.vulnerability_models import power_generating_asset_models as pgam
 from physrisk.vulnerability_models.chronic_heat_models import ChronicHeatGZNModel
 from physrisk.vulnerability_models.example_models import PlaceholderVulnerabilityModel
@@ -109,7 +108,8 @@ def default_vulnerability_models_scores() -> Dict[
 
 def get_default_risk_measure_calculators() -> Dict[Type[Asset], RiskMeasureCalculator]:
     """For asset-level risk measure, define the measure calculators to use."""
-    return {RealEstateAsset: RealEstateToyRiskMeasures()}
+    return {Asset: GenericScoreBasedRiskMeasures()}
+    # return {RealEstateAsset: RealEstateToyRiskMeasures()}
 
 
 class DefaultMeasuresFactory(RiskMeasuresFactory):

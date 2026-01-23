@@ -1,4 +1,4 @@
-import importlib
+import importlib.resources
 import json
 from typing import (
     Any,
@@ -776,14 +776,18 @@ def _create_risk_measures(
     )
 
 
-def _get_example_portfolios() -> List[Assets]:
-    portfolios = []
-    for file in importlib.resources.contents(physrisk.data.static.example_portfolios):
+def _get_example_portfolios() -> list[Assets]:
+    return list(_get_example_portfolios_with_names().values())
+
+
+def _get_example_portfolios_with_names() -> dict[str, Assets]:
+    portfolios = {}
+    for file in importlib.resources.files(
+        physrisk.data.static.example_portfolios
+    ).iterdir():
         if not str(file).endswith(".json"):
             continue
-        with importlib.resources.open_text(
-            physrisk.data.static.example_portfolios, file
-        ) as f:
+        with file.open() as f:
             portfolio = Assets(**json.load(f))
-            portfolios.append(portfolio)
+            portfolios[file.name.replace(".json", "")] = portfolio
     return portfolios

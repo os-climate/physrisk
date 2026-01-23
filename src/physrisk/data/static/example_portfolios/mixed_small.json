@@ -1,13 +1,6 @@
 {
     "items": [
         {
-            "asset_class": "IndustrialActivity",
-            "type": "Construction",
-            "location": "South America",
-            "latitude": -39.1009,
-            "longitude": -68.5982
-        },
-        {
             "asset_class": "ThermalPowerGeneratingAsset",
             "type": "Gas",
             "location": "Africa",
@@ -19,7 +12,8 @@
             "type": "Buildings/Industrial",
             "location": "Asia",
             "latitude": 23.6839,
-            "longitude": 90.5314
+            "longitude": 90.5314,
+            "wkt": "POLYGON ((90.53185 23.6839, 90.53181 23.68374, 90.53172 23.68361, 90.53157 23.68352, 90.5314 23.68349, 90.53123 23.68352, 90.53108 23.68361, 90.53099 23.68374, 90.53095 23.6839, 90.53099 23.68406, 90.53108 23.68419, 90.53123 23.68428, 90.5314 23.68431, 90.53157 23.68428, 90.53172 23.68419, 90.53181 23.68406, 90.53185 23.6839))"
         }
     ]
 }

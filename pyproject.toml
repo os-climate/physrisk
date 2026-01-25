@@ -90,8 +90,8 @@ include = ["physrisk*"]
 
 [tool.setuptools.package-data]
 physrisk = [
-    "data/ne_110m_admin_0_countries/ne_*.*",
-    "data/ne_110m_admin_0_countries/country_codes.tsv",
+    "data/ne_10m_admin_0_map_subunits/ne_*.*",
+    "data/ne_10m_admin_0_map_subunits/country_codes.tsv",
     "data/static/*.json",
     "data/static/example_portfolios/*.json",
     "data/static/hazard/*.json",
@@ -150,10 +150,10 @@ dev = [
 [tool.pytest.ini_options]
 testpaths = ["tests",
 ]
-# log_cli = true
-# log_cli_level = "INFO"
-# log_cli_format = "%(asctime)s [%(levelname)s] %(message)s (%(filename)s:%(lineno)s)"
-# log_cli_date_format = "%Y-%m-%d %H:%M:%S"
+log_cli = true
+log_cli_level = "INFO"
+log_cli_format = "%(asctime)s [%(levelname)s] %(message)s (%(filename)s:%(lineno)s)"
+log_cli_date_format = "%Y-%m-%d %H:%M:%S"
 
 [tool.mypy]
 warn_unreachable = true

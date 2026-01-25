@@ -8,7 +8,7 @@ from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
 from ..kernel.assets import Asset
 from ..kernel.calculation import (
     get_default_hazard_model,
-    default_vulnerability_models_scores,
+    alternate_default_vulnerability_models_scores,
 )
 from ..kernel.financial_model import FinancialModelBase
 from ..kernel.hazard_model import HazardModel
@@ -39,7 +39,9 @@ class LossModel:
             get_default_hazard_model() if hazard_model is None else hazard_model
         )
         self.vulnerability_models = (
-            DictBasedVulnerabilityModels(default_vulnerability_models_scores())
+            DictBasedVulnerabilityModels(
+                alternate_default_vulnerability_models_scores()
+            )
             if vulnerability_models is None
             else vulnerability_models
         )

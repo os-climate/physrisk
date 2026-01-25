@@ -1,3 +1,5 @@
+import base64
+import hashlib
 import json
 import os
 from dataclasses import dataclass
@@ -7,6 +9,7 @@ from typing import Any, Dict, List, Optional, Protocol, Sequence
 
 import h3
 from lmdbm import Lmdb
+from shapely.geometry.base import BaseGeometry
 
 
 @dataclass
@@ -80,6 +83,11 @@ class MemoryStore(Store):
     def getall(self, prefix: str = ""):
         return {k: v for k, v in self._dict.items() if k.startswith(prefix)}
 
+    def keys(self, prefix: str = ""):
+        if prefix == "":
+            return list(self._dict.keys())
+        return [k for k in self._dict.keys() if k.startswith(prefix)]
+
 
 class H3BasedCache:
     def __init__(self, store: Store):
@@ -87,13 +95,60 @@ class H3BasedCache:
         self.store = store
 
     def spatial_key(self, latitude: float, longitude: float):
-        return h3.geo_to_h3(latitude, longitude, self.resolution)
+        return h3.latlng_to_cell(latitude, longitude, self.resolution)
 
     def location_from_spatial_key(self, spatial_key: str):
         lat, lon = h3.h3_to_geo(spatial_key)
         # h3.h3_to_geo_boundary
         res = h3.h3_get_resolution(spatial_key)
         return lat, lon, res
+
+    def key(self, provider_id: str, spatial_index: str):
+        return str(PurePosixPath(provider_id, spatial_index))
+
+    def getall(self, prefix: str = ""):
+        return self.store.getall(prefix)
+
+    def getitems(self, keys: List[str]):
+        return self.store.getitems(keys)
+
+    def setitems(self, items: Dict[str, Any]):
+        self.store.setitems(items)
+
+
+class GeometryH3BasedCache:
+    def __init__(self, store: Store, resolution: int = 12):
+        """A cache based on WKT geometries or latitude/longitude as keys. If
+        WKT is provided, the normalized WKT string is used as the key; this must be
+        identical for the cache to be a match. If latitude/longitude is provided, the H3
+        spatial index at a given resolution is used as the key, and immediate vicinity H3
+        neighbors will be checked for a match if required.
+        The intent is to allow some tolerance for latitude/longitudes, but typically a
+        WKT is unique.
+        """
+        self.resolution = resolution  # resolution 9 ~ 300m; 12 ~ 20m; 14 ~ 3m
+        self.store = store
+
+    def spatial_key(
+        self, latitude: float, longitude: float, geometry: Optional[BaseGeometry] = None
+    ):
+        if geometry is None:
+            # based on the lat/lon
+            return h3.latlng_to_cell(latitude, longitude, self.resolution)
+        else:
+            # create a hash of the wkt, using SHA256 but truncating to 20 characters for brevity
+            # collision probability still extremely low
+            digest = hashlib.sha256(geometry.wkb).digest()
+            wkb_hash = (
+                base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")[0:20]
+            )
+            return "wkbhash_" + wkb_hash
+
+    # def location_from_spatial_key(self, spatial_key: str):
+    #     lat, lon = h3.(spatial_key)
+    #     # h3.h3_to_geo_boundary
+    #     res = h3.h3_get_resolution(spatial_key)
+    #     return lat, lon, res
 
     def key(self, provider_id: str, spatial_index: str):
         return str(PurePosixPath(provider_id, spatial_index))

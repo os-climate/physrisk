@@ -19,6 +19,8 @@ from typing import (
 
 import aiohttp
 import numpy as np
+from shapely.geometry.base import BaseGeometry
+
 from physrisk.data.hazard_data_provider import HazardDataProvider, ScenarioYear
 from physrisk.kernel.hazard_model import (
     HazardDataFailedResponse,
@@ -33,14 +35,13 @@ from physrisk.kernel.hazards import (
     PluvialInundation,
     RiverineInundation,
 )
-
 from physrisk.data.geocode import Geocoder
 from physrisk.utils.event_loop import get_loop, run
 from physrisk.hazard_models.credentials_provider import (
     CredentialsProvider,
     EnvCredentialsProvider,
 )
-from physrisk.hazard_models.hazard_cache import H3BasedCache
+from physrisk.hazard_models.hazard_cache import GeometryH3BasedCache
 
 logger = logging.getLogger(__name__)
 
@@ -71,6 +72,7 @@ class APIRequest:
     spatial_keys: Sequence[str]  # spatial keys for latitudes and longitudes in order
     latitudes: Sequence[float]
     longitudes: Sequence[float]
+    geometries: Sequence[Optional[BaseGeometry]]
     country_code: str
     location_cache_keys: Dict[
         str, List[JBACacheKey]
@@ -90,7 +92,7 @@ class RequestWeights:
 class JBAHazardModel(HazardModel):
     def __init__(
         self,
-        cache_store: H3BasedCache,
+        cache_store: GeometryH3BasedCache,
         credentials: Optional[CredentialsProvider] = None,
         geocoder: Optional[Geocoder] = None,
         max_requests: int = 5,
@@ -98,6 +100,7 @@ class JBAHazardModel(HazardModel):
         batch_size: int = 100,
         restrict_coverage: bool = False,
         only_request_required: bool = False,
+        default_buffer: int = 10,
     ):
         """JBAHazardModel retrieves data via the JBA API.
         https://api.jbarisk.com/docs/index.html
@@ -118,11 +121,13 @@ class JBAHazardModel(HazardModel):
                 Defaults to 100.
             restrict_coverage (bool, optional): If True, restrict the number of scenarios for performance reasons.
             only_request_required (bool, optional): If True, request only scenarios and years required (i.e. not extra ones to cache)
+            default_buffer (int, optional): Default buffer in metres to apply around points if no geometry provided. Defaults to 10.
         """
         self.cache_store = cache_store
         self.credentials = (
             credentials if credentials is not None else EnvCredentialsProvider()
         )
+        self.default_buffer = default_buffer
         self.geocoder = geocoder if geocoder is not None else Geocoder()
         self.indicators = set(
             [
@@ -210,7 +215,7 @@ class JBAHazardModel(HazardModel):
             all_years: set[int] = set()
             for item in requests:
                 spatial_key = self.cache_store.spatial_key(
-                    item.latitude, item.longitude
+                    item.latitude, item.longitude, item.geometry
                 )
                 requests_by_location[spatial_key].append(item)
                 if item.scenario != "historical":
@@ -255,7 +260,7 @@ class JBAHazardModel(HazardModel):
                                 req.scenario, weight[0].year, country
                             ),
                             spatial_key=self.cache_store.spatial_key(
-                                req.latitude, req.longitude
+                                req.latitude, req.longitude, req.geometry
                             ),
                         )
                         cache_key_country[cache_key] = country
@@ -402,9 +407,18 @@ class JBAHazardModel(HazardModel):
         request = {
             "country_code": country_code,
             "geometries": [
-                {"id": id, "wkt_geometry": f"POINT({lon} {lat})", "buffer": 10}
-                for id, lat, lon in zip(
-                    req_ids, api_request.latitudes, api_request.longitudes
+                {
+                    "id": id,
+                    "wkt_geometry": (
+                        f"POINT({lon} {lat})" if geom is None else geom.wkt
+                    ),
+                    "buffer": (self.default_buffer if geom is None else 0),
+                }
+                for id, lat, lon, geom in zip(
+                    req_ids,
+                    api_request.latitudes,
+                    api_request.longitudes,
+                    api_request.geometries,
                 )
             ],
         }
@@ -506,12 +520,14 @@ class JBAHazardModel(HazardModel):
             first_req = [requests_by_location[k][0] for k in req_keys]
             lats = [r.latitude for r in first_req]
             lons = [r.longitude for r in first_req]
+            geoms = [r.geometry for r in first_req]
             batches.append(
                 APIRequest(
                     location_cache_keys=location_cache_keys,
                     spatial_keys=req_keys,
                     latitudes=lats,
                     longitudes=lons,
+                    geometries=geoms,
                     country_code=request_key.country_code,
                 )
             )
@@ -579,12 +595,16 @@ class JBAHazardModel(HazardModel):
                     spatial_keys=[spatial_key],
                     latitudes=[lat],
                     longitudes=[lon],
+                    geometries=[geometry],
                     country_code=rerun.country_code,
                     location_cache_keys=rerun.location_cache_keys,
                 )
                 for rerun in reruns
-                for spatial_key, lat, lon in zip(
-                    rerun.spatial_keys, rerun.latitudes, rerun.longitudes
+                for spatial_key, lat, lon, geometry in zip(
+                    rerun.spatial_keys,
+                    rerun.latitudes,
+                    rerun.longitudes,
+                    rerun.geometries,
                 )
             ]
             if len(single_api_requests) > 0:

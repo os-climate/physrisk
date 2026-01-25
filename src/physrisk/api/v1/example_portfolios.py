@@ -10,4 +10,4 @@ class ExamplePortfoliosRequest(BaseModel):
 class ExamplePortfoliosResponse(BaseModel):
     """Example portfolios response."""
 
-    assets: Assets
+    portfolios: dict[str, Assets]

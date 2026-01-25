@@ -25,6 +25,7 @@ from physrisk.requests import (
 from physrisk.vulnerability_models.configuration.asset_factory import (
     DefaultAssetFactory,
 )
+from physrisk.vulnerability_models.vulnerability import VulnerabilityModelsFactory
 
 
 class ZarrHazardModelFactory(HazardModelFactory):
@@ -46,7 +47,7 @@ class ZarrHazardModelFactory(HazardModelFactory):
         self,
         interpolation: Optional[str] = None,
         provider_max_requests: Dict[str, int] = {},
-        interpolate_years: bool = False,
+        interpolate_years: bool = True,
     ):
         # this is done to allow interpolation to be set dynamically, e.g. different requests can have different
         # parameters.
@@ -68,13 +69,32 @@ class DictBasedVulnerabilityModelsFactory(PVulnerabilityModelsFactory):
     def vulnerability_models(
         self, hazard_scope: Optional[Set[Type[Hazard]]] = None
     ) -> PVulnerabilityModels:
-        return DictBasedVulnerabilityModels(calc.default_vulnerability_models_scores())
+        return DictBasedVulnerabilityModels(
+            calc.alternate_default_vulnerability_models_scores()
+        )
+
+
+class DefaultVulnerabilityModelFactory(VulnerabilityModelsFactory):
+    """Default vulnerability approach. 'default_vulnerability_models'
+    programmatic models are used, to which FEMA Hazus vulnerability-based
+    models are added and finally configuration.
+    FEMA Hazus vulnerability-based models excluded by default (until non-experimental).
+    """
+
+    def __init__(self):
+        super().__init__(
+            config=VulnerabilityModelsFactory.embedded_vulnerability_config(),
+            programmatic_models=calc.default_vulnerability_models(),
+            use_oed_hazus_curves=False,
+        )
 
 
 class Container(containers.DeclarativeContainer):
     asset_factory = providers.Factory(DefaultAssetFactory)
 
-    config = providers.Configuration(default={"zarr_sources": ["embedded", "hazard"]})
+    config = providers.Configuration(
+        default={"zarr_sources": ["embedded"]}
+    )  # , "hazard"]})
 
     colormaps = providers.Singleton(lambda: EmbeddedInventory().colormaps())
 
@@ -106,9 +126,7 @@ class Container(containers.DeclarativeContainer):
 
     measures_factory = providers.Factory(calc.DefaultMeasuresFactory)
 
-    vulnerability_models_factory = providers.Factory(
-        DictBasedVulnerabilityModelsFactory
-    )
+    vulnerability_models_factory = providers.Factory(DefaultVulnerabilityModelFactory)
 
     requester = providers.Singleton(
         Requester,

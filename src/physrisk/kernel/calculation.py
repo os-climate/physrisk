@@ -20,6 +20,7 @@ from physrisk.vulnerability_models.real_estate_models import (
     CoolingModel,
     GenericTropicalCycloneModel,
     RealEstateCoastalInundationModel,
+    RealEstatePluvialInundationModel,
     RealEstateRiverineInundationModel,
 )
 from physrisk.vulnerability_models.thermal_power_generation_models import (
@@ -48,10 +49,31 @@ def get_default_hazard_model() -> HazardModel:
     return ZarrHazardModel(source_paths=get_default_source_paths())
 
 
+def placeholder_models() -> Sequence[VulnerabilityModelBase]:
+    return [
+        PlaceholderVulnerabilityModel("fire_probability", Fire, ImpactType.damage),
+        PlaceholderVulnerabilityModel("days/above/35c", ChronicHeat, ImpactType.damage),
+        PlaceholderVulnerabilityModel("days/above/5cm", Hail, ImpactType.damage),
+        PlaceholderVulnerabilityModel(
+            "months/spei3m/below/-2", Drought, ImpactType.damage
+        ),
+        PlaceholderVulnerabilityModel(
+            "max/daily/water_equivalent", Precipitation, ImpactType.damage
+        ),
+    ]
+
+
 def default_vulnerability_models() -> Dict[type, Sequence[VulnerabilityModelBase]]:
-    """Base set of programmatic models for combination with config-based models."""
+    """Base set of programmatic models; other models are added on top of these
+    There is a specific treatment for power generating assets and real estate assets.
+    """
     return {
         PowerGeneratingAsset: [pgam.InundationModel()],
+        RealEstateAsset: [
+            RealEstateCoastalInundationModel(),
+            RealEstatePluvialInundationModel(),
+            RealEstateRiverineInundationModel(),
+        ],
         ThermalPowerGeneratingAsset: [
             ThermalPowerGenerationAirTemperatureModel(),
             ThermalPowerGenerationCoastalInundationModel(),
@@ -63,7 +85,7 @@ def default_vulnerability_models() -> Dict[type, Sequence[VulnerabilityModelBase
     }
 
 
-def default_vulnerability_models_scores() -> Dict[
+def alternate_default_vulnerability_models_scores() -> Dict[
     type, Sequence[VulnerabilityModelBase]
 ]:
     """A vulnerability models set that combines loss-based and exposure-based scores."""
@@ -101,6 +123,7 @@ def default_vulnerability_models_scores() -> Dict[
             ThermalPowerGenerationRiverineInundationModel(),
             ThermalPowerGenerationWaterStressModel(),
             ThermalPowerGenerationWaterTemperatureModel(),
+            GenericTropicalCycloneModel(),
         ],
         TestAsset: [pgam.TemperatureModel()],
     }

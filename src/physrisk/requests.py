@@ -1,5 +1,6 @@
 import importlib.resources
 import json
+import math
 from typing import (
     Any,
     Callable,
@@ -13,6 +14,7 @@ from typing import (
 
 import numpy as np
 
+from physrisk.api.v1.example_portfolios import ExamplePortfoliosResponse
 import physrisk.data.static.example_portfolios
 import physrisk.kernel.hazard_model
 from physrisk.api.v1.common import (
@@ -162,11 +164,14 @@ class Requester:
                 self.get_asset_impacts(request).model_dump(exclude_none=True)
             )
         elif request_id == "get_example_portfolios":
-            return self.dumps(_get_example_portfolios())
+            return self.dumps(self.get_example_portfolios())
         elif request_id == "get_image_info":
             return self.dumps(self.get_image_info().model_dump())
         else:
             raise ValueError(f"request type '{request_id}' not found")
+
+    def get_example_portfolios(self):
+        return ExamplePortfoliosResponse(portfolios=_get_example_portfolios())
 
     def get_hazard_data(self, request: HazardDataRequest):
         hazard_model = self.hazard_model_factory.hazard_model(
@@ -486,7 +491,9 @@ def _get_asset_impacts(
     ] = lambda x: x,
 ):
     vulnerability_models = (
-        DictBasedVulnerabilityModels(calc.default_vulnerability_models_scores())
+        DictBasedVulnerabilityModels(
+            calc.alternate_default_vulnerability_models_scores()
+        )
         if vulnerability_models is None
         else vulnerability_models
     )
@@ -722,7 +729,11 @@ def _create_risk_measures(
                         measure = measures.get(measure_key, None)
                         if measure is not None:
                             scores[i] = measure.score
-                            measures_0[i] = measure.measure_0
+                            measures_0[i] = (
+                                nan_value
+                                if math.isnan(measure.measure_0)
+                                else measure.measure_0
+                            )
                     measures_for_assets.append(
                         RiskMeasuresForAssets(
                             key=score_key,
@@ -776,11 +787,7 @@ def _create_risk_measures(
     )
 
 
-def _get_example_portfolios() -> list[Assets]:
-    return list(_get_example_portfolios_with_names().values())
-
-
-def _get_example_portfolios_with_names() -> dict[str, Assets]:
+def _get_example_portfolios() -> dict[str, Assets]:
     portfolios = {}
     for file in importlib.resources.files(
         physrisk.data.static.example_portfolios

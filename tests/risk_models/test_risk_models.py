@@ -16,7 +16,7 @@ from physrisk.container import Container
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import Asset, RealEstateAsset
-from physrisk.kernel.calculation import default_vulnerability_models_scores
+from physrisk.kernel.calculation import alternate_default_vulnerability_models_scores
 from physrisk.kernel.hazard_model import HazardModelFactory
 from physrisk.kernel.hazards import (
     ChronicHeat,
@@ -91,7 +91,9 @@ class TestRiskModels(TestWithCredentials):
 
         model = AssetLevelRiskModel(
             hazard_model,
-            DictBasedVulnerabilityModels(default_vulnerability_models_scores()),
+            DictBasedVulnerabilityModels(
+                alternate_default_vulnerability_models_scores()
+            ),
             {RealEstateAsset: RealEstateToyRiskMeasures()},
             NullAssetBasedPortfolioRiskMeasureCalculator(),
         )
@@ -428,7 +430,7 @@ class TestRiskModels(TestWithCredentials):
             for ma in response.risk_measures.measures_for_assets
             if ma.key.hazard_type == "RiverineInundation"
         )
-        np.testing.assert_allclose(res.measures_0, [0.80338, 0.80338])
+        np.testing.assert_allclose(res.measures_0, [0.0959039, 0.0959039])
 
     def test_generic_model(self):
         scenarios = ["ssp585"]
@@ -454,7 +456,7 @@ class TestRiskModels(TestWithCredentials):
         )
         np.testing.assert_approx_equal(
             measures[MeasureKey(assets[0], scenarios[0], years[0], Wind)].measure_0,
-            214.01549835205077,
+            0.010149044212901014,
         )
         np.testing.assert_equal(
             measures[MeasureKey(assets[0], scenarios[0], years[0], Drought)].score,

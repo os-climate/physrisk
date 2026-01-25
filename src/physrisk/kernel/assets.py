@@ -317,3 +317,16 @@ class WindTurbine(Asset):
     cut_out_speed: Optional[float] = None
     fixed_base: Optional[bool] = True
     rotor_diameter: Optional[float] = None
+
+
+def all_asset_types():
+    def all_subclasses(cls: type) -> set[type]:
+        subclasses = set(cls.__subclasses__())
+        for subclass in cls.__subclasses__():
+            subclasses |= all_subclasses(subclass)
+        return subclasses
+
+    all_asset_types = all_subclasses(Asset)
+    for a in [OEDAsset, SimpleTypeLocationAsset, TestAsset]:
+        all_asset_types.remove(a)
+    return all_asset_types

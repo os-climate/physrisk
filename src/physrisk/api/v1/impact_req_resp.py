@@ -287,6 +287,8 @@ class RiskMeasuresHelper:
             year=str(year),
             measure_id=self.measure_set_id,
         )
+        if measure_key not in self.measures:
+            return None, None, None
         measure = self.measures[measure_key]
         asset_scores, asset_measures = (
             measure.scores,

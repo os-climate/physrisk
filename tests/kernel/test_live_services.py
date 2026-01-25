@@ -84,12 +84,12 @@ def test_live_hazard_data():
     print(result)
 
 
-# @pytest.mark.skip("only as example")
+@pytest.mark.skip("only as example")
 def test_example_portfolios():
-    example_portfolios = physrisk.requests._get_example_portfolios_with_names()
+    example_portfolios = physrisk.requests._get_example_portfolios()
     for name, assets in example_portfolios.items():
-        if name != "mixed_small":
-            continue
+        # if name != "power_generating_small":
+        #    continue
         logger.info(f"Running example portfolio: {name}")
         request_dict = {
             "assets": assets,
@@ -111,13 +111,21 @@ def test_example_portfolios():
             TypeAdapter(RiskMeasures).validate_python(risk_measures_dict)
         )
         for hazard_type in [
-            "RiverineInundation",
             "CoastalInundation",
             "ChronicHeat",
+            "Drought",
+            "Fire",
+            "Hail",
+            "RiverineInundation",
             "Wind",
         ]:
             scores, measure_values, measure_defns = helper.get_measure(
                 hazard_type, "ssp585", 2050
             )
+            if not scores:
+                logger.info(f"No scores for hazard type: {hazard_type}")
+                continue
             label, description = helper.get_score_details(scores[0], measure_defns[0])
-            print(label)
+            logger.info(
+                f"Hazard: {hazard_type}, Scores: {scores}, Measures: {measure_values}"
+            )

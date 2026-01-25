@@ -44,7 +44,7 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
         self,
         interpolation: Optional[str] = None,
         provider_max_requests: Dict[str, int] = {},
-        interpolate_years: bool = False,
+        interpolate_years: bool = True,
     ):
         return CompositeHazardModel(
             self.cache_store,

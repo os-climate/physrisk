@@ -219,7 +219,7 @@ class AssetLevelRiskModel(RiskModel):
         self,
         hazard_model: HazardModel,
         vulnerability_models: VulnerabilityModels,
-        measure_calculators: Dict[type, RiskMeasureCalculator],
+        measure_calculators: Dict[type[Asset], RiskMeasureCalculator],
         portfolio_measure_calculator: PortfolioRiskMeasureCalculator = NullAssetBasedPortfolioRiskMeasureCalculator(),
     ):
         """Risk model that calculates risk measures at the asset level for a sequence
@@ -254,12 +254,7 @@ class AssetLevelRiskModel(RiskModel):
         # the identifiers of the score-based risk measures used for each asset, for each hazard type
         measure_ids_for_hazard: Dict[Type[Hazard], List[str]] = {}
         # one
-        calcs_by_asset = [
-            self._asset_level_measure_calculators.get(
-                type(asset), self._asset_level_measure_calculators.get(Asset, None)
-            )
-            for asset in assets
-        ]
+        calcs_by_asset = [self._calculator_for_asset(asset) for asset in assets]
         # match to specific asset and if no match then use the generic calculator assigned to Asset
         used_calcs = {c for c in calcs_by_asset if c is not None}
 
@@ -318,10 +313,9 @@ class AssetLevelRiskModel(RiskModel):
             list
         )
         for asset in assets:
-            if type(asset) not in self._asset_level_measure_calculators:
-                continue
-            measure_calc = self._asset_level_measure_calculators[type(asset)]
-            measure_calc_assets[measure_calc].append(asset)
+            measure_calc = self._calculator_for_asset(asset)
+            if measure_calc is not None:
+                measure_calc_assets[measure_calc].append(asset)
         for measure_calc, assets_for_calc in measure_calc_assets.items():
             for asset in assets_for_calc:
                 for scenario in scenarios:
@@ -373,3 +367,8 @@ class AssetLevelRiskModel(RiskModel):
         )
         aggregated_measures.update(portfolio_measures)
         return impacts, aggregated_measures
+
+    def _calculator_for_asset(self, asset: Asset) -> Optional[RiskMeasureCalculator]:
+        return self._asset_level_measure_calculators.get(
+            type(asset), self._asset_level_measure_calculators.get(Asset, None)
+        )

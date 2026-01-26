@@ -15,6 +15,7 @@ from typing import (
 )
 
 import numpy as np
+from shapely.geometry.base import BaseGeometry
 
 from physrisk.data.hazard_data_provider import HazardDataHint
 from physrisk.kernel.hazards import Hazard
@@ -34,6 +35,7 @@ class HazardDataRequest:
         "scenario",
         "year",
         "hint",
+        "geometry",
         "buffer",
     )
 
@@ -47,6 +49,7 @@ class HazardDataRequest:
         scenario: str,
         year: int,
         hint: Optional[HazardDataHint] = None,
+        geometry: Optional[BaseGeometry] = None,
         buffer: Optional[int] = None,
     ):
         """Create HazardDataRequest.
@@ -60,8 +63,13 @@ class HazardDataRequest:
             year (int): Year for which data required.
             hint (Optional[HazardDataHint], optional): Hint, typically providing the data set path.
                 Defaults to None.
+            geometry (Optional[BaseGeometry], optional): Geometry of the area of interest. Defaults to None.
             buffer (Optional[int], optional): If not None applies a buffer around the point in metres, within [0, 1000m]. Defaults to None.
         """
+        if geometry is not None and buffer is not None:
+            raise ValueError(
+                "Cannot specify both geometry and buffer: buffer should be included in the geometry."
+            )
         self.hazard_type = hazard_type
         self.longitude = longitude
         self.latitude = latitude
@@ -69,6 +77,7 @@ class HazardDataRequest:
         self.scenario = scenario
         self.year = year
         self.hint = hint
+        self.geometry = geometry
         self.buffer = buffer
 
     def group_key(self):

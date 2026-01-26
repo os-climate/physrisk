@@ -1,0 +1,250 @@
+Country	Continent	Alpha-2 code	Alpha-3 code	Numeric
+Afghanistan	Asia	AF	AFG	4
+Albania	Europe	AL	ALB	8
+Algeria	Africa	DZ	DZA	12
+American Samoa	Oceania	AS	ASM	16
+Andorra	Europe	AD	AND	20
+Angola	Africa	AO	AGO	24
+Anguilla	North America	AI	AIA	660
+Antarctica	Antarctica	AQ	ATA	10
+Antigua and Barbuda	North America	AG	ATG	28
+Argentina	South America	AR	ARG	32
+Armenia	Asia	AM	ARM	51
+Aruba	North America	AW	ABW	533
+Australia	Oceania	AU	AUS	36
+Austria	Europe	AT	AUT	40
+Azerbaijan	Asia	AZ	AZE	31
+Bahamas (the)	North America	BS	BHS	44
+Bahrain	Asia	BH	BHR	48
+Bangladesh	Asia	BD	BGD	50
+Barbados	North America	BB	BRB	52
+Belarus	Europe	BY	BLR	112
+Belgium	Europe	BE	BEL	56
+Belize	North America	BZ	BLZ	84
+Benin	Africa	BJ	BEN	204
+Bermuda	North America	BM	BMU	60
+Bhutan	Asia	BT	BTN	64
+Bolivia (Plurinational State of)	South America	BO	BOL	68
+Bonaire, Sint Eustatius and Saba	North America	BQ	BES	535
+Bosnia and Herzegovina	Europe	BA	BIH	70
+Botswana	Africa	BW	BWA	72
+Bouvet Island	South America	BV	BVT	74
+Brazil	South America	BR	BRA	76
+British Indian Ocean Territory (the)	Asia	IO	IOT	86
+Brunei Darussalam	Asia	BN	BRN	96
+Bulgaria	Europe	BG	BGR	100
+Burkina Faso	Africa	BF	BFA	854
+Burundi	Africa	BI	BDI	108
+Cabo Verde	Africa	CV	CPV	132
+Cambodia	Asia	KH	KHM	116
+Cameroon	Africa	CM	CMR	120
+Canada	North America	CA	CAN	124
+Cayman Islands (the)	North America	KY	CYM	136
+Central African Republic (the)	Africa	CF	CAF	140
+Chad	Africa	TD	TCD	148
+Chile	South America	CL	CHL	152
+China	Asia	CN	CHN	156
+Christmas Island	Oceania	CX	CXR	162
+Cocos (Keeling) Islands (the)	Oceania	CC	CCK	166
+Colombia	South America	CO	COL	170
+Comoros (the)	Africa	KM	COM	174
+Congo (the Democratic Republic of the)	Africa	CD	COD	180
+Congo (the)	Africa	CG	COG	178
+Cook Islands (the)	Oceania	CK	COK	184
+Costa Rica	North America	CR	CRI	188
+Croatia	Europe	HR	HRV	191
+Cuba	North America	CU	CUB	192
+Curaçao	North America	CW	CUW	531
+Cyprus	Europe	CY	CYP	196
+Czechia	Europe	CZ	CZE	203
+Côte d'Ivoire	Africa	CI	CIV	384
+Denmark	Europe	DK	DNK	208
+Djibouti	Africa	DJ	DJI	262
+Dominica	North America	DM	DMA	212
+Dominican Republic (the)	North America	DO	DOM	214
+Ecuador	South America	EC	ECU	218
+Egypt	Africa	EG	EGY	818
+El Salvador	North America	SV	SLV	222
+Equatorial Guinea	Africa	GQ	GNQ	226
+Eritrea	Africa	ER	ERI	232
+Estonia	Europe	EE	EST	233
+Eswatini	Africa	SZ	SWZ	748
+Ethiopia	Africa	ET	ETH	231
+Falkland Islands (the) [Malvinas]	South America	FK	FLK	238
+Faroe Islands (the)	Europe	FO	FRO	234
+Fiji	Oceania	FJ	FJI	242
+Finland	Europe	FI	FIN	246
+France	Europe	FR	FRA	250
+French Guiana	South America	GF	GUF	254
+French Polynesia	Oceania	PF	PYF	258
+French Southern Territories (the)	Africa	TF	ATF	260
+Gabon	Africa	GA	GAB	266
+Gambia (the)	Africa	GM	GMB	270
+Georgia	Asia	GE	GEO	268
+Germany	Europe	DE	DEU	276
+Ghana	Africa	GH	GHA	288
+Gibraltar	Europe	GI	GIB	292
+Greece	Europe	GR	GRC	300
+Greenland	North America	GL	GRL	304
+Grenada	North America	GD	GRD	308
+Guadeloupe	North America	GP	GLP	312
+Guam	Oceania	GU	GUM	316
+Guatemala	North America	GT	GTM	320
+Guernsey	Europe	GG	GGY	831
+Guinea	Africa	GN	GIN	324
+Guinea-Bissau	Africa	GW	GNB	624
+Guyana	South America	GY	GUY	328
+Haiti	North America	HT	HTI	332
+Heard Island and McDonald Islands	Antarctica	HM	HMD	334
+Holy See (the)	Europe	VA	VAT	336
+Honduras	North America	HN	HND	340
+Hong Kong	Asia	HK	HKG	344
+Hungary	Europe	HU	HUN	348
+Iceland	Europe	IS	ISL	352
+India	Asia	IN	IND	356
+Indonesia	Asia	ID	IDN	360
+Iran (Islamic Republic of)	Asia	IR	IRN	364
+Iraq	Asia	IQ	IRQ	368
+Ireland	Europe	IE	IRL	372
+Isle of Man	Europe	IM	IMN	833
+Israel	Asia	IL	ISR	376
+Italy	Europe	IT	ITA	380
+Jamaica	North America	JM	JAM	388
+Japan	Asia	JP	JPN	392
+Jersey	Europe	JE	JEY	832
+Jordan	Asia	JO	JOR	400
+Kazakhstan	Asia	KZ	KAZ	398
+Kenya	Africa	KE	KEN	404
+Kiribati	Oceania	KI	KIR	296
+Korea (the Democratic People's Republic of)	Asia	KP	PRK	408
+Korea (the Republic of)	Asia	KR	KOR	410
+Kuwait	Asia	KW	KWT	414
+Kyrgyzstan	Asia	KG	KGZ	417
+Lao People's Democratic Republic (the)	Asia	LA	LAO	418
+Latvia	Europe	LV	LVA	428
+Lebanon	Asia	LB	LBN	422
+Lesotho	Africa	LS	LSO	426
+Liberia	Africa	LR	LBR	430
+Libya	Africa	LY	LBY	434
+Liechtenstein	Europe	LI	LIE	438
+Lithuania	Europe	LT	LTU	440
+Luxembourg	Europe	LU	LUX	442
+Macao	Asia	MO	MAC	446
+Madagascar	Africa	MG	MDG	450
+Malawi	Africa	MW	MWI	454
+Malaysia	Asia	MY	MYS	458
+Maldives	Asia	MV	MDV	462
+Mali	Africa	ML	MLI	466
+Malta	Europe	MT	MLT	470
+Marshall Islands (the)	Oceania	MH	MHL	584
+Martinique	North America	MQ	MTQ	474
+Mauritania	Africa	MR	MRT	478
+Mauritius	Africa	MU	MUS	480
+Mayotte	Africa	YT	MYT	175
+Mexico	North America	MX	MEX	484
+Micronesia (Federated States of)	Oceania	FM	FSM	583
+Moldova (the Republic of)	Europe	MD	MDA	498
+Monaco	Europe	MC	MCO	492
+Mongolia	Asia	MN	MNG	496
+Montenegro	Europe	ME	MNE	499
+Montserrat	North America	MS	MSR	500
+Morocco	Africa	MA	MAR	504
+Mozambique	Africa	MZ	MOZ	508
+Myanmar	Asia	MM	MMR	104
+Namibia	Africa	NA	NAM	516
+Nauru	Oceania	NR	NRU	520
+Nepal	Asia	NP	NPL	524
+Netherlands (Kingdom of the)	Europe	NL	NLD	528
+New Caledonia	Oceania	NC	NCL	540
+New Zealand	Oceania	NZ	NZL	554
+Nicaragua	North America	NI	NIC	558
+Niger (the)	Africa	NE	NER	562
+Nigeria	Africa	NG	NGA	566
+Niue	Oceania	NU	NIU	570
+Norfolk Island	Oceania	NF	NFK	574
+North Macedonia	Europe	MK	MKD	807
+Northern Mariana Islands (the)	Oceania	MP	MNP	580
+Norway	Europe	NO	NOR	578
+Oman	Asia	OM	OMN	512
+Pakistan	Asia	PK	PAK	586
+Palau	Oceania	PW	PLW	585
+Palestine, State of	Asia	PS	PSE	275
+Panama	North America	PA	PAN	591
+Papua New Guinea	Oceania	PG	PNG	598
+Paraguay	South America	PY	PRY	600
+Peru	South America	PE	PER	604
+Philippines (the)	Asia	PH	PHL	608
+Pitcairn	Oceania	PN	PCN	612
+Poland	Europe	PL	POL	616
+Portugal	Europe	PT	PRT	620
+Puerto Rico	North America	PR	PRI	630
+Qatar	Asia	QA	QAT	634
+Romania	Europe	RO	ROU	642
+Russian Federation (the)	Europe	RU	RUS	643
+Rwanda	Africa	RW	RWA	646
+Réunion	Africa	RE	REU	638
+Saint Barthélemy	North America	BL	BLM	652
+Saint Helena, Ascension and Tristan da Cunha	Africa	SH	SHN	654
+Saint Kitts and Nevis	North America	KN	KNA	659
+Saint Lucia	North America	LC	LCA	662
+Saint Martin (French part)	North America	MF	MAF	663
+Saint Pierre and Miquelon	North America	PM	SPM	666
+Saint Vincent and the Grenadines	North America	VC	VCT	670
+Samoa	Oceania	WS	WSM	882
+San Marino	Europe	SM	SMR	674
+Sao Tome and Principe	Africa	ST	STP	678
+Saudi Arabia	Asia	SA	SAU	682
+Senegal	Africa	SN	SEN	686
+Serbia	Europe	RS	SRB	688
+Seychelles	Africa	SC	SYC	690
+Sierra Leone	Africa	SL	SLE	694
+Singapore	Asia	SG	SGP	702
+Sint Maarten (Dutch part)	North America	SX	SXM	534
+Slovakia	Europe	SK	SVK	703
+Slovenia	Europe	SI	SVN	705
+Solomon Islands	Oceania	SB	SLB	90
+Somalia	Africa	SO	SOM	706
+South Africa	Africa	ZA	ZAF	710
+South Georgia and the South Sandwich Islands	South America	GS	SGS	239
+South Sudan	Africa	SS	SSD	728
+Spain	Europe	ES	ESP	724
+Sri Lanka	Asia	LK	LKA	144
+Sudan (the)	Africa	SD	SDN	729
+Suriname	South America	SR	SUR	740
+Svalbard and Jan Mayen	Europe	SJ	SJM	744
+Sweden	Europe	SE	SWE	752
+Switzerland	Europe	CH	CHE	756
+Syrian Arab Republic (the)	Asia	SY	SYR	760
+Taiwan (Province of China)	Asia	TW	TWN	158
+Tajikistan	Asia	TJ	TJK	762
+Tanzania, the United Republic of	Africa	TZ	TZA	834
+Thailand	Asia	TH	THA	764
+Timor-Leste	Asia	TL	TLS	626
+Togo	Africa	TG	TGO	768
+Tokelau	Oceania	TK	TKL	772
+Tonga	Oceania	TO	TON	776
+Trinidad and Tobago	North America	TT	TTO	780
+Tunisia	Africa	TN	TUN	788
+Turkmenistan	Asia	TM	TKM	795
+Turks and Caicos Islands (the)	North America	TC	TCA	796
+Tuvalu	Oceania	TV	TUV	798
+Türkiye	Europe	TR	TUR	792
+Uganda	Africa	UG	UGA	800
+Ukraine	Europe	UA	UKR	804
+United Arab Emirates (the)	Asia	AE	ARE	784
+United Kingdom of Great Britain and Northern Ireland (the)	Europe	GB	GBR	826
+United States Minor Outlying Islands (the)	Oceania	UM	UMI	581
+United States of America (the)	North America	US	USA	840
+Uruguay	South America	UY	URY	858
+Uzbekistan	Asia	UZ	UZB	860
+Vanuatu	Oceania	VU	VUT	548
+Venezuela (Bolivarian Republic of)	South America	VE	VEN	862
+Viet Nam	Asia	VN	VNM	704
+Virgin Islands (British)	North America	VG	VGB	92
+Virgin Islands (U.S.)	North America	VI	VIR	850
+Wallis and Futuna	Oceania	WF	WLF	876
+Western Sahara	Africa	EH	ESH	732
+Yemen	Asia	YE	YEM	887
+Zambia	Africa	ZM	ZMB	894
+Zimbabwe	Africa	ZW	ZWE	716
+Åland Islands	Europe	AX	ALA	248

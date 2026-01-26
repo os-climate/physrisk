@@ -58,10 +58,21 @@ class Asset(BaseModel):
         description="name of asset class; corresponds to physrisk class names, e.g. PowerGeneratingAsset. If not provided, "
         "physrisk will infer the class from 'occupancy_code'.",
     )
-    latitude: Optional[float] = Field(default=None, description="Latitude in degrees")
-    longitude: Optional[float] = Field(default=None, description="Longitude in degrees")
+    latitude: Optional[float] = Field(
+        default=None, description="Latitude in degrees, specified in WGS84 (EPSG:4326)."
+    )
+    longitude: Optional[float] = Field(
+        default=None,
+        description="Longitude in degrees, specified in WGS84 (EPSG:4326).",
+    )
     wkt: Optional[str] = Field(
-        default=None, description="Well Known Text representation of location"
+        default=None,
+        description="Well Known Text representation of asset geometry, specified in WGS84 (EPSG:4326).",
+    )
+    buffer: float = Field(
+        default=0.0,
+        description="Buffer to be applied to the geometry, in metres. "
+        "If 'wkt' is not provided, the buffer is applied.",
     )
     type: Optional[str] = Field(
         None,
@@ -75,8 +86,8 @@ class Asset(BaseModel):
     )
     occupancy_code: int = Field(
         default=1000,
-        description="Occupancy code. This is Open Exposure Data occupancy code, unless otherwise specified. Defaults"
-        "to None, rather than 1000 (unknown) to indicate that asset_class field is to be used.",
+        description="Occupancy code. This is Open Exposure Data occupancy code, unless otherwise specified (and currently no other scheme supported)."
+        "Defaults to 1000, which is 'unknown', in which case physrisk asset class is inferred from 'asset_class'.",
     )
     number_of_storeys: Optional[int] = Field(
         default=-1,

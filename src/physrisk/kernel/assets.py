@@ -1,10 +1,19 @@
-import base64
 from dataclasses import dataclass
 from enum import Enum
-import hashlib
 from typing import Optional
 
+from pyproj import Transformer
+from shapely.ops import transform
+from shapely import Point
+from shapely.geometry.base import BaseGeometry
 import shapely.wkt
+
+project_4326_to_3857 = Transformer.from_crs(
+    "EPSG:4326", "EPSG:3857", always_xy=True
+).transform
+project_3857_to_4326 = Transformer.from_crs(
+    "EPSG:3857", "EPSG:4326", always_xy=True
+).transform
 
 
 # 'primary_fuel' entries in Global Power Plant Database v1.3.0 (World Resources Institute)
@@ -94,30 +103,62 @@ class Asset:
         self,
         latitude: Optional[float] = None,
         longitude: Optional[float] = None,
-        wkt: Optional[str] = None,
+        wkt_geometry: Optional[str] = None,
+        buffer: float = 0.0,
         id: Optional[str] = None,
         **kwargs,
     ):
+        """
+        Create Asset instance. Asset can be point-like, or have a geometry defined via WKT. Buffering can
+        be specified as a convenience: if buffer is non-zero, the geometry is buffered by the specified
+        distance in metres. This is also applied to point-like assets created from latitude/longitude.
+
+        Args:
+            latitude (Optional[float], optional): Latitude in degrees (EPSG:4326). Defaults to None.
+            longitude (Optional[float], optional): Longitude in degrees (EPSG:4326). Defaults to None.
+            wkt_geometry (Optional[str], optional): Well-Known Text representation of geometry. Defaults to None.
+            buffer (float, optional): Buffer distance in metres. Defaults to 0.0.
+            id (Optional[str], optional): Identifier for the asset. Defaults to None.
+        Raises:
+            ValueError: If neither lat/lon nor wkt_geometry is provided.
+        """
         self.id = id
         if latitude is None or longitude is None:
-            if wkt is None:
+            if wkt_geometry is None:
                 raise ValueError("either latitude/longitude or wkt must be provided")
-        else:
-            self.latitude = latitude
-            self.longitude = longitude
-        if wkt is not None:
-            self.geom = shapely.wkt.loads(wkt).normalize()
-            centroid = self.geom.centroid
+        if wkt_geometry is not None:
+            self.geometry = shapely.wkt.loads(wkt_geometry).normalize()
+            if buffer != 0.0:
+                self.geometry = self.buffered_geometry(self.geometry, buffer)
+            centroid = self.geometry.centroid
             self.latitude = centroid.y
             self.longitude = centroid.x
-            # create a hash of the wkt, using SHA256 but truncating to 20 characters for brevity
-            # collision probability still extremely low
-            digest = hashlib.sha256(self.geom.wkb).digest()
-            self.wkt_hash = (
-                base64.urlsafe_b64encode(digest).rstrip(b"=").decode("ascii")[0:20]
-            )
+        else:
+            if buffer != 0.0:
+                self.geometry = Asset.buffered_geometry(
+                    Point(longitude, latitude), buffer
+                )
+            else:
+                self.geometry = None
+            self.latitude = latitude
+            self.longitude = longitude
 
         self.__dict__.update(kwargs)
+
+    @staticmethod
+    def buffered_geometry(geometry: BaseGeometry, buffer: float) -> BaseGeometry:
+        """Relatively simple buffer, suitable for small buffers in metres around lat/lon points.
+
+        Args:
+            geometry (BaseGeometry): Geometry in EPSG:4326.
+            buffer (float): Buffer in metres.
+
+        Returns:
+            BaseGeometry: Buffered geometry in EPSG:4326.
+        """
+        geom_proj: BaseGeometry = transform(project_4326_to_3857, geometry)
+        buffered = geom_proj.buffer(buffer, quad_segs=4)
+        return transform(project_3857_to_4326, buffered)
 
 
 class OEDAsset(Asset):
@@ -126,14 +167,21 @@ class OEDAsset(Asset):
         latitude: Optional[float] = None,
         longitude: Optional[float] = None,
         occupancy_code: int = 1000,
-        wkt: Optional[str] = None,
+        wkt_geometry: Optional[str] = None,
+        buffer: float = 0.0,
         number_of_storeys: int = 0,  # -1 = unknown No. storeys - low rise, -2 = unknown No. storeys - mid rise, -3 = Unknown no. storeys = high rise).
         basement: int = 0,  # 0 = unknown / default, 1 = unfinished, 2 = 100% finished
         construction_code: int = 5000,
         first_floor_height: float = 0.305,
         **kwargs,
     ):
-        super().__init__(latitude=latitude, longitude=longitude, wkt=wkt, **kwargs)
+        super().__init__(
+            latitude=latitude,
+            longitude=longitude,
+            wkt_geometry=wkt_geometry,
+            buffer=buffer,
+            **kwargs,
+        )
         self.occupancy_code = occupancy_code
         self.number_of_storeys = number_of_storeys
         self.basement = basement
@@ -269,3 +317,16 @@ class WindTurbine(Asset):
     cut_out_speed: Optional[float] = None
     fixed_base: Optional[bool] = True
     rotor_diameter: Optional[float] = None
+
+
+def all_asset_types():
+    def all_subclasses(cls: type) -> set[type]:
+        subclasses = set(cls.__subclasses__())
+        for subclass in cls.__subclasses__():
+            subclasses |= all_subclasses(subclass)
+        return subclasses
+
+    all_asset_types = all_subclasses(Asset)
+    for a in [OEDAsset, SimpleTypeLocationAsset, TestAsset]:
+        all_asset_types.remove(a)
+    return all_asset_types

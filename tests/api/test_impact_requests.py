@@ -1,17 +1,16 @@
 import json
-import unittest
 
 import numpy as np
-from pydantic import TypeAdapter
+import pyproj
+import shapely
 
 from physrisk import requests
 from physrisk.api.v1.common import Asset, Assets
-from physrisk.api.v1.impact_req_resp import RiskMeasures, RiskMeasuresHelper
-from physrisk.container import Container
 from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_source_paths
+import physrisk.kernel.assets
 from physrisk.kernel.assets import (
     PowerGeneratingAsset,
     RealEstateAsset,
@@ -39,9 +38,6 @@ from ..data.test_hazard_model_store import (
     shape_transform_21600_43200,
     zarr_memory_store,
 )
-
-# from physrisk.api.v1.impact_req_resp import AssetImpactResponse
-# from physrisk.data.static.world import get_countries_and_continents
 
 
 class TestImpactRequests(TestWithCredentials):
@@ -790,73 +786,6 @@ class TestImpactRequests(TestWithCredentials):
             response.asset_impacts[5].impacts[0].impact_mean, 0.0005859470850072303
         )
 
-    @unittest.skip("example, not test: TOCHECK")
-    def test_example_portfolios(self):
-        example_portfolios = requests._get_example_portfolios()
-        for assets in example_portfolios:
-            request_dict = {
-                "assets": assets,
-                "include_asset_level": True,
-                "include_calc_details": False,
-                "years": [2030, 2040, 2050],
-                "scenarios": ["ssp585"],
-            }
-            container = Container()
-            requester = container.requester()
-            response = requester.get(
-                request_id="get_asset_impact", request_dict=request_dict
-            )
-            with open("out.json", "w") as f:
-                f.write(response)
-            assert response is not None
-
-    @unittest.skip("example, not test")
-    def test_example_portfolios_risk_measures(self):
-        assets = {
-            "items": [
-                {
-                    "asset_class": "RealEstateAsset",
-                    "type": "Buildings/Commercial",
-                    "location": "Europe",
-                    "longitude": 11.5391,
-                    "latitude": 48.1485,
-                }
-            ],
-        }
-        # 48.1485°, 11.5391°
-        # 48.1537°, 11.5852°
-        request_dict = {
-            "assets": assets,
-            "include_asset_level": True,
-            "include_calc_details": True,
-            "include_measures": True,
-            "years": [2030, 2040, 2050],
-            "scenarios": ["ssp245", "ssp585"],  # ["ssp126", "ssp245", "ssp585"],
-        }
-        container = Container()
-        requester = container.requester()
-        response = requester.get(
-            request_id="get_asset_impact", request_dict=request_dict
-        )
-        response = requester.get(
-            request_id="get_asset_impact", request_dict=request_dict
-        )
-        risk_measures_dict = json.loads(response)["risk_measures"]
-        helper = RiskMeasuresHelper(
-            TypeAdapter(RiskMeasures).validate_python(risk_measures_dict)
-        )
-        for hazard_type in [
-            "RiverineInundation",
-            "CoastalInundation",
-            "ChronicHeat",
-            "Wind",
-        ]:
-            scores, measure_values, measure_defns = helper.get_measure(
-                hazard_type, "ssp585", 2050
-            )
-            label, description = helper.get_score_details(scores[0], measure_defns[0])
-            print(label)
-
 
 def test_json_nan_protection():
     test_array = np.array(
@@ -866,3 +795,17 @@ def test_json_nan_protection():
     result = json.dumps(test_list, cls=requests.PhysriskDefaultEncoder)
     result2 = json.dumps(test_array, cls=requests.PhysriskDefaultEncoder)
     assert result == result2 == '[[1.0, "inf", 3.0], [4.0, null, "-inf"]]'
+
+
+def test_asset_geometry_buffer():
+    asset = physrisk.kernel.assets.Asset(
+        latitude=23.6839, longitude=90.5314, buffer=50.0
+    )
+    coords = shapely.get_coordinates(asset.geometry)
+    # print(shapely.to_wkt(asset.geometry, rounding_precision=5))
+    g = pyproj.Geod(ellps="WGS84")
+    # buffering built into Asset is approximate, aiming to be good to within a few metres
+    # for relatively small buffers (under 100 m or so)
+    # sanity check using great circle distance:
+    (_, _, dist) = g.inv(coords[0][0], coords[0][1], 90.5314, 23.6839)
+    assert dist > 45.0 and dist < 55.0

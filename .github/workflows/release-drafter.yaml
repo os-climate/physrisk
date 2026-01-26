@@ -2,51 +2,77 @@
 # SPDX-License-Identifier: Apache-2.0
 # SPDX-FileCopyrightText: 2025 The Linux Foundation
 
-name: "Release Drafter"
+name: 'Release Drafter'
 
+# yamllint disable-line rule:truthy
 on:
+  workflow_dispatch:
   push:
-    # branches to consider in the event; optional, defaults to all
     branches:
       - main
-      - master
-
-  # pull_request event is required only for autolabeler
+  # pull_request is required for autolabeler
   pull_request:
-    # Only following types are handled by the action, but one can default to all as well
-    types: [opened, reopened, synchronize]
-  # pull_request_target event is required for autolabeler to support PRs from forks
-  # pull_request_target:
-  #   types: [opened, reopened, synchronize]
+    types:
+      - opened
+      - synchronize
+      - reopened
+  # pull_request_target is required for autolabeler on PRs from forks
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
 
-permissions:
-  contents: read
+permissions: {}
 
 jobs:
   update_release_draft:
+    name: 'Update Release Draft'
+    # Run on pull_request_target for forks, or pull_request for same-repo PRs
+    # This prevents duplicate runs for same-repo PRs
+    # yamllint disable rule:line-length
+    if: >
+      (github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork) ||
+      (github.event_name == 'pull_request' && !github.event.pull_request.head.repo.fork) ||
+      github.event_name == 'push'
+    # yamllint enable rule:line-length
+    # SECURITY: pull_request_target with write permissions is safe here because:
+    # 1. This workflow does NOT checkout any code from the PR
+    # 2. The workflow code itself runs from the base branch (not the fork)
+    # 3. release-drafter only makes GitHub API calls (no code execution)
+    # 4. pull_request_target is needed ONLY for autolabeling fork PRs
     permissions:
-      # write permission is required to create a github release
+      # write permission is required to create releases
       contents: write
       # write permission is required for autolabeler
-      # otherwise, read permission is required at least
       pull-requests: write
-    runs-on: ubuntu-24.04
+    runs-on: 'ubuntu-latest'
+    timeout-minutes: 3
+    concurrency:
+      # yamllint disable-line rule:line-length
+      group: ${{ github.event.pull_request.number && format('rd-pr-{0}', github.event.pull_request.number) || format('rd-push-{0}', github.ref) }}
+      cancel-in-progress: true
     steps:
       # Harden the runner used by this workflow
-      - uses: step-security/harden-runner@f4a75cfd619ee5ce8d5b864b0d183aff3c69b55a # v2.13.1
+      # yamllint disable-line rule:line-length
+      - uses: step-security/harden-runner@20cf305ff2072d973412fa9b1e3a4f227bda3c76 # v2.14.0
         with:
-          egress-policy: audit
+          egress-policy: 'audit'
 
-      # (Optional) GitHub Enterprise requires GHE_HOST variable set
-      #- name: Set GHE_HOST
-      #  run: |
-      #    echo "GHE_HOST=${GITHUB_SERVER_URL##https:\/\/}" >> $GITHUB_ENV
+      - name: 'Show concurrency group'
+        shell: bash
+        # yamllint disable rule:line-length
+        run: |
+          # Show concurrency group
+          {
+            echo '## Release Drafter'
+            echo "Concurrency group: ${{ github.event.pull_request.number && format('rd-pr-{0}', github.event.pull_request.number) || format('rd-push-{0}', github.ref) }}"
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "Concurrency group: ${{ github.event.pull_request.number && format('rd-pr-{0}', github.event.pull_request.number) || format('rd-push-{0}', github.ref) }}"
+        # yamllint enable rule:line-length
 
-      # Drafts your next Release notes as Pull Requests are merged into "master"
-      - uses: release-drafter/release-drafter@b1476f6e6eb133afa41ed8589daba6dc69b4d3f5 # v6.1.0
-        # (Optional) specify config name to use, relative to .github/. Default: release-drafter.yml
-        # with:
-        #   config-name: my-config.yml
-        #   disable-autolabeler: true
+      - name: 'Update draft release'
+        # yamllint disable-line rule:line-length
+        uses: release-drafter/release-drafter@267d2e0268deae5d44f3ba5029dd4d6e85f9d52d # v6.1.1
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"

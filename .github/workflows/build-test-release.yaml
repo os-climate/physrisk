@@ -69,11 +69,13 @@ jobs:
       - name: 'Verify pushed tag'
         id: 'tag-validate'
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/tag-validate-action@4bd433ffdadfcfb8850312059b669dfd3da0bb84  # v0.1.2
+        uses: lfreleng-actions/tag-validate-action@57c522eff7b5ff797094c054a9614f45e0c5ef17  # v0.3.0
         with:
-          require_type: 'semver'
-          require_signed: 'true'
           token: "${{ secrets.GITHUB_TOKEN }}"
+          require_type: 'semver'
+          require_github: 'true'
+          # yamllint disable-line rule:line-length
+          require_signed: 'ssh,gpg-unverifiable'  # Cannot verify GPG without key
 
       - name: 'Reject development tags'
         if: steps.tag-validate.outputs.development_tag == 'true'
@@ -230,6 +232,9 @@ jobs:
         # yamllint disable-line rule:line-length
         uses: anchore/scan-action@62b74fb7bb810d2c45b1865f47a77655621862a5  # v7.2.3
         id: grype-sarif
+        # The first Grype audit should not be blocking and should never fail
+        # That way we always get the required artefact; the second job will
+        # exit with an error, as required (below)
         continue-on-error: true
         with:
           sbom: "${{ steps.sbom.outputs.sbom_json_path }}"
@@ -290,7 +295,7 @@ jobs:
 
       - name: 'Test PyPI publishing'
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/pypi-publish-action@440c499c2ba633f95a281c02e624676e753d01ea  # v0.1.3
+        uses: lfreleng-actions/pypi-publish-action@927f0dfdbcf79802c16a3e486ffca2be27ab57ed  # v0.1.4
         with:
           environment: 'development'
           tag: "${{ needs.tag-validate.outputs.tag }}"
@@ -317,7 +322,7 @@ jobs:
 
       - name: 'PyPI release'
         # yamllint disable-line rule:line-length
-        uses: lfreleng-actions/pypi-publish-action@440c499c2ba633f95a281c02e624676e753d01ea  # v0.1.3
+        uses: lfreleng-actions/pypi-publish-action@927f0dfdbcf79802c16a3e486ffca2be27ab57ed  # v0.1.4
         with:
           environment: 'production'
           attestations: true

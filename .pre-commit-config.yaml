@@ -96,7 +96,7 @@ repos:
       - id: actionlint
 
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: 79a6b2b1392eaf49cdd32ac4f14be1a809bbd8f7 # frozen: v1.37.1
+    rev: cba56bcde1fdd01c1deb3f945e69764c291a6530  # frozen: v1.38.0
     hooks:
       - id: yamllint
         types: [yaml]
@@ -107,7 +107,7 @@ repos:
           ]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 6ce4b4fc349b8881cbce40207dac3bf78824a88e  # frozen: v0.14.11
+    rev: 9b1e9a33f1b33f6ecc2fdbb8d7cc894e951106e4  # frozen: v0.14.13
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --config=pyproject.toml]

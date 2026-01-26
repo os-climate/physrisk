@@ -143,7 +143,7 @@ dev = [
     "pre-commit",
     "ruff",
     "tox",
-    "filelock>=3.20.1",
+    "filelock>=3.20.3",
     "click>=8.3.0",
 ]
 

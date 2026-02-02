@@ -629,3 +629,4 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                         if to_key in measures:
                             aggregate_measures[from_key] = measures[to_key]
         return aggregate_measures
+

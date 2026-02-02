@@ -341,6 +341,8 @@ class AssetLevelRiskModel(RiskModel):
                             if base_impacts is None or fut_impacts is None:
                                 # should only happen if we are working with limited hazard scope
                                 continue
+                            # if there are multiple impacts (e.g. from multiple vulnerability models), we
+                            # pass to the measure calculator. It will aggregate as it sees fit.
                             risk_inds = [
                                 measure_calc.calc_measure(
                                     hazard_type, base_impact, prosp_impact

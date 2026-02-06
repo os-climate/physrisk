@@ -68,12 +68,24 @@ class AssetImpactRequest(BaseModel):
     )
 
 
-class Category(int, Enum):
+class OriginalCategory(int, Enum):
     NODATA = 0
+    VERY_LOW = LOW = 1
+    MEDIUM = 2
+    HIGH = 3
+    VERY_HIGH = REDFLAG = 4
+
+
+class CurrentCategory(int, Enum):
+    NODATA = -1
+    VERY_LOW = 0
     LOW = 1
     MEDIUM = 2
     HIGH = 3
-    REDFLAG = 4
+    VERY_HIGH = 4
+
+
+Category = OriginalCategory
 
 
 class RiskMeasureDefinition(BaseModel):

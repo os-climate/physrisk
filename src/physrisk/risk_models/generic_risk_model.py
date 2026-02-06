@@ -85,51 +85,21 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
         # fmt: off
 
         acute_bounds = ImpactBounds(
-                categories=[Category.LOW, Category.MEDIUM, Category.HIGH, Category.REDFLAG],
+                categories=[Category.VERY_LOW, Category.LOW, Category.MEDIUM, Category.HIGH, Category.VERY_HIGH],
                 measure=self._aal_future,
-                lower=[float("-inf"), 0.002,         0.01,          0.05],  # applies to impact
-                upper=[0.002,         0.01,          0.05,          float("inf")],
+                lower=[float("-inf"),   0.01/100.,  0.2/100.,   1./100.,   5./100.],  # applies to impact
+                upper=[0.01/100.,       0.2/100.,   1./100.,    5./100.,   float("inf")],
+        ) # noqa
+        chronic_bounds = ImpactBounds(
+                categories=[Category.VERY_LOW, Category.LOW, Category.MEDIUM, Category.HIGH, Category.VERY_HIGH],
+                measure=self._aal_future,
+                lower=[float("-inf"),   0.01/100.,  1./100.,   5./100.,    10./100.],  # applies to impact
+                upper=[0.01/100,        1./100.,    5./100.,   10./100.,  float("inf")],
         ) # noqa
 
         self._bounds = {
-            ChronicHeat: HazardIndicatorBounds(
-                categories=[Category.LOW, Category.MEDIUM, Category.HIGH, Category.REDFLAG],
-                hazard_type=ChronicHeat,
-                indicator_id="days/above/35c",
-                indicator_return=1,
-                units="days/year",
-                lower=[float("-inf"), 10, 20, 30],
-                upper=[10,            20, 30, float("inf")]
-                ), # noqa
-            Drought: HazardIndicatorBounds(
-                categories=[Category.LOW, Category.MEDIUM, Category.HIGH, Category.REDFLAG],
-                hazard_type=Drought,
-                indicator_id="months/spei3m/below/-2",
-                indicator_return=1,
-                units="months/year",
-                lower=[float("-inf"), 0.25, 0.5, 1],
-                upper=[0.25,          0.5,  1,   float("inf")]
-                ), # noqa
-            Fire: HazardIndicatorBounds(
-                categories=[Category.LOW, Category.MEDIUM, Category.HIGH, Category.REDFLAG],
-                hazard_type=Fire,
-                indicator_id="fire_probability",
-                indicator_return=1,
-                units="",
-                lower=[float("-inf"), 0.001, 0.0035, 0.005],
-                upper=[0.001,          0.0035, 0.005, float("inf")]
-                ), # noqa
-            Hail: HazardIndicatorBounds(
-                categories=[Category.LOW, Category.MEDIUM, Category.HIGH, Category.REDFLAG],
-                hazard_type=Hail,
-                indicator_id="days/above/5cm",
-                indicator_return=1,
-                units="days/year",
-                lower=[float("-inf"), 1, 2, 3],
-                upper=[1,             2, 3, float("inf")]
-                ), # noqa
             Precipitation: HazardIndicatorBounds(
-                categories=[Category.LOW, Category.MEDIUM, Category.HIGH, Category.REDFLAG],
+                categories=[Category.LOW, Category.MEDIUM, Category.HIGH, Category.VERY_HIGH],
                 hazard_type=Precipitation,
                 indicator_id="max/daily/water_equivalent",
                 indicator_return=100,
@@ -140,83 +110,14 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
             CoastalInundation: acute_bounds,
             PluvialInundation: acute_bounds,
             RiverineInundation: acute_bounds,
+            Fire: acute_bounds,
+            Hail: acute_bounds,
             Wind: acute_bounds,
+            Drought: chronic_bounds,
+            ChronicHeat: chronic_bounds,
         }
-
-        # acute_bounds = ImpactBoundsJoint(
-        #     categories=[Category.LOW, Category.MEDIUM, Category.HIGH, Category.REDFLAG],
-        #     measure1=self._impact,
-        #     return1=100,  # i.e. 1-in-100 year impact
-        #     measure2=self._delta_impact,
-        #     return2=100,  # i.e. change in 1-in-100 year impact from historical to future scenario
-        #     lower1=[float("-inf"), 0.02,          0.02,         0.05],  # applies to impact
-        #     upper1=[0.02,          float("inf"),  0.05,         float("inf")],
-        #     lower2=[float("-inf"), float("-inf"), 0.03,         0.03],  # change of impact, baseline to future
-        #     upper2=[float("inf"),  0.03,          float("inf"), float("inf")],
-        # ) # noqa
-        # self._bounds[RiverineInundation] = acute_bounds
-        # self._bounds[CoastalInundation] = acute_bounds
-        # self._bounds[PluvialInundation] = acute_bounds
         # fmt: on
         self._definition_lookup = {}
-        self._definition_lookup[ChronicHeat] = ScoreBasedRiskMeasureDefinition(
-            hazard_types=[ChronicHeat.__name__],
-            values=self._definition_values(self._bounds[ChronicHeat]),
-            underlying_measures=[
-                RiskMeasureDefinition(
-                    measure_id="measure_chronic_heat",
-                    label="Days per year temperature > 35°C.",
-                    description=(
-                        "Days per year with maximum daily temperature > 35°C."
-                    ),
-                    units="days/year",
-                )
-            ],
-        )
-        self._definition_lookup[Drought] = ScoreBasedRiskMeasureDefinition(
-            hazard_types=[Drought.__name__],
-            values=self._definition_values(self._bounds[Drought]),
-            underlying_measures=[
-                RiskMeasureDefinition(
-                    measure_id="measure_drought",
-                    label=("Months per year 3M SPEI < -2"),
-                    description=(
-                        "Months per year where the rolling 3-month average Standardized Precipitation "
-                        "Evapotranspiration Index (SPEI) is < -2."
-                    ),
-                    units="months/year",
-                )
-            ],
-        )
-        self._definition_lookup[Fire] = ScoreBasedRiskMeasureDefinition(
-            hazard_types=[Fire.__name__],
-            values=self._definition_values(self._bounds[Fire]),
-            underlying_measures=[
-                RiskMeasureDefinition(
-                    measure_id="measure_fire",
-                    label=("Wilfire probability."),
-                    description=(
-                        "Annual probability of occurence of a wildfire: asset is located in a burnt area."
-                    ),
-                    units="",  # expect a percentage
-                )
-            ],
-        )
-        self._definition_lookup[Hail] = ScoreBasedRiskMeasureDefinition(
-            hazard_types=[Hail.__name__],
-            values=self._definition_values(self._bounds[Hail]),
-            underlying_measures=[
-                RiskMeasureDefinition(
-                    measure_id="measure_hail",
-                    label=("Large hail days per year."),
-                    description=(
-                        "Number of days per year where climatic conditions are such that large hail "
-                        "(> 2 inches / 5 cm in diameter) can occur."
-                    ),
-                    units="days/year",
-                )
-            ],
-        )
         self._definition_lookup[Precipitation] = ScoreBasedRiskMeasureDefinition(
             hazard_types=[Precipitation.__name__],
             values=self._definition_values(self._bounds[Precipitation]),
@@ -236,6 +137,8 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 CoastalInundation.__name__,
                 PluvialInundation.__name__,
                 RiverineInundation.__name__,
+                Fire.__name__,
+                Hail.__name__,
                 Wind.__name__,
             ],
             values=self._definition_values_impact(acute_bounds),
@@ -306,17 +209,17 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 ],
             ),
             RiskScoreValue(
-                value=Category.REDFLAG,
+                value=Category.VERY_HIGH,
                 label=("Very high exposure"),
                 description="Very high exposure",
                 lower_bound=[
                     self._bounds_format(
-                        bounds.lower[bounds.categories.index(Category.REDFLAG)]
+                        bounds.lower[bounds.categories.index(Category.VERY_HIGH)]
                     )
                 ],
                 upper_bound=[
                     self._bounds_format(
-                        bounds.upper[bounds.categories.index(Category.REDFLAG)]
+                        bounds.upper[bounds.categories.index(Category.VERY_HIGH)]
                     )
                 ],
             ),
@@ -373,17 +276,17 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 ],
             ),
             RiskScoreValue(
-                value=Category.REDFLAG,
+                value=Category.VERY_HIGH,
                 label=("Very high impact"),
                 description="Very high impact",
                 lower_bound=[
                     self._bounds_format(
-                        bounds.lower[bounds.categories.index(Category.REDFLAG)]
+                        bounds.lower[bounds.categories.index(Category.VERY_HIGH)]
                     )
                 ],
                 upper_bound=[
                     self._bounds_format(
-                        bounds.upper[bounds.categories.index(Category.REDFLAG)]
+                        bounds.upper[bounds.categories.index(Category.VERY_HIGH)]
                     )
                 ],
             ),
@@ -392,9 +295,9 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
     def _definition_values_impact_change(self, description: Callable[[Category], str]):
         return [
             RiskScoreValue(
-                value=Category.REDFLAG,
+                value=Category.VERY_HIGH,
                 label=("The asset is very materially impacted."),
-                description=description(Category.REDFLAG),
+                description=description(Category.VERY_HIGH),
             ),
             RiskScoreValue(
                 value=Category.HIGH,
@@ -443,13 +346,13 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
     def calc_measure(
         self,
         hazard_type: Type[Hazard],
-        histo_impact_res: AssetImpactResult,
-        future_impact_res: AssetImpactResult,
+        histo_impacts: Sequence[AssetImpactResult],
+        future_impacts: Sequence[AssetImpactResult],
     ) -> Measure:
         # in general we want to use the impact distribution, but in certain circumstances we can use
         # the underlying hazard data some care is needed given that vulnerability models are interchangeable
         # (what if the vulnerability model used does not make use of the hazard indicator we require?)
-
+        histo_impact_res, future_impact_res = histo_impacts[0], future_impacts[0]
         bounds = self._bounds[hazard_type]
         if isinstance(bounds, HazardIndicatorBounds):
             assert future_impact_res.hazard_data is not None
@@ -629,4 +532,3 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                         if to_key in measures:
                             aggregate_measures[from_key] = measures[to_key]
         return aggregate_measures
-

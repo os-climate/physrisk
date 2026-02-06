@@ -87,8 +87,8 @@ def _config_based_vulnerability_models():
             indicator_units="months/year",
             impact_id="disruption",
             curve_type="threshold/piecewise_linear",
-            points_x=np.array([-2, -2.5, -3, -3.5]),
-            points_y=np.array([0, 0.1, 0.2, 1.0]),
+            points_x=np.array([-3.5, -3.0, -2.5, -2]),
+            points_y=np.array([1.0, 0.2, 0.1, 0.0]),
         ),
         VulnerabilityConfigItem(
             hazard_class="Fire",
@@ -358,14 +358,14 @@ class TestRiskModels(TestWithCredentials):
             [5.0, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60],
             np.array(
                 [
-                    363.65,
-                    350.21,
-                    303.64,
-                    240.48,
-                    181.83,
-                    128.47,
-                    74.40,
-                    1.40,
+                    327.28,
+                    315.19,
+                    273.28,
+                    216.43,
+                    163.65,
+                    115.62,
+                    66.96,
+                    1.26,
                     0.0,
                     0.0,
                     0.0,
@@ -393,8 +393,7 @@ class TestRiskModels(TestWithCredentials):
                     0.0,
                     0.0,
                 ]
-            )
-            * 1.1,
+            ),
         )
         mocker.add_curves_global(
             sp_heat2("historical", -1),
@@ -442,15 +441,16 @@ class TestRiskModels(TestWithCredentials):
             sp_drought("historical", -1),
             TestData.longitudes,
             TestData.latitudes,
-            [-3.6, -3.0, -2.5, -2.0, -1.5, -1.0, 0.0],
-            np.array([0.0, 0.0, 0.058, 0.29, 0.86, 2.1, 6.5]),
+            # data should be this way around, consistent with temperature type threshold curves
+            [0.0, -1.0, -1.5, -2.0, -2.5, -3.0, -3.6],
+            np.array([6.5, 2.1, 0.86, 0.29, 0.058, 0.0, 0.0]),
         )
         mocker.add_curves_global(
             sp_drought("ssp585", 2050),
             TestData.longitudes,
             TestData.latitudes,
-            [-3.6, -3.0, -2.5, -2.0, -1.5, -1.0, 0.0],
-            np.array([0.0, 0.075, 0.56, 1.5, 2.4, 3.7, 7.3]),
+            [0.0, -1.0, -1.5, -2.0, -2.5, -3.0, -3.6],
+            np.array([7.3, 3.7, 2.4, 1.5, 0.56, 0.075, 0.0]),
         )
         mocker.add_curves_global(
             sp_precipitation("historical", -1),
@@ -547,13 +547,26 @@ class TestRiskModels(TestWithCredentials):
             measures[MeasureKey(assets[0], scenarios[0], years[0], Wind)].measure_0,
             0.0101490442129,
         )
+        # another check on drought.
+        # thresholds:
+        # [0.0, -1.0, -1.5, -2.0, -2.5, -3.0, -3.6],
+        # months/year above threshold:
+        # [6.5, 2.1, 0.86, 0.29, 0.058, 0.0, 0.0]
+        # [7.3, 3.7, 2.4, 1.5, 0.56, 0.075, 0.0]
+        # points_x = (np.array([-2, -2.5, -3, -3.5]),)
+        # points_y = (np.array([0, 0.1, 0.2, 1.0]),)
+        expected_hist = 0.058 * 0.15 / 12 + (0.29 - 0.058) * 0.05 / 12
+        expected_fut = (
+            0.075 * 0.6 / 12 + (0.56 - 0.075) * 0.15 / 12 + (1.5 - 0.56) * 0.05 / 12
+        )
+
         np.testing.assert_approx_equal(
             measures[MeasureKey(assets[0], scenarios[0], years[0], Drought)].measure_0,
-            0.00312500012418,
+            expected_fut - expected_hist,
         )
         np.testing.assert_equal(
             measures[MeasureKey(assets[0], scenarios[0], years[0], Drought)].score,
-            Category.VERY_LOW,
+            Category.MEDIUM,
         )
 
     def test_generic_model_via_requests_custom(self):
@@ -588,7 +601,7 @@ class TestRiskModels(TestWithCredentials):
             def vulnerability_models(
                 self, hazard_scope: Optional[Set[Type[Hazard]]] = None
             ) -> VulnerabilityModels:
-                return DictBasedVulnerabilityModels(_vulnerability_models())
+                return _vulnerability_models()
 
         class TestMeasuresFactory(RiskMeasuresFactory):
             def asset_calculators(self, use_case_id: str):

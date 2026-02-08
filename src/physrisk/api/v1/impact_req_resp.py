@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Any, Dict, List, NamedTuple, Optional, Sequence
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -68,26 +67,6 @@ class AssetImpactRequest(BaseModel):
     )
 
 
-class OriginalCategory(int, Enum):
-    NODATA = 0
-    VERY_LOW = LOW = 1
-    MEDIUM = 2
-    HIGH = 3
-    VERY_HIGH = REDFLAG = 4
-
-
-class CurrentCategory(int, Enum):
-    NODATA = -1
-    VERY_LOW = 0
-    LOW = 1
-    MEDIUM = 2
-    HIGH = 3
-    VERY_HIGH = 4
-
-
-Category = OriginalCategory
-
-
 class RiskMeasureDefinition(BaseModel):
     measure_id: str = Field("", description="Identifier for the risk measure.")
     label: str = Field(
@@ -101,17 +80,15 @@ class RiskMeasureDefinition(BaseModel):
 
 
 class RiskScoreValue(BaseModel):
-    value: Category = Field(
-        Category.NODATA, description="Value of the score: red, amber, green, nodata."
-    )
+    value: int = Field(-1, description="Value of the score.")
     label: str = Field(
         "",
-        description="Short description of value, e.g. material increase in loss for 1-in-100 year event.",
+        description="Short description of value, e.g. 'very low impact'.",
     )
     description: str = Field(
         "",
-        description="Full description of value including criteria, \
-        e.g. change in fractional loss from 1-in-100 year event is greater than 10%.",
+        description="Full description of value, \
+        e.g. 'very low impact: very unlikely to cause asset devaluation'.",
     )
     lower_bound: Optional[List[Any]] = Field(
         default=None,

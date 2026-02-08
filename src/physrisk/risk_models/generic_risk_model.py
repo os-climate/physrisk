@@ -4,11 +4,11 @@ from typing import Any, Dict, Protocol, Sequence, Set, Type, Union
 
 import numpy as np
 from physrisk.api.v1.impact_req_resp import (
-    Category,
     RiskMeasureDefinition,
     RiskScoreValue,
     ScoreBasedRiskMeasureDefinition,
 )
+from physrisk.api.v1.scoring_schemes import Category
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.hazard_model import (
     HazardEventDataResponse,
@@ -111,6 +111,7 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
         self._bounds = {
             Precipitation: HazardIndicatorBounds(
                 categories=[
+                    Category.VERY_LOW,
                     Category.LOW,
                     Category.MEDIUM,
                     Category.HIGH,
@@ -120,8 +121,8 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 indicator_id="max/daily/water_equivalent",
                 indicator_return=100,
                 units="mm/day",
-                lower=[float("-inf"), 100, 130, 160],
-                upper=[100, 130, 160, float("inf")],
+                lower=[float("-inf"), 10, 100, 130, 160],
+                upper=[10, 100, 130, 160, float("inf")],
             ),  # noqa
             CoastalInundation: acute_bounds,
             PluvialInundation: acute_bounds,
@@ -201,7 +202,7 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
     def _definition_values_exposure(self, bounds: HazardIndicatorBounds):
         return [
             RiskScoreValue(
-                value=Category.NODATA, label="No data", description="No data."
+                value=Category.NO_DATA, label="No data", description="No data."
             ),
             RiskScoreValue(
                 value=Category.VERY_LOW,
@@ -283,10 +284,10 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
     def _definition_values_impact(self, bounds: ImpactBounds):
         return [
             RiskScoreValue(
-                value=Category.NODATA, label="No data", description="No data."
+                value=Category.NO_DATA, label="No data", description="No data."
             ),
             RiskScoreValue(
-                value=Category.LOW,
+                value=Category.VERY_LOW,
                 label="Very low impact",
                 description="Very low impact",
                 lower_bound=[
@@ -387,12 +388,12 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 # if there are no impacts with data, we cannot calculate a measure. This
                 # can occur in the case where a curve cannot be matched
                 return Measure(
-                    score=Category.NODATA,
+                    score=Category.NO_DATA,
                     measure_0=float("nan"),
                     definition=self.get_definition(hazard_type),
                 )
             measure = bounds.measure(h_impacts, f_impacts)
-            score = Category.NODATA
+            score = Category.NO_DATA
             for category, lower, upper in zip(
                 bounds.categories, bounds.lower, bounds.upper
             ):
@@ -428,7 +429,7 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                     param = ureg.convert(param, resp.units, bounds.units)
             if math.isnan(param):
                 return Measure(
-                    score=Category.NODATA,
+                    score=Category.NO_DATA,
                     measure_0=float(param),
                     definition=self.get_definition(hazard_type),
                 )
@@ -455,13 +456,13 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 if hazard_type == PluvialInundation:
                     # there is no alternative pluvial inundation model, so allow for this
                     return Measure(
-                        score=Category.NODATA,
+                        score=Category.NO_DATA,
                         measure_0=float("nan"),
                         definition=self.get_definition(hazard_type),
                     )
             measure1 = bounds.measure1(h_impacts, f_impacts)
             measure2 = bounds.measure2(h_impacts, f_impacts)
-            score = Category.NODATA
+            score = Category.NO_DATA
             for category, lower1, upper1, lower2, upper2 in zip(
                 bounds.categories,
                 bounds.lower1,

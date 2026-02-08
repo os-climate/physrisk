@@ -2,11 +2,11 @@ from enum import Enum
 from typing import Callable, Optional, Sequence, Set, Type
 
 from physrisk.api.v1.impact_req_resp import (
-    Category,
     RiskMeasureDefinition,
     RiskScoreValue,
     ScoreBasedRiskMeasureDefinition,
 )
+from physrisk.api.v1.scoring_schemes import Category
 from physrisk.kernel.hazards import (
     ChronicHeat,
     CoastalInundation,
@@ -114,7 +114,7 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
                 description=description(Category.LOW),
             ),
             RiskScoreValue(
-                value=Category.NODATA, label="No data.", description="No data."
+                value=Category.NO_DATA, label="No data.", description="No data."
             ),
         ]
 

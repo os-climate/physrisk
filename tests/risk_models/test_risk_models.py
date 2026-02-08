@@ -5,10 +5,14 @@ from typing import Dict, Optional, Sequence, Set, Type
 import numpy as np
 from dependency_injector import providers
 
+from physrisk.api.v1.scoring_schemes import (
+    Category,
+    OriginalCategory,
+    map_to_original_category,
+)
 from physrisk.kernel.hazards import Hazard
 from physrisk.api.v1.impact_req_resp import (
     AssetImpactResponse,
-    Category,
     RiskMeasureKey,
     RiskMeasuresHelper,
 )
@@ -637,3 +641,9 @@ class TestRiskModels(TestWithCredentials):
             i for i in response.asset_impacts[0].impacts if i.key.hazard_type == "Fire"
         )
         assert impact_for_placeholder.calc_details.hazard_path is not None
+
+    def test_scores_mapping_for_regression_tests(self):
+        assert map_to_original_category(Category.ERROR) == OriginalCategory.NODATA
+        assert map_to_original_category(-3) == 0
+        assert map_to_original_category(Category.NO_DATA) == OriginalCategory.NODATA
+        assert map_to_original_category(Category.VERY_LOW) == OriginalCategory.LOW

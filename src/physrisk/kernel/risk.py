@@ -18,7 +18,8 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 
-from physrisk.api.v1.impact_req_resp import Category, ScoreBasedRiskMeasureDefinition
+from physrisk.api.v1.impact_req_resp import ScoreBasedRiskMeasureDefinition
+from physrisk.api.v1.scoring_schemes import Category
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.hazard_model import HazardModel
 from physrisk.kernel.hazards import Hazard

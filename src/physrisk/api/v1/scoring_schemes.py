@@ -2,10 +2,10 @@ from enum import Enum
 
 
 class Category(int, Enum):
-    ERROR = -3 # an unexpected error: should not happen
-    NO_DATA = -2 # no data available to determine vulnerability, e.g. scenario/year selected for which there is no coverage for asset and hazard combination
-    NO_VULNERABILITY = -1 # for the type of asset, the model assumes no vulnerability to the hazard, e.g. model assumes real estate asset has no vulnerability to chronic heat (if shrink-swell subsidence tackled separately)
-    VERY_LOW = 0 
+    ERROR = -3  # an unexpected error: should not happen
+    NO_DATA = -2  # no data available to determine vulnerability, e.g. scenario/year selected for which there is no coverage for asset and hazard combination
+    NO_VULNERABILITY = -1  # for the type of asset, the model assumes no vulnerability to the hazard, e.g. model assumes real estate asset has no vulnerability to chronic heat (if shrink-swell subsidence tackled separately)
+    VERY_LOW = 0
     LOW = 1
     MEDIUM = 2
     HIGH = 3
@@ -28,6 +28,7 @@ def map_to_original_category(score: int) -> int:
     else:
         raise ValueError(f"Unexpected score value: {score}")
 
+
 # original scoring scheme for reference
 class OriginalCategory(int, Enum):
     NODATA = 0
@@ -35,4 +36,3 @@ class OriginalCategory(int, Enum):
     MEDIUM = 2
     HIGH = 3
     REDFLAG = 4
-

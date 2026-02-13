@@ -27,7 +27,11 @@ from physrisk.kernel.hazards import (
     Wind,
 )
 from physrisk.kernel.impact import AssetImpactResult
-from physrisk.kernel.impact_distrib import EmptyImpactDistrib, ImpactDistrib
+from physrisk.kernel.impact_distrib import (
+    EmptyImpactDistrib,
+    EmptyReason,
+    ImpactDistrib,
+)
 from physrisk.kernel.risk import Measure, MeasureKey, RiskMeasureCalculator
 from pint import UnitRegistry
 
@@ -374,26 +378,25 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
         bounds = self._bounds[hazard_type]
         if isinstance(bounds, ImpactBounds):
             # just need the impact part, no hazard indicator data.
-            h_impacts = [
-                h.impact
-                for h in histo_impacts
-                if not isinstance(h.impact, EmptyImpactDistrib)
-            ]
-            f_impacts = [
-                f.impact
-                for h, f in zip(histo_impacts, future_impacts)
-                if not isinstance(h.impact, EmptyImpactDistrib)
-            ]
-            if len(f_impacts) == 0:
-                # if there are no impacts with data, we cannot calculate a measure. This
-                # can occur in the case where a curve cannot be matched
+            h_impacts, f_impacts = [], []
+            for h, v in zip(histo_impacts, future_impacts):
+                if isinstance(h.impact, EmptyImpactDistrib):
+                    empty_reason = h.impact.empty_reason
+                elif isinstance(v.impact, EmptyImpactDistrib):
+                    empty_reason = v.impact.empty_reason
+                else:
+                    h_impacts.append(h.impact)
+                    f_impacts.append(v.impact)
+                    continue
                 return Measure(
-                    score=Category.NO_DATA,
+                    score=Category.NO_VULNERABILITY
+                    if empty_reason == EmptyReason.NO_VULNERABILITY
+                    else Category.NO_DATA,
                     measure_0=float("nan"),
                     definition=self.get_definition(hazard_type),
                 )
             measure = bounds.measure(h_impacts, f_impacts)
-            score = Category.NO_DATA
+            score = Category.NO_VULNERABILITY
             for category, lower, upper in zip(
                 bounds.categories, bounds.lower, bounds.upper
             ):

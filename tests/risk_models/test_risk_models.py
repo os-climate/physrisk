@@ -75,7 +75,7 @@ def _config_based_vulnerability_models():
         VulnerabilityConfigItem(
             hazard_class="ChronicHeat",
             asset_class="Asset",
-            asset_identifier="type=Generic",
+            asset_identifier="type=MyType",
             indicator_id="days_wbgt_above",
             indicator_units="days/year",
             impact_id="disruption",
@@ -121,7 +121,9 @@ def _config_based_vulnerability_models():
     return config
 
 
-def _vulnerability_models():
+def _vulnerability_models(
+    hazard_scope: Optional[Set[Type[Hazard]]] = None,
+) -> VulnerabilityModels:
     model_set = [
         RealEstateCoastalInundationModel(),
         RealEstateRiverineInundationModel(),
@@ -131,12 +133,17 @@ def _vulnerability_models():
             "max/daily/water_equivalent", Precipitation, ImpactType.damage
         ),
     ]
-    programmatic_models = {Asset: model_set, RealEstateAsset: model_set}
+    programmatic_models = {
+        Asset: model_set,
+        RealEstateAsset: model_set,
+    }
     factory = VulnerabilityModelsFactory(
         config=_config_based_vulnerability_models(),
         programmatic_models=programmatic_models,
     )
-    models = factory.vulnerability_models(disable_api_calls=True)
+    models = factory.vulnerability_models(
+        disable_api_calls=True, hazard_scope=hazard_scope
+    )
     return models
 
 
@@ -571,6 +578,42 @@ class TestRiskModels(TestWithCredentials):
         np.testing.assert_equal(
             measures[MeasureKey(assets[0], scenarios[0], years[0], Drought)].score,
             Category.MEDIUM,
+        )
+
+        # check some edge cases
+        # 1) for SSP245 Hail data not available
+        model = AssetLevelRiskModel(
+            hazard_model,
+            _vulnerability_models(set([Hail])),
+            {Asset: generic_measures, RealEstateAsset: generic_measures},
+            NullAssetBasedPortfolioRiskMeasureCalculator(),
+        )
+        _, measures = model.calculate_risk_measures(
+            assets, scenarios=["ssp245"], years=years
+        )
+        np.testing.assert_equal(
+            measures[MeasureKey(assets[0], "ssp245", years[0], Hail)].score,
+            Category.NO_DATA,
+        )
+        # 2) have a non-matching asset, so 'no vulnerability'
+        assets = [
+            Asset(
+                TestData.latitudes[0],
+                TestData.longitudes[0],
+                id="unique_id_0",
+                type="type_not_in_model",
+            )
+        ]
+        model = AssetLevelRiskModel(
+            hazard_model,
+            _vulnerability_models(set([ChronicHeat])),
+            {Asset: generic_measures, RealEstateAsset: generic_measures},
+            NullAssetBasedPortfolioRiskMeasureCalculator(),
+        )
+        _, measures = model.calculate_risk_measures(assets, scenarios, years=years)
+        np.testing.assert_equal(
+            measures[MeasureKey(assets[0], scenarios[0], years[0], ChronicHeat)].score,
+            Category.NO_VULNERABILITY,
         )
 
     def test_generic_model_via_requests_custom(self):

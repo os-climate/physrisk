@@ -104,7 +104,9 @@ class TestRiskModels(TestWithCredentials):
 
         # how to get a score using the MeasureKey
         measure = measures[
-            MeasureKey(assets[0], scenarios[0], years[0], RiverineInundation)
+            MeasureKey(
+                assets[0], scenarios[0], years[0], RiverineInundation, "flood_depth"
+            )
         ]
         score = measure.score
         measure_0 = measure.measure_0
@@ -117,6 +119,7 @@ class TestRiskModels(TestWithCredentials):
         # we still have a key, but no asset:
         key = RiskMeasureKey(
             hazard_type="RiverineInundation",
+            indicator_id="flood_depth",
             scenario_id=scenarios[0],
             year=str(years[0]),
             measure_id=risk_measures.score_based_measure_set_defn.measure_set_id,
@@ -129,7 +132,7 @@ class TestRiskModels(TestWithCredentials):
 
         helper = RiskMeasuresHelper(risk_measures)
         asset_scores, measures, definitions = helper.get_measure(
-            "CoastalInundation", scenarios[0], years[0]
+            "CoastalInundation", "flood_depth", scenarios[0], years[0]
         )
         label, description = helper.get_score_details(asset_scores[0], definitions[0])
         assert asset_scores[0] == 4
@@ -454,12 +457,19 @@ class TestRiskModels(TestWithCredentials):
         _, measures = model.calculate_risk_measures(
             assets, scenarios=scenarios, years=years
         )
+
         np.testing.assert_approx_equal(
-            measures[MeasureKey(assets[0], scenarios[0], years[0], Wind)].measure_0,
+            measures[
+                MeasureKey(assets[0], scenarios[0], years[0], Wind, "max_speed")
+            ].measure_0,
             0.010149044212901014,
         )
         np.testing.assert_equal(
-            measures[MeasureKey(assets[0], scenarios[0], years[0], Drought)].score,
+            measures[
+                MeasureKey(
+                    assets[0], scenarios[0], years[0], Drought, "months/spei3m/below/-2"
+                )
+            ].score,
             Category.HIGH,
         )
 

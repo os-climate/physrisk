@@ -42,8 +42,10 @@ class AssetImpactRequest(BaseModel):
         True, description="If true, include impact calculation details."
     )
     use_case_id: str = Field(
-        "",
-        description="Identifier for 'use case' used in the risk measures calculation.",
+        "DEFAULT",
+        description=(
+            "Identifier for 'use case' used in vulnerability models and risk measures calculations."
+        ),
     )
     provider_max_requests: Dict[str, int] = Field(
         {},
@@ -74,6 +76,8 @@ class Category(int, Enum):
     MEDIUM = 2
     HIGH = 3
     REDFLAG = 4
+
+    NORISK = -1
 
 
 class RiskMeasureDefinition(BaseModel):
@@ -134,6 +138,7 @@ class ScoreBasedRiskMeasureDefinition(BaseModel):
 
 class RiskMeasureKey(BaseModel):
     hazard_type: str
+    indicator_id: Optional[str] = None
     scenario_id: str
     year: str
     measure_id: str
@@ -168,7 +173,7 @@ class RiskMeasuresForAssets(BaseModel):
 
 class ScoreBasedRiskMeasureSetDefinition(BaseModel):
     measure_set_id: str
-    asset_measure_ids_for_hazard: Dict[str, List[str]]
+    asset_measure_ids_for_hazard_indicator: Dict[str, Dict[str, List[str]]]
     score_definitions: Dict[str, ScoreBasedRiskMeasureDefinition]
 
 
@@ -205,6 +210,7 @@ class CalculationDetails(BaseModel):
 
 class ImpactKey(BaseModel):
     hazard_type: str = Field("", description="Type of the hazard.")
+    indicator_id: str = Field("", description="Hazard indicator id.")
     scenario_id: str = Field("", description="Identifier of the scenario.")
     year: str = Field("", description="Year of impact.")
 
@@ -275,14 +281,18 @@ class RiskMeasuresHelper:
     def _key(self, key: RiskMeasureKey):
         return self.Key(
             hazard_type=key.hazard_type,
+            indicator_id=key.indicator_id,
             scenario_id=key.scenario_id,
             year=key.year,
             measure_id=key.measure_id,
         )
 
-    def get_measure(self, hazard_type: str, scenario: str, year: int):
+    def get_measure(
+        self, hazard_type: str, indicator_id: str, scenario: str, year: int
+    ):
         measure_key = self.Key(
             hazard_type=hazard_type,
+            indicator_id=indicator_id,
             scenario_id=scenario,
             year=str(year),
             measure_id=self.measure_set_id,
@@ -295,7 +305,9 @@ class RiskMeasuresHelper:
             [measure.measures_0, measure.measures_1],
         )  # scores for each asset
         # measure IDs for each asset (for the hazard type in question)
-        measure_ids = self.measure_definition.asset_measure_ids_for_hazard[hazard_type]
+        measure_ids = self.measure_definition.asset_measure_ids_for_hazard_indicator[
+            hazard_type
+        ][indicator_id]
         # measure definitions for each asset
         measure_definitions = [
             self.measure_definition.score_definitions[mid] if mid != "na" else None
@@ -311,6 +323,7 @@ class RiskMeasuresHelper:
 
     class Key(NamedTuple):  # hashable key for looking up measures
         hazard_type: str
+        indicator_id: str | None
         scenario_id: str
         year: str
         measure_id: str

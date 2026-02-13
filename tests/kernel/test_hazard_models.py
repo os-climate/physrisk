@@ -115,6 +115,7 @@ def test_using_point_based_hazard_model():
     results = calculate_impacts(
         assets, hazard_model, vulnerability_models, scenarios=[scenario], years=[year]
     )
-    impact_distrib = results[(assets[0], Wind, scenario, year)][0].impact
+    indicator_id = list(vulnerability_models.models.values())[0][0].indicator_id
+    impact_distrib = results[(assets[0], Wind, indicator_id, scenario, year)][0].impact
     mean_impact = impact_distrib.mean_impact()
     np.testing.assert_almost_equal(mean_impact, 0.009909858317497338)

@@ -17,7 +17,7 @@ project_3857_to_4326 = Transformer.from_crs(
 
 
 # 'primary_fuel' entries in Global Power Plant Database v1.3.0 (World Resources Institute)
-# https://wri-dataportal-prod.s3.amazonaws.com/manual/global_power_plant_database_v_1_3
+# https://datasets.wri.org/dataset/globalpowerplantdatabase
 class FuelKind(Enum):
     Biomass = 1
     Coal = 2

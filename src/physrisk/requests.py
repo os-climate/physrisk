@@ -55,7 +55,6 @@ from physrisk.kernel.risk import (
     NullAssetBasedPortfolioRiskMeasureCalculator,
 )
 from physrisk.kernel.vulnerability_model import (
-    DictBasedVulnerabilityModels,
     VulnerabilityModels,
     VulnerabilityModelsFactory,
 )
@@ -66,7 +65,8 @@ from physrisk.vulnerability_models.configuration.asset_factory import (
     DefaultAssetFactory,
 )
 
-from .api.v1.hazard_data import (
+
+from physrisk.api.v1.hazard_data import (
     HazardAvailabilityRequest,
     HazardAvailabilityResponse,
     HazardDataRequest,
@@ -79,7 +79,7 @@ from .api.v1.hazard_data import (
     Scenario,
     StaticInformationResponse,
 )
-from .api.v1.impact_req_resp import (
+from physrisk.api.v1.impact_req_resp import (
     CalculationDetails,
     AssetImpactRequest,
     AssetImpactResponse,
@@ -88,8 +88,8 @@ from .api.v1.impact_req_resp import (
     AssetSingleImpact,
     RiskMeasure,
 )
-from .api.v1.impact_req_resp import ImpactKey as APIImpactKey
-from .api.v1.impact_req_resp import (
+from physrisk.api.v1.impact_req_resp import ImpactKey as APIImpactKey
+from physrisk.api.v1.impact_req_resp import (
     RiskMeasureKey,
     RiskMeasures,
     RiskMeasuresForAssets,
@@ -490,31 +490,26 @@ def _get_asset_impacts(
         [Union[np.ndarray, float]], Union[np.ndarray, float]
     ] = lambda x: x,
 ):
-    vulnerability_models = (
-        DictBasedVulnerabilityModels(
-            calc.alternate_default_vulnerability_models_scores()
-        )
-        if vulnerability_models is None
-        else vulnerability_models
-    )
+    if vulnerability_models is None:
+        factory = calc.DictBasedVulnerabilityModelsFactory(request.use_case_id)
+        vulnerability_models = factory.vulnerability_models()
     # we keep API definition of asset separate from internal Asset class; convert by reflection
     # based on asset_class:
     _assets = create_assets(request.assets, assets, asset_factory)
-    measure_calculators = (
-        calc.get_default_risk_measure_calculators()
-        if measure_calculators is None
-        else measure_calculators
-    )
+    if measure_calculators is None:
+        factory_mc = calc.DefaultMeasuresFactory()
+        measure_calculators = factory_mc.asset_calculators(request.use_case_id)
+
     portfolio_measure_calculator = (
         NullAssetBasedPortfolioRiskMeasureCalculator()
         if portfolio_measure_calculator is None
         else portfolio_measure_calculator
     )
     risk_model = AssetLevelRiskModel(
-        hazard_model,
-        vulnerability_models,
-        measure_calculators,
-        portfolio_measure_calculator,
+        hazard_model=hazard_model,
+        vulnerability_models=vulnerability_models,
+        measure_calculators=measure_calculators,
+        portfolio_measure_calculator=portfolio_measure_calculator,
     )
 
     scenarios = (
@@ -532,13 +527,13 @@ def _get_asset_impacts(
         impacts, measures = risk_model.calculate_risk_measures(
             _assets, scenarios, years
         )
-        measure_ids_for_asset, definitions = risk_model.populate_measure_definitions(
-            _assets
+        measure_ids_for_asset_indicator, definitions = (
+            risk_model.populate_measure_definitions(_assets)
         )
         # create object for API:
         risk_measures = _create_risk_measures(
             measures,
-            measure_ids_for_asset,
+            measure_ids_for_asset_indicator,
             definitions,
             _assets,
             scenarios,
@@ -620,6 +615,7 @@ def compile_asset_impacts(
 
             key = APIImpactKey(
                 hazard_type=k.hazard_type.__name__,
+                indicator_id=k.indicator_id,
                 scenario_id=k.scenario,
                 year=str(k.key_year),
             )
@@ -669,7 +665,7 @@ def compile_asset_impacts(
 
 def _create_risk_measures(
     measures: Dict[MeasureKey, Measure],
-    measure_ids_for_asset: Dict[Type[Hazard], List[str]],
+    measure_ids_for_asset_indicator: Dict[tuple[Type[Hazard], str], List[str]],
     definitions: Dict[ScoreBasedRiskMeasureDefinition, str],
     assets: List[Asset],
     scenarios: Sequence[str],
@@ -682,7 +678,7 @@ def _create_risk_measures(
 
     Args:
         measures (Dict[MeasureKey, Measure]): The score-based risk measures.
-        measure_ids_for_asset (Dict[Type[Hazard], List[str]]): IDs of the score-based risk measures
+        measure_ids_for_asset_indicator (Dict[tuple[Type[Hazard], str], List[str]]): IDs of the score-based risk measures
             for each asset.
         definitions (Dict[ScoreBasedRiskMeasureDefinition, str]): Map of the score-based risk measures
             definitions to ID.
@@ -703,75 +699,82 @@ def _create_risk_measures(
     for hazard_type in sorted(
         hazard_types, key=lambda x: x.__name__ if x is not None else ""
     ):
-        for scenario_id in sorted(scenarios):
-            for year in [None] if scenario_id == "historical" else sorted(years):
-                # we calculate and tag results for each scenario, year and hazard
-                if hazard_type is not None:
-                    score_key = RiskMeasureKey(
-                        hazard_type=hazard_type.__name__
-                        if hazard_type is not None
-                        else "",
-                        scenario_id=scenario_id,
-                        year=str(year),
-                        measure_id=measure_set_id,
-                    )
-                    scores = [-1] * len(assets)
-                    # measures_0 = [float("nan")] * len(assets)
-                    measures_0 = [nan_value] * len(assets)
-                    for i, asset in enumerate(assets):
-                        # look up result using the MeasureKey:
-                        measure_key = MeasureKey(
-                            asset=asset,
-                            prosp_scen=scenario_id,
-                            year=year,
-                            hazard_type=hazard_type,
+        for indicator_id in (
+            hazard_type.indicator_data if hazard_type is not None else [None]
+        ):
+            for scenario_id in sorted(scenarios):
+                for year in [None] if scenario_id == "historical" else sorted(years):
+                    # we calculate and tag results for each scenario, year and hazard
+                    if hazard_type is not None:
+                        score_key = RiskMeasureKey(
+                            hazard_type=hazard_type.__name__,
+                            indicator_id=indicator_id,
+                            scenario_id=scenario_id,
+                            year=str(year),
+                            measure_id=measure_set_id,
                         )
-                        measure = measures.get(measure_key, None)
-                        if measure is not None:
-                            scores[i] = measure.score
-                            measures_0[i] = (
-                                nan_value
-                                if math.isnan(measure.measure_0)
-                                else measure.measure_0
+                        scores = [-1] * len(assets)
+                        # measures_0 = [float("nan")] * len(assets)
+                        measures_0 = [nan_value] * len(assets)
+                        for i, asset in enumerate(assets):
+                            # look up result using the MeasureKey:
+                            measure_key = MeasureKey(
+                                asset=asset,
+                                prosp_scen=scenario_id,
+                                year=year,
+                                hazard_type=hazard_type,
+                                indicator_id=indicator_id,
                             )
-                    measures_for_assets.append(
-                        RiskMeasuresForAssets(
-                            key=score_key,
-                            scores=scores,
-                            measures_0=sig_figures(measures_0),
-                            measures_1=None,
+                            measure = measures.get(measure_key, None)
+                            if measure is not None:
+                                scores[i] = measure.score
+                                measures_0[i] = (
+                                    nan_value
+                                    if math.isnan(measure.measure_0)
+                                    else measure.measure_0
+                                )
+                        measures_for_assets.append(
+                            RiskMeasuresForAssets(
+                                key=score_key,
+                                scores=scores,
+                                measures_0=sig_figures(measures_0),
+                                measures_1=None,
+                            )
                         )
+                    portfolio_measure_key = MeasureKey(
+                        asset=None,
+                        prosp_scen=scenario_id,
+                        year=year,
+                        hazard_type=hazard_type,
+                        indicator_id=indicator_id,
                     )
-                portfolio_measure_key = MeasureKey(
-                    asset=None,
-                    prosp_scen=scenario_id,
-                    year=year,
-                    hazard_type=hazard_type,
-                )
-                if portfolio_measure_key in measures:
-                    measure = measures[portfolio_measure_key]
-                    measures_for_portfolio.append(
-                        RiskMeasure(
-                            key=RiskMeasureKey(
-                                hazard_type="",
-                                scenario_id=scenario_id,
-                                year=str(year),
-                                measure_id=definitions.get(measure.definition, ""),
-                            ),
-                            score=int(measure.score),
-                            measure_0=sig_figures(measure.measure_0),
-                            measure_1=None,
+                    if portfolio_measure_key in measures:
+                        measure = measures[portfolio_measure_key]
+                        measures_for_portfolio.append(
+                            RiskMeasure(
+                                key=RiskMeasureKey(
+                                    hazard_type="",
+                                    indicator_id=indicator_id,
+                                    scenario_id=scenario_id,
+                                    year=str(year),
+                                    measure_id=definitions.get(measure.definition, ""),
+                                ),
+                                score=int(measure.score),
+                                measure_0=sig_figures(measure.measure_0),
+                                measure_1=None,
+                            )
                         )
-                    )
+
+    asset_measure_ids_for_hazard_indicator: Dict[str, Dict[str, List[str]]] = {}
+
+    for (hazard_type, metric), values in measure_ids_for_asset_indicator.items():
+        if hazard_type.__name__ not in asset_measure_ids_for_hazard_indicator:
+            asset_measure_ids_for_hazard_indicator[hazard_type.__name__] = {}
+        asset_measure_ids_for_hazard_indicator[hazard_type.__name__][metric] = values
 
     score_based_measure_set_defn = ScoreBasedRiskMeasureSetDefinition(
         measure_set_id=measure_set_id,
-        asset_measure_ids_for_hazard={
-            k.__name__: v
-            for k, v in sorted(
-                measure_ids_for_asset.items(), key=lambda x: x[0].__name__
-            )
-        },
+        asset_measure_ids_for_hazard_indicator=asset_measure_ids_for_hazard_indicator,
         score_definitions={v: k for (k, v) in definitions.items()},
     )
 

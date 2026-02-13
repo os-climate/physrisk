@@ -1,6 +1,6 @@
 import math
 from dataclasses import dataclass
-from typing import Any, Callable, Dict, Sequence, Set, Type, Union
+from typing import Any, Callable, Dict, Optional, Sequence, Set, Type, Union
 
 import numpy as np
 from physrisk.api.v1.impact_req_resp import (
@@ -71,7 +71,9 @@ class ImpactBoundsJoint:
 
 
 class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
-    """A generic score based risk measure. 'Generic' indicates that the user of the score is unknown.
+    """A generic score based risk measure.
+
+    'Generic' indicates that the user of the score is unknown.
     i.e. it is unknown whether the user owns the assets in question, or interested in the assets from
     the point of view of loan origination or project financing.
     """
@@ -443,6 +445,7 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
     def calc_measure(
         self,
         hazard_type: Type[Hazard],
+        indicator_id: str,
         histo_impact_res: AssetImpactResult,
         future_impact_res: AssetImpactResult,
     ) -> Measure:
@@ -587,10 +590,12 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
         future_loss = future_impact.to_exceedance_curve().get_value(1.0 / return_period)
         return future_loss - histo_loss
 
-    def get_definition(self, hazard_type: Type[Hazard]):
+    def get_definition(
+        self, hazard_type: Type[Hazard], indicator_id: Optional[str] = None
+    ):
         return self._definition_lookup.get(hazard_type, None)
 
-    def supported_hazards(self) -> Set[type]:
+    def supported_hazards(self) -> Set[type[Hazard]]:
         return set(
             [
                 Wind,
@@ -623,9 +628,17 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 for year in years:
                     # if the Precipitation measures exists but the corresponding PluvialInundation
                     # is not present, proxy PluvialInundation to Precipitation
-                    from_key = MeasureKey(asset, scenario, year, PluvialInundation)
+                    from_key = MeasureKey(
+                        asset, scenario, year, PluvialInundation, "flood_depth"
+                    )
                     if from_key not in measures:
-                        to_key = MeasureKey(asset, scenario, year, Precipitation)
+                        to_key = MeasureKey(
+                            asset,
+                            scenario,
+                            year,
+                            Precipitation,
+                            "max/daily/water_equivalent",
+                        )
                         if to_key in measures:
                             aggregate_measures[from_key] = measures[to_key]
         return aggregate_measures

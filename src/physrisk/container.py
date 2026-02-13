@@ -1,4 +1,4 @@
-from typing import Dict, MutableMapping, Optional, Set, Type
+from typing import Dict, MutableMapping, Optional
 
 from dependency_injector import containers, providers
 
@@ -10,12 +10,7 @@ from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.kernel import calculation as calc
 from physrisk.kernel.hazard_model import HazardModelFactory
-from physrisk.kernel.hazards import Hazard
-from physrisk.kernel.vulnerability_model import (
-    DictBasedVulnerabilityModels,
-    VulnerabilityModels as PVulnerabilityModels,
-    VulnerabilityModelsFactory as PVulnerabilityModelsFactory,
-)
+
 from physrisk.requests import (
     PhysriskDefaultEncoder,
     Requester,
@@ -65,17 +60,8 @@ class ZarrHazardModelFactory(HazardModelFactory):
         return ImageCreator(self.inventory, self.source_paths, self.reader)
 
 
-class DictBasedVulnerabilityModelsFactory(PVulnerabilityModelsFactory):
-    def vulnerability_models(
-        self, hazard_scope: Optional[Set[Type[Hazard]]] = None
-    ) -> PVulnerabilityModels:
-        return DictBasedVulnerabilityModels(
-            calc.alternate_default_vulnerability_models_scores()
-        )
-
-
 class DefaultVulnerabilityModelFactory(VulnerabilityModelsFactory):
-    """Default vulnerability approach. 'default_vulnerability_models'
+    """Default vulnerability approach. 'get_default_vulnerability_models'
     programmatic models are used, to which FEMA Hazus vulnerability-based
     models are added and finally configuration.
     FEMA Hazus vulnerability-based models excluded by default (until non-experimental).
@@ -84,7 +70,7 @@ class DefaultVulnerabilityModelFactory(VulnerabilityModelsFactory):
     def __init__(self):
         super().__init__(
             config=VulnerabilityModelsFactory.embedded_vulnerability_config(),
-            programmatic_models=calc.default_vulnerability_models(),
+            programmatic_models=calc.get_default_vulnerability_models(),
             use_oed_hazus_curves=False,
         )
 

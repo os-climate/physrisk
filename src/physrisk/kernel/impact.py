@@ -30,13 +30,14 @@ class ImpactKey(NamedTuple):
     # these additional key items can be set to None, for example
     # if the calculation is for a given scenario and year
     # impact_type: Optional[str] = None # consider adding: whether damage or disruption
+    indicator_id: str
     scenario: str
     key_year: Optional[int] = None  # this is None for 'historical' scenario
 
     def __repr__(self) -> str:
         asset_id = self.asset.id if self.asset.id is not None else "no_id"
         return (
-            f"ImpactKey(asset={asset_id},hazard_type={self.hazard_type.__name__},"
+            f"ImpactKey(asset={asset_id},hazard_type={self.hazard_type.__name__},indicator_id={self.indicator_id},"
             f"scenario={self.scenario},key_year={self.key_year})"
         )
 
@@ -130,6 +131,7 @@ def calculate_impacts(  # noqa: C901
                         ImpactKey(
                             asset=asset,
                             hazard_type=model.hazard_type,
+                            indicator_id=model.indicator_id,
                             scenario=scenario,
                             key_year=None if year == -1 else year,
                         ),
@@ -150,6 +152,7 @@ def calculate_impacts(  # noqa: C901
                                 ImpactKey(
                                     asset=asset,
                                     hazard_type=model.hazard_type,
+                                    indicator_id=model.indicator_id,
                                     scenario=scenario,
                                     key_year=None if year == -1 else year,
                                 )
@@ -167,6 +170,7 @@ def calculate_impacts(  # noqa: C901
                                 ImpactKey(
                                     asset=asset,
                                     hazard_type=model.hazard_type,
+                                    indicator_id=model.indicator_id,
                                     scenario=scenario,
                                     key_year=None if year == -1 else year,
                                 )

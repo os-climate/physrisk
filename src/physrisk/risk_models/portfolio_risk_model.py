@@ -46,7 +46,7 @@ class AveragingAssetBasedPortfolioRiskMeasureCalculator:
             # Calculate portfolio score-based risk measures for this year/scenario
             scores = [float(asset_level_measures[m].score) for m in v]
             average_score = statistics.mean(s for s in scores if s > 0)
-            portfolio_measures[MeasureKey(None, k[0], k[1], None)] = Measure(
+            portfolio_measures[MeasureKey(None, k[0], k[1], None, None)] = Measure(
                 score=Category(round(average_score)),
                 measure_0=average_score,
                 definition=self._definition,

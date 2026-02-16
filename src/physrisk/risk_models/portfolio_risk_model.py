@@ -3,10 +3,10 @@ import statistics
 from typing import Optional
 
 from physrisk.api.v1.impact_req_resp import (
-    Category,
     RiskMeasureDefinition,
     ScoreBasedRiskMeasureDefinition,
 )
+from physrisk.api.v1.scoring_schemes import Category
 from physrisk.kernel.hazards import Hazard
 from physrisk.kernel.risk import Measure, MeasureKey, RiskQuantity, RiskQuantityKey
 

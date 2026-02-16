@@ -18,7 +18,7 @@ from typing import (
 import numpy as np
 import numpy.typing as npt
 
-from physrisk.api.v1.impact_req_resp import Category, ScoreBasedRiskMeasureDefinition
+from physrisk.api.v1.impact_req_resp import ScoreBasedRiskMeasureDefinition
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.hazard_model import HazardModel
 from physrisk.kernel.hazards import Hazard
@@ -74,7 +74,7 @@ class MeasureKey(NamedTuple):
 
 @dataclass
 class Measure:
-    score: Category
+    score: int
     measure_0: float
     definition: ScoreBasedRiskMeasureDefinition  # reference to single instance of ScoreBasedRiskMeasureDefinition
 
@@ -160,16 +160,18 @@ class RiskMeasureCalculator(Protocol):
     def calc_measure(
         self,
         hazard_type: Type[Hazard],
-        base_impact: AssetImpactResult,
-        impact: AssetImpactResult,
+        base_impact: Sequence[AssetImpactResult],
+        impact: Sequence[AssetImpactResult],
     ) -> Optional[Measure]:
         """Calculate the Measure (score-based risk measure) for the hazard,
-        given the base (i.e. historical) and future asset-level impact.
+        given the base (i.e. historical) and future asset-level impacts. Most often
+        there may be a single impact for a given type of hazard, but in general
+        there can be multiple corresponding to different vulnerability models.
 
         Args:
             hazard_type (Type[Hazard]): Hazard type.
-            base_impact (AssetImpactResult): Historical asset-level impact.
-            impact (AssetImpactResult): Future asset-level impact.
+            base_impacts (AssetImpactResult): Historical asset-level impacts.
+            impacts (AssetImpactResult): Future asset-level impacts.
 
         Returns:
             Optional[Measure]: Score-based risk measure.
@@ -341,24 +343,17 @@ class AssetLevelRiskModel(RiskModel):
                             if base_impacts is None or fut_impacts is None:
                                 # should only happen if we are working with limited hazard scope
                                 continue
-                            risk_inds = [
-                                measure_calc.calc_measure(
-                                    hazard_type, base_impact, prosp_impact
-                                )
-                                for base_impact, prosp_impact in zip(
-                                    base_impacts, fut_impacts
-                                )
-                            ]
-                            risk_ind = [
-                                risk_ind
-                                for risk_ind in risk_inds
-                                if risk_ind is not None
-                            ]
-                            if len(risk_ind) > 0:
-                                # TODO: Aggregate  measures instead of picking the first value.
+                            if len(base_impacts) == 0 or len(fut_impacts) == 0:
+                                continue
+                            # if there are multiple impacts (e.g. from multiple vulnerability models), we
+                            # pass to the measure calculator. It will aggregate as it sees fit.
+                            risk_ind = measure_calc.calc_measure(
+                                hazard_type, base_impacts, fut_impacts
+                            )
+                            if risk_ind is not None:
                                 measures[
                                     MeasureKey(asset, scenario, year, hazard_type)
-                                ] = risk_ind[0]
+                                ] = risk_ind
             aggregated_measures.update(
                 measure_calc.aggregate_risk_measures(measures, assets, scenarios, years)
             )

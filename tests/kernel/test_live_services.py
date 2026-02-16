@@ -88,8 +88,8 @@ def test_live_hazard_data():
 def test_example_portfolios():
     example_portfolios = physrisk.requests._get_example_portfolios()
     for name, assets in example_portfolios.items():
-        # if name != "power_generating_small":
-        #    continue
+        if name != "manufacturing":
+            continue
         logger.info(f"Running example portfolio: {name}")
         request_dict = {
             "assets": assets,

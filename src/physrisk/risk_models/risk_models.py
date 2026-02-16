@@ -1,12 +1,12 @@
 from enum import Enum
-from typing import Callable, Optional, Set, Type
+from typing import Callable, Optional, Sequence, Set, Type
 
 from physrisk.api.v1.impact_req_resp import (
-    Category,
     RiskMeasureDefinition,
     RiskScoreValue,
     ScoreBasedRiskMeasureDefinition,
 )
+from physrisk.api.v1.scoring_schemes import Category
 from physrisk.kernel.hazards import (
     ChronicHeat,
     CoastalInundation,
@@ -88,12 +88,12 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
     def _definition_values(self, description: Callable[[Category], str]):
         return [
             RiskScoreValue(
-                value=Category.REDFLAG,
+                value=Category.VERY_HIGH,
                 label=(
                     "The asset is very significantly impacted and the impact will increase "
                     "as a result of climate change."
                 ),
-                description=description(Category.REDFLAG),
+                description=description(Category.VERY_HIGH),
             ),
             RiskScoreValue(
                 value=Category.HIGH,
@@ -114,7 +114,7 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
                 description=description(Category.LOW),
             ),
             RiskScoreValue(
-                value=Category.NODATA, label="No data.", description="No data."
+                value=Category.NO_DATA, label="No data.", description="No data."
             ),
         ]
 
@@ -136,7 +136,7 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
                 f"{self.measure_thresholds_acute[Threshold.ABS_LOW] * 100:0.0f}% and increases by more than "
                 f"{self.measure_thresholds_acute[Threshold.CHANGE] * 100:0.0f}% of asset value over historical baseline."
             )
-        elif category == Category.REDFLAG:
+        elif category == Category.VERY_HIGH:
             description = (
                 f"Projected 1-in-{self.return_period:0.0f} year annual loss is more than "
                 f"{self.measure_thresholds_acute[Threshold.ABS_HIGH] * 100:0.0f}% and increases by more than "
@@ -164,7 +164,7 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
                 f"{self.measure_thresholds_cooling[Threshold.ABS_LOW]}kWh and increases by more than "
                 f"{self.measure_thresholds_cooling[Threshold.CHANGE] * 100:0.0f}% over historical baseline."
             )
-        elif category == Category.REDFLAG:
+        elif category == Category.VERY_HIGH:
             description = (
                 f"Expected cooling annual energy consumption is more than "
                 f"{self.measure_thresholds_cooling[Threshold.ABS_HIGH]}kWh and increases by more than "
@@ -177,9 +177,10 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
     def calc_measure(
         self,
         hazard_type: Type[Hazard],
-        base_impact_res: AssetImpactResult,
-        impact_res: AssetImpactResult,
+        base_impacts: Sequence[AssetImpactResult],
+        impacts: Sequence[AssetImpactResult],
     ) -> Optional[Measure]:
+        base_impact_res, impact_res = base_impacts[0], impacts[0]
         if isinstance(base_impact_res.impact, EmptyImpactDistrib) or isinstance(
             impact_res.impact, EmptyImpactDistrib
         ):
@@ -205,7 +206,7 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
             future_loss > self.measure_thresholds_acute[Threshold.ABS_HIGH]
             and loss_change > self.measure_thresholds_acute[Threshold.CHANGE]
         ):
-            score = Category.REDFLAG
+            score = Category.VERY_HIGH
         elif (
             future_loss > self.measure_thresholds_acute[Threshold.ABS_LOW]
             and loss_change > self.measure_thresholds_acute[Threshold.CHANGE]
@@ -235,7 +236,7 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
             future_cooling > self.measure_thresholds_cooling[Threshold.ABS_HIGH]
             and cooling_change > self.measure_thresholds_cooling[Threshold.CHANGE]
         ):
-            score = Category.REDFLAG
+            score = Category.VERY_HIGH
         elif (
             future_cooling > self.measure_thresholds_cooling[Threshold.ABS_LOW]
             and cooling_change > self.measure_thresholds_cooling[Threshold.CHANGE]

@@ -10,7 +10,7 @@ from ..kernel.calculation import (
     get_default_hazard_model,
     alternate_default_vulnerability_models_scores,
 )
-from ..kernel.financial_model import FinancialModelBase
+from ..kernel.financial_model import DefaultFinancialModel
 from ..kernel.hazard_model import HazardModel
 from ..kernel.impact import calculate_impacts
 from ..kernel.vulnerability_model import (
@@ -52,7 +52,7 @@ class LossModel:
         self,
         assets: Sequence[Asset],
         *,
-        financial_model: FinancialModelBase,
+        financial_model: DefaultFinancialModel,
         scenario: str,
         year: int,
         aggregator: Optional[Aggregator] = None,
@@ -87,11 +87,13 @@ class LossModel:
                 impact_samples = self.uncorrelated_samples(impact, sims, rg)
 
                 if impact.impact_type == ImpactType.damage:
-                    loss = financial_model.damage_to_loss(
-                        impact_key.asset, impact_samples, currency
+                    loss, _ = (
+                        financial_model.frac_damage_to_restoration_cost_and_revenue_disruption(
+                            impact_key.asset, impact_samples, currency
+                        )
                     )
                 else:  # impact.impact_type == ImpactType.disruption:
-                    loss = financial_model.disruption_to_loss(
+                    loss = financial_model.frac_disruption_to_revenue_loss(
                         impact_key.asset, impact_samples, year, currency
                     )
 

@@ -11,7 +11,11 @@ from physrisk.kernel.hazard_model import (
     HazardDataResponse,
     HazardModel,
 )
-from physrisk.kernel.impact_distrib import ImpactDistrib
+from physrisk.kernel.impact_distrib import (
+    EmptyImpactDistrib,
+    EmptyReason,
+    ImpactDistrib,
+)
 from physrisk.kernel.vulnerability_distrib import VulnerabilityDistrib
 from physrisk.kernel.vulnerability_model import (
     DataRequester,
@@ -136,24 +140,29 @@ def calculate_impacts(  # noqa: C901
                         [],
                     )
 
+                    impact_key = ImpactKey(
+                        asset=asset,
+                        hazard_type=model.hazard_type,
+                        scenario=scenario,
+                        key_year=None if year == -1 else year,
+                    )
+
                     if any(
                         isinstance(hd, HazardDataFailedResponse) for hd in hazard_data
                     ):
-                        # the failed responses should have been logged already
-                        continue
+                        # some hazard indicator data is missing; perhaps unavailable location for a certain requested SSP
+                        results[impact_key].append(
+                            AssetImpactResult(
+                                EmptyImpactDistrib(empty_reason=EmptyReason.NO_DATA),
+                                hazard_data=hazard_data,
+                            )
+                        )
                     try:
                         if isinstance(model, VulnerabilityModelAcuteBase):
                             impact, vul, event = model.get_impact_details(
                                 asset, hazard_data
                             )
-                            results[
-                                ImpactKey(
-                                    asset=asset,
-                                    hazard_type=model.hazard_type,
-                                    scenario=scenario,
-                                    key_year=None if year == -1 else year,
-                                )
-                            ].append(
+                            results[impact_key].append(
                                 AssetImpactResult(
                                     impact,
                                     vulnerability=vul,
@@ -163,14 +172,9 @@ def calculate_impacts(  # noqa: C901
                             )
                         elif isinstance(model, VulnerabilityModelBase):
                             impact = model.get_impact(asset, hazard_data)
-                            results[
-                                ImpactKey(
-                                    asset=asset,
-                                    hazard_type=model.hazard_type,
-                                    scenario=scenario,
-                                    key_year=None if year == -1 else year,
-                                )
-                            ].append(AssetImpactResult(impact, hazard_data=hazard_data))
+                            results[impact_key].append(
+                                AssetImpactResult(impact, hazard_data=hazard_data)
+                            )
                     except Exception as e:
                         logger.exception(e)
     return results

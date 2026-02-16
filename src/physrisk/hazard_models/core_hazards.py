@@ -161,12 +161,18 @@ class InventorySourcePaths(SourcePaths):
             year = min(scenario.years)
             return ScenarioPaths(
                 [-1],
-                lambda y: path.format(
-                    id=resource.indicator_id,
-                    scenario=scenario.id,  # type:ignore
-                    year=year,
-                )
-                + ("/indicator" if (resource.store_netcdf_coords and not map) else ""),
+                lambda y: (
+                    path.format(
+                        id=resource.indicator_id,
+                        scenario=scenario.id,  # type:ignore
+                        year=year,
+                    )
+                    + (
+                        "/indicator"
+                        if (resource.store_netcdf_coords and not map)
+                        else ""
+                    )
+                ),
             )
         proxy_scenario_id = (
             cmip6_scenario_to_rcp(scenario_id)
@@ -182,10 +188,16 @@ class InventorySourcePaths(SourcePaths):
         else:
             return ScenarioPaths(
                 scenario.years,
-                lambda y: path.format(
-                    id=resource.indicator_id, scenario=proxy_scenario_id, year=y
-                )
-                + ("/indicator" if (resource.store_netcdf_coords and not map) else ""),
+                lambda y: (
+                    path.format(
+                        id=resource.indicator_id, scenario=proxy_scenario_id, year=y
+                    )
+                    + (
+                        "/indicator"
+                        if (resource.store_netcdf_coords and not map)
+                        else ""
+                    )
+                ),
             )
 
     def get_resources(

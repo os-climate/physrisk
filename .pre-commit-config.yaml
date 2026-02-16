@@ -91,7 +91,7 @@ repos:
         args: ["-x"] # Check external files
 
   - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
-    rev: 85c37735ea69e5baf0681530e57e63deee0ce733  # frozen: v1.7.10.24
+    rev: 694e2c0dfb4253d51f3c6c54b8f9fec0a16764dc  # frozen: v1.7.11.24
     hooks:
       - id: actionlint
 
@@ -107,14 +107,14 @@ repos:
           ]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 9b1e9a33f1b33f6ecc2fdbb8d7cc894e951106e4  # frozen: v0.14.13
+    rev: fa93bc3224c614a0e9786d3e2d3d48edcca246eb  # frozen: v0.15.1
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --config=pyproject.toml]
       - id: ruff-format
 
   - repo: https://github.com/abravalheri/validate-pyproject
-    rev: 78f5e0f104cfa803d0597eaa924b4de3becd3e3e # frozen: v0.24.1
+    rev: 4b2e70d08cb2ccd26d1fba73588de41c7a5d50b7  # frozen: v0.25
     hooks:
       - id: validate-pyproject
         # Optional extra validations from SchemaStore:

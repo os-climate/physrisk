@@ -3,6 +3,7 @@ import os
 from pathlib import PurePosixPath
 from typing import Any, Callable, List, MutableMapping, Optional, Sequence, Tuple, Union
 
+from fsspec import FSMap
 import numpy as np
 import s3fs
 import shapely.ops
@@ -56,6 +57,7 @@ class ZarrReader:
             store = ZarrReader.create_s3_zarr_store(get_env)
 
         self._root = zarr.open(store, mode="r")
+        self._store = store
         self._path_provider = path_provider
         pass
 
@@ -65,6 +67,13 @@ class ZarrReader:
         )
         z = self._root[path]  # e.g. inundation/wri/v2/<filename>
         return z
+
+    def ls(self, path: str):
+        if not isinstance(self._store, FSMap):
+            raise NotImplementedError(
+                f"cannot list for store of type {type(self._store)}"
+            )
+        return self._store.fs.ls(PurePosixPath(self._store.root) / path)
 
     @classmethod
     def create_s3_zarr_store(

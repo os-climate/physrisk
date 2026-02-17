@@ -265,7 +265,7 @@ class HazardImageCreator(Protocol):
 
     def get_info(
         self, resource_id: str, scenario: str, year: int
-    ) -> Tuple[Sequence[Any], Sequence[Any], str, str]:
+    ) -> Tuple[Sequence[Any], Sequence[Any], str, str, Optional[int]]:
         """Provides additional image information required to create an image.
 
         Args:
@@ -274,10 +274,11 @@ class HazardImageCreator(Protocol):
             year (int): Year for future scenarios.
 
         Returns:
-            Tuple[Sequence[Any], Sequence[Any], str, str]: All non-spatial ('index') coordinate values,
+            Tuple[Sequence[Any], Sequence[Any], str, str, Optional[int]]: All non-spatial ('index') coordinate values,
             non-spatial ('index') coordinate values for which map data exists,
             display name,
-            units.
+            units,
+            maximum zoom level.
         """
         ...
 

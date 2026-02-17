@@ -127,7 +127,7 @@ doc = [
     "sphinx-toggleprompt==0.5.2",
     "sphinx-toolbox==3.8.0",
     "sphinxcontrib-applehelp==2.0.0",
-    "sphinxcontrib-bibtex==2.6.3",
+    "sphinxcontrib-bibtex==2.6.5",
     "sphinxcontrib-details-directive==0.1.0",
     "sphinxcontrib-devhelp==2.0.0",
     "sphinxcontrib-htmlhelp==2.1.0",

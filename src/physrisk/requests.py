@@ -166,7 +166,8 @@ class Requester:
         elif request_id == "get_example_portfolios":
             return self.dumps(self.get_example_portfolios())
         elif request_id == "get_image_info":
-            return self.dumps(self.get_image_info().model_dump())
+            request = HazardImageInfoRequest(**request_dict)
+            return self.dumps(self.get_image_info(request).model_dump())
         else:
             raise ValueError(f"request type '{request_id}' not found")
 
@@ -268,14 +269,19 @@ class Requester:
 
     def get_image_info(self, request: HazardImageInfoRequest):
         creator: HazardImageCreator = self.hazard_model_factory.image_creator()
-        all_index_values, available_index_values, index_display_name, index_units = (
-            creator.get_info(request.resource, request.scenario_id, request.year)
-        )
+        (
+            all_index_values,
+            available_index_values,
+            index_display_name,
+            index_units,
+            max_zoom,
+        ) = creator.get_info(request.resource, request.scenario_id, request.year)
         return HazardImageInfoResponse(
             all_index_values=all_index_values,
             available_index_values=available_index_values,
             index_display_name=index_display_name,
             index_units=index_units,
+            max_zoom=max_zoom,
         )
 
     def dumps(self, dict):

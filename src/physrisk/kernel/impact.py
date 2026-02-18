@@ -157,6 +157,7 @@ def calculate_impacts(  # noqa: C901
                                 hazard_data=hazard_data,
                             )
                         )
+                        continue
                     try:
                         if isinstance(model, VulnerabilityModelAcuteBase):
                             impact, vul, event = model.get_impact_details(

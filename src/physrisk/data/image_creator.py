@@ -2,6 +2,7 @@ from importlib import import_module
 import io
 import logging
 from functools import lru_cache
+from pathlib import PurePosixPath
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
 
 import numpy as np
@@ -94,7 +95,7 @@ class ImageCreator(HazardImageCreator):
 
     def get_info(
         self, resource_id: str, scenario: str, year: int
-    ) -> Tuple[Sequence[Any], Sequence[Any], str, str]:
+    ) -> Tuple[Sequence[Any], Sequence[Any], str, str, Optional[int]]:
         resource = self.inventory.resources[resource_id]
         # in principle, depends on the scenario and year, although we assume here that
         # all years have the same index values available.
@@ -121,7 +122,32 @@ class ImageCreator(HazardImageCreator):
 
         if index_units == "default":
             index_units = self._default_index_units(hazard_class, resource.indicator_id)
-        return all_index_values, available_index_values, index_display_name, index_units
+
+        max_zoom = None
+        is_pyramid = resource.map and resource.map.source != "map_array"
+        if is_pyramid:
+            try:
+                # strip off last part of path, which gives the zoom level
+                path_stripped = str(PurePosixPath(path).parent) + "/"
+                array_list = self.reader.ls(path_stripped)
+                zoom_levels = [
+                    int(PurePosixPath(p).name)
+                    for p in array_list
+                    if PurePosixPath(p).name.isnumeric()
+                ]
+                max_zoom = max(zoom_levels)
+            except Exception as e:
+                logger.warning(
+                    f"Could not obtain max zoom for resource {resource_id}: {e}"
+                )
+
+        return (
+            all_index_values,
+            available_index_values,
+            index_display_name,
+            index_units,
+            max_zoom,
+        )
 
     def _default_index_display_name(
         self, hazard_class: Type[Hazard], indicator_id: str

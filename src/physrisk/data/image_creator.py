@@ -135,7 +135,7 @@ class ImageCreator(HazardImageCreator):
                     for p in array_list
                     if PurePosixPath(p).name.isnumeric()
                 ]
-                max_zoom = max(zoom_levels) + 1  # 512 pixel tiles
+                max_zoom = max(zoom_levels)
             except Exception as e:
                 logger.warning(
                     f"Could not obtain max zoom for resource {resource_id}: {e}"

@@ -5,10 +5,14 @@ from typing import Dict, Optional, Sequence, Set, Type
 import numpy as np
 from dependency_injector import providers
 
+from physrisk.api.v1.scoring_schemes import (
+    Category,
+    OriginalCategory,
+    map_to_original_category,
+)
 from physrisk.kernel.hazards import Hazard
 from physrisk.api.v1.impact_req_resp import (
     AssetImpactResponse,
-    Category,
     RiskMeasureKey,
     RiskMeasuresHelper,
 )
@@ -41,11 +45,14 @@ from physrisk.risk_models.portfolio_risk_model import (
 from physrisk.kernel.vulnerability_model import (
     DictBasedVulnerabilityModels,
     VulnerabilityModels,
-    VulnerabilityModelsFactory,
+    VulnerabilityModelsFactory as PVulnerabilityModelsFactory,
 )
 from physrisk.requests import _create_risk_measures
 from physrisk.risk_models.generic_risk_model import GenericScoreBasedRiskMeasures
 from physrisk.risk_models.risk_models import RealEstateToyRiskMeasures
+from physrisk.vulnerability_models.config_based_impact_curves import (
+    VulnerabilityConfigItem,
+)
 from physrisk.vulnerability_models.example_models import PlaceholderVulnerabilityModel
 from physrisk.vulnerability_models.real_estate_models import (
     GenericTropicalCycloneModel,
@@ -53,6 +60,7 @@ from physrisk.vulnerability_models.real_estate_models import (
     RealEstatePluvialInundationModel,
     RealEstateRiverineInundationModel,
 )
+from physrisk.vulnerability_models.vulnerability import VulnerabilityModelsFactory
 
 from ..test_base import TestWithCredentials
 from ..data.test_hazard_model_store import (
@@ -62,23 +70,81 @@ from ..data.test_hazard_model_store import (
 )
 
 
-def _vulnerability_models():
+def _config_based_vulnerability_models():
+    config = [
+        VulnerabilityConfigItem(
+            hazard_class="ChronicHeat",
+            asset_class="Asset",
+            asset_identifier="type=MyType",
+            indicator_id="days_wbgt_above",
+            indicator_units="days/year",
+            impact_id="disruption",
+            curve_type="threshold/piecewise_linear",
+            points_x=np.array([20, 24, 28, 32, 36, 40, 44, 48]),
+            points_y=np.array([0, 0.01, 0.125, 0.45, 0.775, 0.975, 1.0, 1.0]),
+        ),
+        VulnerabilityConfigItem(
+            hazard_class="Drought",
+            asset_class="Asset",
+            asset_identifier="type=Generic",
+            indicator_id="months/spei12m/below/threshold",
+            indicator_units="months/year",
+            impact_id="disruption",
+            curve_type="threshold/piecewise_linear",
+            points_x=np.array([-3.5, -3.0, -2.5, -2]),
+            points_y=np.array([1.0, 0.2, 0.1, 0.0]),
+        ),
+        VulnerabilityConfigItem(
+            hazard_class="Fire",
+            asset_class="Asset",
+            asset_identifier="type=Generic",
+            indicator_id="fire_probability",
+            indicator_units="",
+            impact_id="damage",
+            curve_type="threshold/piecewise_linear",
+            points_x=np.array([0.0]),
+            points_y=np.array([0.7]),
+        ),
+        VulnerabilityConfigItem(
+            hazard_class="Hail",
+            asset_class="Asset",
+            asset_identifier="type=Generic",
+            indicator_id="days/above/5cm",
+            indicator_units="days/year",
+            impact_id="damage",
+            impact_units=None,
+            curve_type="indicator/piecewise_linear",
+            points_x=np.array([0.0, 10.0]),
+            points_y=np.array([0.0, 0.01]),
+        ),
+    ]
+    return config
+
+
+def _vulnerability_models(
+    hazard_scope: Optional[Set[Type[Hazard]]] = None,
+) -> VulnerabilityModels:
     model_set = [
         RealEstateCoastalInundationModel(),
         RealEstateRiverineInundationModel(),
         RealEstatePluvialInundationModel(),
         GenericTropicalCycloneModel(),
-        PlaceholderVulnerabilityModel("fire_probability", Fire, ImpactType.damage),
-        PlaceholderVulnerabilityModel("days/above/35c", ChronicHeat, ImpactType.damage),
-        PlaceholderVulnerabilityModel("days/above/5cm", Hail, ImpactType.damage),
-        PlaceholderVulnerabilityModel(
-            "months/spei3m/below/-2", Drought, ImpactType.damage
-        ),
         PlaceholderVulnerabilityModel(
             "max/daily/water_equivalent", Precipitation, ImpactType.damage
         ),
     ]
-    return {Asset: model_set, RealEstateAsset: model_set}
+    programmatic_models = {
+        Asset: model_set,
+        RealEstateAsset: model_set,
+    }
+    factory = VulnerabilityModelsFactory(
+        config=_config_based_vulnerability_models(),
+        programmatic_models=programmatic_models,
+    )
+    models = factory.vulnerability_models(
+        disable_api_calls=True, hazard_scope=hazard_scope
+    )
+    return models
 
 
 class TestRiskModels(TestWithCredentials):
@@ -196,7 +262,7 @@ class TestRiskModels(TestWithCredentials):
         def sp_heat(scenario, year):
             return (
                 source_paths.resource_paths(
-                    ChronicHeat, indicator_id="days/above/35c", scenarios=[scenario]
+                    ChronicHeat, indicator_id="days_wbgt_above", scenarios=[scenario]
                 )[0]
                 .scenarios[scenario]
                 .path(year)
@@ -234,7 +300,9 @@ class TestRiskModels(TestWithCredentials):
         def sp_drought(scenario, year):
             return (
                 source_paths.resource_paths(
-                    Drought, indicator_id="months/spei3m/below/-2", scenarios=[scenario]
+                    Drought,
+                    indicator_id="months/spei12m/below/threshold",
+                    scenarios=[scenario],
                 )[0]
                 .scenarios[scenario]
                 .path(year)
@@ -298,15 +366,45 @@ class TestRiskModels(TestWithCredentials):
             sp_heat("historical", -1),
             TestData.longitudes,
             TestData.latitudes,
-            [0],
-            [5.0],
+            [5.0, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60],
+            np.array(
+                [
+                    327.28,
+                    315.19,
+                    273.28,
+                    216.43,
+                    163.65,
+                    115.62,
+                    66.96,
+                    1.26,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                ]
+            ),
         )
         mocker.add_curves_global(
             sp_heat("ssp585", 2050),
             TestData.longitudes,
             TestData.latitudes,
-            [0],
-            [7.0],
+            [5.0, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60],
+            np.array(
+                [
+                    363.65,
+                    350.21,
+                    303.64,
+                    240.48,
+                    181.83,
+                    128.47,
+                    74.40,
+                    1.40,
+                    0.0,
+                    0.0,
+                    0.0,
+                    0.0,
+                ]
+            ),
         )
         mocker.add_curves_global(
             sp_heat2("historical", -1),
@@ -354,15 +452,16 @@ class TestRiskModels(TestWithCredentials):
             sp_drought("historical", -1),
             TestData.longitudes,
             TestData.latitudes,
-            [0],
-            [3],
+            # data should be this way around, consistent with temperature type threshold curves
+            [0.0, -1.0, -1.5, -2.0, -2.5, -3.0, -3.6],
+            np.array([6.5, 2.1, 0.86, 0.29, 0.058, 0.0, 0.0]),
         )
         mocker.add_curves_global(
             sp_drought("ssp585", 2050),
             TestData.longitudes,
             TestData.latitudes,
-            [0],
-            [0.8],
+            [0.0, -1.0, -1.5, -2.0, -2.5, -3.0, -3.6],
+            np.array([7.3, 3.7, 2.4, 1.5, 0.56, 0.075, 0.0]),
         )
         mocker.add_curves_global(
             sp_precipitation("historical", -1),
@@ -444,9 +543,10 @@ class TestRiskModels(TestWithCredentials):
         hazard_model = self._create_hazard_model(scenarios, years)
 
         generic_measures = GenericScoreBasedRiskMeasures()
+
         model = AssetLevelRiskModel(
             hazard_model,
-            DictBasedVulnerabilityModels(_vulnerability_models()),
+            _vulnerability_models(),
             {Asset: generic_measures, RealEstateAsset: generic_measures},
             NullAssetBasedPortfolioRiskMeasureCalculator(),
         )
@@ -456,11 +556,64 @@ class TestRiskModels(TestWithCredentials):
         )
         np.testing.assert_approx_equal(
             measures[MeasureKey(assets[0], scenarios[0], years[0], Wind)].measure_0,
-            0.010149044212901014,
+            0.0101490442129,
+        )
+        # another check on drought.
+        # thresholds:
+        # [0.0, -1.0, -1.5, -2.0, -2.5, -3.0, -3.6],
+        # months/year above threshold:
+        # [6.5, 2.1, 0.86, 0.29, 0.058, 0.0, 0.0]
+        # [7.3, 3.7, 2.4, 1.5, 0.56, 0.075, 0.0]
+        # points_x = (np.array([-2, -2.5, -3, -3.5]),)
+        # points_y = (np.array([0, 0.1, 0.2, 1.0]),)
+        expected_hist = 0.058 * 0.15 / 12 + (0.29 - 0.058) * 0.05 / 12
+        expected_fut = (
+            0.075 * 0.6 / 12 + (0.56 - 0.075) * 0.15 / 12 + (1.5 - 0.56) * 0.05 / 12
+        )
+
+        np.testing.assert_approx_equal(
+            measures[MeasureKey(assets[0], scenarios[0], years[0], Drought)].measure_0,
+            expected_fut - expected_hist,
         )
         np.testing.assert_equal(
             measures[MeasureKey(assets[0], scenarios[0], years[0], Drought)].score,
-            Category.HIGH,
+            Category.MEDIUM,
+        )
+
+        # check some edge cases
+        # 1) for SSP245 Hail data not available
+        model = AssetLevelRiskModel(
+            hazard_model,
+            _vulnerability_models(set([Hail])),
+            {Asset: generic_measures, RealEstateAsset: generic_measures},
+            NullAssetBasedPortfolioRiskMeasureCalculator(),
+        )
+        _, measures = model.calculate_risk_measures(
+            assets, scenarios=["ssp245"], years=years
+        )
+        np.testing.assert_equal(
+            measures[MeasureKey(assets[0], "ssp245", years[0], Hail)].score,
+            Category.NO_DATA,
+        )
+        # 2) have a non-matching asset, so 'no vulnerability'
+        assets = [
+            Asset(
+                TestData.latitudes[0],
+                TestData.longitudes[0],
+                id="unique_id_0",
+                type="type_not_in_model",
+            )
+        ]
+        model = AssetLevelRiskModel(
+            hazard_model,
+            _vulnerability_models(set([ChronicHeat])),
+            {Asset: generic_measures, RealEstateAsset: generic_measures},
+            NullAssetBasedPortfolioRiskMeasureCalculator(),
+        )
+        _, measures = model.calculate_risk_measures(assets, scenarios, years=years)
+        np.testing.assert_equal(
+            measures[MeasureKey(assets[0], scenarios[0], years[0], ChronicHeat)].score,
+            Category.NO_VULNERABILITY,
         )
 
     def test_generic_model_via_requests_custom(self):
@@ -491,11 +644,11 @@ class TestRiskModels(TestWithCredentials):
             ):
                 return hazard_model
 
-        class TestVulnerabilityModelsFactory(VulnerabilityModelsFactory):
+        class TestVulnerabilityModelsFactory(PVulnerabilityModelsFactory):
             def vulnerability_models(
                 self, hazard_scope: Optional[Set[Type[Hazard]]] = None
             ) -> VulnerabilityModels:
-                return DictBasedVulnerabilityModels(_vulnerability_models())
+                return _vulnerability_models()
 
         class TestMeasuresFactory(RiskMeasuresFactory):
             def asset_calculators(self, use_case_id: str):
@@ -531,3 +684,9 @@ class TestRiskModels(TestWithCredentials):
             i for i in response.asset_impacts[0].impacts if i.key.hazard_type == "Fire"
         )
         assert impact_for_placeholder.calc_details.hazard_path is not None
+
+    def test_scores_mapping_for_regression_tests(self):
+        assert map_to_original_category(Category.ERROR) == OriginalCategory.NODATA
+        assert map_to_original_category(-3) == 0
+        assert map_to_original_category(Category.NO_DATA) == OriginalCategory.NODATA
+        assert map_to_original_category(Category.VERY_LOW) == OriginalCategory.LOW

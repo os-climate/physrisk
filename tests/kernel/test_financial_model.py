@@ -1,24 +1,21 @@
 import unittest
-from datetime import datetime
 
 import numpy as np
 
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import Asset, PowerGeneratingAsset
-from physrisk.kernel.financial_model import FinancialDataProvider, FinancialModel
+from physrisk.kernel.financial_model import DefaultFinancialModel, FinancialDataProvider
 from physrisk.risk_models.loss_model import LossModel
 
 from ..data.test_hazard_model_store import TestData, mock_hazard_model_store_inundation
 
 
 class MockFinancialDataProvider(FinancialDataProvider):
-    def get_asset_value(self, asset: Asset, currency: str) -> float:
+    def revenue_attributable_to_asset(self, asset: Asset, currency: str) -> float:
         return 1000
 
-    def get_asset_aggregate_cashflows(
-        self, asset: Asset, start: datetime, end: datetime, currency: str
-    ) -> float:
+    def total_insurable_value(self, asset: Asset, currency: str) -> float:
         return 1000
 
 
@@ -55,7 +52,7 @@ class TestAssetImpact(unittest.TestCase):
         model = LossModel(hazard_model=hazard_model)
 
         data_provider = MockFinancialDataProvider()
-        financial_model = FinancialModel(data_provider)
+        financial_model = DefaultFinancialModel(data_provider, [])
 
         assets = [
             PowerGeneratingAsset(latitude=lat, longitude=lon)

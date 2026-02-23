@@ -118,9 +118,16 @@ class ImpactDistrib:
         return self._path
 
 
+class EmptyReason(int, Enum):
+    NO_VULNERABILITY = (
+        2  # models/config yielded no vulnerability for asset/hazard combination
+    )
+    NO_DATA = 1  # some hazard indicator data could not be sourced
+
+
 class EmptyImpactDistrib(ImpactDistrib):
-    def __init__(self):
-        pass
+    def __init__(self, empty_reason: EmptyReason = EmptyReason.NO_VULNERABILITY):
+        self.empty_reason = empty_reason
 
 
 class PlaceholderImpactDistrib(ImpactDistrib):

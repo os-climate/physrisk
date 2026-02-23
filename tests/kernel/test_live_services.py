@@ -88,8 +88,8 @@ def test_live_hazard_data():
 def test_example_portfolios():
     example_portfolios = physrisk.requests._get_example_portfolios()
     for name, assets in example_portfolios.items():
-        # if name != "power_generating_small":
-        #    continue
+        if name != "manufacturing":
+            continue
         logger.info(f"Running example portfolio: {name}")
         request_dict = {
             "assets": assets,
@@ -129,3 +129,18 @@ def test_example_portfolios():
             logger.info(
                 f"Hazard: {hazard_type}, Scores: {scores}, Measures: {measure_values}"
             )
+
+
+@pytest.mark.skip("only as example")
+def test_get_image_info():
+    request = {
+        "resource": "inundation/river_tudelft/v2/flood_depth_unprot_{scenario}_{year}",
+        "scenario_id": "historical",
+        "year": 1985,
+    }
+    from physrisk.container import Container
+
+    container = Container()
+    requester = container.requester()
+    result = requester.get(request_id="get_image_info", request_dict=request)
+    print(result)

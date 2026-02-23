@@ -166,7 +166,8 @@ class Requester:
         elif request_id == "get_example_portfolios":
             return self.dumps(self.get_example_portfolios())
         elif request_id == "get_image_info":
-            return self.dumps(self.get_image_info().model_dump())
+            request = HazardImageInfoRequest(**request_dict)
+            return self.dumps(self.get_image_info(request).model_dump())
         else:
             raise ValueError(f"request type '{request_id}' not found")
 
@@ -268,14 +269,19 @@ class Requester:
 
     def get_image_info(self, request: HazardImageInfoRequest):
         creator: HazardImageCreator = self.hazard_model_factory.image_creator()
-        all_index_values, available_index_values, index_display_name, index_units = (
-            creator.get_info(request.resource, request.scenario_id, request.year)
-        )
+        (
+            all_index_values,
+            available_index_values,
+            index_display_name,
+            index_units,
+            max_zoom,
+        ) = creator.get_info(request.resource, request.scenario_id, request.year)
         return HazardImageInfoResponse(
             all_index_values=all_index_values,
             available_index_values=available_index_values,
             index_display_name=index_display_name,
             index_units=index_units,
+            max_zoom=max_zoom,
         )
 
     def dumps(self, dict):
@@ -586,19 +592,7 @@ def compile_asset_impacts(
                 continue
             calc_details = None
             if include_calc_details:
-                if isinstance(v.impact, PlaceholderImpactDistrib):
-                    # if the impact is a placeholder, measures are calculated based
-                    # only on hazard indicators. Still populate the hazard_path field in this case.
-                    calc_details = CalculationDetails(
-                        hazard_exceedance=None,
-                        hazard_distribution=None,
-                        vulnerability_distribution=None,
-                        hazard_path=[]
-                        if v.hazard_data is None
-                        else [h.path for h in v.hazard_data],
-                    )
-
-                elif v.event is not None and v.vulnerability is not None:
+                if v.event is not None and v.vulnerability is not None:
                     hazard_exceedance = v.event.to_exceedance_curve()
                     vulnerability_distribution = VulnerabilityDistrib(
                         intensity_bin_edges=sig_figures(v.vulnerability.intensity_bins),
@@ -616,6 +610,15 @@ def compile_asset_impacts(
                         ),
                         vulnerability_distribution=vulnerability_distribution,
                         hazard_path=v.impact.path,
+                    )
+                else:
+                    calc_details = CalculationDetails(
+                        hazard_exceedance=None,
+                        hazard_distribution=None,
+                        vulnerability_distribution=None,
+                        hazard_path=[]
+                        if v.hazard_data is None
+                        else [h.path for h in v.hazard_data],
                     )
 
             key = APIImpactKey(
@@ -652,7 +655,7 @@ def compile_asset_impacts(
                     impact_semi_std_deviation=sig_figures(
                         v.impact.semi_standard_deviation()
                     ),
-                    calc_details=None if v.event is None else calc_details,
+                    calc_details=calc_details,
                 )
             # note that this does rely on ordering of dictionary (post 3.6)
             ordered_impacts[k.asset].append(hazard_impacts)

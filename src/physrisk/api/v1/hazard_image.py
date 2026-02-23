@@ -37,6 +37,10 @@ class HazardImageInfoResponse(BaseHazardRequest):
         "index", description="The name of the index dimension."
     )
     index_units: str = Field("", description="The units of the index dimension.")
+    max_zoom: Optional[int] = Field(
+        default=None,
+        description="The maximum zoom level for which tiles are available.",
+    )
 
 
 class HazardImageRequest(BaseHazardRequest):

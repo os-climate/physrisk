@@ -32,9 +32,6 @@ class MapInfo(BaseModel):
     """Provides information about map layer."""
 
     colormap: Optional[Colormap] = Field(description="Details of colormap.")
-    path: str = Field(
-        description="Name of array reprojected to Web Mercator for on-the-fly display or to hash to obtain tile ID. If not supplied, convention is to add '_map' to path."  # noqa
-    )
     bounds: List[Tuple[float, float]] = Field(
         [(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
         description="Bounds (top/left, top/right, bottom/right, bottom/left) as degrees. Note applied to map reprojected into Web Mercator CRS.",  # noqa
@@ -43,6 +40,9 @@ class MapInfo(BaseModel):
     index_values: Optional[Sequence[Union[float, int, str]]] = Field(
         default=None,
         description="Index values to include in maps. If None, the last index value only is included.",
+    )
+    path: str = Field(
+        description="Name of array reprojected to Web Mercator for on-the-fly display or to hash to obtain tile ID. If not supplied, convention is to add '_map' to path."  # noqa
     )
     # note that the bounds should be consistent with the array attributes
     source: Optional[str] = Field(

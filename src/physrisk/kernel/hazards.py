@@ -5,7 +5,12 @@ from typing import Dict, Type
 
 
 class IndicatorData(Enum):
+    # The hazard data comprises return periods and corresponding hazard indicator values.
+    # e.g. for return periods 200, 500, 1000 years, the corresponding flood depth.
     EVENT = 1
+    # The hazard data comprises a set of parameter definitions and corresponding parameters.
+    # A common case is that the parameters are hazard indicator values at specific thresholds, given by
+    # the parameter definitions.
     PARAMETERS = 2
 
 
@@ -71,12 +76,18 @@ class Drought(Hazard):
 
 
 class Fire(Hazard):
-    kind = HazardKind.CHRONIC
+    kind = HazardKind.ACUTE
+    indicator_data = {
+        "fire_probability": IndicatorData.PARAMETERS,
+    }
     pass
 
 
 class Hail(Hazard):
-    kind = HazardKind.CHRONIC
+    kind = HazardKind.ACUTE
+    indicator_data = {
+        "days/above/5cm": IndicatorData.PARAMETERS,
+    }
     pass
 
 

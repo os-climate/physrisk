@@ -113,7 +113,7 @@ doc = [
     "numpydoc==1.9.0",
     "pandoc==2.4",
     "plotly>=6.0.0",
-    "pydata-sphinx-theme==0.15.4",
+    "pydata-sphinx-theme==0.16.1",
     "setuptools<81",
     "sphinx==7.4.7",
     "sphinx-autodoc-typehints==2.3.0",

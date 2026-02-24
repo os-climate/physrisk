@@ -2837,7 +2837,7 @@ name = "pexpect"
 version = "4.9.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "ptyprocess" },
+    { name = "ptyprocess", marker = "(python_full_version < '3.11' and sys_platform == 'emscripten') or (python_full_version < '3.11' and sys_platform == 'win32') or (sys_platform != 'emscripten' and sys_platform != 'win32')" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/42/92/cc564bf6381ff43ce1f4d06852fc19a2f11d180f23dc32d9588bee2f149d/pexpect-4.9.0.tar.gz", hash = "sha256:ee7d41123f3c9911050ea2c2dac107568dc43b2d3b0c7557a33212c398ead30f", size = 166450, upload-time = "2023-11-25T09:07:26.339Z" }
 wheels = [
@@ -2984,7 +2984,7 @@ doc = [
     { name = "sphinx-jinja2-compat", specifier = "==0.3.0" },
     { name = "sphinx-prompt", specifier = "==1.8.0" },
     { name = "sphinx-rtd-theme", specifier = "==2.0.0" },
-    { name = "sphinx-simplepdf", specifier = "==1.6.0" },
+    { name = "sphinx-simplepdf", specifier = "==1.7.0" },
     { name = "sphinx-tabs", specifier = "==3.4.5" },
     { name = "sphinx-toggleprompt", specifier = "==0.5.2" },
     { name = "sphinx-toolbox", specifier = "==3.8.0" },
@@ -4574,7 +4574,7 @@ wheels = [
 
 [[package]]
 name = "sphinx-simplepdf"
-version = "1.6.0"
+version = "1.7.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "beautifulsoup4" },
@@ -4582,9 +4582,9 @@ dependencies = [
     { name = "sphinx" },
     { name = "weasyprint" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9f/28/43db1675815af866ce6ecb09d07b192da27fdc7a811f43f8f3760c2c89ea/sphinx-simplepdf-1.6.0.tar.gz", hash = "sha256:bc8412c6b029886ae2e9241612dfc59c4cd35fa8cf2e7eb987c14126d422a939", size = 2282868, upload-time = "2023-01-20T10:18:26.815Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/41/ca/4d157b8b8f1dabedc35bd2c8a5cc04b16cebc8abf5c17830029f2a092fda/sphinx_simplepdf-1.7.0.tar.gz", hash = "sha256:4e2d323e30cabdff53c12abf1694a9029e667f9a01db343c49341180324caaef", size = 2285303, upload-time = "2025-12-02T06:33:07.868Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/74/98/8dbde560e7a22654c5980561ec2d5417efe999af1939a861909485c6e9ff/sphinx_simplepdf-1.6.0-py3-none-any.whl", hash = "sha256:466a2b7e2000997ebf4dae62d88cd37b27d38c436ca23e81caf939e1d0e611f1", size = 2292403, upload-time = "2023-01-20T10:18:20.405Z" },
+    { url = "https://files.pythonhosted.org/packages/08/26/ef3efd9534fde12bc4bcf8d8fe21c46c62b2235ee946f11cc1413b9cec54/sphinx_simplepdf-1.7.0-py3-none-any.whl", hash = "sha256:eaea30c6dc9dc7d63de566545c448585d792be60243a046cd9c40307d5ca96c6", size = 2295733, upload-time = "2025-12-02T06:33:03.812Z" },
 ]
 
 [[package]]

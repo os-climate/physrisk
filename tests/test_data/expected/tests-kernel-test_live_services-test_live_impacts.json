@@ -1,0 +1,430 @@
+{
+  "risk_measures": {
+    "measures_for_assets": [
+      {
+        "key": {
+          "hazard_type": "ChronicHeat",
+          "scenario_id": "ssp585",
+          "year": "2050",
+          "measure_id": "measure_set_0"
+        },
+        "scores": [
+          -1
+        ],
+        "measures_0": [
+          -9999.0
+        ]
+      },
+      {
+        "key": {
+          "hazard_type": "CoastalInundation",
+          "scenario_id": "ssp585",
+          "year": "2050",
+          "measure_id": "measure_set_0"
+        },
+        "scores": [
+          0
+        ],
+        "measures_0": [
+          0.0
+        ]
+      },
+      {
+        "key": {
+          "hazard_type": "Drought",
+          "scenario_id": "ssp585",
+          "year": "2050",
+          "measure_id": "measure_set_0"
+        },
+        "scores": [
+          -1
+        ],
+        "measures_0": [
+          -9999.0
+        ]
+      },
+      {
+        "key": {
+          "hazard_type": "Fire",
+          "scenario_id": "ssp585",
+          "year": "2050",
+          "measure_id": "measure_set_0"
+        },
+        "scores": [
+          1
+        ],
+        "measures_0": [
+          0.0001709
+        ]
+      },
+      {
+        "key": {
+          "hazard_type": "Hail",
+          "scenario_id": "ssp585",
+          "year": "2050",
+          "measure_id": "measure_set_0"
+        },
+        "scores": [
+          0
+        ],
+        "measures_0": [
+          1.551e-06
+        ]
+      },
+      {
+        "key": {
+          "hazard_type": "PluvialInundation",
+          "scenario_id": "ssp585",
+          "year": "2050",
+          "measure_id": "measure_set_0"
+        },
+        "scores": [
+          -2
+        ],
+        "measures_0": [
+          -9999.0
+        ]
+      },
+      {
+        "key": {
+          "hazard_type": "Precipitation",
+          "scenario_id": "ssp585",
+          "year": "2050",
+          "measure_id": "measure_set_0"
+        },
+        "scores": [
+          -1
+        ],
+        "measures_0": [
+          -9999.0
+        ]
+      },
+      {
+        "key": {
+          "hazard_type": "RiverineInundation",
+          "scenario_id": "ssp585",
+          "year": "2050",
+          "measure_id": "measure_set_0"
+        },
+        "scores": [
+          4
+        ],
+        "measures_0": [
+          0.1316
+        ]
+      },
+      {
+        "key": {
+          "hazard_type": "Wind",
+          "scenario_id": "ssp585",
+          "year": "2050",
+          "measure_id": "measure_set_0"
+        },
+        "scores": [
+          2
+        ],
+        "measures_0": [
+          0.006901
+        ]
+      }
+    ],
+    "measures_for_portfolio": [],
+    "score_based_measure_set_defn": {
+      "measure_set_id": "measure_set_0",
+      "asset_measure_ids_for_hazard": {
+        "ChronicHeat": [
+          "measure_0"
+        ],
+        "CoastalInundation": [
+          "measure_1"
+        ],
+        "Drought": [
+          "measure_0"
+        ],
+        "Fire": [
+          "measure_1"
+        ],
+        "Hail": [
+          "measure_1"
+        ],
+        "PluvialInundation": [
+          "measure_1"
+        ],
+        "Precipitation": [
+          "measure_2"
+        ],
+        "RiverineInundation": [
+          "measure_1"
+        ],
+        "Wind": [
+          "measure_1"
+        ]
+      },
+      "score_definitions": {
+        "measure_0": {
+          "hazard_types": [
+            "ChronicHeat",
+            "Drought"
+          ],
+          "values": [
+            {
+              "value": -3,
+              "label": "Error",
+              "description": "Error."
+            },
+            {
+              "value": -2,
+              "label": "No hazard data",
+              "description": "No hazard data."
+            },
+            {
+              "value": -1,
+              "label": "No vulnerability",
+              "description": "No modelled vulnerability."
+            },
+            {
+              "value": 0,
+              "label": "Very low impact",
+              "description": "Very low impact",
+              "lower_bound": [
+                "-inf"
+              ],
+              "upper_bound": [
+                0.0001
+              ]
+            },
+            {
+              "value": 1,
+              "label": "Low impact",
+              "description": "Low impact",
+              "lower_bound": [
+                0.0001
+              ],
+              "upper_bound": [
+                0.01
+              ]
+            },
+            {
+              "value": 2,
+              "label": "Medium impact",
+              "description": "Medium impact",
+              "lower_bound": [
+                0.01
+              ],
+              "upper_bound": [
+                0.05
+              ]
+            },
+            {
+              "value": 3,
+              "label": "High impact",
+              "description": "High impact",
+              "lower_bound": [
+                0.05
+              ],
+              "upper_bound": [
+                0.1
+              ]
+            },
+            {
+              "value": 4,
+              "label": "Very high impact",
+              "description": "Very high impact",
+              "lower_bound": [
+                0.1
+              ],
+              "upper_bound": [
+                "inf"
+              ]
+            }
+          ],
+          "underlying_measures": [
+            {
+              "measure_id": "measure_disruption_aal",
+              "label": "Average annual loss (AAL).",
+              "description": "Average annual loss (AAL). Annual disruption as a fraction of the total revenue attributable to the asset.",
+              "units": ""
+            }
+          ]
+        },
+        "measure_1": {
+          "hazard_types": [
+            "CoastalInundation",
+            "PluvialInundation",
+            "RiverineInundation",
+            "Fire",
+            "Hail",
+            "Wind"
+          ],
+          "values": [
+            {
+              "value": -3,
+              "label": "Error",
+              "description": "Error."
+            },
+            {
+              "value": -2,
+              "label": "No hazard data",
+              "description": "No hazard data."
+            },
+            {
+              "value": -1,
+              "label": "No vulnerability",
+              "description": "No modelled vulnerability."
+            },
+            {
+              "value": 0,
+              "label": "Very low impact",
+              "description": "Very low impact",
+              "lower_bound": [
+                "-inf"
+              ],
+              "upper_bound": [
+                0.0001
+              ]
+            },
+            {
+              "value": 1,
+              "label": "Low impact",
+              "description": "Low impact",
+              "lower_bound": [
+                0.0001
+              ],
+              "upper_bound": [
+                0.002
+              ]
+            },
+            {
+              "value": 2,
+              "label": "Medium impact",
+              "description": "Medium impact",
+              "lower_bound": [
+                0.002
+              ],
+              "upper_bound": [
+                0.01
+              ]
+            },
+            {
+              "value": 3,
+              "label": "High impact",
+              "description": "High impact",
+              "lower_bound": [
+                0.01
+              ],
+              "upper_bound": [
+                0.05
+              ]
+            },
+            {
+              "value": 4,
+              "label": "Very high impact",
+              "description": "Very high impact",
+              "lower_bound": [
+                0.05
+              ],
+              "upper_bound": [
+                "inf"
+              ]
+            }
+          ],
+          "underlying_measures": [
+            {
+              "measure_id": "measure_damage_aal",
+              "label": "Average annual loss (AAL).",
+              "description": "Average annual loss (AAL). Annual damage as a fraction of the asset total insurable value (TIV).Where applicable, aggregates asset-restoration downtime loss, also as fraction of TIV.",
+              "units": ""
+            }
+          ]
+        },
+        "measure_2": {
+          "hazard_types": [
+            "Precipitation"
+          ],
+          "values": [
+            {
+              "value": -2,
+              "label": "No data",
+              "description": "No data."
+            },
+            {
+              "value": 0,
+              "label": "Very low exposure",
+              "description": "Very low exposure",
+              "lower_bound": [
+                "-inf"
+              ],
+              "upper_bound": [
+                10
+              ]
+            },
+            {
+              "value": 1,
+              "label": "Low exposure",
+              "description": "Low exposure",
+              "lower_bound": [
+                10
+              ],
+              "upper_bound": [
+                100
+              ]
+            },
+            {
+              "value": 2,
+              "label": "Medium exposure",
+              "description": "Medium exposure",
+              "lower_bound": [
+                100
+              ],
+              "upper_bound": [
+                130
+              ]
+            },
+            {
+              "value": 3,
+              "label": "High exposure",
+              "description": "High exposure",
+              "lower_bound": [
+                130
+              ],
+              "upper_bound": [
+                160
+              ]
+            },
+            {
+              "value": 4,
+              "label": "Very high exposure",
+              "description": "Very high exposure",
+              "lower_bound": [
+                160
+              ],
+              "upper_bound": [
+                "inf"
+              ]
+            }
+          ],
+          "underlying_measures": [
+            {
+              "measure_id": "measure_precipitation",
+              "label": "1-in-100 year precipitation.",
+              "description": "1-in-100 year maximum daily total water equivalent precipitation.",
+              "units": "mm"
+            }
+          ]
+        }
+      },
+      "asset_measure_ids_for_hazard_drilldown": {}
+    },
+    "scenarios": [
+      {
+        "id": "ssp585",
+        "years": [
+          2050
+        ]
+      }
+    ],
+    "asset_ids": [
+      "asset_0"
+    ]
+  }
+}

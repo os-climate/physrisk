@@ -163,7 +163,9 @@ class TestRiskModels(TestWithCredentials):
             {RealEstateAsset: RealEstateToyRiskMeasures()},
             NullAssetBasedPortfolioRiskMeasureCalculator(),
         )
-        measure_ids_for_asset, definitions = model.populate_measure_definitions(assets)
+        measure_ids_for_asset, definitions, measure_ids_for_asset_drilldown = (
+            model.populate_measure_definitions(assets)
+        )
         _, measures = model.calculate_risk_measures(
             assets, scenarios=scenarios, years=years
         )
@@ -550,7 +552,9 @@ class TestRiskModels(TestWithCredentials):
             {Asset: generic_measures, RealEstateAsset: generic_measures},
             NullAssetBasedPortfolioRiskMeasureCalculator(),
         )
-        measure_ids_for_asset, definitions = model.populate_measure_definitions(assets)
+        measure_ids_for_asset, definitions, _ = model.populate_measure_definitions(
+            assets
+        )
         _, measures = model.calculate_risk_measures(
             assets, scenarios=scenarios, years=years
         )

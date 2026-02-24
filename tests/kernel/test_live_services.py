@@ -7,6 +7,7 @@ import requests
 from physrisk.api.v1.impact_req_resp import RiskMeasures, RiskMeasuresHelper
 from physrisk.container import Container
 import physrisk.requests
+from tests.conftest import get_result_expected
 
 url = "https://physrisk-api-physrisk.apps.osc-cl1.apps.os-climate.org"
 # url = "http://127.0.0.1:5000"
@@ -144,3 +145,53 @@ def test_get_image_info():
     requester = container.requester()
     result = requester.get(request_id="get_image_info", request_dict=request)
     print(result)
+
+
+@pytest.fixture
+def requester():
+    container = Container()
+    return container.requester()
+
+
+def test_live_impacts_regression(
+    requester: physrisk.requests.Requester, update_expected: str
+):  # "latitude": 34.556, "longitude": 69.4787
+    request = {
+        "assets": {
+            "items": [
+                {
+                    "asset_class": "RealEstateAsset",
+                    "type": "Buildings/Industrial",
+                    "location": "Asia",
+                    "latitude": 23.0737,
+                    "longitude": 113.8516,
+                }
+            ]
+        },
+        "include_asset_level": False,
+        "include_measures": True,
+        "include_calc_details": False,
+        "scenarios": ["ssp585"],
+        "years": [2050],
+    }
+    result = requester.get(request_id="get_asset_impact", request_dict=request)
+    result_dict = json.loads(result)
+    # hazards = [
+    #     "CoastalInundation",
+    #     "ChronicHeat",
+    #     "Drought",
+    #     "Fire",
+    #     "Hail",
+    #     "PluvialInundation",
+    #     "RiverineInundation",
+    #     "Wind",
+    # ]
+    # result_dict_cut_down = {"risk_measures": {"measure_for_assets": []}}
+    # for item in result_dict["risk_measures"]["measures_for_assets"]:
+    #     if item["key"]["hazard_type"] in hazards:
+    #         result_dict_cut_down["risk_measures"]["measure_for_assets"].append(item)
+    result_str = json.dumps(result_dict, indent=2)
+    func_name = f"{__name__}.{test_live_impacts.__name__}"
+    result_dict, expected_dict = get_result_expected(
+        result_str, func_name, update_expected == "True"
+    )

@@ -123,6 +123,7 @@ class EmptyReason(int, Enum):
         2  # models/config yielded no vulnerability for asset/hazard combination
     )
     NO_DATA = 1  # some hazard indicator data could not be sourced
+    EXCEPTION = 3  # some exception was raised during impact calculation
 
 
 class EmptyImpactDistrib(ImpactDistrib):

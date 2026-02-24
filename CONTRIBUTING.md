@@ -78,7 +78,7 @@ do this:
 - Create new annotated tag and push
 
 ```bash
-git tag -a v1.0.0 -m "v1.0.0"
+git tag -s -a v1.0.0 -m "v1.0.0"
 git push --follow-tags
 ```
 

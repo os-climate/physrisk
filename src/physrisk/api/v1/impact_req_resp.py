@@ -122,10 +122,15 @@ class ScoreBasedRiskMeasureDefinition(BaseModel):
 
 
 class RiskMeasureKey(BaseModel):
+    """Hazard type (e.g. 'RiverineInundation'), scenario ID (e.g. 'ssp585'), year (e.g. '2050')
+    and measure ID (e.g. 'measure_set_1') that together identify a risk measure.
+    For drill-down by hazard indicator ID, hazard_indicator_id can optionally be provided."""
+
     hazard_type: str
     scenario_id: str
     year: str
     measure_id: str
+    hazard_indicator_id: Optional[str] = None
 
 
 class RiskMeasure(BaseModel):
@@ -157,8 +162,14 @@ class RiskMeasuresForAssets(BaseModel):
 
 class ScoreBasedRiskMeasureSetDefinition(BaseModel):
     measure_set_id: str
+    # for hazard types give the measure ID used to calculate the measure for each asset:
     asset_measure_ids_for_hazard: Dict[str, List[str]]
     score_definitions: Dict[str, ScoreBasedRiskMeasureDefinition]
+    # where drill-down by hazard indicator ID is relevant, give the measure IDs for each
+    # (hazard type, indicator ID) combination :
+    asset_measure_ids_for_hazard_drilldown: Optional[
+        Dict[tuple[str, str], List[str]]
+    ] = None
 
 
 class RiskMeasures(BaseModel):

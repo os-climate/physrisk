@@ -41,7 +41,7 @@ class AveragingAssetBasedPortfolioRiskMeasureCalculator:
             defaultdict(list)
         )
         for mk in asset_level_measures.keys():
-            measure_by_year_scen[(mk.prosp_scen, mk.year)].append(mk)
+            measure_by_year_scen[(mk.scenario, mk.year)].append(mk)
         for k, v in measure_by_year_scen.items():
             # Calculate portfolio score-based risk measures for this year/scenario
             scores = [float(asset_level_measures[m].score) for m in v]

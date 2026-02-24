@@ -66,10 +66,19 @@ class Quantity:
 
 
 class MeasureKey(NamedTuple):
+    """Key for risk measures:
+    asset can be None for measures aggregated over assets (i.e. portfolio-level);
+    the hazard_type can be None for measures aggregated over hazard types;
+    scenario is required; year should be None for the historical scenario;
+    hazard_indicator_id can be used to distinguish between different hazard indicators for the same hazard type,
+    e.g. for ChronicHeat, multiple hazard indicators may be used to capture different mechanisms of impact.
+    """
+
     asset: Optional[Asset]
-    prosp_scen: str  # prospective scenario
+    scenario: str
     year: Optional[int]
     hazard_type: Optional[Type[Hazard]]
+    hazard_indicator_id: Optional[str] = None
 
 
 @dataclass
@@ -77,6 +86,7 @@ class Measure:
     score: int
     measure_0: float
     definition: ScoreBasedRiskMeasureDefinition  # reference to single instance of ScoreBasedRiskMeasureDefinition
+    measure_1: Optional[float] = None
 
 
 class PortfolioRiskMeasureCalculator(Protocol):
@@ -162,19 +172,23 @@ class RiskMeasureCalculator(Protocol):
         hazard_type: Type[Hazard],
         base_impact: Sequence[AssetImpactResult],
         impact: Sequence[AssetImpactResult],
-    ) -> Optional[Measure]:
+    ) -> Measure | dict[str, Measure]:
         """Calculate the Measure (score-based risk measure) for the hazard,
-        given the base (i.e. historical) and future asset-level impacts. Most often
-        there may be a single impact for a given type of hazard, but in general
+        given the set of base (i.e. historical) and future asset-level impacts.
+        Most often there may be a single impact for a given type of hazard, but in general
         there can be multiple corresponding to different vulnerability models.
 
         Args:
             hazard_type (Type[Hazard]): Hazard type.
-            base_impacts (AssetImpactResult): Historical asset-level impacts.
-            impacts (AssetImpactResult): Future asset-level impacts.
+            base_impacts (Sequence[AssetImpactResult]): Historical asset-level impacts.
+            impacts (Sequence[AssetImpactResult]): Future asset-level impacts. The historical
+            and future impacts are aligned by the generating vulnerability model (with unique hazard indicator ID),
+            allowing these to be zipped and compared as required.
 
         Returns:
-            Optional[Measure]: Score-based risk measure.
+            Measure | dict[str, Measure]: Single score-based risk measures, or a dictionary
+            of score-based risk measures keyed by a hazard indicator ID, for cases where
+            drill-down by hazard indicator is desired.
         """
         ...
 
@@ -250,11 +264,14 @@ class AssetLevelRiskModel(RiskModel):
 
     def populate_measure_definitions(
         self, assets: Sequence[Asset]
-    ) -> Tuple[
-        Dict[Type[Hazard], List[str]], Dict[ScoreBasedRiskMeasureDefinition, str]
+    ) -> tuple[
+        dict[type[Hazard], list[str]],
+        dict[ScoreBasedRiskMeasureDefinition, str],
+        dict[tuple[type[Hazard], str], list[str]],
     ]:
         # the identifiers of the score-based risk measures used for each asset, for each hazard type
-        measure_ids_for_hazard: Dict[Type[Hazard], List[str]] = {}
+        measure_ids_for_hazard: dict[type[Hazard], list[str]] = {}
+        measure_ids_for_hazard_drilldown: dict[tuple[type[Hazard], str], list[str]] = {}
         # one
         calcs_by_asset = [self._calculator_for_asset(asset) for asset in assets]
         # match to specific asset and if no match then use the generic calculator assigned to Asset
@@ -301,7 +318,11 @@ class AssetLevelRiskModel(RiskModel):
         for hazard_type in all_supported_hazards:
             measure_ids = [get_measure_id(calc, hazard_type) for calc in calcs_by_asset]
             measure_ids_for_hazard[hazard_type] = measure_ids
-        return measure_ids_for_hazard, measure_id_lookup
+        return (
+            measure_ids_for_hazard,
+            measure_id_lookup,
+            measure_ids_for_hazard_drilldown,
+        )
 
     def calculate_risk_measures(
         self, assets: Sequence[Asset], scenarios: Sequence[str], years: Sequence[int]
@@ -329,7 +350,8 @@ class AssetLevelRiskModel(RiskModel):
                                     hazard_type=hazard_type,
                                     scenario="historical",
                                     key_year=None,
-                                )
+                                ),
+                                [],
                             )
                             # the future impact might also be the historical if that is also specified
                             fut_impacts = impacts.get(
@@ -338,22 +360,33 @@ class AssetLevelRiskModel(RiskModel):
                                     hazard_type=hazard_type,
                                     scenario=scenario,
                                     key_year=year,
-                                )
+                                ),
+                                [],
                             )
-                            if base_impacts is None or fut_impacts is None:
-                                # should only happen if we are working with limited hazard scope
-                                continue
-                            if len(base_impacts) == 0 or len(fut_impacts) == 0:
-                                continue
                             # if there are multiple impacts (e.g. from multiple vulnerability models), we
-                            # pass to the measure calculator. It will aggregate as it sees fit.
-                            risk_ind = measure_calc.calc_measure(
+                            # pass to the measure calculator. It will either aggregate, or return
+                            # multiple measures with different hazard indicator IDs.
+                            risk_measure = measure_calc.calc_measure(
                                 hazard_type, base_impacts, fut_impacts
                             )
-                            if risk_ind is not None:
+                            if isinstance(risk_measure, Measure):
                                 measures[
                                     MeasureKey(asset, scenario, year, hazard_type)
-                                ] = risk_ind
+                                ] = risk_measure
+                            else:
+                                for (
+                                    hazard_indicator_id,
+                                    measure,
+                                ) in risk_measure.items():
+                                    measures[
+                                        MeasureKey(
+                                            asset,
+                                            scenario,
+                                            year,
+                                            hazard_type,
+                                            hazard_indicator_id,
+                                        )
+                                    ] = measure
             aggregated_measures.update(
                 measure_calc.aggregate_risk_measures(measures, assets, scenarios, years)
             )

@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Callable, Optional, Sequence, Set, Type
+from typing import Callable, Sequence, Set, Type
 
 from physrisk.api.v1.impact_req_resp import (
     RiskMeasureDefinition,
@@ -179,12 +179,16 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
         hazard_type: Type[Hazard],
         base_impacts: Sequence[AssetImpactResult],
         impacts: Sequence[AssetImpactResult],
-    ) -> Optional[Measure]:
+    ) -> Measure:
         base_impact_res, impact_res = base_impacts[0], impacts[0]
         if isinstance(base_impact_res.impact, EmptyImpactDistrib) or isinstance(
             impact_res.impact, EmptyImpactDistrib
         ):
-            return None
+            return Measure(
+                score=Category.NO_DATA,
+                measure_0=float("nan"),
+                definition=self.get_definition(hazard_type),
+            )
         if hazard_type == ChronicHeat:
             return self.calc_measure_cooling(
                 hazard_type, base_impact_res.impact, impact_res.impact

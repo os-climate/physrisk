@@ -531,8 +531,10 @@ def _get_asset_impacts(
         impacts, measures = risk_model.calculate_risk_measures(
             _assets, scenarios, years
         )
+        # in the case of drill-down by hazard indicator ID, we list the indicator IDs per hazard type:
+        hazard_type_indicators = _hazard_type_indicators(measures)
         measure_ids_for_asset, definitions, measure_ids_for_asset_drilldown = (
-            risk_model.populate_measure_definitions(_assets)
+            risk_model.populate_measure_definitions(_assets, hazard_type_indicators)
         )
         # create object for API:
         risk_measures = _create_risk_measures(
@@ -543,6 +545,7 @@ def _get_asset_impacts(
             scenarios,
             years,
             sig_figures,
+            hazard_type_indicators=hazard_type_indicators,
             measure_ids_for_asset_drilldown=measure_ids_for_asset_drilldown,
         )
     elif request.include_asset_level:
@@ -641,8 +644,8 @@ def compile_asset_impacts(
                         exceed_probabilities=sig_figures(impact_exceedance.probs),
                     ),
                     impact_distribution=Distribution(
-                        bin_edges=sig_figures(v.impact.impact_bins),
-                        probabilities=sig_figures(v.impact.prob),
+                        bin_edges=sig_figures(v.impact.impact_bin_edges),
+                        probabilities=sig_figures(v.impact.probabilities),
                     ),
                     impact_mean=sig_figures(v.impact.mean_impact()),
                     impact_std_deviation=sig_figures(v.impact.standard_deviation()),
@@ -674,6 +677,7 @@ def _create_risk_measures(
     sig_figures: Callable[
         [Union[np.ndarray, float]], Union[np.ndarray, float]
     ] = lambda x: x,
+    hazard_type_indicators: dict[type[Hazard], set[str]] = {},
     measure_ids_for_asset_drilldown: dict[tuple[type[Hazard], str], list[str]] = {},
 ) -> RiskMeasures:
     """Prepare RiskMeasures object for (JSON) output from measure results.
@@ -687,19 +691,13 @@ def _create_risk_measures(
         assets (list[Asset]): Assets.
         scenarios (Sequence[str]): Scenario IDs.
         years (Sequence[int]): Years.
+        hazard_type_indicators (dict[type[Hazard], set[str]]): Hazard indicator IDs used for each hazard type.
         measure_ids_for_asset_drilldown (dict[tuple[type[Hazard], str], list[str]]): IDs of the score-based risk measures
             for each asset, drilling-down by hazard indicator ID.
 
     Returns:
         RiskMeasures: Output for writing to JSON.
     """
-
-    # the measures keys might contain hazard_indicator_id for drill-down: we check for this
-    # and create a look-up of the hazard_indicator_ids used for each hazard type.
-    hazard_type_indicators: Dict[type[Hazard], set[str]] = defaultdict(set)
-    for k in measures.keys():
-        if k.hazard_type is not None and k.hazard_indicator_id is not None:
-            hazard_type_indicators[k.hazard_type].add(k.hazard_indicator_id)
 
     nan_value = -9999.0  # Nan not part of JSON spec
     hazard_types = set(k.hazard_type for k in measures.keys())
@@ -715,11 +713,8 @@ def _create_risk_measures(
                 # we calculate and tag results for each scenario, year and hazard
                 if hazard_type is not None:
                     hazard_indicator_ids: list[Any] = sorted(
-                        hazard_type_indicators[hazard_type]
-                    )
-                    hazard_indicator_ids.append(
-                        None
-                    )  # case where no drill-down by hazard indicator ID
+                        hazard_type_indicators.get(hazard_type, set())
+                    ) + [None]  # case where no drill-down by hazard indicator ID
                     for hazard_indicator_id in hazard_indicator_ids:
                         score_key = RiskMeasureKey(
                             hazard_type=hazard_type.__name__
@@ -780,6 +775,17 @@ def _create_risk_measures(
                         )
                     )
 
+    asset_measure_ids_for_hazard_drilldown_nested: dict[str, dict[str, list[str]]] = (
+        defaultdict(dict)
+    )
+    for (hazard_type, hazard_indicator_id), measure_ids in sorted(
+        measure_ids_for_asset_drilldown.items(),
+        key=lambda x: (x[0][0].__name__, x[0][1]),
+    ):
+        asset_measure_ids_for_hazard_drilldown_nested[hazard_type.__name__][
+            hazard_indicator_id
+        ] = measure_ids
+
     score_based_measure_set_defn = ScoreBasedRiskMeasureSetDefinition(
         measure_set_id=measure_set_id,
         asset_measure_ids_for_hazard={
@@ -788,13 +794,7 @@ def _create_risk_measures(
                 measure_ids_for_asset.items(), key=lambda x: x[0].__name__
             )
         },
-        asset_measure_ids_for_hazard_drilldown={
-            (k[0].__name__, k[1]): v
-            for k, v in sorted(
-                measure_ids_for_asset_drilldown.items(),
-                key=lambda x: (x[0][0].__name__, x[0][1]),
-            )
-        },
+        asset_measure_ids_for_hazard_drilldown=asset_measure_ids_for_hazard_drilldown_nested,
         score_definitions={v: k for (k, v) in definitions.items()},
     )
 
@@ -821,3 +821,13 @@ def _get_example_portfolios() -> dict[str, Assets]:
             portfolio = Assets(**json.load(f))
             portfolios[file.name.replace(".json", "")] = portfolio
     return portfolios
+
+
+def _hazard_type_indicators(measures: dict[MeasureKey, Measure]):
+    # the measures keys might contain hazard_indicator_id for drill-down: we check for this
+    # and create a look-up of the hazard_indicator_ids used for each hazard type.
+    hazard_type_indicators: Dict[type[Hazard], set[str]] = defaultdict(set)
+    for k in measures.keys():
+        if k.hazard_type is not None and k.hazard_indicator_id is not None:
+            hazard_type_indicators[k.hazard_type].add(k.hazard_indicator_id)
+    return hazard_type_indicators

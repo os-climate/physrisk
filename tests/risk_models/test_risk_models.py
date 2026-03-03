@@ -15,6 +15,7 @@ from physrisk.api.v1.impact_req_resp import (
     AssetImpactResponse,
     RiskMeasureKey,
     RiskMeasuresHelper,
+    ScoreBasedRiskMeasureDefinition,
 )
 from physrisk.container import Container
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
@@ -32,11 +33,14 @@ from physrisk.kernel.hazards import (
     RiverineInundation,
     Wind,
 )
+from physrisk.kernel.impact import AssetImpactResult
 from physrisk.kernel.impact_distrib import ImpactType
 from physrisk.kernel.risk import (
     AssetLevelRiskModel,
+    Measure,
     MeasureKey,
     NullAssetBasedPortfolioRiskMeasureCalculator,
+    RiskMeasureCalculator,
     RiskMeasuresFactory,
 )
 from physrisk.risk_models.portfolio_risk_model import (
@@ -532,6 +536,52 @@ class TestRiskModels(TestWithCredentials):
             if ma.key.hazard_type == "RiverineInundation"
         )
         np.testing.assert_allclose(res.measures_0, [0.0959039, 0.0959039])
+
+        # now test the ability to return scores based on hazard indicator ID if needed
+
+        test_measure_defn = ScoreBasedRiskMeasureDefinition(
+            hazard_types=["Fire"], values=[], underlying_measures=[]
+        )
+
+        class TestMeasuresWithHazardIndicatorID(RiskMeasureCalculator):
+            def calc_measure(
+                self,
+                hazard_type: Type[Hazard],
+                base_impact: Sequence[AssetImpactResult],
+                impact: Sequence[AssetImpactResult],
+            ) -> Measure | dict[str | None, Measure]:
+                return {
+                    impact[0].impact.hazard_indicator_id: Measure(
+                        0, 0.001, test_measure_defn
+                    ),
+                    None: Measure(0, 0.002, test_measure_defn),
+                }
+
+            def supported_hazards(self):
+                return [Fire]
+
+            def get_definition(self, hazard_type, hazard_indicator_id):
+                return test_measure_defn
+
+        class TestMeasuresFactory(RiskMeasuresFactory):
+            def asset_calculators(self, use_case_id: str):
+                return {Asset: TestMeasuresWithHazardIndicatorID()}
+
+            def portfolio_calculator(self, use_case_id: str):
+                return NullAssetBasedPortfolioRiskMeasureCalculator()
+
+        container.override_providers(
+            measures_factory=providers.Factory(TestMeasuresFactory)
+        )
+        container.reset_singletons()
+        requester = container.requester()
+        res = requester.get(request_id="get_asset_impact", request_dict=request_dict)
+        response = AssetImpactResponse.model_validate_json(res)
+        # just check that measures are hazard_indicator_id-level
+        assert (
+            response.risk_measures.measures_for_assets[0].key.hazard_indicator_id
+            == "fire_probability"
+        )
 
     def test_generic_model(self):
         scenarios = ["ssp585"]

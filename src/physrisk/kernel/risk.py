@@ -172,7 +172,7 @@ class RiskMeasureCalculator(Protocol):
         hazard_type: Type[Hazard],
         base_impact: Sequence[AssetImpactResult],
         impact: Sequence[AssetImpactResult],
-    ) -> Measure | dict[str, Measure]:
+    ) -> Measure | dict[str | None, Measure]:
         """Calculate the Measure (score-based risk measure) for the hazard,
         given the set of base (i.e. historical) and future asset-level impacts.
         Most often there may be a single impact for a given type of hazard, but in general
@@ -193,7 +193,7 @@ class RiskMeasureCalculator(Protocol):
         ...
 
     def get_definition(
-        self, hazard_type: Type[Hazard]
+        self, hazard_type: Type[Hazard], hazard_indicator_id: Optional[str] = None
     ) -> ScoreBasedRiskMeasureDefinition: ...
 
     def supported_hazards(self) -> Set[type]: ...
@@ -263,7 +263,9 @@ class AssetLevelRiskModel(RiskModel):
         return impacts
 
     def populate_measure_definitions(
-        self, assets: Sequence[Asset]
+        self,
+        assets: Sequence[Asset],
+        hazard_type_indicators: dict[type[Hazard], set[str]] = {},
     ) -> tuple[
         dict[type[Hazard], list[str]],
         dict[ScoreBasedRiskMeasureDefinition, str],
@@ -288,8 +290,15 @@ class AssetLevelRiskModel(RiskModel):
                     set(
                         item
                         for item in (
-                            cal.get_definition(hazard_type=hazard_type)
+                            cal.get_definition(
+                                hazard_type=hazard_type,
+                                hazard_indicator_id=hazard_indicator_id,
+                            )
                             for hazard_type in all_supported_hazards
+                            for hazard_indicator_id in (
+                                sorted(hazard_type_indicators.get(hazard_type, set()))
+                                + [None]
+                            )
                             for cal in used_calcs
                         )
                         if item is not None
@@ -308,16 +317,30 @@ class AssetLevelRiskModel(RiskModel):
             )
 
         def get_measure_id(
-            measure_calc: Union[RiskMeasureCalculator, None], hazard_type: type
+            measure_calc: Union[RiskMeasureCalculator, None],
+            hazard_type: type[Hazard],
+            hazard_indicator_id: Optional[str] = None,
         ):
             if measure_calc is None:
                 return "na"
-            measure = measure_calc.get_definition(hazard_type=hazard_type)
+            measure = measure_calc.get_definition(
+                hazard_type=hazard_type, hazard_indicator_id=hazard_indicator_id
+            )
             return measure_id_lookup[measure] if measure is not None else "na"
 
         for hazard_type in all_supported_hazards:
             measure_ids = [get_measure_id(calc, hazard_type) for calc in calcs_by_asset]
             measure_ids_for_hazard[hazard_type] = measure_ids
+            for hazard_indicator_id in sorted(
+                hazard_type_indicators.get(hazard_type, set())
+            ):
+                measure_ids_drilldown = [
+                    get_measure_id(calc, hazard_type, hazard_indicator_id)
+                    for calc in calcs_by_asset
+                ]
+                measure_ids_for_hazard_drilldown[(hazard_type, hazard_indicator_id)] = (
+                    measure_ids_drilldown
+                )
         return (
             measure_ids_for_hazard,
             measure_id_lookup,

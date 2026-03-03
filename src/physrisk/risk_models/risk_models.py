@@ -1,5 +1,5 @@
 from enum import Enum
-from typing import Callable, Sequence, Set, Type
+from typing import Callable, Optional, Sequence, Set, Type
 
 from physrisk.api.v1.impact_req_resp import (
     RiskMeasureDefinition,
@@ -259,7 +259,9 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
             definition=self.get_definition(hazard_type),
         )
 
-    def get_definition(self, hazard_type: type):
+    def get_definition(
+        self, hazard_type: type[Hazard], hazard_indicator_id: Optional[str] = None
+    ) -> ScoreBasedRiskMeasureDefinition:
         return self._definition_lookup.get(hazard_type, None)
 
     def supported_hazards(self) -> Set[type]:

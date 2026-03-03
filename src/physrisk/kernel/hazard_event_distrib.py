@@ -2,6 +2,8 @@ from typing import List, Union
 
 import numpy as np
 
+from physrisk.kernel.hazards import Hazard
+
 from . import curve
 
 
@@ -13,7 +15,7 @@ class HazardEventDistrib:
 
     def __init__(
         self,
-        event_type: type,
+        event_type: type[Hazard],
         intensity_bins: Union[List[float], np.ndarray],
         prob: Union[List[float], np.ndarray],
         path: List[str],

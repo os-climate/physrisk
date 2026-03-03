@@ -168,7 +168,7 @@ class ScoreBasedRiskMeasureSetDefinition(BaseModel):
     # where drill-down by hazard indicator ID is relevant, give the measure IDs for each
     # (hazard type, indicator ID) combination :
     asset_measure_ids_for_hazard_drilldown: Optional[
-        Dict[tuple[str, str], List[str]]
+        dict[str, dict[str, list[str]]]
     ] = None
 
 

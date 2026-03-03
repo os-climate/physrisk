@@ -1,6 +1,6 @@
 import math
 from dataclasses import dataclass
-from typing import Any, Dict, Protocol, Sequence, Set, Type, Union
+from typing import Any, Dict, Optional, Protocol, Sequence, Set, Type, Union
 
 import numpy as np
 from physrisk.api.v1.impact_req_resp import (
@@ -556,7 +556,9 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
         )
         return future_loss - histo_loss
 
-    def get_definition(self, hazard_type: Type[Hazard]):
+    def get_definition(
+        self, hazard_type: type[Hazard], hazard_indicator_id: Optional[str] = None
+    ) -> ScoreBasedRiskMeasureDefinition:
         return self._definition_lookup.get(hazard_type, None)
 
     def supported_hazards(self) -> Set[type]:

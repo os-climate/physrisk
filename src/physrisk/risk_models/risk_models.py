@@ -179,12 +179,16 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
         hazard_type: Type[Hazard],
         base_impacts: Sequence[AssetImpactResult],
         impacts: Sequence[AssetImpactResult],
-    ) -> Optional[Measure]:
+    ) -> Measure:
         base_impact_res, impact_res = base_impacts[0], impacts[0]
         if isinstance(base_impact_res.impact, EmptyImpactDistrib) or isinstance(
             impact_res.impact, EmptyImpactDistrib
         ):
-            return None
+            return Measure(
+                score=Category.NO_DATA,
+                measure_0=float("nan"),
+                definition=self.get_definition(hazard_type),
+            )
         if hazard_type == ChronicHeat:
             return self.calc_measure_cooling(
                 hazard_type, base_impact_res.impact, impact_res.impact
@@ -255,7 +259,9 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
             definition=self.get_definition(hazard_type),
         )
 
-    def get_definition(self, hazard_type: type):
+    def get_definition(
+        self, hazard_type: type[Hazard], hazard_indicator_id: Optional[str] = None
+    ) -> ScoreBasedRiskMeasureDefinition:
         return self._definition_lookup.get(hazard_type, None)
 
     def supported_hazards(self) -> Set[type]:

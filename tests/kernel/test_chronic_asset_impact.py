@@ -130,6 +130,7 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
             fraction_loss_std,
             ChronicHeat,
             [scenario_dd_above_mean.path],
+            self.indicator_id,
             ImpactType.disruption,
         )
 
@@ -139,6 +140,7 @@ def get_impact_distrib(
     fraction_loss_std: float,
     hazard_type: type,
     hazard_paths: List[str],
+    hazard_indicator_id: str,
     impact_type: ImpactType,
 ) -> ImpactDistrib:
     """Calculate impact (disruption) of asset based on the hazard data returned.
@@ -181,7 +183,14 @@ def get_impact_distrib(
     else:
         probs[0] = probs[0] + prob_differential
 
-    return ImpactDistrib(hazard_type, impact_bins, probs, hazard_paths, impact_type)
+    return ImpactDistrib(
+        hazard_type,
+        impact_bins,
+        probs,
+        hazard_indicator_id=hazard_indicator_id,
+        impact_type=impact_type,
+        path=hazard_paths,
+    )
 
 
 class TestChronicAssetImpact(unittest.TestCase):
@@ -217,7 +226,7 @@ class TestChronicAssetImpact(unittest.TestCase):
         )
 
         value_test = list(results.values())[0][0].impact.mean_impact()
-        value_test = list(results.values())[0][0].impact.prob
+        value_test = list(results.values())[0][0].impact.probabilities
         value_exp = np.array(
             [
                 0.02656777935,

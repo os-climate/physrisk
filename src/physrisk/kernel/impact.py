@@ -147,37 +147,43 @@ def calculate_impacts(  # noqa: C901
                         key_year=None if year == -1 else year,
                     )
 
-                    if any(
-                        isinstance(hd, HazardDataFailedResponse) for hd in hazard_data
-                    ):
-                        # some hazard indicator data is missing; perhaps unavailable location for a certain requested SSP
-                        results[impact_key].append(
-                            AssetImpactResult(
+                    try:
+                        if any(
+                            isinstance(hd, HazardDataFailedResponse)
+                            for hd in hazard_data
+                        ):
+                            # some hazard indicator data is missing; perhaps unavailable location for a certain requested SSP
+                            asset_impact_result = AssetImpactResult(
                                 EmptyImpactDistrib(empty_reason=EmptyReason.NO_DATA),
                                 hazard_data=hazard_data,
                             )
-                        )
-                        continue
-                    try:
-                        if isinstance(model, VulnerabilityModelAcuteBase):
+                        elif isinstance(model, VulnerabilityModelAcuteBase):
                             impact, vul, event = model.get_impact_details(
                                 asset, hazard_data
                             )
-                            results[impact_key].append(
-                                AssetImpactResult(
-                                    impact,
-                                    vulnerability=vul,
-                                    event=event,
-                                    hazard_data=hazard_data,
-                                )
+                            asset_impact_result = AssetImpactResult(
+                                impact,
+                                vulnerability=vul,
+                                event=event,
+                                hazard_data=hazard_data,
                             )
                         elif isinstance(model, VulnerabilityModelBase):
                             impact = model.get_impact(asset, hazard_data)
-                            results[impact_key].append(
-                                AssetImpactResult(impact, hazard_data=hazard_data)
+                            asset_impact_result = AssetImpactResult(
+                                impact, hazard_data=hazard_data
+                            )
+                        else:
+                            raise ValueError(
+                                f"Unsupported vulnerability model type: {type(model)}"
                             )
                     except Exception as e:
+                        asset_impact_result = AssetImpactResult(
+                            EmptyImpactDistrib(empty_reason=EmptyReason.EXCEPTION),
+                            hazard_data=hazard_data,
+                        )
                         logger.exception(e)
+                    finally:
+                        results[impact_key].append(asset_impact_result)
     return results
 
 

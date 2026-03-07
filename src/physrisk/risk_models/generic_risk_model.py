@@ -1,6 +1,6 @@
 import math
 from dataclasses import dataclass
-from typing import Any, Dict, Protocol, Sequence, Set, Type, Union
+from typing import Any, Dict, Optional, Protocol, Sequence, Set, Type, Union
 
 import numpy as np
 from physrisk.api.v1.impact_req_resp import (
@@ -287,8 +287,16 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
 
     def _definition_values_impact(self, bounds: ImpactBounds):
         return [
+            RiskScoreValue(value=Category.ERROR, label="Error", description="Error."),
             RiskScoreValue(
-                value=Category.NO_DATA, label="No data", description="No data."
+                value=Category.NO_DATA,
+                label="No hazard data",
+                description="No hazard data.",
+            ),
+            RiskScoreValue(
+                value=Category.NO_VULNERABILITY,
+                label="No vulnerability",
+                description="No modelled vulnerability.",
             ),
             RiskScoreValue(
                 value=Category.VERY_LOW,
@@ -375,19 +383,28 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
     ) -> Measure:
         # in general ImpactBounds are preferred over HazardIndicatorBounds, because the score thereby
         # takes account of the vulnerability of the asset as well as the hazard intensity.
+        if len(histo_impacts) == 0 and len(future_impacts) == 0:
+            # no impacts at all, so return no data
+            return Measure(
+                score=Category.NO_VULNERABILITY,
+                measure_0=float("nan"),
+                definition=self.get_definition(hazard_type),
+            )
+
         bounds = self._bounds[hazard_type]
         if isinstance(bounds, ImpactBounds):
             # just need the impact part, no hazard indicator data.
             h_impacts, f_impacts = [], []
+            empty_reason = EmptyReason.NO_VULNERABILITY
             for h, v in zip(histo_impacts, future_impacts):
                 if isinstance(h.impact, EmptyImpactDistrib):
-                    empty_reason = h.impact.empty_reason
+                    empty_reason = min(empty_reason, h.impact.empty_reason)
                 elif isinstance(v.impact, EmptyImpactDistrib):
-                    empty_reason = v.impact.empty_reason
+                    empty_reason = min(empty_reason, v.impact.empty_reason)
                 else:
                     h_impacts.append(h.impact)
                     f_impacts.append(v.impact)
-                    continue
+            if len(f_impacts) == 0:
                 return Measure(
                     score=Category.NO_VULNERABILITY
                     if empty_reason == EmptyReason.NO_VULNERABILITY
@@ -422,7 +439,7 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
             if isinstance(resp, HazardParameterDataResponse):
                 # if data is not present for parameters, the array will come through as empty
                 # (as opposed to NaN or a fixed size array passed with NaNs)
-                param = resp.parameter if any(resp.parameters) else float("nan")
+                param = resp.parameter if len(resp.parameters) > 0 else float("nan")
             elif isinstance(resp, HazardEventDataResponse):
                 return_period = bounds.indicator_return
                 param = float(
@@ -539,7 +556,9 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
         )
         return future_loss - histo_loss
 
-    def get_definition(self, hazard_type: Type[Hazard]):
+    def get_definition(
+        self, hazard_type: type[Hazard], hazard_indicator_id: Optional[str] = None
+    ) -> ScoreBasedRiskMeasureDefinition:
         return self._definition_lookup.get(hazard_type, None)
 
     def supported_hazards(self) -> Set[type]:

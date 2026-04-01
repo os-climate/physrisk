@@ -22,6 +22,9 @@ from physrisk.requests import (
     _create_inventory,
     create_source_paths,
 )
+from physrisk.vulnerability_models.config_based_vuln_model_acute import (
+    StandardOfProtection,
+)
 from physrisk.vulnerability_models.configuration.asset_factory import (
     DefaultAssetFactory,
 )
@@ -86,6 +89,7 @@ class DefaultVulnerabilityModelFactory(VulnerabilityModelsFactory):
             config=VulnerabilityModelsFactory.embedded_vulnerability_config(),
             programmatic_models=calc.default_vulnerability_models(),
             use_oed_hazus_curves=False,
+            standard_of_protection=StandardOfProtection.CONSTANT_DEPTH,
         )
 
 

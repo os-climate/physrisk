@@ -636,6 +636,7 @@ def compile_asset_impacts(
                 hazard_impacts = AssetSingleImpact(
                     key=key,
                     impact_type="n/a",
+                    hazard_indicator_id="n/a",
                     impact_distribution=None,
                     impact_exceedance=None,
                     impact_mean=float("nan"),
@@ -647,6 +648,7 @@ def compile_asset_impacts(
                 hazard_impacts = AssetSingleImpact(
                     key=key,
                     impact_type=v.impact.impact_type.name,
+                    hazard_indicator_id=v.impact.hazard_indicator_id,
                     impact_exceedance=ExceedanceCurve(
                         values=sig_figures(impact_exceedance.values),
                         exceed_probabilities=sig_figures(impact_exceedance.probs),
@@ -667,7 +669,8 @@ def compile_asset_impacts(
 
     for a, imps in ordered_impacts.items():
         ordered_impacts[a] = sorted(
-            imps, key=lambda x: x.key.hazard_type + x.key.scenario_id + x.key.year
+            imps,
+            key=lambda x: x.key.hazard_type + x.key.scenario_id + x.key.year,
         )
     return [
         AssetLevelImpact(asset_id=k.id if k.id is not None else "", impacts=v)

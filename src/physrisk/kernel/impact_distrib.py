@@ -1,6 +1,6 @@
 from enum import Enum
 import sys
-from typing import Optional, Sequence, Type, Union
+from typing import Sequence, Type, Union
 
 import numpy as np
 
@@ -30,7 +30,7 @@ class ImpactDistrib:
         hazard_type: Type[Hazard],
         impact_bin_edges: Union[Sequence[float], np.ndarray],
         probabilities: Union[Sequence[float], np.ndarray],
-        hazard_indicator_id: Optional[str] = None,
+        hazard_indicator_id: str,
         impact_type: ImpactType = ImpactType.damage,
         path: Sequence[str] = [],
     ):

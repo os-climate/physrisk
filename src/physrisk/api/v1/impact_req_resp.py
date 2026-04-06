@@ -224,6 +224,7 @@ class AssetSingleImpact(BaseModel):
         value of the asset ('damage') or disruption, expressed as fractional decrease in the revenue attributable
         to the asset.""",
     )
+    hazard_indicator_id: str = Field("", description="The ID of the hazard indicator.")
     impact_distribution: Optional[Distribution] = Field(
         None, description="Impact as probability distribution."
     )

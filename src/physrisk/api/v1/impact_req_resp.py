@@ -21,6 +21,10 @@ class CalcSettings(BaseModel):
         description="Comma separated list of hazards to include in analysis.",
         examples=["RiverineInundation,Wind", "Hail,Fire"],
     )
+    hazard_scope_by_indicator: Optional[Dict[str, List[str] | None]] = Field(
+        default=None,
+        description="Dictionary of hazards and corresponding indicator ids to include in analysis.",
+    )
 
 
 class AssetImpactRequest(BaseModel):

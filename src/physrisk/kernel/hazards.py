@@ -131,5 +131,5 @@ def all_hazards():
     ]
 
 
-def hazard_class(name: str):
+def hazard_class(name: str) -> Type[Hazard]:
     return getattr(sys.modules[__name__], name)

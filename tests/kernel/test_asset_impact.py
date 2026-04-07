@@ -66,7 +66,9 @@ class TestAssetImpact(unittest.TestCase):
     def test_standard_deviations(self):
         impact_bins = np.array([0.0, 0.5, 1.0, 1.5])
         probs = np.array([0.1, 0.2, 0.15])
-        impact = ImpactDistrib(RiverineInundation, impact_bins, probs, hazard_indicator_id="unknown")
+        impact = ImpactDistrib(
+            RiverineInundation, impact_bins, probs, hazard_indicator_id="unknown"
+        )
         stddev = impact.standard_deviation()
         semi_stddev = impact.semi_standard_deviation()
         mean = impact.mean_impact()
@@ -97,8 +99,8 @@ class TestAssetImpact(unittest.TestCase):
         impact_bins = np.array([0.7, 0.7])
         probs = np.array([0.02])
         impact = ImpactDistrib(
-            RiverineInundation, 
-            impact_bins, 
+            RiverineInundation,
+            impact_bins,
             probs,
             hazard_indicator_id="unknown",
             path=["unknown"],
@@ -115,8 +117,8 @@ class TestAssetImpact(unittest.TestCase):
         impact_bins = np.array([0.3, 0.3, 0.7, 0.8])
         probs = np.array([0.02, 0, 0.03])
         impact = ImpactDistrib(
-            RiverineInundation, 
-            impact_bins, 
+            RiverineInundation,
+            impact_bins,
             probs,
             hazard_indicator_id="unknown",
             path=["unknown"],
@@ -137,8 +139,8 @@ class TestAssetImpact(unittest.TestCase):
         impact_bins = np.array([0.1, 0.2, 0.5, 0.5, 0.8, 0.9])
         probs = np.array([1.0 / 3.0, 0, 1.0 / 3.0, 0, 1.0 / 3.0])
         impact = ImpactDistrib(
-            RiverineInundation, 
-            impact_bins, 
+            RiverineInundation,
+            impact_bins,
             probs,
             hazard_indicator_id="unknown",
             path=["unknown"],
@@ -218,20 +220,22 @@ class TestAssetImpact(unittest.TestCase):
         probs_w_cutoff = np.where(depth_bins[1:] <= cutoff_depth, 0.0, 1.0)
         # n_bins = len(probs)  # type: ignore
         vul = VulnerabilityDistrib(
-            RiverineInundation, 
+            RiverineInundation,
             depth_bins,
             impact_bins,
             np.diag(probs_w_cutoff),
             hazard_indicator_id="flood_depth",
         )  # np.eye(n_bins, n_bins))
         hazard_paths = ["unknown"]
-        event = HazardEventDistrib(
-            RiverineInundation, depth_bins, probs, hazard_paths
-        )  # type: ignore
+        event = HazardEventDistrib(RiverineInundation, depth_bins, probs, hazard_paths)  # type: ignore
 
         impact_prob = vul.prob_matrix.T @ event.prob
         impact = ImpactDistrib(
-            vul.event_type, vul.impact_bins, impact_prob, hazard_indicator_id=vul.hazard_indicator_id, path=event.path
+            vul.event_type,
+            vul.impact_bins,
+            impact_prob,
+            hazard_indicator_id=vul.hazard_indicator_id,
+            path=event.path,
         )
 
         mean = impact.mean_impact()

@@ -171,7 +171,9 @@ class ScoreBasedRiskMeasureSetDefinition(BaseModel):
     score_definitions: Dict[str, ScoreBasedRiskMeasureDefinition]
     # where drill-down by hazard indicator ID is relevant, give the measure IDs for each
     # (hazard type, indicator ID) combination :
-    asset_measure_ids_for_hazard_drilldown: dict[str, dict[str, list[str]]] = Field(default_factory=dict)
+    asset_measure_ids_for_hazard_drilldown: dict[str, dict[str, list[str]]] = Field(
+        default_factory=dict
+    )
 
 
 class RiskMeasures(BaseModel):
@@ -284,7 +286,13 @@ class RiskMeasuresHelper:
             hazard_indicator_id=key.hazard_indicator_id,
         )
 
-    def get_measure(self, hazard_type: str, scenario: str, year: int, hazard_indicator_id: str | None = None):
+    def get_measure(
+        self,
+        hazard_type: str,
+        scenario: str,
+        year: int,
+        hazard_indicator_id: str | None = None,
+    ):
         measure_key = self.Key(
             hazard_type=hazard_type,
             scenario_id=scenario,
@@ -299,14 +307,20 @@ class RiskMeasuresHelper:
             measure.scores,
             [measure.measures_0, measure.measures_1],
         )  # scores for each asset
-        
+
         if hazard_indicator_id is None:
             # measure IDs for each asset (for the hazard type in question)
-            measure_ids = self.measure_definition.asset_measure_ids_for_hazard[hazard_type]
+            measure_ids = self.measure_definition.asset_measure_ids_for_hazard[
+                hazard_type
+            ]
         else:
             # measure IDs for each asset (for the hazard type and indicator ID in question)
-            measure_ids = self.measure_definition.asset_measure_ids_for_hazard_drilldown[hazard_type][hazard_indicator_id]
-        
+            measure_ids = (
+                self.measure_definition.asset_measure_ids_for_hazard_drilldown[
+                    hazard_type
+                ][hazard_indicator_id]
+            )
+
         # measure definitions for each asset
         measure_definitions = [
             self.measure_definition.score_definitions[mid] if mid != "na" else None

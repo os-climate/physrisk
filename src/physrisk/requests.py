@@ -208,9 +208,14 @@ class Requester:
             interpolation=request.calc_settings.hazard_interp,
             provider_max_requests=request.provider_max_requests,
         )
-        
-        if request.calc_settings.hazard_scope is not None and request.calc_settings.hazard_scope_by_indicator is not None:
-            raise ValueError("Cannot specify both hazard_scope and hazard_scope_by_indicator")
+
+        if (
+            request.calc_settings.hazard_scope is not None
+            and request.calc_settings.hazard_scope_by_indicator is not None
+        ):
+            raise ValueError(
+                "Cannot specify both hazard_scope and hazard_scope_by_indicator"
+            )
         hazard_scope: dict[type[Hazard], set[str] | None] | None = None
         if request.calc_settings.hazard_scope is not None:
             hazard_scope = {
@@ -222,7 +227,7 @@ class Requester:
                 hazard_class(h): set(inds) if inds is not None else None
                 for h, inds in request.calc_settings.hazard_scope_by_indicator.items()
             }
-        
+
         vulnerability_models = self.vulnerability_models_factory.vulnerability_models(
             hazard_scope=hazard_scope
         )

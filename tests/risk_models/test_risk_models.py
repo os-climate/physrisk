@@ -700,7 +700,7 @@ class TestRiskModels(TestWithCredentials):
 
         class TestVulnerabilityModelsFactory(PVulnerabilityModelsFactory):
             def vulnerability_models(
-                self, hazard_scope: Optional[Set[Type[Hazard]]] = None
+                self, hazard_scope: dict[type[Hazard], set[str] | None] | None = None
             ) -> VulnerabilityModels:
                 return _vulnerability_models()
 

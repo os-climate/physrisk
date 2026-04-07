@@ -1,4 +1,4 @@
-from typing import Dict, MutableMapping, Optional, Set, Type
+from typing import Dict, MutableMapping, Optional
 
 from dependency_injector import containers, providers
 

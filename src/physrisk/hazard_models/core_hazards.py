@@ -342,9 +342,5 @@ def cmip6_scenario_to_rcp(scenario: str):
         return scenario
 
 
-def get_default_source_path_provider(inventory: Inventory = EmbeddedInventory()):
-    return CoreInventorySourcePaths(inventory)
-
-
 def get_default_source_paths(inventory: Inventory = EmbeddedInventory()):
     return CoreInventorySourcePaths(inventory)

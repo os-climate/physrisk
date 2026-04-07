@@ -171,9 +171,7 @@ class ScoreBasedRiskMeasureSetDefinition(BaseModel):
     score_definitions: Dict[str, ScoreBasedRiskMeasureDefinition]
     # where drill-down by hazard indicator ID is relevant, give the measure IDs for each
     # (hazard type, indicator ID) combination :
-    asset_measure_ids_for_hazard_drilldown: Optional[
-        dict[str, dict[str, list[str]]]
-    ] = None
+    asset_measure_ids_for_hazard_drilldown: dict[str, dict[str, list[str]]] = Field(default_factory=dict)
 
 
 class RiskMeasures(BaseModel):
@@ -283,14 +281,16 @@ class RiskMeasuresHelper:
             scenario_id=key.scenario_id,
             year=key.year,
             measure_id=key.measure_id,
+            hazard_indicator_id=key.hazard_indicator_id,
         )
 
-    def get_measure(self, hazard_type: str, scenario: str, year: int):
+    def get_measure(self, hazard_type: str, scenario: str, year: int, hazard_indicator_id: str | None = None):
         measure_key = self.Key(
             hazard_type=hazard_type,
             scenario_id=scenario,
             year=str(year),
             measure_id=self.measure_set_id,
+            hazard_indicator_id=hazard_indicator_id,
         )
         if measure_key not in self.measures:
             return None, None, None
@@ -299,8 +299,14 @@ class RiskMeasuresHelper:
             measure.scores,
             [measure.measures_0, measure.measures_1],
         )  # scores for each asset
-        # measure IDs for each asset (for the hazard type in question)
-        measure_ids = self.measure_definition.asset_measure_ids_for_hazard[hazard_type]
+        
+        if hazard_indicator_id is None:
+            # measure IDs for each asset (for the hazard type in question)
+            measure_ids = self.measure_definition.asset_measure_ids_for_hazard[hazard_type]
+        else:
+            # measure IDs for each asset (for the hazard type and indicator ID in question)
+            measure_ids = self.measure_definition.asset_measure_ids_for_hazard_drilldown[hazard_type][hazard_indicator_id]
+        
         # measure definitions for each asset
         measure_definitions = [
             self.measure_definition.score_definitions[mid] if mid != "na" else None
@@ -319,3 +325,4 @@ class RiskMeasuresHelper:
         scenario_id: str
         year: str
         measure_id: str
+        hazard_indicator_id: str | None = None

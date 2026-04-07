@@ -1,6 +1,6 @@
 """Test asset impact calculations."""
 
-from typing import Dict, Optional, Sequence, Set, Type
+from typing import Dict, Optional, Sequence, Type
 
 import numpy as np
 from dependency_injector import providers

@@ -56,6 +56,7 @@ class FinancialDataProvider(Protocol):
 class FinancialModel(Protocol):
     """ "Financial Model using a FinancialDataProvider as source of information."""
 
+    @property
     def financial_data_provider(self) -> FinancialDataProvider:
         """Get the financial data provider.
 
@@ -64,7 +65,7 @@ class FinancialModel(Protocol):
         """
         ...
 
-    def frac_damage_to_restoration_cost_and_revenue_disruption(
+    def frac_damage_to_restoration_cost_and_revenue_loss(
         self, asset: Asset, impact: np.ndarray, currency: str
     ) -> tuple[np.ndarray, np.ndarray]:
         """Convert damage, specified as a fraction of total insurable value, to cost
@@ -107,7 +108,11 @@ class DefaultFinancialModel(FinancialModel):
         self.data_provider = data_provider
         self.downtime_config = DowntimeModels(downtime_config)
 
-    def frac_damage_to_restoration_cost_and_revenue_disruption(
+    @property
+    def financial_data_provider(self) -> FinancialDataProvider:
+        return self.data_provider
+
+    def frac_damage_to_restoration_cost_and_revenue_loss(
         self, asset: Asset, impact: np.ndarray, currency: str
     ):
         damage = self.data_provider.total_insurable_value(asset, currency) * impact

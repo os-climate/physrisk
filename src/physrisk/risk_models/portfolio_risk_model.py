@@ -8,7 +8,7 @@ from physrisk.api.v1.impact_req_resp import (
 )
 from physrisk.api.v1.scoring_schemes import Category
 from physrisk.kernel.hazards import Hazard
-from physrisk.kernel.risk import Measure, MeasureKey, RiskQuantity, RiskQuantityKey
+from physrisk.kernel.risk import Measure, MeasureKey, Quantity, RiskQuantityKey
 
 
 class AveragingAssetBasedPortfolioRiskMeasureCalculator:
@@ -34,7 +34,7 @@ class AveragingAssetBasedPortfolioRiskMeasureCalculator:
     def calculate_risk_measures(
         self,
         asset_level_measures: dict[MeasureKey, Measure] = {},
-        portfolio_quantities: dict[RiskQuantityKey, RiskQuantity] = {},
+        portfolio_quantities: dict[RiskQuantityKey, Quantity] = {},
     ) -> dict[MeasureKey, Measure]:
         portfolio_measures: dict[MeasureKey, Measure] = {}
         measure_by_year_scen: dict[tuple[str, int | None], list[MeasureKey]] = (

@@ -46,15 +46,9 @@ class QuantityType(str, Enum):
 
 
 class RiskQuantityKey(NamedTuple):
-    quantity_type: Optional[QuantityType] = None
+    quantity: Optional[QuantityType] = None
     agg_id: Optional[str] = None
-    hazard_type: Optional[str] = None
-
-
-class RiskQuantity(NamedTuple):
-    quantity_type: Optional[QuantityType] = None
-    agg_id: Optional[str] = None
-    hazard_type: Optional[str] = None
+    hazard_type: Optional[type[Hazard]] = None
 
 
 @dataclass(frozen=True)
@@ -101,7 +95,7 @@ class PortfolioRiskMeasureCalculator(Protocol):
     def calculate_risk_measures(
         self,
         asset_level_measures: dict[MeasureKey, Measure] = {},
-        portfolio_quantities: dict[RiskQuantityKey, RiskQuantity] = {},
+        portfolio_quantities: dict[RiskQuantityKey, Quantity] = {},
     ) -> dict[MeasureKey, Measure]: ...
 
     def asset_level_measures_required(self) -> bool: ...
@@ -120,7 +114,7 @@ class NullAssetBasedPortfolioRiskMeasureCalculator(PortfolioRiskMeasureCalculato
     def calculate_risk_measures(
         self,
         asset_level_measures: dict[MeasureKey, Measure] = {},
-        portfolio_quantities: dict[RiskQuantityKey, RiskQuantity] = {},
+        portfolio_quantities: dict[RiskQuantityKey, Quantity] = {},
     ) -> dict[MeasureKey, Measure]:
         return {}
 
@@ -413,6 +407,9 @@ class AssetLevelRiskModel(RiskModel):
             aggregated_measures.update(
                 measure_calc.aggregate_risk_measures(measures, assets, scenarios, years)
             )
+
+        # calculate portfolio measures
+
         portfolio_measures = self._portfolio_measure_calculator.calculate_risk_measures(
             aggregated_measures
         )

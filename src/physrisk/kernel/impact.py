@@ -11,6 +11,7 @@ from physrisk.kernel.hazard_model import (
     HazardDataResponse,
     HazardModel,
 )
+from physrisk.kernel.hazards import Hazard
 from physrisk.kernel.impact_distrib import (
     EmptyImpactDistrib,
     EmptyReason,
@@ -30,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 class ImpactKey(NamedTuple):
     asset: Asset
-    hazard_type: type
+    hazard_type: type[Hazard]
     # these additional key items can be set to None, for example
     # if the calculation is for a given scenario and year
     # impact_type: Optional[str] = None # consider adding: whether damage or disruption

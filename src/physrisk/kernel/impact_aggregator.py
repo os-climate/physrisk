@@ -232,6 +232,7 @@ def aggregate_impacts(
             for asset in all_non_zero_assets
         ]
     )
+
     for event_start in range(0, n_events, event_batch_sz):
         event_end = min(event_start + event_batch_sz, n_events)
         batch_impacts[QuantityType.DAMAGE].fill(0.0)
@@ -336,8 +337,9 @@ class UncorrelatedEventSeverityProvider(EventSeverityProvider):
         self, n_events: int, generator: np.random.Generator
     ) -> Generator[tuple[type[Hazard], np.ndarray], None, None]:
         for hazard_type in self.n_severity_zones_by_hazard.keys():
-            randoms = generator.uniform(
-                size=(self.n_severity_zones_by_hazard[hazard_type], n_events)
+            randoms = generator.random(
+                size=(self.n_severity_zones_by_hazard[hazard_type], n_events),
+                dtype=np.float32,
             )
             yield hazard_type, randoms
 

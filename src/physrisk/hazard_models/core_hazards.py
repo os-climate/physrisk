@@ -1,5 +1,5 @@
 from enum import Enum
-from pathlib import PosixPath, PurePosixPath
+from pathlib import PurePosixPath
 from typing import Dict, Iterable, List, NamedTuple, Optional, Protocol, Sequence, Type
 
 from physrisk.api.v1.hazard_data import HazardResource
@@ -135,8 +135,8 @@ class InventorySourcePaths(SourcePaths):
             # is this a pyramid of tiles?
             is_pyramid = resource.map.source != "map_array"
             path = (
-                str(PosixPath(resource.path).with_name(resource.map.path))
-                if len(PosixPath(resource.map.path).parts) == 1
+                str(PurePosixPath(resource.path).with_name(resource.map.path))
+                if len(PurePosixPath(resource.map.path).parts) == 1
                 else resource.map.path
             )
             if is_pyramid:
@@ -340,10 +340,6 @@ def cmip6_scenario_to_rcp(scenario: str):
         if scenario not in ["rcp2p6", "rcp4p5", "rcp6p0", "rcp8p5", "historical"]:
             raise ValueError(f"unexpected scenario {scenario}")
         return scenario
-
-
-def get_default_source_path_provider(inventory: Inventory = EmbeddedInventory()):
-    return CoreInventorySourcePaths(inventory)
 
 
 def get_default_source_paths(inventory: Inventory = EmbeddedInventory()):

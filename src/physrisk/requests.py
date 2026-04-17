@@ -178,6 +178,7 @@ class Requester:
         hazard_model = self.hazard_model_factory.hazard_model(
             interpolation=request.interpolation,
             provider_max_requests=request.provider_max_requests,
+            interpolate_years=request.interpolate_years,
         )
         return _get_hazard_data(
             request, hazard_model=hazard_model, sig_figures=self.round_sig_figures
@@ -198,6 +199,7 @@ class Requester:
         hazard_model = self.hazard_model_factory.hazard_model(
             interpolation=request.calc_settings.hazard_interp,
             provider_max_requests=request.provider_max_requests,
+            interpolate_years=request.calc_settings.interpolate_years,
         )
         return _get_asset_exposures(
             request, hazard_model, asset_factory=self.asset_factory
@@ -207,14 +209,28 @@ class Requester:
         hazard_model = self.hazard_model_factory.hazard_model(
             interpolation=request.calc_settings.hazard_interp,
             provider_max_requests=request.provider_max_requests,
+            interpolate_years=request.calc_settings.interpolate_years,
         )
-        if request.calc_settings.hazard_scope is not None:
-            hazard_scope = set(
-                hazard_class(h.strip())
-                for h in request.calc_settings.hazard_scope.split(",")
+
+        if (
+            request.calc_settings.hazard_scope is not None
+            and request.calc_settings.hazard_scope_by_indicator is not None
+        ):
+            raise ValueError(
+                "Cannot specify both hazard_scope and hazard_scope_by_indicator"
             )
-        else:
-            hazard_scope = None
+        hazard_scope: dict[type[Hazard], set[str] | None] | None = None
+        if request.calc_settings.hazard_scope is not None:
+            hazard_scope = {
+                hazard_class(h.strip()): None
+                for h in request.calc_settings.hazard_scope.split(",")
+            }
+        if request.calc_settings.hazard_scope_by_indicator is not None:
+            hazard_scope = {
+                hazard_class(h): set(inds) if inds is not None else None
+                for h, inds in request.calc_settings.hazard_scope_by_indicator.items()
+            }
+
         vulnerability_models = self.vulnerability_models_factory.vulnerability_models(
             hazard_scope=hazard_scope
         )
@@ -628,6 +644,7 @@ def compile_asset_impacts(
                 hazard_impacts = AssetSingleImpact(
                     key=key,
                     impact_type="n/a",
+                    hazard_indicator_id="n/a",
                     impact_distribution=None,
                     impact_exceedance=None,
                     impact_mean=float("nan"),
@@ -639,6 +656,7 @@ def compile_asset_impacts(
                 hazard_impacts = AssetSingleImpact(
                     key=key,
                     impact_type=v.impact.impact_type.name,
+                    hazard_indicator_id=v.impact.hazard_indicator_id,
                     impact_exceedance=ExceedanceCurve(
                         values=sig_figures(impact_exceedance.values),
                         exceed_probabilities=sig_figures(impact_exceedance.probs),
@@ -659,7 +677,8 @@ def compile_asset_impacts(
 
     for a, imps in ordered_impacts.items():
         ordered_impacts[a] = sorted(
-            imps, key=lambda x: x.key.hazard_type + x.key.scenario_id + x.key.year
+            imps,
+            key=lambda x: x.key.hazard_type + x.key.scenario_id + x.key.year,
         )
     return [
         AssetLevelImpact(asset_id=k.id if k.id is not None else "", impacts=v)

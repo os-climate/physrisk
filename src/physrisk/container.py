@@ -1,4 +1,4 @@
-from typing import Dict, MutableMapping, Optional, Set, Type
+from typing import Dict, MutableMapping, Optional
 
 from dependency_injector import containers, providers
 
@@ -70,7 +70,7 @@ class ZarrHazardModelFactory(HazardModelFactory):
 
 class DictBasedVulnerabilityModelsFactory(PVulnerabilityModelsFactory):
     def vulnerability_models(
-        self, hazard_scope: Optional[Set[Type[Hazard]]] = None
+        self, hazard_scope: dict[type[Hazard], set[str] | None] | None = None
     ) -> PVulnerabilityModels:
         return DictBasedVulnerabilityModels(
             calc.alternate_default_vulnerability_models_scores()

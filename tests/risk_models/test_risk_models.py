@@ -1,6 +1,6 @@
 """Test asset impact calculations."""
 
-from typing import Dict, Optional, Sequence, Set, Type
+from typing import Dict, Optional, Sequence, Type
 
 import numpy as np
 from dependency_injector import providers
@@ -126,7 +126,7 @@ def _config_based_vulnerability_models():
 
 
 def _vulnerability_models(
-    hazard_scope: Optional[Set[Type[Hazard]]] = None,
+    hazard_scope: dict[type[Hazard], set[str] | None] | None = None,
 ) -> VulnerabilityModels:
     model_set = [
         RealEstateCoastalInundationModel(),
@@ -638,7 +638,7 @@ class TestRiskModels(TestWithCredentials):
         # 1) for SSP245 Hail data not available
         model = AssetLevelRiskModel(
             hazard_model,
-            _vulnerability_models(set([Hail])),
+            _vulnerability_models({Hail: None}),
             {Asset: generic_measures, RealEstateAsset: generic_measures},
             NullAssetBasedPortfolioRiskMeasureCalculator(),
         )
@@ -660,7 +660,7 @@ class TestRiskModels(TestWithCredentials):
         ]
         model = AssetLevelRiskModel(
             hazard_model,
-            _vulnerability_models(set([ChronicHeat])),
+            _vulnerability_models({ChronicHeat: None}),
             {Asset: generic_measures, RealEstateAsset: generic_measures},
             NullAssetBasedPortfolioRiskMeasureCalculator(),
         )
@@ -700,7 +700,7 @@ class TestRiskModels(TestWithCredentials):
 
         class TestVulnerabilityModelsFactory(PVulnerabilityModelsFactory):
             def vulnerability_models(
-                self, hazard_scope: Optional[Set[Type[Hazard]]] = None
+                self, hazard_scope: dict[type[Hazard], set[str] | None] | None = None
             ) -> VulnerabilityModels:
                 return _vulnerability_models()
 

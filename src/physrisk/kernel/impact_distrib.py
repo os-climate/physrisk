@@ -1,6 +1,6 @@
 from enum import Enum
 import sys
-from typing import Optional, Sequence, Type, Union
+from typing import Sequence, Type, Union
 
 import numpy as np
 
@@ -30,7 +30,7 @@ class ImpactDistrib:
         hazard_type: Type[Hazard],
         impact_bin_edges: Union[Sequence[float], np.ndarray],
         probabilities: Union[Sequence[float], np.ndarray],
-        hazard_indicator_id: Optional[str] = None,
+        hazard_indicator_id: str,
         impact_type: ImpactType = ImpactType.damage,
         path: Sequence[str] = [],
     ):
@@ -44,9 +44,7 @@ class ImpactDistrib:
             path: Paths (unique identifiers) of the hazard indicator data sources used to calculate the impact distribution. Provides the main hazard indicator (specified by the ID), but also any additional hazard indicators. For example, for flood, 'flood_depth' but also standard of protection data sources.
         """
         self._hazard_type = hazard_type
-        self._hazard_indicator_id = (
-            sys.intern(hazard_indicator_id) if hazard_indicator_id is not None else None
-        )
+        self._hazard_indicator_id = sys.intern(hazard_indicator_id)
         self._impact_bin_edges = np.array(impact_bin_edges)
         self._impact_type = impact_type
         self._probabilities = np.array(probabilities)
@@ -127,7 +125,7 @@ class ImpactDistrib:
         return self._hazard_type
 
     @property
-    def hazard_indicator_id(self) -> str | None:
+    def hazard_indicator_id(self) -> str:
         return self._hazard_indicator_id
 
     @property

@@ -21,6 +21,10 @@ class CalcSettings(BaseModel):
         description="Comma separated list of hazards to include in analysis.",
         examples=["RiverineInundation,Wind", "Hail,Fire"],
     )
+    interpolate_years: bool = Field(
+        default=True,
+        description="If True, the hazard model interpolates the available years to provide data for the requested years. ",
+    )
     hazard_scope_by_indicator: Optional[Dict[str, List[str] | None]] = Field(
         default=None,
         description="Dictionary of hazards and corresponding indicator ids to include in analysis.",

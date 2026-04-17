@@ -178,6 +178,7 @@ class Requester:
         hazard_model = self.hazard_model_factory.hazard_model(
             interpolation=request.interpolation,
             provider_max_requests=request.provider_max_requests,
+            interpolate_years=request.interpolate_years,
         )
         return _get_hazard_data(
             request, hazard_model=hazard_model, sig_figures=self.round_sig_figures
@@ -198,6 +199,7 @@ class Requester:
         hazard_model = self.hazard_model_factory.hazard_model(
             interpolation=request.calc_settings.hazard_interp,
             provider_max_requests=request.provider_max_requests,
+            interpolate_years=request.calc_settings.interpolate_years,
         )
         return _get_asset_exposures(
             request, hazard_model, asset_factory=self.asset_factory
@@ -207,6 +209,7 @@ class Requester:
         hazard_model = self.hazard_model_factory.hazard_model(
             interpolation=request.calc_settings.hazard_interp,
             provider_max_requests=request.provider_max_requests,
+            interpolate_years=request.calc_settings.interpolate_years,
         )
 
         if (

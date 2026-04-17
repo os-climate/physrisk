@@ -251,6 +251,7 @@ class HazardDataRequest(BaseHazardRequest):
     """
 
     interpolation: str = "floor"
+    interpolate_years: bool = True
     provider_max_requests: Dict[str, int] = Field(
         {},
         description="The maximum permitted number of \

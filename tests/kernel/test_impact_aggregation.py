@@ -48,6 +48,7 @@ def test_impact_aggregation():
                     RiverineInundation,
                     impact_bin_edges.copy(),
                     impact_probabilities.copy(),
+                    "",
                 )
             )
         else:
@@ -56,6 +57,7 @@ def test_impact_aggregation():
                     RiverineInundation,
                     impact_bin_edges_zero.copy(),
                     impact_probabilities_zero.copy(),
+                    "",
                 )
             )
         impacts[
@@ -76,9 +78,7 @@ def test_impact_aggregation():
 
     # single impact
     single_impact = ImpactDistrib(
-        RiverineInundation,
-        impact_bin_edges.copy(),
-        impact_probabilities.copy(),
+        RiverineInundation, impact_bin_edges.copy(), impact_probabilities.copy(), ""
     )
     logger.info(
         f"Fractional difference: {abs(np.mean(single_impact.to_exceedance_curve().get_samples(np.random.rand(1000000))) - single_impact.mean_impact()) / single_impact.mean_impact()}"

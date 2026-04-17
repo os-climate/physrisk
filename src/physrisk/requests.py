@@ -39,7 +39,10 @@ from physrisk.data.inventory import expand
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.static.scenarios import scenario_description
 from physrisk.data.zarr_reader import ZarrReader
-from physrisk.hazard_models.core_hazards import get_default_source_paths
+from physrisk.hazard_models.core_hazards import (
+    InventorySourcePaths,
+    get_default_source_paths,
+)
 from physrisk.kernel.exposure import JupterExposureMeasure, calculate_exposures
 from physrisk.kernel.hazards import Hazard, hazard_class
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey  # , ImpactKey
@@ -96,8 +99,13 @@ from .api.v1.impact_req_resp import (
     ScoreBasedRiskMeasureDefinition,
     ScoreBasedRiskMeasureSetDefinition,
 )
+from physrisk.api.v1.availability_sources import (
+    AvailabilitySourcesRequest,
+    AvailabilitySourcesResponse,
+    HazardTypeAvailability,
+)
 from .data.inventory import EmbeddedInventory, Inventory
-from .kernel.assets import Asset
+from physrisk.kernel.assets import Asset, all_asset_types
 from .kernel import calculation as calc
 from .kernel.hazard_model import (
     HazardDataRequest as hmHazardDataRequest,
@@ -121,6 +129,7 @@ class Requester:
         hazard_model_factory: HazardModelFactory,
         vulnerability_models_factory: VulnerabilityModelsFactory,
         inventory: Inventory,
+        source_paths: InventorySourcePaths,
         inventory_reader: InventoryReader,
         reader: ZarrReader,
         colormaps: Colormaps,
@@ -138,6 +147,7 @@ class Requester:
         self.inventory = inventory
         self.inventory_reader = inventory_reader
         self.zarr_reader = reader
+        self.source_paths = source_paths
 
     def get(self, *, request_id, request_dict):
         if request_id == "get_hazard_data":
@@ -165,6 +175,9 @@ class Requester:
             )
         elif request_id == "get_example_portfolios":
             return self.dumps(self.get_example_portfolios())
+        elif request_id == "get_available_sources":
+            request = AvailabilitySourcesRequest(**request_dict)
+            return self.dumps(self.get_available_sources(request).model_dump())
         elif request_id == "get_image_info":
             request = HazardImageInfoRequest(**request_dict)
             return self.dumps(self.get_image_info(request).model_dump())
@@ -204,6 +217,43 @@ class Requester:
         return _get_asset_exposures(
             request, hazard_model, asset_factory=self.asset_factory
         )
+
+    def get_available_sources(
+        self, request: AvailabilitySourcesRequest
+    ) -> AvailabilitySourcesResponse:
+        resources = [
+            resource
+            for resources in self.source_paths.all_selected_resources_by_type_id.values()
+            for resource in resources
+        ]
+
+        if request.selected_hazards_list:
+            resources = [
+                s for s in resources if s.hazard_type in request.selected_hazards_list
+            ]
+        result = _create_available_sources_result(
+            resources=resources,
+        )
+
+        if not request.include_all:
+            vulnerability_models = (
+                self.vulnerability_models_factory.vulnerability_models()
+            )
+            result = _filter_with_vuln_models(
+                result=result,
+                vulnerability_models=vulnerability_models,
+            )
+
+        message = ""
+        if not result:
+            message = (
+                f"Empty for the combination of the following request parameters:\n"
+                f"include_all={request.include_all},\n"
+                f"USE_CASE_ID={request.use_case_id},\n"
+                f"selected_hazard_list={request.selected_hazards_list}"
+            )
+
+        return AvailabilitySourcesResponse(hazards=result, message=message)
 
     def get_asset_impacts(self, request: AssetImpactRequest) -> AssetImpactResponse:
         hazard_model = self.hazard_model_factory.hazard_model(
@@ -840,6 +890,66 @@ def _get_example_portfolios() -> dict[str, Assets]:
             portfolio = Assets(**json.load(f))
             portfolios[file.name.replace(".json", "")] = portfolio
     return portfolios
+
+
+def _create_available_sources_result(
+    resources: list[HazardResource],
+) -> dict[str, dict[str, HazardTypeAvailability]]:
+    result: dict[str, dict[str, HazardTypeAvailability]] = {}
+    for resource in resources:
+        availability = result.setdefault(resource.hazard_type, {}).setdefault(
+            resource.indicator_id,
+            HazardTypeAvailability(),
+        )
+        availability.scenarios.extend(resource.scenarios)
+        availability.indicator_display_name = resource.display_name
+
+    return result
+
+
+def _filter_with_vuln_models(
+    result: dict[str, dict[str, HazardTypeAvailability]],
+    vulnerability_models: VulnerabilityModels,
+) -> dict[str, dict[str, HazardTypeAvailability]]:
+    filtered_result: dict[str, dict[str, HazardTypeAvailability]] = {}
+
+    for asset_type in all_asset_types():
+        asset_type_name = asset_type.__name__
+
+        allowed = _get_hazards_from_vulnerability_models(
+            vulnerability_models, asset_type
+        )
+
+        for hazard_type, indicators in result.items():
+            allowed_indicators = allowed.get(hazard_type)
+            if not allowed_indicators:
+                continue
+
+            target = filtered_result.setdefault(hazard_type, {})
+
+            for indicator, availability in indicators.items():
+                if indicator not in allowed_indicators:
+                    continue
+
+                target[indicator] = availability
+
+                if asset_type_name not in availability.available_for_assets_type:
+                    availability.available_for_assets_type.append(asset_type_name)
+
+    return filtered_result
+
+
+def _get_hazards_from_vulnerability_models(
+    vulnerability_models: VulnerabilityModels,
+    asset_type: type[Asset],
+) -> dict[str, list[str]]:
+    hazards: dict[str, list[str]] = {}
+    for vuln_model in vulnerability_models.vuln_model_for_asset_of_type(asset_type):
+        hazard_name = vuln_model.hazard_type.__name__
+        hazards.setdefault(hazard_name, [])
+        hazards[hazard_name].append(vuln_model.indicator_id)
+
+    return hazards
 
 
 def _hazard_type_indicators(measures: dict[MeasureKey, Measure]):

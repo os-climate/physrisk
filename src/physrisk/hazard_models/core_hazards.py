@@ -256,8 +256,6 @@ class InventorySourcePaths(SourcePaths):
                 indicator_id,
             ), _ in self._inventory.resources_by_type_id.items():
                 hazard_type = hazard_class(hazard)
-                if hazard_type is None:
-                    continue
 
                 selected = self.get_resources(
                     hazard_type=hazard_type, indicator_id=indicator_id, hint=None

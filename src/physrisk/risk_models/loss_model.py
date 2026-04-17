@@ -88,7 +88,7 @@ class LossModel:
 
                 if impact.impact_type == ImpactType.damage:
                     loss, _ = (
-                        financial_model.frac_damage_to_restoration_cost_and_revenue_disruption(
+                        financial_model.frac_damage_to_restoration_cost_and_revenue_loss(
                             impact_key.asset, impact_samples, currency
                         )
                     )

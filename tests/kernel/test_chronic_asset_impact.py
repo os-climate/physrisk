@@ -1,4 +1,3 @@
-import unittest
 from typing import List, Sequence, Union
 
 import numpy as np
@@ -193,74 +192,67 @@ def get_impact_distrib(
     )
 
 
-class TestChronicAssetImpact(unittest.TestCase):
-    """Tests the impact on an asset of a chronic hazard model."""
+def test_chronic_vulnerability_model():
+    """Testing the generation of an asset when only an impact curve (e.g. damage curve is available)"""
 
-    def test_chronic_vulnerability_model(self):
-        """Testing the generation of an asset when only an impact curve (e.g. damage curve is available)"""
+    store = mock_hazard_model_store_heat(TestData.longitudes, TestData.latitudes)
+    hazard_model = ZarrHazardModel(source_paths=get_default_source_paths(), store=store)
+    scenario = "ssp585"
+    year = 2050
 
-        store = mock_hazard_model_store_heat(TestData.longitudes, TestData.latitudes)
-        hazard_model = ZarrHazardModel(
-            source_paths=get_default_source_paths(), store=store
-        )
-        # to run a live calculation, we omit the store parameter
+    vulnerability_models = DictBasedVulnerabilityModels(
+        {IndustrialActivity: [ChronicHeatGZNModel()]}
+    )
 
-        scenario = "ssp585"
-        year = 2050
+    assets = [
+        IndustrialActivity(latitude=lat, longitude=lon, type="Construction")
+        for lon, lat in zip(TestData.longitudes, TestData.latitudes)
+    ][:1]
 
-        vulnerability_models = DictBasedVulnerabilityModels(
-            {IndustrialActivity: [ChronicHeatGZNModel()]}
-        )
+    results = calculate_impacts(
+        assets,
+        hazard_model,
+        vulnerability_models,
+        scenarios=[scenario],
+        years=[year],
+    )
 
-        assets = [
-            IndustrialActivity(latitude=lat, longitude=lon, type="Construction")
-            for lon, lat in zip(TestData.longitudes, TestData.latitudes)
-        ][:1]
-
-        results = calculate_impacts(
-            assets,
-            hazard_model,
-            vulnerability_models,
-            scenarios=[scenario],
-            years=[year],
-        )
-
-        value_test = list(results.values())[0][0].impact.mean_impact()
-        value_test = list(results.values())[0][0].impact.probabilities
-        value_exp = np.array(
-            [
-                0.02656777935,
-                0.01152965908,
-                0.01531928095,
-                0.01983722513,
-                0.02503479879,
-                0.03079129430,
-                0.03690901485,
-                0.04311790414,
-                0.04909118572,
-                0.05447159590,
-                0.51810304973,
-                0.16109092806,
-                0.00807680527,
-                0.00005941883,
-                0.00000005990,
-                0.00000000001,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-                0.00000000000,
-            ]
-        )
-        value_diff = np.sum(np.abs(value_test - value_exp))
-        self.assertAlmostEqual(value_diff, 0.0, places=6)
+    value_test = list(results.values())[0][0].impact.mean_impact()
+    value_test = list(results.values())[0][0].impact.probabilities
+    value_exp = np.array(
+        [
+            0.02656777935,
+            0.01152965908,
+            0.01531928095,
+            0.01983722513,
+            0.02503479879,
+            0.03079129430,
+            0.03690901485,
+            0.04311790414,
+            0.04909118572,
+            0.05447159590,
+            0.51810304973,
+            0.16109092806,
+            0.00807680527,
+            0.00005941883,
+            0.00000005990,
+            0.00000000001,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+            0.00000000000,
+        ]
+    )
+    value_diff = np.sum(np.abs(value_test - value_exp))
+    assert np.isclose(value_diff, 0.0, atol=1.0e-7)

@@ -157,7 +157,7 @@ markers = [
 testpaths = ["tests",
 ]
 asyncio_mode = "auto"
-addopts = "-v --update_expected=False --update_inputs=False"
+addopts = "-v"
 log_cli = true
 log_cli_level = "INFO"
 log_cli_format = "%(asctime)s [%(levelname)s] %(message)s (%(filename)s:%(lineno)s)"

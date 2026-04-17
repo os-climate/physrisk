@@ -134,6 +134,7 @@ class Container(containers.DeclarativeContainer):
         hazard_model_factory=hazard_model_factory,
         vulnerability_models_factory=vulnerability_models_factory,
         inventory=inventory,
+        source_paths=source_paths,
         inventory_reader=inventory_reader,
         reader=zarr_reader,
         colormaps=colormaps,

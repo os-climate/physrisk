@@ -1,6 +1,8 @@
 from enum import Enum
-from pathlib import PurePosixPath
 from typing import Dict, Iterable, List, NamedTuple, Optional, Protocol, Sequence, Type
+import re
+from collections import defaultdict
+from pathlib import PurePosixPath
 
 from physrisk.api.v1.hazard_data import HazardResource
 from physrisk.data.hazard_data_provider import (
@@ -18,6 +20,7 @@ from physrisk.kernel.hazards import (
     Hazard,
     RiverineInundation,
     Wind,
+    hazard_class,
 )
 
 
@@ -29,7 +32,7 @@ class ResourceSubset:
         return any(self.resources)
 
     def first(self):
-        return [next(r for r in self.resources)]
+        return [self.resources[0]]
 
     def match(self, hint: HazardDataHint):
         return [next(r for r in self.resources if r.path == hint.path)]
@@ -48,6 +51,14 @@ class ResourceSubset:
         return ResourceSubset(
             r for r in self.resources if r.indicator_model_id == model_id
         )
+
+    def with_display_name(self, display_name: str):
+        return ResourceSubset(
+            r for r in self.resources if r.display_name == display_name
+        )
+
+    def last(self):
+        return [self.resources[-1]]
 
 
 class ResourceSelector(Protocol):
@@ -76,6 +87,9 @@ class InventorySourcePaths(SourcePaths):
     def __init__(self, inventory: Inventory):
         self._inventory = inventory
         self._selectors: Dict[ResourceSelectorKey, ResourceSelector] = {}
+        self._all_selected_resources_by_type_id: (
+            defaultdict[tuple[str, str], list[HazardResource]] | None
+        ) = None
 
     def add_selector(
         self, hazard_type: type, indicator_id: str, selector: ResourceSelector
@@ -230,6 +244,28 @@ class InventorySourcePaths(SourcePaths):
     ):
         return candidates.first()
 
+    @property
+    def all_selected_resources_by_type_id(
+        self,
+    ) -> dict[tuple[str, str], list[HazardResource]]:
+        if self._all_selected_resources_by_type_id is None:
+            self._all_selected_resources_by_type_id = defaultdict(list)
+
+            for (
+                hazard,
+                indicator_id,
+            ), _ in self._inventory.resources_by_type_id.items():
+                hazard_type = hazard_class(hazard)
+                if hazard_type is None:
+                    continue
+
+                selected = self.get_resources(
+                    hazard_type=hazard_type, indicator_id=indicator_id, hint=None
+                )
+                self._all_selected_resources_by_type_id[hazard, indicator_id] = selected
+
+        return self._all_selected_resources_by_type_id
+
 
 class CoreFloodModels(Enum):
     WRI = 1
@@ -330,14 +366,25 @@ def cmip6_scenario_to_rcp(scenario: str):
     RCP-4.5: 'rcp4p5'
     RCP-8.5: 'rcp8p5' etc.
     """
-    if scenario == "ssp126":
-        return "rcp2p6"
-    elif scenario == "ssp245":
-        return "rcp4p5"
-    elif scenario == "ssp585":
-        return "rcp8p5"
+    match = re.fullmatch(r"ssp([1-5])(\d)(\d)", scenario)
+    if match:
+        first, second, third = match.groups()
+        return f"rcp{second}p{third}"
     else:
-        if scenario not in ["rcp2p6", "rcp4p5", "rcp6p0", "rcp8p5", "historical"]:
+        # Handle scenarios that do not match the SSP pattern but are valid RCPs or historical
+        valid_scenarios = [
+            "rcp2p6",
+            "rcp4p5",
+            "rcp6p0",
+            "rcp8p5",
+            "historical",
+            "rcp26",
+            "rcp45",
+            "rcp60",
+            "rcp7p0",
+            "rcp85",
+        ]
+        if scenario not in valid_scenarios:
             raise ValueError(f"unexpected scenario {scenario}")
         return scenario
 

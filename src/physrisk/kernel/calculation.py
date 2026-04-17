@@ -136,9 +136,13 @@ def get_default_risk_measure_calculators() -> Dict[Type[Asset], RiskMeasureCalcu
 
 
 class DefaultMeasuresFactory(RiskMeasuresFactory):
+    """Factory class for selecting appropriate risk measure calculators based on the use case."""
+
     def asset_calculators(
         self, use_case_id: str
     ) -> Dict[Type[Asset], RiskMeasureCalculator]:
+        """Get the appropriate risk measure calculators based on the use case identifier."""
+
         if use_case_id == "generic":
             return {Asset: GenericScoreBasedRiskMeasures()}
         return get_default_risk_measure_calculators()

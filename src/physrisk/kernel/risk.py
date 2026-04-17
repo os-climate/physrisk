@@ -126,18 +126,30 @@ class NullAssetBasedPortfolioRiskMeasureCalculator(PortfolioRiskMeasureCalculato
 
 
 class RiskModel:
-    """Base class for a risk model (i.e. a calculation of risk that makes use of hazard and vulnerability
-    models)."""
+    """Base class for a risk model.
+
+    That is, a calculation of risk that makes use of hazard and vulnerability models).
+    """
 
     def __init__(
         self, hazard_model: HazardModel, vulnerability_models: VulnerabilityModels
     ):
+        """Initialize a RiskModel instance.
+
+        Parameter:
+        ---------
+            hazard_model (HazardModel): The hazard model to be used for risk calculations.
+            vulnerability_models (Optional[VulnerabilityModels]): Optional vulnerability models; if not provided, will use default.
+
+        """
         self._hazard_model = hazard_model
         self._vulnerability_models = vulnerability_models
 
     def calculate_risk_measures(
         self, assets: Sequence[Asset], prosp_scens: Sequence[str], years: Sequence[int]
-    ): ...
+    ):
+        """Calculate risk measures for a set of assets, scenarios, and years."""
+        ...
 
     def _calculate_all_impacts(
         self,
@@ -215,9 +227,18 @@ class RiskMeasureCalculator(Protocol):
 
 
 class RiskMeasuresFactory(Protocol):
+    """Protocol for selecting risk measure calculators."""
+
     def asset_calculators(
         self, use_case_id: str
     ) -> Dict[Type[Asset], RiskMeasureCalculator]:
+        """Get risk measure calculators for asset types.
+
+        Args:
+        ----
+            use_case_id (Optional[str]): Optional use case ID to filter calculators.
+
+        """
         pass
 
     def portfolio_calculator(self, use_case_id: str) -> PortfolioRiskMeasureCalculator:
@@ -225,6 +246,8 @@ class RiskMeasuresFactory(Protocol):
 
 
 class AssetLevelRiskModel(RiskModel):
+    """Risk model that calculates risk measures at the asset level for various assets."""
+
     def __init__(
         self,
         hazard_model: HazardModel,
@@ -236,9 +259,11 @@ class AssetLevelRiskModel(RiskModel):
         of assets.
 
         Args:
+        ----
             hazard_model (HazardModel): The hazard model.
-            vulnerability_models (Dict[type, Sequence[VulnerabilityModelBase]]): Vulnerability models for asset types.
+            vulnerability_models (VulnerabilityModels): Vulnerability models for asset types.
             measure_calculators (Dict[type, RiskMeasureCalculator]): Risk measure calculators for asset types.
+
         """
         super().__init__(hazard_model, vulnerability_models)
         self.asset_level_measures_required = (
@@ -344,6 +369,32 @@ class AssetLevelRiskModel(RiskModel):
     def calculate_risk_measures(
         self, assets: Sequence[Asset], scenarios: Sequence[str], years: Sequence[int]
     ):
+        """Calculate risk measures for a set of assets, scenarios, and years, according to the selected method calculation.
+
+        For the Default Method:
+        The impact of the historical scenario is chosen as the base impact, and risk measures are
+        calculated using the calc_measure function defined in the RealEstateToyRiskMeasures class. This method performs
+        calculations differently depending on whether the hazard is chronic heat or another type. The difference between
+        the two methods is that calc_measure_cooling uses mean impacts for calculations, while calc_measure_acute uses
+        exceedance curves. In both cases, a Measure object is returned, which contains a score (REDFLAG, HIGH, MEDIUM, LOW),
+        measures_0 (future_loss), and a definition.
+
+        Args:
+        ----
+            assets (Sequence[Asset]): List of assets.
+            scenarios (Sequence[str]): List of prospective scenarios.
+            years (Sequence[int]): List of years for the calculations.
+
+        Return:
+        ------
+            Tuple[
+                Dict[ImpactKey, List[AssetImpactResult]],
+                Dict[MeasureKey, Measure]
+            ]: A tuple containing:
+                - A dictionary mapping asset and hazard type tuples to impact results.
+                - A dictionary mapping MeasureKeys to calculated measures.
+
+        """
         impacts = self._calculate_all_impacts(
             assets, scenarios, years, include_histo=True
         )

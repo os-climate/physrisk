@@ -87,6 +87,9 @@ class PregeneratedHazardModel(HazardModel):
                     or (hazard_type == Hail and indicator_id == "days/above/5cm")
                     or (hazard_type == Fire and indicator_id == "fire_probability")
                 )
+                # Add check that indicators are non-negative. This can occur in cases
+                # of extrapolation, even if underlying hazard data is well-behaved.
+                non_negative = nan_is_zero
                 for req in batch:
                     lat_lon_index.setdefault(
                         (req.latitude, req.longitude, req.buffer), len(lat_lon_index)
@@ -172,6 +175,8 @@ class PregeneratedHazardModel(HazardModel):
                             else:
                                 if nan_is_zero:
                                     values[np.isnan(values)] = 0.0
+                                if non_negative:
+                                    values[values < 0] = 0.0
                                 responses[req] = HazardParameterDataResponse(
                                     values.astype(dtype="float64"),
                                     indices,

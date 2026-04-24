@@ -95,7 +95,7 @@ class PortfolioRiskMeasureCalculator(Protocol):
     def calculate_risk_measures(
         self,
         asset_level_measures: dict[MeasureKey, Measure] = {},
-        portfolio_quantities: dict[RiskQuantityKey, Quantity] = {},
+        impacts: dict[ImpactKey, list[AssetImpactResult]] = {},
     ) -> dict[MeasureKey, Measure]: ...
 
     def asset_level_measures_required(self) -> bool: ...

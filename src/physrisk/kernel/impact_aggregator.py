@@ -7,7 +7,7 @@ import numpy as np
 
 from physrisk.kernel.hazards import Hazard
 from physrisk.kernel.impact_distrib import ImpactDistrib
-from physrisk.kernel.risk import QuantityType, RiskQuantityKey
+from physrisk.kernel.risk import Quantity, QuantityType, RiskQuantityKey
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.curve import ExceedanceCurve
 from physrisk.kernel.financial_model import FinancialModel
@@ -105,7 +105,7 @@ class DefaultAggregationKeys(AggregationKeys):
 
 def aggregate_impacts(
     impacts: dict[ImpactKey, list[AssetImpactResult]], financial_model: FinancialModel
-):
+) -> dict[RiskQuantityKey, Quantity]:
     """Aggregate impacts over assets and hazards for a given scenario and year.
     For acute hazards, i.e. hazards associated with an event, a Monte Carlo approach is used whereby a large number of
     events is sampled, representing future possible years.

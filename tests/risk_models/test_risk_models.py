@@ -43,7 +43,7 @@ from physrisk.kernel.risk import (
     RiskMeasureCalculator,
     RiskMeasuresFactory,
 )
-from physrisk.risk_models.portfolio_risk_model import (
+from physrisk.risk_models.score_based_portfolio_risk_model import (
     AveragingAssetBasedPortfolioRiskMeasureCalculator,
 )
 from physrisk.kernel.vulnerability_model import (

@@ -7,12 +7,27 @@ from physrisk.api.v1.impact_req_resp import (
     ScoreBasedRiskMeasureDefinition,
 )
 from physrisk.api.v1.scoring_schemes import Category
+from physrisk.kernel.financial_model import DefaultFinancialModel
 from physrisk.kernel.hazards import Hazard
-from physrisk.kernel.risk import Measure, MeasureKey, Quantity, RiskQuantityKey
+from physrisk.kernel.impact import AssetImpactResult, ImpactKey
+from physrisk.kernel.impact_aggregator import aggregate_impacts
+from physrisk.kernel.risk import Measure, MeasureKey, PortfolioRiskMeasureCalculator, Quantity, RiskQuantityKey
 
 
-class AveragingAssetBasedPortfolioRiskMeasureCalculator:
-    """Calculates portfolio score-based risk measures from asset-level score-based risk measures only."""
+class CompanyRiskMeasureCalculator(PortfolioRiskMeasureCalculator):
+    """Impacts can be:
+    1) asset damage
+    2) business disruption, comprising
+        - impact on revenue and
+        - increase in costs.
+    Impacts specified in an ImpactDistrib are all relative quantities.
+    Asset damage is specified as a fraction of the asset total insurable value.
+    Revenue decrease is specified as a fraction of revenue (attributed to the asset in question).
+    Cost increases are specified as a fraction of revenue.
+    Financial data is applied to the relative quantities and a Monte Carlo-based approach is used
+    to aggregate over assets and hazards.
+    Finally, scores are assigned based on the aggregate quantities. 
+    """
 
     def __init__(self):
         self._definition = ScoreBasedRiskMeasureDefinition(
@@ -20,9 +35,9 @@ class AveragingAssetBasedPortfolioRiskMeasureCalculator:
             values=[],
             underlying_measures=[
                 RiskMeasureDefinition(
-                    measure_id="average_asset_score",
-                    label="Average asset score.",
-                    description=("Average asset score."),
+                    measure_id="portfolio_level_score",
+                    label="Aggregated damage/business disruption score.",
+                    description=("Portfolio level score inferred from aggregated damage and business disruption."),
                     units="",
                 )
             ],
@@ -34,24 +49,12 @@ class AveragingAssetBasedPortfolioRiskMeasureCalculator:
     def calculate_risk_measures(
         self,
         asset_level_measures: dict[MeasureKey, Measure] = {},
-        portfolio_quantities: dict[RiskQuantityKey, Quantity] = {},
+        impacts: dict[ImpactKey, list[AssetImpactResult]] = {},
     ) -> dict[MeasureKey, Measure]:
-        portfolio_measures: dict[MeasureKey, Measure] = {}
-        measure_by_year_scen: dict[tuple[str, int | None], list[MeasureKey]] = (
-            defaultdict(list)
-        )
-        for mk in asset_level_measures.keys():
-            measure_by_year_scen[(mk.scenario, mk.year)].append(mk)
-        for k, v in measure_by_year_scen.items():
-            # Calculate portfolio score-based risk measures for this year/scenario
-            scores = [float(asset_level_measures[m].score) for m in v]
-            average_score = statistics.mean(s for s in scores if s > 0)
-            portfolio_measures[MeasureKey(None, k[0], k[1], None)] = Measure(
-                score=Category(round(average_score)),
-                measure_0=average_score,
-                definition=self._definition,
-            )
-        return portfolio_measures
+        financial_data_provider = 
+        financial_model = DefaultFinancialModel()
+        aggregated_impacts = aggregate_impacts(impacts, )
+
 
     def asset_level_measures_required(self) -> bool:
         return True

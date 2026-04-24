@@ -3,6 +3,7 @@ from typing import Dict
 
 import numpy as np
 
+from physrisk.api.v1.common import Asset as APIAsset
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.financial_model import DefaultFinancialModel, FinancialDataProvider
 from physrisk.kernel.hazards import RiverineInundation
@@ -96,3 +97,12 @@ def test_impact_aggregation():
     )
     np.testing.assert_allclose(mean_damage_mc, 261.33738422)
     np.testing.assert_allclose(mean_damage_mc, mean_damage_exact, rtol=0.02)
+
+
+def test_impact_aggregation_end_to_end():
+    latitues = [22.30224, 22.31150, 22.45022, 22.27034]
+    longitudes = [114.18670, 114.17774, 114.02882, 114.19268]
+
+    assets = [
+        APIAsset(id=f"asset_{i}", latitude=lat, longitude=lon)
+        for i, (lat, lon) in enumerate(zip(latitues, longitudes))]

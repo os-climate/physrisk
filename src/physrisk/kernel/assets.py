@@ -169,7 +169,7 @@ class OEDAsset(Asset):
         occupancy_code: int = 1000,
         wkt_geometry: Optional[str] = None,
         buffer: float = 0.0,
-        number_of_storeys: int = 0,  # -1 = unknown No. storeys - low rise, -2 = unknown No. storeys - mid rise, -3 = Unknown no. storeys = high rise).
+        number_of_storeys: int = -1,  # -1 = unknown No. storeys - low rise, -2 = unknown No. storeys - mid rise, -3 = Unknown no. storeys = high rise).
         basement: int = 0,  # 0 = unknown / default, 1 = unfinished, 2 = 100% finished
         construction_code: int = 5000,
         first_floor_height: float = 0.305,

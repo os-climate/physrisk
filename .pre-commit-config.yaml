@@ -67,7 +67,7 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: 76b3d32d3f4b965e1d6425253c59407420ae2c43  # frozen: v0.47.0
+    rev: e72a3ca1632f0b11a07d171449fe447a7ff6795e  # frozen: v0.48.0
     hooks:
       - id: markdownlint
         args: ["--fix"]
@@ -91,7 +91,7 @@ repos:
         args: ["-x"] # Check external files
 
   - repo: https://github.com/Mateusz-Grzelinski/actionlint-py
-    rev: 85c37735ea69e5baf0681530e57e63deee0ce733  # frozen: v1.7.10.24
+    rev: c04ed26e40637cab1aa9879c693832a9c120fb20  # frozen: v1.7.12.24
     hooks:
       - id: actionlint
 
@@ -107,14 +107,14 @@ repos:
           ]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 9b1e9a33f1b33f6ecc2fdbb8d7cc894e951106e4  # frozen: v0.14.13
+    rev: 6fec9b7edb08fd9989088709d864a7826dc74e80  # frozen: v0.15.12
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --config=pyproject.toml]
       - id: ruff-format
 
   - repo: https://github.com/abravalheri/validate-pyproject
-    rev: 78f5e0f104cfa803d0597eaa924b4de3becd3e3e # frozen: v0.24.1
+    rev: 4b2e70d08cb2ccd26d1fba73588de41c7a5d50b7  # frozen: v0.25
     hooks:
       - id: validate-pyproject
         # Optional extra validations from SchemaStore:
@@ -153,7 +153,7 @@ repos:
         entry: bash -c 'if [ ! -d .mypy_cache ]; then /bin/mkdir .mypy_cache; fi; exit 0'
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: "a66e98df7b4aeeb3724184b332785976d062b92e"  # frozen: v1.19.1
+    rev: "fc0f09a29bb495f4a91f00266155d6282d52485d"  # frozen: v1.20.2
     hooks:
       - id: mypy
         verbose: true

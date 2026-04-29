@@ -47,12 +47,32 @@ def load_credentials():
     return "loaded"
 
 
+@pytest.fixture()
+def clear_credentials(monkeypatch):
+    """Use the public OSC bucket anonymously for tests that need live data."""
+    credential_keys = (
+        "OSC_S3_ACCESS_KEY",
+        "OSC_S3_SECRET_KEY",
+        "OSC_S3_BUCKET",
+        "OSC_S3_HAZARD_PATH",
+        "OSC_S3_ENDPOINT",
+    )
+
+    for key in credential_keys:
+        monkeypatch.delenv(key, raising=False)
+
+
 @pytest.fixture(autouse=True)
-def skip_if_needs_live_data(request, load_credentials):
+def skip_if_needs_live_data(request):
     env = os.environ.get("PHYSRISK_ENVIRONMENT", "")
-    if request.node.get_closest_marker("live_data"):
-        if request.node.get_closest_marker("live_data").args[0] != env:
-            pytest.skip(f"skipped: PHYSRISK_ENVIRONMENT set to {env}")
+
+    marker = request.node.get_closest_marker("live_data")
+    if marker:
+        if not marker.args:
+            raise ValueError("live_data marker requires at least one environment")
+
+        if env not in marker.args:
+            pytest.skip(f"skipped: PHYSRISK_ENVIRONMENT={env}, required={marker.args}")
 
 
 @pytest.fixture

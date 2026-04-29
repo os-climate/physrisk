@@ -149,6 +149,9 @@ dev = [
 ]
 
 [tool.pytest.ini_options]
+markers = [
+    "live_data: tests that hit live/external data sources",
+]
 testpaths = ["tests",
 ]
 addopts = "-v --update_expected=False --update_inputs=False"

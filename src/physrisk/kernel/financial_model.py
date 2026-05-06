@@ -53,6 +53,16 @@ class FinancialDataProvider(Protocol):
         ...
 
 
+class EqualDistributionFinancialDataProvider(FinancialDataProvider):
+    """Financial data provider that assumes that revenue and total insurable value are equally distributed across all assets."""
+
+    def revenue_attributable_to_asset(self, asset: Asset, currency: str) -> float:
+        return 100.0
+
+    def total_insurable_value(self, asset: Asset, currency: str) -> float:
+        return 100.0
+
+
 class FinancialModel(Protocol):
     """ "Financial Model using a FinancialDataProvider as source of information."""
 

@@ -36,7 +36,7 @@ from physrisk.kernel.hazards import (
 from physrisk.kernel.impact import AssetImpactResult
 from physrisk.kernel.impact_distrib import ImpactType
 from physrisk.kernel.risk import (
-    AssetLevelRiskModel,
+    PortfolioRiskModel,
     Measure,
     MeasureKey,
     NullAssetBasedPortfolioRiskMeasureCalculator,
@@ -593,7 +593,7 @@ def test_generic_model():
     hazard_model = create_hazard_model(scenarios, years)
     generic_measures = GenericScoreBasedRiskMeasures()
 
-    model = AssetLevelRiskModel(
+    model = PortfolioRiskModel(
         hazard_model,
         _vulnerability_models(),
         {Asset: generic_measures, RealEstateAsset: generic_measures},
@@ -631,7 +631,7 @@ def test_generic_model():
 
     # check some edge cases
     # 1) for SSP245 Hail data not available
-    model = AssetLevelRiskModel(
+    model = PortfolioRiskModel(
         hazard_model,
         _vulnerability_models({Hail: None}),
         {Asset: generic_measures, RealEstateAsset: generic_measures},
@@ -653,7 +653,7 @@ def test_generic_model():
             type="type_not_in_model",
         )
     ]
-    model = AssetLevelRiskModel(
+    model = PortfolioRiskModel(
         hazard_model,
         _vulnerability_models({ChronicHeat: None}),
         {Asset: generic_measures, RealEstateAsset: generic_measures},

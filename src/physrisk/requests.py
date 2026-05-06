@@ -49,7 +49,7 @@ from physrisk.kernel.hazards import Hazard, all_hazards, hazard_class
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey  # , ImpactKey
 from physrisk.kernel.impact_distrib import EmptyImpactDistrib, PlaceholderImpactDistrib
 from physrisk.kernel.risk import (
-    AssetLevelRiskModel,
+    PortfolioRiskModel,
     Measure,
     MeasureKey,
     RiskMeasureCalculator,
@@ -289,7 +289,7 @@ class Requester:
             request.use_case_id
         )
         portfolio_measure_calculator = self.measures_factory.portfolio_calculator(
-            request.use_case_id
+            request.use_case_id,
         )
         return _get_asset_impacts(
             request,
@@ -516,9 +516,12 @@ def create_assets(
             raise ValueError(
                 "Cannot provide asset items in the request while specifying an explicit asset list"
             )
-        return assets
+        return assets, None
     else:
-        return [asset_factory.create_asset(i) for i in api_assets.items]
+        assets, financial_data_store = asset_factory.assets_and_financial_details(
+            api_assets.items
+        )
+        return assets, financial_data_store
 
 
 def _get_asset_exposures(
@@ -527,7 +530,7 @@ def _get_asset_exposures(
     assets: Optional[List[Asset]] = None,
     asset_factory: AssetFactory = DefaultAssetFactory(),
 ):
-    _assets = create_assets(request.assets, assets, asset_factory)
+    _assets, _ = create_assets(request.assets, assets, asset_factory)
     measure = JupterExposureMeasure()
     results = calculate_exposures(
         _assets, hazard_model, measure, scenario="ssp585", year=2030
@@ -560,7 +563,9 @@ def _get_asset_impacts(
 ):
     # we keep API definition of asset separate from internal Asset class; convert by reflection
     # based on asset_class:
-    _assets = create_assets(request.assets, assets, asset_factory)
+    _assets, financial_data_provider = create_assets(
+        request.assets, assets, asset_factory
+    )
     measure_calculators = (
         calc.get_default_risk_measure_calculators()
         if measure_calculators is None
@@ -571,7 +576,7 @@ def _get_asset_impacts(
         if portfolio_measure_calculator is None
         else portfolio_measure_calculator
     )
-    risk_model = AssetLevelRiskModel(
+    risk_model = PortfolioRiskModel(
         hazard_model,
         vulnerability_models,
         measure_calculators,
@@ -591,7 +596,7 @@ def _get_asset_impacts(
     risk_measures = None
     if request.include_measures:
         impacts, measures = risk_model.calculate_risk_measures(
-            _assets, scenarios, years
+            _assets, scenarios, years, financial_data_provider
         )
         # in the case of drill-down by hazard indicator ID, we list the indicator IDs per hazard type:
         hazard_type_indicators = _hazard_type_indicators(measures)

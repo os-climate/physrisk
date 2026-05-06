@@ -251,6 +251,27 @@ class AssetSingleImpact(BaseModel):
     )
 
 
+class PortfolioImpact(BaseModel):
+    key: ImpactKey
+    impact_exceedance: Optional[ExceedanceCurve] = Field(
+        None, description="Impact as exceedance curve."
+    )
+    impact_type: str = Field(
+        "damage",
+        description="Damage or business disruption (to revenue or costs).",
+        examples=["damage", "disruption", "disruption/revenue", "disruption/costs"],
+    )
+    impact_mean: Optional[float]
+    impact_std_deviation: Optional[float] = Field(
+        default=None,
+        description="""Impact standard deviation.""",
+    )
+    impact_semi_std_deviation: Optional[float] = Field(
+        default=None,
+        description="""Impact semi standard deviation: dispersion above the mean.""",
+    )
+
+
 class AssetLevelImpact(BaseModel):
     """Impact at asset level. Each asset can have impacts for multiple hazard types."""
 
@@ -268,6 +289,7 @@ class AssetImpactResponse(BaseModel):
     """Response to impact request."""
 
     asset_impacts: Optional[List[AssetLevelImpact]] = None
+    portfolio_impacts: Optional[List[PortfolioImpact]] = None
     risk_measures: Optional[RiskMeasures] = None
 
 

@@ -113,11 +113,11 @@ class DefaultVulnerabilityModelFactory(VulnerabilityModelsFactory):
     FEMA Hazus vulnerability-based models excluded by default (until non-experimental).
     """
 
-    def __init__(self):
+    def __init__(self, use_oed_hazus_curves: bool = False):
         super().__init__(
             config=VulnerabilityModelsFactory.embedded_vulnerability_config(),
             programmatic_models=calc.default_vulnerability_models(),
-            use_oed_hazus_curves=False,
+            use_oed_hazus_curves=use_oed_hazus_curves,
             standard_of_protection=StandardOfProtection.CONSTANT_DEPTH,
         )
 

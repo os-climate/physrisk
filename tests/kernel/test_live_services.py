@@ -1,10 +1,8 @@
 import json
 import logging
-from pydantic import TypeAdapter
 import pytest
 import requests
 
-from physrisk.api.v1.impact_req_resp import RiskMeasures, RiskMeasuresHelper
 from physrisk.container import Container
 import physrisk.requests
 from tests.conftest import get_result_expected
@@ -86,53 +84,6 @@ def test_live_hazard_data():
 
 
 @pytest.mark.skip("only as example")
-def test_example_portfolios():
-    example_portfolios = physrisk.requests._get_example_portfolios()
-    for name, assets in example_portfolios.items():
-        if name != "manufacturing":
-            continue
-        logger.info(f"Running example portfolio: {name}")
-        request_dict = {
-            "assets": assets,
-            "include_asset_level": True,
-            "include_calc_details": False,
-            "include_measures": True,
-            "years": [2030, 2040, 2050],
-            "scenarios": ["ssp585"],
-        }
-        container = Container()
-        requester = container.requester()
-        response = requester.get(
-            request_id="get_asset_impact", request_dict=request_dict
-        )
-        # with open("result.json", "w") as f:
-        #    f.write(response)
-        risk_measures_dict = json.loads(response)["risk_measures"]
-        helper = RiskMeasuresHelper(
-            TypeAdapter(RiskMeasures).validate_python(risk_measures_dict)
-        )
-        for hazard_type in [
-            "CoastalInundation",
-            "ChronicHeat",
-            "Drought",
-            "Fire",
-            "Hail",
-            "RiverineInundation",
-            "Wind",
-        ]:
-            scores, measure_values, measure_defns = helper.get_measure(
-                hazard_type, "ssp585", 2050
-            )
-            if not scores:
-                logger.info(f"No scores for hazard type: {hazard_type}")
-                continue
-            label, description = helper.get_score_details(scores[0], measure_defns[0])
-            logger.info(
-                f"Hazard: {hazard_type}, Scores: {scores}, Measures: {measure_values}"
-            )
-
-
-@pytest.mark.skip("only as example")
 def test_get_image_info():
     request = {
         "resource": "inundation/river_tudelft/v2/flood_depth_unprot_{scenario}_{year}",
@@ -148,11 +99,12 @@ def test_get_image_info():
 
 
 @pytest.fixture
-def requester():
+def requester(clear_credentials):
     container = Container()
     return container.requester()
 
 
+@pytest.mark.live_data("dev")
 def test_live_impacts_regression(
     requester: physrisk.requests.Requester, update_expected: str
 ):  # "latitude": 34.556, "longitude": 69.4787

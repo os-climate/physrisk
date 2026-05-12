@@ -10,10 +10,6 @@ class AvailabilitySourcesRequest(BaseModel):
         False,
         description="If true, brings back all available information about years and scenarios per each hazard",
     )
-    use_case_id: str = Field(
-        "DEFAULT",
-        description="Use case id determines which set of hazards will be taken into account depending on the selected vulnerability models",
-    )
     selected_hazards_list: list[str] = Field(
         [], description="Specify which list of hazards the data is required for"
     )

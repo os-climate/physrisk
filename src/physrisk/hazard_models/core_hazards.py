@@ -1,8 +1,9 @@
 from enum import Enum
+import logging
+from pathlib import PurePosixPath
 from typing import Dict, Iterable, List, NamedTuple, Optional, Protocol, Sequence, Type
 import re
 from collections import defaultdict
-from pathlib import PurePosixPath
 
 from physrisk.api.v1.hazard_data import HazardResource
 from physrisk.data.hazard_data_provider import (
@@ -22,6 +23,8 @@ from physrisk.kernel.hazards import (
     Wind,
     hazard_class,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ResourceSubset:
@@ -255,7 +258,13 @@ class InventorySourcePaths(SourcePaths):
                 hazard,
                 indicator_id,
             ), _ in self._inventory.resources_by_type_id.items():
-                hazard_type = hazard_class(hazard)
+                try:
+                    hazard_type = hazard_class(hazard)
+                except AttributeError:
+                    logger.warning(
+                        f"unable to find hazard class for hazard {hazard}, skipping"
+                    )
+                    continue
 
                 selected = self.get_resources(
                     hazard_type=hazard_type, indicator_id=indicator_id, hint=None

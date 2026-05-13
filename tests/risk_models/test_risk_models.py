@@ -600,7 +600,7 @@ def test_generic_model():
         NullAssetBasedPortfolioRiskMeasureCalculator(),
     )
     measure_ids_for_asset, definitions, _ = model.populate_measure_definitions(assets)
-    _, measures = model.calculate_risk_measures(
+    _, measures, _ = model.calculate_risk_measures(
         assets, scenarios=scenarios, years=years
     )
     np.testing.assert_approx_equal(

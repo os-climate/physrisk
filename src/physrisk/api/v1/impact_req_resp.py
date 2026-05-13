@@ -256,6 +256,9 @@ class PortfolioImpact(BaseModel):
     impact_exceedance: Optional[ExceedanceCurve] = Field(
         None, description="Impact as exceedance curve."
     )
+    # quantity_type: QuantityType = Field(
+    #     QuantityType.DAMAGE, description="The type of quantity: damage, loss of revenue etc.",
+    # )
     impact_type: str = Field(
         "damage",
         description="Damage or business disruption (to revenue or costs).",

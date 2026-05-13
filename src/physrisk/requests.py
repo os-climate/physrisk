@@ -595,7 +595,7 @@ def _get_asset_impacts(
     )
     risk_measures = None
     if request.include_measures:
-        impacts, measures = risk_model.calculate_risk_measures(
+        impacts, measures, portfolio_quantities = risk_model.calculate_risk_measures(
             _assets, scenarios, years, financial_data_provider
         )
         # in the case of drill-down by hazard indicator ID, we list the indicator IDs per hazard type:

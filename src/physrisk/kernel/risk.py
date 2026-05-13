@@ -386,7 +386,11 @@ class PortfolioRiskModel(RiskModel):
         scenarios: Sequence[str],
         years: Sequence[int],
         financial_data_provider: FinancialDataProvider = EqualDistributionFinancialDataProvider(),
-    ):
+    ) -> tuple[
+        dict[ImpactKey, list[AssetImpactResult]],
+        dict[MeasureKey, Measure],
+        dict[RiskQuantityKey, Quantity],
+    ]:
         """Calculate risk measures for a set of assets, scenarios, and years, according to the selected method calculation.
 
         For the Default Method:
@@ -408,9 +412,11 @@ class PortfolioRiskModel(RiskModel):
             Tuple[
                 Dict[ImpactKey, List[AssetImpactResult]],
                 Dict[MeasureKey, Measure]
+                Dict[RiskQuantityKey, Quantity],
             ]: A tuple containing:
-                - A dictionary mapping asset and hazard type tuples to impact results.
-                - A dictionary mapping MeasureKeys to calculated measures.
+                - Asset-level results for each asset, hazard type, scenario and year.
+                - Score-based risk measures for each asset, hazard type, scenario and year; also portfolio-level scores.
+                - Portfolio-level quantities.
 
         """
         impacts = self._calculate_all_impacts(
@@ -478,13 +484,13 @@ class PortfolioRiskModel(RiskModel):
             )
 
         # calculate portfolio measures
-        portfolio_measures, _ = (
+        portfolio_measures, portfolio_quantities = (
             self._portfolio_measure_calculator.calculate_risk_measures(
                 financial_data_provider, aggregated_measures, impacts
             )
         )
         aggregated_measures.update(portfolio_measures)
-        return impacts, aggregated_measures
+        return impacts, aggregated_measures, portfolio_quantities
 
     def _calculator_for_asset(self, asset: Asset) -> Optional[RiskMeasureCalculator]:
         return self._asset_level_measure_calculators.get(

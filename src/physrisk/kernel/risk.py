@@ -176,8 +176,8 @@ class RiskMeasureCalculator(Protocol):
     def calc_measure(
         self,
         hazard_type: Type[Hazard],
-        base_impact: Sequence[AssetImpactResult],
-        impact: Sequence[AssetImpactResult],
+        base_impacts: Sequence[AssetImpactResult],
+        impacts: Sequence[AssetImpactResult],
     ) -> Measure | dict[str | None, Measure]:
         """Calculate the Measure (score-based risk measure) for the hazard,
         given the set of base (i.e. historical) and future asset-level impacts.

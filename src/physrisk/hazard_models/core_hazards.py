@@ -21,6 +21,7 @@ from physrisk.kernel.hazards import (
     Hazard,
     RiverineInundation,
     Wind,
+    Landslide,
     hazard_class,
 )
 
@@ -311,6 +312,7 @@ class CoreInventorySourcePaths(InventorySourcePaths):
             CoastalInundation, "flood_depth", self._select_coastal_inundation
         )
         self.add_selector(Wind, "max_speed", self._select_wind)
+        self.add_selector(Landslide, "landslide_susceptability", self._select_landslide)
 
     def resources_with(self, *, hazard_type: type, indicator_id: str):
         return ResourceSubset(
@@ -363,6 +365,14 @@ class CoreInventorySourcePaths(InventorySourcePaths):
         hint: Optional[HazardDataHint] = None,
     ):
         return candidates.prefer_group_id("iris_osc").first()
+
+    @staticmethod
+    def _select_landslide(
+        *,
+        candidates: ResourceSubset,
+        hint: Optional[HazardDataHint] = None,
+    ) -> List[HazardResource]:
+        return candidates.with_group_id("landslide_jrc").first()
 
 
 def cmip6_scenario_to_rcp(scenario: str):

@@ -206,7 +206,7 @@ class HazardDataProvider(ABC):
         # mask_unprocessed is the mask of lats and lons that remain unprocessed.
         # This always has the same length and is updated for each path_item.
         # combined data for each year
-        mask_unprocessed = np.ones(len(longitudes), dtype=np.bool)
+        mask_unprocessed = np.ones(len(longitudes), dtype=bool)
         resource_paths_set: List[ResourcePaths] = self._source_paths.resource_paths(
             self.hazard_type,
             indicator_id=indicator_id,
@@ -284,7 +284,7 @@ class HazardDataProvider(ABC):
                     indices=indices,
                     indices_length=indices_length,
                     coverage_mask=np.zeros(
-                        len(longitudes), dtype=np.bool
+                        len(longitudes), dtype=bool
                     ),  # ~mask_unprocessed,
                     units=v.units,
                     paths=paths,

@@ -62,7 +62,7 @@ class InventoryReader:
         md: Dict[str, str] = {}
         for path in paths:
             try:
-                with self._fs.open(self._full_path(path), "r") as f:
+                with self._fs.open(self._full_path(path), "r", encoding="utf-8") as f:
                     md[path] = f.read()
             finally:
                 continue
@@ -70,7 +70,7 @@ class InventoryReader:
 
     def read_json(self, path: str) -> str:
         """Read inventory at path provided and return json."""
-        with self._fs.open(self._full_path(path), "r") as f:
+        with self._fs.open(self._full_path(path), "r", encoding="utf-8") as f:
             json_str = f.read()
         return json_str
 
@@ -80,7 +80,7 @@ class InventoryReader:
             combined[model.key()] = model
         models = HazardModels(resources=list(combined.values()))
         json_str = json.dumps(models.model_dump())
-        with self._fs.open(self._full_path(path), "w") as f:
+        with self._fs.open(self._full_path(path), "w", encoding="utf-8") as f:
             f.write(json_str)
 
     def _full_path(self, path: str):

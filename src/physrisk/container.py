@@ -8,6 +8,14 @@ from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
+from physrisk.hazard_models.credentials_provider import (
+    CredentialsProvider,
+    EnvCredentialsProvider,
+)
+from physrisk.hazard_models.jba_image_creator import (
+    CombinedImageCreator,
+    JBAImageCreator,
+)
 from physrisk.kernel import calculation as calc
 from physrisk.kernel.hazard_model import HazardModelFactory
 from physrisk.kernel.hazards import Hazard
@@ -31,7 +39,7 @@ from physrisk.vulnerability_models.configuration.asset_factory import (
 from physrisk.vulnerability_models.vulnerability import VulnerabilityModelsFactory
 
 
-class ZarrHazardModelFactory(HazardModelFactory):
+class DefaultHazardModelFactory(HazardModelFactory):
     def __init__(
         self,
         inventory: Inventory,
@@ -39,12 +47,24 @@ class ZarrHazardModelFactory(HazardModelFactory):
         store: Optional[MutableMapping] = None,
         reader: Optional[ZarrReader] = None,
         default_interpolation: str = "floor",
+        credentials: Optional[CredentialsProvider] = None,
+        third_party_apis: list[str] = [],
     ):
         self.inventory = inventory
         self.source_paths = source_paths
         self.store = store
         self.reader = reader
         self.default_interpolation = default_interpolation
+        self.credentials = credentials
+        self.third_party_apis = third_party_apis
+        self.zarr_image_creator = (
+            ImageCreator(inventory, source_paths, reader)
+            if reader is not None
+            else None
+        )
+        self.jba_image_creator = (
+            JBAImageCreator(credentials) if "jba" in third_party_apis else None
+        )
 
     def hazard_model(
         self,
@@ -54,6 +74,7 @@ class ZarrHazardModelFactory(HazardModelFactory):
     ):
         # this is done to allow interpolation to be set dynamically, e.g. different requests can have different
         # parameters.
+
         return ZarrHazardModel(
             source_paths=self.source_paths,
             store=self.store,
@@ -65,7 +86,11 @@ class ZarrHazardModelFactory(HazardModelFactory):
         )
 
     def image_creator(self):
-        return ImageCreator(self.inventory, self.source_paths, self.reader)
+        return (
+            CombinedImageCreator(self.zarr_image_creator, self.jba_image_creator)
+            if "jba" in self.third_party_apis
+            else self.zarr_image_creator
+        )
 
 
 class DictBasedVulnerabilityModelsFactory(PVulnerabilityModelsFactory):
@@ -121,11 +146,14 @@ class Container(containers.DeclarativeContainer):
     # why do we have factories for hazard models, vulnerability models and measures?
     # this is because the models may need to be created with different parameters for different requests
 
+    credentials = providers.Singleton(EnvCredentialsProvider)
+
     hazard_model_factory = providers.Factory(
-        ZarrHazardModelFactory,
+        DefaultHazardModelFactory,
         inventory=inventory,
         reader=zarr_reader,
         source_paths=source_paths,
+        credentials=credentials,
     )
 
     measures_factory = providers.Factory(calc.DefaultMeasuresFactory)

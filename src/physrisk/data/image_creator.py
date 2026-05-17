@@ -252,12 +252,12 @@ class ImageCreator(HazardImageCreator):
         def get_colors(index: int):
             return map_defn[str(index)]
 
-        rgba = self._to_rgba(data, get_colors, min_value=min_value, max_value=max_value)
+        rgba = self.to_rgba(data, get_colors, min_value=min_value, max_value=max_value)
         image = Image.fromarray(rgba, mode="RGBA")
         return image
 
-    def _to_rgba(  # noqa: C901
-        self,
+    @staticmethod
+    def to_rgba(  # noqa: C901
         data: np.ndarray,
         get_colors: Callable[[int], List[int]],
         min_value: Optional[float] = None,
@@ -340,23 +340,6 @@ class ImageCreator(HazardImageCreator):
             + (a[result] << 24)
         )
         return final
-
-    @staticmethod
-    def test_store(path: str):
-        store = zarr.storage.MemoryStore(root="hazard.zarr")
-        root = zarr.open(store=store, mode="w")
-        x, y = np.meshgrid(
-            (np.arange(1000) - 500.0) / 500.0, (np.arange(1000) - 500.0) / 500.0
-        )
-        im = np.exp(-(x**2 + y**2))
-        z = root.create_dataset(  # type: ignore
-            path,
-            shape=(1, im.shape[0], im.shape[1]),
-            chunks=(1, im.shape[0], im.shape[1]),
-            dtype="f4",
-        )
-        z[0, :, :] = im
-        return store
 
 
 @lru_cache(maxsize=32)

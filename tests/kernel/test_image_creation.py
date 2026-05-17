@@ -66,7 +66,7 @@ class TestImageCreation(TestWithCredentials):
         def get_colors(index: int):
             return colormap[str(index)]
 
-        result = converter._to_rgba(im, get_colors)
+        result = converter.to_rgba(im, get_colors)
         # Max should be 255, min should be 1. Other values span the 253 elements from 2 to 254.
         expected = np.array(
             [

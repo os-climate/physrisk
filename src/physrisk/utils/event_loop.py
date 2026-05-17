@@ -61,9 +61,7 @@ def get_loop():
             if loop[0] is None:
                 with _selector_policy():
                     loop[0] = asyncio.new_event_loop()
-                th = threading.Thread(
-                    target=loop[0].run_forever, name="esg-physrisk-IO"
-                )
+                th = threading.Thread(target=loop[0].run_forever, name="physrisk-IO")
                 th.daemon = True
                 th.start()
                 iothread[0] = th

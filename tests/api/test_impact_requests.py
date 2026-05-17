@@ -794,7 +794,7 @@ def test_example_portfolios(tmp_path, clear_credentials):
         request_dict = {
             "assets": assets,
             "include_asset_level": True,
-            "include_calc_details": False,
+            "include_calc_details": True,
             "include_measures": True,
             "years": [2030, 2040, 2050],
             "scenarios": ["ssp585"],

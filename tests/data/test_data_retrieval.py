@@ -399,6 +399,7 @@ class SourcePathsTest(SourcePaths):
                         years=[-1], path=lambda f: "test_set_europe_only"
                     ),
                 },
+                units="m",
             )
         ]
         if self.cascade:
@@ -413,6 +414,7 @@ class SourcePathsTest(SourcePaths):
                             years=[-1], path=lambda f: "test_set_world"
                         ),
                     },
+                    units="m",
                 )
             )
         return result
@@ -601,6 +603,7 @@ class SourcePathsYearsInterpolationTest(SourcePaths):
                         years=[-1], path=lambda f: "test_set_europe_only_historical"
                     ),
                 },
+                units="m",
             )
         ]
         return result

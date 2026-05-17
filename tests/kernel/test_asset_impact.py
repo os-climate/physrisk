@@ -227,7 +227,9 @@ class TestAssetImpact(unittest.TestCase):
             hazard_indicator_id="flood_depth",
         )  # np.eye(n_bins, n_bins))
         hazard_paths = ["unknown"]
-        event = HazardEventDistrib(RiverineInundation, depth_bins, probs, hazard_paths)  # type: ignore
+        event = HazardEventDistrib(
+            RiverineInundation, depth_bins, probs, hazard_paths, "default"
+        )  # type: ignore
 
         impact_prob = vul.prob_matrix.T @ event.prob
         impact = ImpactDistrib(

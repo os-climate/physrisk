@@ -153,24 +153,34 @@ class RiskMeasure(BaseModel):
     )
 
 
-class RiskMeasuresForAssets(BaseModel):
+class ScoreBasedRiskMeasuresForAssets(BaseModel):
     """Risk measures for multiple assets. Results returned in this form, i.e. using an
     array for asset scores, for compactness (keep response size down).
     List-based version of RiskMeasure.
     """
 
     key: RiskMeasureKey
-    scores: List[int] = Field([0], description="Identifier for the risk measure.")
-    measures_0: List[float]
+    scores: Optional[list[int]] = Field(
+        [0], description="Identifier for the risk measure."
+    )
+    measures_0: Optional[list[float]]
     measures_1: Optional[List[float]] = Field(
         [],
         description="Underlying measures for case where there are multiple underlying measures.",
     )
 
 
+class RiskMeasuresForAssets(BaseModel):
+    key: RiskMeasureKey
+    measures: list[float] = Field(
+        [],
+        description="Risk measures Measures.",
+    )
+
+
 class ScoreBasedRiskMeasureSetDefinition(BaseModel):
     measure_set_id: str
-    # for hazard types give the measure ID used to calculate the measure for each asset:
+    # for each hazard type, gives the measure ID used to calculate the measure for each asset:
     asset_measure_ids_for_hazard: Dict[str, List[str]]
     score_definitions: Dict[str, ScoreBasedRiskMeasureDefinition]
     # where drill-down by hazard indicator ID is relevant, give the measure IDs for each
@@ -183,7 +193,7 @@ class ScoreBasedRiskMeasureSetDefinition(BaseModel):
 class RiskMeasures(BaseModel):
     """Risk measures"""
 
-    measures_for_assets: List[RiskMeasuresForAssets]
+    measures_for_assets: List[RiskMeasuresForAssets | ScoreBasedRiskMeasuresForAssets]
     measures_for_portfolio: List[RiskMeasure]
     score_based_measure_set_defn: ScoreBasedRiskMeasureSetDefinition
     measures_definitions: Optional[List[RiskMeasureDefinition]] = Field(

@@ -157,7 +157,7 @@ def test_risk_indicator_model():
     assets = create_assets()
     hazard_model = create_hazard_model(scenarios, years)
 
-    model = AssetLevelRiskModel(
+    model = PortfolioRiskModel(
         hazard_model,
         DictBasedVulnerabilityModels(alternate_default_vulnerability_models_scores()),
         {RealEstateAsset: RealEstateToyRiskMeasures()},
@@ -637,7 +637,7 @@ def test_generic_model():
         {Asset: generic_measures, RealEstateAsset: generic_measures},
         NullAssetBasedPortfolioRiskMeasureCalculator(),
     )
-    _, measures = model.calculate_risk_measures(
+    _, measures, _ = model.calculate_risk_measures(
         assets, scenarios=["ssp245"], years=years
     )
     np.testing.assert_equal(
@@ -659,7 +659,7 @@ def test_generic_model():
         {Asset: generic_measures, RealEstateAsset: generic_measures},
         NullAssetBasedPortfolioRiskMeasureCalculator(),
     )
-    _, measures = model.calculate_risk_measures(assets, scenarios, years=years)
+    _, measures, _ = model.calculate_risk_measures(assets, scenarios, years=years)
     np.testing.assert_equal(
         measures[MeasureKey(assets[0], scenarios[0], years[0], ChronicHeat)].score,
         Category.NO_VULNERABILITY,

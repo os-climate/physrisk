@@ -96,7 +96,7 @@ from .api.v1.impact_req_resp import ImpactKey as APIImpactKey
 from .api.v1.impact_req_resp import (
     RiskMeasureKey,
     RiskMeasures,
-    RiskMeasuresForAssets,
+    ScoreBasedRiskMeasuresForAssets,
     ScoreBasedRiskMeasureDefinition,
     ScoreBasedRiskMeasureSetDefinition,
 )
@@ -787,7 +787,7 @@ def _create_risk_measures(
     hazard_types = set(k.hazard_type for k in measures.keys())
     # hazard_types = all_hazards()
     measure_set_id = "measure_set_0"
-    measures_for_assets: List[RiskMeasuresForAssets] = []
+    measures_for_assets: List[ScoreBasedRiskMeasuresForAssets] = []
     measures_for_portfolio: List[RiskMeasure] = []
     for hazard_type in sorted(
         hazard_types, key=lambda x: x.__name__ if x is not None else ""
@@ -830,7 +830,7 @@ def _create_risk_measures(
                                     else measure.measure_0
                                 )
                         measures_for_assets.append(
-                            RiskMeasuresForAssets(
+                            ScoreBasedRiskMeasuresForAssets(
                                 key=score_key,
                                 scores=scores,
                                 measures_0=sig_figures(measures_0),

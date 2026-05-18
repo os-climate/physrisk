@@ -1,6 +1,7 @@
+import asyncio
 import os
 import pathlib
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from dotenv import load_dotenv
@@ -114,6 +115,11 @@ def _mock_session(
 @pytest.fixture
 def default_session():
     return _mock_session()
+
+
+# ---------------------------------------------------------------------------
+# proxy / max_concurrency
+# ---------------------------------------------------------------------------
 
 
 # ---------------------------------------------------------------------------
@@ -278,6 +284,45 @@ async def test_geocode_many_fetches_building_shapes_when_opted_in():
     assert len(results) == 3
     assert session.get.call_count == 3
     assert session.post.call_count == 3
+
+
+async def test_geocode_passes_proxy_to_requests():
+    session = _mock_session()
+    async with GoogleGeocoder("k", proxy="http://proxy.corp:8080", session=session, fetch_building_shape=True) as geocoder:
+        await geocoder.geocode("Some Address")
+
+    assert session.get.call_args.kwargs["proxy"] == "http://proxy.corp:8080"
+    assert session.post.call_args.kwargs["proxy"] == "http://proxy.corp:8080"
+
+
+async def test_geocode_proxy_is_none_when_not_set():
+    session = _mock_session()
+    async with GoogleGeocoder("plain-key", session=session) as geocoder:
+        await geocoder.geocode("Some Address")
+
+    assert session.get.call_args.kwargs["proxy"] is None
+
+
+async def test_geocode_many_respects_max_concurrency():
+    active = 0
+    peak = 0
+    orig_fetch = GoogleGeocoder._fetch_geocode_address
+
+    async def tracking_fetch(self_inner, address):
+        nonlocal active, peak
+        active += 1
+        peak = max(peak, active)
+        await asyncio.sleep(0)  # yield so other tasks can interleave
+        result = await orig_fetch(self_inner, address)
+        active -= 1
+        return result
+
+    session = _mock_session()
+    with patch.object(GoogleGeocoder, "_fetch_geocode_address", tracking_fetch):
+        async with GoogleGeocoder("k", session=session, max_concurrency=2) as geocoder:
+            await geocoder.geocode_many([f"Address {i}" for i in range(6)])
+
+    assert peak <= 2
 
 
 async def test_geocode_building_shape_not_fetched_by_default():

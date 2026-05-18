@@ -8,7 +8,8 @@ Two endpoints are called concurrently for each address:
 - ``POST https://geocode.googleapis.com/v4/geocode/destinations``
   → building ``displayPolygon`` (GeoJSON → shapely) and ``structureType``.
 
-``geocode_many`` resolves all addresses concurrently via ``asyncio.gather``.
+``geocode_many`` resolves all addresses concurrently via ``asyncio.gather``,
+bounded by ``max_concurrency`` to avoid exhausting API rate limits.
 Authentication uses the ``X-Goog-Api-Key`` header.
 """
 
@@ -96,23 +97,36 @@ class GoogleGeocoder:
         async with GoogleGeocoder(api_key) as geocoder:
             result = await geocoder.geocode("1600 Amphitheatre Pkwy, Mountain View")
             results = await geocoder.geocode_many(["address 1", "address 2"])
+
+    Args:
+        api_key: Google Maps Platform API key.
+        proxy: Optional HTTP/HTTPS proxy URL (e.g. ``"http://proxy.corp:8080"``).
+        max_concurrency: Maximum number of in-flight API requests at once.
+            Applies across both endpoints when ``fetch_building_shape`` is
+            enabled (each address then makes two requests).
+        fetch_building_shape: When ``True`` also calls the destinations
+            endpoint to populate ``building_shape`` and ``structure_type``.
     """
 
     def __init__(
         self,
         api_key: str,
         *,
+        proxy: Optional[str] = None,
         session: Optional[aiohttp.ClientSession] = None,
         language_code: str = "en",
         region_code: Optional[str] = None,
         fetch_building_shape: bool = False,
+        max_concurrency: int = 50,
     ) -> None:
         self._api_key = api_key
+        self._proxy = proxy
         self._external_session = session
         self._session: Optional[aiohttp.ClientSession] = session
         self._language_code = language_code
         self._region_code = region_code
         self._fetch_building_shape = fetch_building_shape
+        self._semaphore = asyncio.Semaphore(max_concurrency)
 
     async def __aenter__(self) -> "GoogleGeocoder":
         if self._external_session is None:
@@ -128,14 +142,15 @@ class GoogleGeocoder:
         """Resolve one address; calls geocode/address and destinations concurrently."""
         assert self._session is not None, "Use GoogleGeocoder as an async context manager"
 
-        if self._fetch_building_shape:
-            geocode_data, destinations_data = await asyncio.gather(
-                self._fetch_geocode_address(address),
-                self._fetch_destinations(address),
-            )
-        else:
-            geocode_data = await self._fetch_geocode_address(address)
-            destinations_data = None
+        async with self._semaphore:
+            if self._fetch_building_shape:
+                geocode_data, destinations_data = await asyncio.gather(
+                    self._fetch_geocode_address(address),
+                    self._fetch_destinations(address),
+                )
+            else:
+                geocode_data = await self._fetch_geocode_address(address)
+                destinations_data = None
 
         if geocode_data is None:
             return None
@@ -162,7 +177,7 @@ class GoogleGeocoder:
     async def geocode_many(
         self, addresses: Sequence[str]
     ) -> List[Optional[GeocodeResult]]:
-        """Geocode a batch of addresses concurrently."""
+        """Geocode a batch of addresses, bounded by ``max_concurrency``."""
         return list(await asyncio.gather(*[self.geocode(a) for a in addresses]))
 
     # ------------------------------------------------------------------
@@ -184,7 +199,8 @@ class GoogleGeocoder:
 
         url = f"{_GEOCODE_ADDRESS_URL}/{quote(address, safe='')}"
         async with self._session.get(
-            url, params=params, headers=self._common_headers(_ADDRESS_FIELD_MASK)
+            url, params=params, headers=self._common_headers(_ADDRESS_FIELD_MASK),
+            proxy=self._proxy,
         ) as resp:
             resp.raise_for_status()
             data = await resp.json()
@@ -204,7 +220,7 @@ class GoogleGeocoder:
 
         headers = {**self._common_headers(_DESTINATIONS_FIELD_MASK), "Content-Type": "application/json"}
         async with self._session.post(
-            _DESTINATIONS_URL, json=body, headers=headers
+            _DESTINATIONS_URL, json=body, headers=headers, proxy=self._proxy,
         ) as resp:
             resp.raise_for_status()
             data = await resp.json()

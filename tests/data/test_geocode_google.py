@@ -1,5 +1,6 @@
 import os
 import pathlib
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 from dotenv import load_dotenv
@@ -8,10 +9,14 @@ from shapely.geometry import MultiPolygon, Point, Polygon
 from physrisk.data.geocode_google import (
     GeocodeResult,
     GoogleGeocoder,
+    Granularity,
     StructureType,
+    _ADDRESS_FIELD_MASK,
+    _DESTINATIONS_FIELD_MASK,
     _DESTINATIONS_URL,
-    _FIELD_MASK,
+    _GEOCODE_ADDRESS_URL,
     _parse_geojson,
+    _parse_granularity,
     _parse_structure_type,
 )
 
@@ -49,13 +54,23 @@ _MULTI_POLYGON_GEOJSON = {
     ],
 }
 
-_API_RESPONSE = {
+# Response from GET geocode/address/<address>
+_ADDRESS_RESPONSE = {
+    "results": [
+        {
+            "location": _LOCATION,
+            "granularity": "ROOFTOP",
+            "formattedAddress": "1600 Amphitheatre Pkwy, Mountain View, CA 94043, USA",
+            "placeId": "ChIJY8sv5-i2j4AR",
+        }
+    ]
+}
+
+# Response from POST geocode/destinations
+_DESTINATIONS_RESPONSE = {
     "destinations": [
         {
             "primary": {
-                "location": _LOCATION,
-                "formattedAddress": "1600 Amphitheatre Pkwy, Mountain View, CA 94043, USA",
-                "place": "places/ChIJY8sv5-i2j4AR",
                 "structureType": "BUILDING",
                 "displayPolygon": _POLYGON_GEOJSON,
             }
@@ -63,15 +78,13 @@ _API_RESPONSE = {
     ]
 }
 
-_EMPTY_RESPONSE: dict = {"destinations": []}
+_EMPTY_ADDRESS_RESPONSE: dict = {"results": []}
+_EMPTY_DESTINATIONS_RESPONSE: dict = {"destinations": []}
 
 
 # ---------------------------------------------------------------------------
 # Helpers / fixtures
 # ---------------------------------------------------------------------------
-
-
-from unittest.mock import AsyncMock, MagicMock
 
 
 def _mock_response(payload: dict, status: int = 200) -> MagicMock:
@@ -85,17 +98,43 @@ def _mock_response(payload: dict, status: int = 200) -> MagicMock:
     return cm
 
 
-def _mock_session(payload: dict, status: int = 200) -> MagicMock:
+def _mock_session(
+    address_payload: dict = _ADDRESS_RESPONSE,
+    destinations_payload: dict = _DESTINATIONS_RESPONSE,
+) -> MagicMock:
+    """Return a mock session whose GET returns address_payload and POST returns destinations_payload."""
     session = AsyncMock()
     session.__aenter__ = AsyncMock(return_value=session)
     session.__aexit__ = AsyncMock(return_value=False)
-    session.post = MagicMock(return_value=_mock_response(payload, status))
+    session.get = MagicMock(return_value=_mock_response(address_payload))
+    session.post = MagicMock(return_value=_mock_response(destinations_payload))
     return session
 
 
 @pytest.fixture
-def api_response_session():
-    return _mock_session(_API_RESPONSE)
+def default_session():
+    return _mock_session()
+
+
+# ---------------------------------------------------------------------------
+# _parse_granularity
+# ---------------------------------------------------------------------------
+
+
+def test_parse_granularity_rooftop():
+    assert _parse_granularity("ROOFTOP") is Granularity.ROOFTOP
+
+
+def test_parse_granularity_approximate():
+    assert _parse_granularity("APPROXIMATE") is Granularity.APPROXIMATE
+
+
+def test_parse_granularity_none():
+    assert _parse_granularity(None) is Granularity.UNSPECIFIED
+
+
+def test_parse_granularity_unknown():
+    assert _parse_granularity("NEW_VALUE") is Granularity.UNSPECIFIED
 
 
 # ---------------------------------------------------------------------------
@@ -156,8 +195,8 @@ def test_parse_geojson_invalid():
 # ---------------------------------------------------------------------------
 
 
-async def test_geocode_returns_result(api_response_session):
-    async with GoogleGeocoder("test-key", session=api_response_session) as geocoder:
+async def test_geocode_returns_result(default_session):
+    async with GoogleGeocoder("test-key", session=default_session, fetch_building_shape=True) as geocoder:
         result = await geocoder.geocode("1600 Amphitheatre Pkwy, Mountain View")
 
     assert isinstance(result, GeocodeResult)
@@ -166,27 +205,34 @@ async def test_geocode_returns_result(api_response_session):
     assert result.location == Point(-122.0840575, 37.4219999)
     assert result.formatted_address == "1600 Amphitheatre Pkwy, Mountain View, CA 94043, USA"
     assert result.place_id == "ChIJY8sv5-i2j4AR"
+    assert result.granularity is Granularity.ROOFTOP
     assert isinstance(result.building_shape, Polygon)
     assert result.structure_type is StructureType.BUILDING
     assert result.structure_type.is_building_level is True
 
 
-async def test_geocode_sends_correct_request():
-    session = _mock_session(_API_RESPONSE)
-    async with GoogleGeocoder("my-api-key", session=session) as geocoder:
+async def test_geocode_calls_both_endpoints(default_session):
+    async with GoogleGeocoder("my-api-key", session=default_session, fetch_building_shape=True) as geocoder:
         await geocoder.geocode("Some Address")
 
-    session.post.assert_called_once()
-    call_kwargs = session.post.call_args
+    # geocode/address — GET
+    default_session.get.assert_called_once()
+    get_call = default_session.get.call_args
+    assert _GEOCODE_ADDRESS_URL in get_call.args[0]
+    assert get_call.kwargs["headers"]["X-Goog-Api-Key"] == "my-api-key"
+    assert get_call.kwargs["headers"]["X-Goog-FieldMask"] == _ADDRESS_FIELD_MASK
 
-    assert call_kwargs.args[0] == _DESTINATIONS_URL
-    assert call_kwargs.kwargs["headers"]["X-Goog-Api-Key"] == "my-api-key"
-    assert call_kwargs.kwargs["headers"]["X-Goog-FieldMask"] == _FIELD_MASK
-    assert call_kwargs.kwargs["json"]["addressQuery"]["addressQuery"] == "Some Address"
+    # destinations — POST
+    default_session.post.assert_called_once()
+    post_call = default_session.post.call_args
+    assert post_call.args[0] == _DESTINATIONS_URL
+    assert post_call.kwargs["headers"]["X-Goog-Api-Key"] == "my-api-key"
+    assert post_call.kwargs["headers"]["X-Goog-FieldMask"] == _DESTINATIONS_FIELD_MASK
+    assert post_call.kwargs["json"]["addressQuery"]["addressQuery"] == "Some Address"
 
 
-async def test_geocode_returns_none_when_no_destinations():
-    session = _mock_session(_EMPTY_RESPONSE)
+async def test_geocode_returns_none_when_no_address_results():
+    session = _mock_session(address_payload=_EMPTY_ADDRESS_RESPONSE)
     async with GoogleGeocoder("test-key", session=session) as geocoder:
         result = await geocoder.geocode("Nonexistent Place XYZ")
 
@@ -194,49 +240,80 @@ async def test_geocode_returns_none_when_no_destinations():
 
 
 async def test_geocode_no_polygon_gives_none_shape():
-    payload = {
-        "destinations": [
-            {
-                "primary": {
-                    "location": _LOCATION,
-                    "formattedAddress": "Some Address",
-                    "place": "places/abc123",
-                }
-            }
-        ]
-    }
-    session = _mock_session(payload)
+    session = _mock_session(destinations_payload=_EMPTY_DESTINATIONS_RESPONSE)
     async with GoogleGeocoder("test-key", session=session) as geocoder:
         result = await geocoder.geocode("Some Address")
 
     assert result is not None
     assert result.building_shape is None
+    assert result.structure_type is StructureType.UNSPECIFIED
+
+
+async def test_geocode_granularity_defaults_to_unspecified_when_missing():
+    address_payload = {"results": [{"location": _LOCATION, "formattedAddress": "X", "placeId": "Y"}]}
+    session = _mock_session(address_payload=address_payload)
+    async with GoogleGeocoder("test-key", session=session) as geocoder:
+        result = await geocoder.geocode("Some Address")
+
+    assert result is not None
+    assert result.granularity is Granularity.UNSPECIFIED
 
 
 async def test_geocode_many_resolves_all_addresses():
-    session = _mock_session(_API_RESPONSE)
+    session = _mock_session()
     async with GoogleGeocoder("test-key", session=session) as geocoder:
         results = await geocoder.geocode_many(["Address A", "Address B", "Address C"])
 
     assert len(results) == 3
     assert all(isinstance(r, GeocodeResult) for r in results)
+    assert session.get.call_count == 3
+    session.post.assert_not_called()
+
+
+async def test_geocode_many_fetches_building_shapes_when_opted_in():
+    session = _mock_session()
+    async with GoogleGeocoder("test-key", session=session, fetch_building_shape=True) as geocoder:
+        results = await geocoder.geocode_many(["Address A", "Address B", "Address C"])
+
+    assert len(results) == 3
+    assert session.get.call_count == 3
     assert session.post.call_count == 3
 
 
-async def test_geocode_region_code_included_in_body():
-    session = _mock_session(_API_RESPONSE)
+async def test_geocode_building_shape_not_fetched_by_default():
+    session = _mock_session()
+    async with GoogleGeocoder("test-key", session=session) as geocoder:
+        result = await geocoder.geocode("Some Address")
+
+    session.post.assert_not_called()
+    assert result is not None
+    assert result.building_shape is None
+    assert result.structure_type is StructureType.UNSPECIFIED
+
+
+async def test_geocode_building_shape_fetched_when_opted_in():
+    session = _mock_session()
+    async with GoogleGeocoder("test-key", session=session, fetch_building_shape=True) as geocoder:
+        result = await geocoder.geocode("Some Address")
+
+    session.post.assert_called_once()
+    assert isinstance(result.building_shape, Polygon)
+
+
+async def test_geocode_region_code_included_in_params():
+    session = _mock_session()
     async with GoogleGeocoder("test-key", session=session, region_code="GB") as geocoder:
         await geocoder.geocode("10 Downing Street, London")
 
-    assert session.post.call_args.kwargs["json"]["regionCode"] == "GB"
+    assert session.get.call_args.kwargs["params"]["regionCode"] == "GB"
 
 
-async def test_geocode_no_region_code_omitted_from_body():
-    session = _mock_session(_API_RESPONSE)
+async def test_geocode_no_region_code_omitted_from_params():
+    session = _mock_session()
     async with GoogleGeocoder("test-key", session=session) as geocoder:
         await geocoder.geocode("Some Address")
 
-    assert "regionCode" not in session.post.call_args.kwargs["json"]
+    assert "regionCode" not in session.get.call_args.kwargs["params"]
 
 
 # ---------------------------------------------------------------------------
@@ -263,4 +340,5 @@ async def test_geocode_googleplex_live():
     assert result.longitude == pytest.approx(-122.084, abs=0.05)
     assert isinstance(result.location, Point)
     assert "Mountain View" in result.formatted_address
+    assert result.granularity in (Granularity.ROOFTOP, Granularity.RANGE_INTERPOLATED)
     assert isinstance(result.building_shape, (Polygon, MultiPolygon))

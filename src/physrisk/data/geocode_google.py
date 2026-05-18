@@ -140,7 +140,9 @@ class GoogleGeocoder:
 
     async def geocode(self, address: str) -> Optional[GeocodeResult]:
         """Resolve one address; calls geocode/address and destinations concurrently."""
-        assert self._session is not None, "Use GoogleGeocoder as an async context manager"
+        assert self._session is not None, (
+            "Use GoogleGeocoder as an async context manager"
+        )
 
         async with self._semaphore:
             if self._fetch_building_shape:
@@ -199,7 +201,9 @@ class GoogleGeocoder:
 
         url = f"{_GEOCODE_ADDRESS_URL}/{quote(address, safe='')}"
         async with self._session.get(
-            url, params=params, headers=self._common_headers(_ADDRESS_FIELD_MASK),
+            url,
+            params=params,
+            headers=self._common_headers(_ADDRESS_FIELD_MASK),
             proxy=self._proxy,
         ) as resp:
             resp.raise_for_status()
@@ -218,9 +222,15 @@ class GoogleGeocoder:
         if self._region_code:
             body["regionCode"] = self._region_code
 
-        headers = {**self._common_headers(_DESTINATIONS_FIELD_MASK), "Content-Type": "application/json"}
+        headers = {
+            **self._common_headers(_DESTINATIONS_FIELD_MASK),
+            "Content-Type": "application/json",
+        }
         async with self._session.post(
-            _DESTINATIONS_URL, json=body, headers=headers, proxy=self._proxy,
+            _DESTINATIONS_URL,
+            json=body,
+            headers=headers,
+            proxy=self._proxy,
         ) as resp:
             resp.raise_for_status()
             data = await resp.json()

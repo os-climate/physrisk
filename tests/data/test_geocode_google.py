@@ -202,14 +202,19 @@ def test_parse_geojson_invalid():
 
 
 async def test_geocode_returns_result(default_session):
-    async with GoogleGeocoder("test-key", session=default_session, fetch_building_shape=True) as geocoder:
+    async with GoogleGeocoder(
+        "test-key", session=default_session, fetch_building_shape=True
+    ) as geocoder:
         result = await geocoder.geocode("1600 Amphitheatre Pkwy, Mountain View")
 
     assert isinstance(result, GeocodeResult)
     assert result.latitude == pytest.approx(37.4219999)
     assert result.longitude == pytest.approx(-122.0840575)
     assert result.location == Point(-122.0840575, 37.4219999)
-    assert result.formatted_address == "1600 Amphitheatre Pkwy, Mountain View, CA 94043, USA"
+    assert (
+        result.formatted_address
+        == "1600 Amphitheatre Pkwy, Mountain View, CA 94043, USA"
+    )
     assert result.place_id == "ChIJY8sv5-i2j4AR"
     assert result.granularity is Granularity.ROOFTOP
     assert isinstance(result.building_shape, Polygon)
@@ -218,7 +223,9 @@ async def test_geocode_returns_result(default_session):
 
 
 async def test_geocode_calls_both_endpoints(default_session):
-    async with GoogleGeocoder("my-api-key", session=default_session, fetch_building_shape=True) as geocoder:
+    async with GoogleGeocoder(
+        "my-api-key", session=default_session, fetch_building_shape=True
+    ) as geocoder:
         await geocoder.geocode("Some Address")
 
     # geocode/address — GET
@@ -256,7 +263,9 @@ async def test_geocode_no_polygon_gives_none_shape():
 
 
 async def test_geocode_granularity_defaults_to_unspecified_when_missing():
-    address_payload = {"results": [{"location": _LOCATION, "formattedAddress": "X", "placeId": "Y"}]}
+    address_payload = {
+        "results": [{"location": _LOCATION, "formattedAddress": "X", "placeId": "Y"}]
+    }
     session = _mock_session(address_payload=address_payload)
     async with GoogleGeocoder("test-key", session=session) as geocoder:
         result = await geocoder.geocode("Some Address")
@@ -278,7 +287,9 @@ async def test_geocode_many_resolves_all_addresses():
 
 async def test_geocode_many_fetches_building_shapes_when_opted_in():
     session = _mock_session()
-    async with GoogleGeocoder("test-key", session=session, fetch_building_shape=True) as geocoder:
+    async with GoogleGeocoder(
+        "test-key", session=session, fetch_building_shape=True
+    ) as geocoder:
         results = await geocoder.geocode_many(["Address A", "Address B", "Address C"])
 
     assert len(results) == 3
@@ -288,7 +299,9 @@ async def test_geocode_many_fetches_building_shapes_when_opted_in():
 
 async def test_geocode_passes_proxy_to_requests():
     session = _mock_session()
-    async with GoogleGeocoder("k", proxy="http://proxy.corp:8080", session=session, fetch_building_shape=True) as geocoder:
+    async with GoogleGeocoder(
+        "k", proxy="http://proxy.corp:8080", session=session, fetch_building_shape=True
+    ) as geocoder:
         await geocoder.geocode("Some Address")
 
     assert session.get.call_args.kwargs["proxy"] == "http://proxy.corp:8080"
@@ -338,7 +351,9 @@ async def test_geocode_building_shape_not_fetched_by_default():
 
 async def test_geocode_building_shape_fetched_when_opted_in():
     session = _mock_session()
-    async with GoogleGeocoder("test-key", session=session, fetch_building_shape=True) as geocoder:
+    async with GoogleGeocoder(
+        "test-key", session=session, fetch_building_shape=True
+    ) as geocoder:
         result = await geocoder.geocode("Some Address")
 
     session.post.assert_called_once()
@@ -347,7 +362,9 @@ async def test_geocode_building_shape_fetched_when_opted_in():
 
 async def test_geocode_region_code_included_in_params():
     session = _mock_session()
-    async with GoogleGeocoder("test-key", session=session, region_code="GB") as geocoder:
+    async with GoogleGeocoder(
+        "test-key", session=session, region_code="GB"
+    ) as geocoder:
         await geocoder.geocode("10 Downing Street, London")
 
     assert session.get.call_args.kwargs["params"]["regionCode"] == "GB"

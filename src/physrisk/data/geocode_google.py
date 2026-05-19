@@ -16,13 +16,13 @@ Authentication uses the ``X-Goog-Api-Key`` header.
 from __future__ import annotations
 
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
 from urllib.parse import quote
 
 import aiohttp
-from shapely.geometry import MultiPolygon, Point, Polygon
+from shapely.geometry import MultiPolygon, Polygon
 from shapely.geometry import shape as shapely_shape
 
 _GEOCODE_ADDRESS_URL = "https://geocode.googleapis.com/v4/geocode/address"
@@ -80,12 +80,12 @@ class StructureType(str, Enum):
 class GeocodeResult:
     latitude: float
     longitude: float
-    location: Point
     building_shape: Optional[BuildingShape]
     formatted_address: str
     place_id: str
     granularity: Granularity
     structure_type: StructureType
+    candidate_count: int = field(default=1)
 
 
 class GoogleGeocoder:
@@ -106,6 +106,9 @@ class GoogleGeocoder:
             enabled (each address then makes two requests).
         fetch_building_shape: When ``True`` also calls the destinations
             endpoint to populate ``building_shape`` and ``structure_type``.
+        region_code: Default CLDR region code applied to every request (e.g. ``"GB"``).
+            Can be overridden per-call via the ``region_code`` argument on
+            ``geocode`` / ``geocode_many``.
     """
 
     def __init__(
@@ -138,24 +141,36 @@ class GoogleGeocoder:
             await self._session.close()
             self._session = None
 
-    async def geocode(self, address: str) -> Optional[GeocodeResult]:
-        """Resolve one address; calls geocode/address and destinations concurrently."""
+    async def geocode(
+        self, address: str, *, region_code: Optional[str] = None
+    ) -> Optional[GeocodeResult]:
+        """Resolve one address; calls geocode/address and destinations concurrently.
+
+        Args:
+            address: Free-form address string.
+            region_code: CLDR region code for this request; overrides the
+                instance-level default when provided.
+        """
         assert self._session is not None, (
             "Use GoogleGeocoder as an async context manager"
         )
 
+        effective_region = region_code if region_code is not None else self._region_code
+
         async with self._semaphore:
             if self._fetch_building_shape:
-                geocode_data, destinations_data = await asyncio.gather(
-                    self._fetch_geocode_address(address),
-                    self._fetch_destinations(address),
+                address_results, destinations_data = await asyncio.gather(
+                    self._fetch_geocode_address(address, effective_region),
+                    self._fetch_destinations(address, effective_region),
                 )
             else:
-                geocode_data = await self._fetch_geocode_address(address)
+                address_results = await self._fetch_geocode_address(address, effective_region)
                 destinations_data = None
 
-        if geocode_data is None:
+        if not address_results:
             return None
+
+        geocode_data = address_results[0]
 
         building_shape: Optional[BuildingShape] = None
         structure_type = StructureType.UNSPECIFIED
@@ -168,19 +183,40 @@ class GoogleGeocoder:
         return GeocodeResult(
             latitude=float(loc.get("latitude", 0)),
             longitude=float(loc.get("longitude", 0)),
-            location=Point(loc.get("longitude", 0), loc.get("latitude", 0)),
             building_shape=building_shape,
             formatted_address=geocode_data.get("formattedAddress", ""),
             place_id=geocode_data.get("placeId", ""),
             granularity=_parse_granularity(geocode_data.get("granularity")),
             structure_type=structure_type,
+            candidate_count=len(address_results),
         )
 
     async def geocode_many(
-        self, addresses: Sequence[str]
+        self,
+        addresses: Sequence[str],
+        *,
+        region_codes: Optional[Sequence[Optional[str]]] = None,
     ) -> List[Optional[GeocodeResult]]:
-        """Geocode a batch of addresses, bounded by ``max_concurrency``."""
-        return list(await asyncio.gather(*[self.geocode(a) for a in addresses]))
+        """Geocode a batch of addresses, bounded by ``max_concurrency``.
+
+        Args:
+            addresses: Sequence of free-form address strings.
+            region_codes: Per-address CLDR region codes, aligned with
+                ``addresses``.  Each entry overrides the instance-level default
+                for that address; use ``None`` in a slot to fall back to the
+                instance default.  Omit the argument entirely to use the
+                instance default for every address.
+        """
+        if region_codes is not None and len(region_codes) != len(addresses):
+            raise ValueError(
+                f"region_codes length ({len(region_codes)}) must match addresses length ({len(addresses)})"
+            )
+        codes: Sequence[Optional[str]] = region_codes if region_codes is not None else [None] * len(addresses)
+        return list(
+            await asyncio.gather(
+                *[self.geocode(a, region_code=rc) for a, rc in zip(addresses, codes)]
+            )
+        )
 
     # ------------------------------------------------------------------
     # Private helpers
@@ -192,12 +228,14 @@ class GoogleGeocoder:
             "X-Goog-FieldMask": field_mask,
         }
 
-    async def _fetch_geocode_address(self, address: str) -> Optional[Dict[str, Any]]:
-        """Call geocode/address → returns the first GeocodeResult dict or None."""
+    async def _fetch_geocode_address(
+        self, address: str, region_code: Optional[str]
+    ) -> Optional[List[Dict[str, Any]]]:
+        """Call geocode/address → returns the full results list or None."""
         assert self._session is not None
         params: Dict[str, str] = {"languageCode": self._language_code}
-        if self._region_code:
-            params["regionCode"] = self._region_code
+        if region_code:
+            params["regionCode"] = region_code
 
         url = f"{_GEOCODE_ADDRESS_URL}/{quote(address, safe='')}"
         async with self._session.get(
@@ -209,18 +247,19 @@ class GoogleGeocoder:
             resp.raise_for_status()
             data = await resp.json()
 
-        results = data.get("results")
-        return results[0] if results else None
+        return data.get("results") or None
 
-    async def _fetch_destinations(self, address: str) -> Optional[List[Dict[str, Any]]]:
+    async def _fetch_destinations(
+        self, address: str, region_code: Optional[str]
+    ) -> Optional[List[Dict[str, Any]]]:
         """Call destinations → returns the destinations list or None."""
         assert self._session is not None
         body: Dict[str, Any] = {
             "addressQuery": {"addressQuery": address},
             "languageCode": self._language_code,
         }
-        if self._region_code:
-            body["regionCode"] = self._region_code
+        if region_code:
+            body["regionCode"] = region_code
 
         headers = {
             **self._common_headers(_DESTINATIONS_FIELD_MASK),

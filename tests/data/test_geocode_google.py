@@ -214,13 +214,18 @@ def test_parse_geojson_invalid():
 
 
 async def test_geocode_returns_result(default_session):
-    async with GoogleGeocoder("test-key", session=default_session, fetch_building_shape=True) as geocoder:
+    async with GoogleGeocoder(
+        "test-key", session=default_session, fetch_building_shape=True
+    ) as geocoder:
         result = await geocoder.geocode("1600 Amphitheatre Pkwy, Mountain View")
 
     assert isinstance(result, GeocodeResult)
     assert result.latitude == pytest.approx(37.4219999)
     assert result.longitude == pytest.approx(-122.0840575)
-    assert result.formatted_address == "1600 Amphitheatre Pkwy, Mountain View, CA 94043, USA"
+    assert (
+        result.formatted_address
+        == "1600 Amphitheatre Pkwy, Mountain View, CA 94043, USA"
+    )
     assert result.place_id == "ChIJY8sv5-i2j4AR"
     assert result.granularity is Granularity.ROOFTOP
     assert isinstance(result.building_shape, Polygon)
@@ -241,7 +246,9 @@ async def test_geocode_candidate_count_reflects_multiple_results():
 
 
 async def test_geocode_calls_both_endpoints(default_session):
-    async with GoogleGeocoder("my-api-key", session=default_session, fetch_building_shape=True) as geocoder:
+    async with GoogleGeocoder(
+        "my-api-key", session=default_session, fetch_building_shape=True
+    ) as geocoder:
         await geocoder.geocode("Some Address")
 
     # geocode/address — GET
@@ -279,7 +286,9 @@ async def test_geocode_no_polygon_gives_none_shape():
 
 
 async def test_geocode_granularity_defaults_to_unspecified_when_missing():
-    address_payload = {"results": [{"location": _LOCATION, "formattedAddress": "X", "placeId": "Y"}]}
+    address_payload = {
+        "results": [{"location": _LOCATION, "formattedAddress": "X", "placeId": "Y"}]
+    }
     session = _mock_session(address_payload=address_payload)
     async with GoogleGeocoder("test-key", session=session) as geocoder:
         result = await geocoder.geocode("Some Address")
@@ -301,7 +310,9 @@ async def test_geocode_many_resolves_all_addresses():
 
 async def test_geocode_many_fetches_building_shapes_when_opted_in():
     session = _mock_session()
-    async with GoogleGeocoder("test-key", session=session, fetch_building_shape=True) as geocoder:
+    async with GoogleGeocoder(
+        "test-key", session=session, fetch_building_shape=True
+    ) as geocoder:
         results = await geocoder.geocode_many(["Address A", "Address B", "Address C"])
 
     assert len(results) == 3
@@ -311,7 +322,9 @@ async def test_geocode_many_fetches_building_shapes_when_opted_in():
 
 async def test_geocode_passes_proxy_to_requests():
     session = _mock_session()
-    async with GoogleGeocoder("k", proxy="http://proxy.corp:8080", session=session, fetch_building_shape=True) as geocoder:
+    async with GoogleGeocoder(
+        "k", proxy="http://proxy.corp:8080", session=session, fetch_building_shape=True
+    ) as geocoder:
         await geocoder.geocode("Some Address")
 
     assert session.get.call_args.kwargs["proxy"] == "http://proxy.corp:8080"
@@ -361,7 +374,9 @@ async def test_geocode_building_shape_not_fetched_by_default():
 
 async def test_geocode_building_shape_fetched_when_opted_in():
     session = _mock_session()
-    async with GoogleGeocoder("test-key", session=session, fetch_building_shape=True) as geocoder:
+    async with GoogleGeocoder(
+        "test-key", session=session, fetch_building_shape=True
+    ) as geocoder:
         result = await geocoder.geocode("Some Address")
 
     session.post.assert_called_once()
@@ -370,7 +385,9 @@ async def test_geocode_building_shape_fetched_when_opted_in():
 
 async def test_geocode_instance_region_code_included_in_params():
     session = _mock_session()
-    async with GoogleGeocoder("test-key", session=session, region_code="GB") as geocoder:
+    async with GoogleGeocoder(
+        "test-key", session=session, region_code="GB"
+    ) as geocoder:
         await geocoder.geocode("10 Downing Street, London")
 
     assert session.get.call_args.kwargs["params"]["regionCode"] == "GB"
@@ -378,7 +395,9 @@ async def test_geocode_instance_region_code_included_in_params():
 
 async def test_geocode_per_request_region_code_overrides_instance():
     session = _mock_session()
-    async with GoogleGeocoder("test-key", session=session, region_code="US") as geocoder:
+    async with GoogleGeocoder(
+        "test-key", session=session, region_code="US"
+    ) as geocoder:
         await geocoder.geocode("10 Downing Street, London", region_code="GB")
 
     assert session.get.call_args.kwargs["params"]["regionCode"] == "GB"
@@ -395,7 +414,9 @@ async def test_geocode_per_request_region_code_used_when_no_instance_default():
 async def test_geocode_many_per_address_region_codes():
     session = _mock_session()
     async with GoogleGeocoder("test-key", session=session) as geocoder:
-        await geocoder.geocode_many(["Address A", "Address B"], region_codes=["FR", "DE"])
+        await geocoder.geocode_many(
+            ["Address A", "Address B"], region_codes=["FR", "DE"]
+        )
 
     codes = [call.kwargs["params"]["regionCode"] for call in session.get.call_args_list]
     assert set(codes) == {"FR", "DE"}
@@ -403,10 +424,16 @@ async def test_geocode_many_per_address_region_codes():
 
 async def test_geocode_many_region_codes_none_slot_uses_instance_default():
     session = _mock_session()
-    async with GoogleGeocoder("test-key", session=session, region_code="GB") as geocoder:
-        await geocoder.geocode_many(["Address A", "Address B"], region_codes=["FR", None])
+    async with GoogleGeocoder(
+        "test-key", session=session, region_code="GB"
+    ) as geocoder:
+        await geocoder.geocode_many(
+            ["Address A", "Address B"], region_codes=["FR", None]
+        )
 
-    codes = {call.kwargs["params"].get("regionCode") for call in session.get.call_args_list}
+    codes = {
+        call.kwargs["params"].get("regionCode") for call in session.get.call_args_list
+    }
     assert codes == {"FR", "GB"}
 
 

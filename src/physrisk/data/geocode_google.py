@@ -18,7 +18,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Dict, List, Optional, Sequence, Union
 from urllib.parse import quote
 
 import aiohttp
@@ -164,7 +164,9 @@ class GoogleGeocoder:
                     self._fetch_destinations(address, effective_region),
                 )
             else:
-                address_results = await self._fetch_geocode_address(address, effective_region)
+                address_results = await self._fetch_geocode_address(
+                    address, effective_region
+                )
                 destinations_data = None
 
         if not address_results:
@@ -211,7 +213,9 @@ class GoogleGeocoder:
             raise ValueError(
                 f"region_codes length ({len(region_codes)}) must match addresses length ({len(addresses)})"
             )
-        codes: Sequence[Optional[str]] = region_codes if region_codes is not None else [None] * len(addresses)
+        codes: Sequence[Optional[str]] = (
+            region_codes if region_codes is not None else [None] * len(addresses)
+        )
         return list(
             await asyncio.gather(
                 *[self.geocode(a, region_code=rc) for a, rc in zip(addresses, codes)]

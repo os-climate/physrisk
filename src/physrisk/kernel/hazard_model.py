@@ -109,6 +109,7 @@ class HazardDataRequest:
 
 class HazardDataResponse(Protocol):
     path: str
+    units: str
 
 
 class HazardDataFailedResponse(HazardDataResponse):
@@ -116,6 +117,7 @@ class HazardDataFailedResponse(HazardDataResponse):
         self.error = err
         self.reason = reason
         self.path = ""
+        self.units = ""
 
     def __repr__(self):
         return self.reason if self.reason is not None else str(self.error)

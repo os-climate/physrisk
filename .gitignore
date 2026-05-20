@@ -116,3 +116,9 @@ methodology/PhysicalRiskMethodology.glsdefs
 methodology/PhysicalRiskMethodology.ist
 methodology/PhysicalRiskMethodology.out
 methodology/PhysicalRiskMethodology.synctex.gz
+
+# Vulnerability-related
+src/physrisk/data/static/vulnerability/candidate_vulnerability_config.csv
+docs/user_guide/vulnerability/vulnerability_functions/wind_hazus/HazusWindDamFunctions_Hazus61.xlsx
+docs/user_guide/vulnerability/vulnerability_functions/wind_hazus/HazusWindDamFunctions_Hazus61.csv
+docs/user_guide/vulnerability/vulnerability_functions/inundation_hazus/flUtilFltyDmgFn.csv

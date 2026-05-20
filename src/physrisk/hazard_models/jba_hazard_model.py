@@ -616,10 +616,13 @@ class JBAHazardModel(HazardModel):
     def _process_response(self, request: HazardDataRequest, response: Dict):
         if request.hazard_type == RiverineInundation:
             tag = "FLRF_U"
+            path = "jba_riverine"
         elif request.hazard_type == PluvialInundation:
             tag = "FLSW_U"
+            path = "jba_pluvial"
         elif request.hazard_type == CoastalInundation:
             tag = "STSU_U"
+            path = "jba_coastal"
         else:
             raise ValueError("unexpected hazard type")
         if response["stats"] is None:
@@ -627,7 +630,7 @@ class JBAHazardModel(HazardModel):
         elif request.indicator_id == "flood_sop":
             sop = response["stats"].get("FLRF_U", {}).get("sop", 0)
             return HazardParameterDataResponse(
-                [sop, sop], units="years", path="jba"
+                [sop, sop], units="years", path=path
             )  # min and max: in this case just a single value
         elif request.indicator_id == "flood_depth":
             return_periods: List[float] = []
@@ -641,7 +644,7 @@ class JBAHazardModel(HazardModel):
                 np.array(return_periods),
                 np.array(intens),
                 units="m",
-                path="jba",
+                path=path,
             )
         else:
             raise NotImplementedError()

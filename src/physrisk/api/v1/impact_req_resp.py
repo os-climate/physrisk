@@ -209,6 +209,7 @@ class CalculationDetails(BaseModel):
     hazard_path: List[str] = Field(
         ["unknown"], description="Path to the hazard indicator data source."
     )
+    hazard_units: str = Field(["unknown"], description="Hazard indicator units.")
 
 
 class ImpactKey(BaseModel):

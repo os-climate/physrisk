@@ -5,7 +5,13 @@ from typing import Dict, Protocol
 class CredentialsProvider(Protocol):
     def jba_access_key(self) -> str: ...
 
+    def jba_vision_username(self) -> str: ...
+
+    def jba_vision_password(self) -> str: ...
+
     def jba_api_disabled(self) -> bool: ...
+
+    def jupiter_api_disabled(self) -> bool: ...
 
     def jupiter_client_id(self) -> str: ...
 
@@ -25,7 +31,16 @@ class EnvCredentialsProvider(CredentialsProvider):
             "JBA_TOKEN", getenv("JBA_PROD_TOKEN", "")
         )  # for back compatibility, alllow JBA_PROD_TOKEN also
 
+    def jba_vision_username(self) -> str:
+        return getenv("JBA_VISION_USERNAME", "")
+
+    def jba_vision_password(self) -> str:
+        return getenv("JBA_VISION_PASSWORD", "")
+
     def jba_api_disabled(self) -> bool:
+        return self._disable_api_calls
+
+    def jupiter_api_disabled(self) -> bool:
         return self._disable_api_calls
 
     def jupiter_client_id(self) -> str:

@@ -8,7 +8,7 @@ from physrisk.api.v1.exposure_req_resp import (
     AssetExposureRequest,
     AssetExposureResponse,
 )
-from physrisk.container import ZarrHazardModelFactory
+from physrisk.container import DefaultHazardModelFactory
 from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.zarr_reader import ZarrReader
@@ -126,7 +126,7 @@ class TestExposureMeasures(TestWithCredentials):
         )
 
         inventory = EmbeddedInventory()
-        hazard_model_factory = ZarrHazardModelFactory(
+        hazard_model_factory = DefaultHazardModelFactory(
             inventory=inventory,
             source_paths=get_default_source_paths(inventory),
             store=store,

@@ -56,12 +56,15 @@ class ResourcePaths:
     """Provides for a single HazardResource the mappings of scenarios to the ScenarioPaths.
     The ScenarioPaths for each scenario will give the available years and a function to get
     the array path for a year.
+    Units (inferred from the inventory) are also provided as these are needed in addition
+    to path information to derive HazardDataResponses.
     """
 
     # the path (unique identifier) of the HazardResource
     resource_path: str
     # note the key is the *requested* scenario, not the scenario it may be proxied to
     scenarios: Dict[str, ScenarioPaths]
+    units: str
 
 
 class SourcePaths(Protocol):
@@ -314,6 +317,7 @@ class HazardDataProvider(ABC):
         result: Dict[ScenarioYear, ScenarioYearResult] = {}
         # Retrieve the data for all available years for the path in question.
         weights: Dict[ScenarioYear, WeightedSum] = {}
+        expected_units = resource_paths.units
         for scenario, paths in resource_paths.scenarios.items():
             if len(paths.years) == 0:
                 continue
@@ -360,7 +364,7 @@ class HazardDataProvider(ABC):
                         [len(indices)], dtype=np.int32
                     ),  # a numpy scalar
                     coverage_mask=coverage,
-                    units=units,
+                    units=expected_units if units == "default" else units,
                     paths=np.array(
                         [sys.intern(resource_paths.resource_path)], dtype=np.object_
                     ),

@@ -673,6 +673,7 @@ def compile_asset_impacts(
                         ),
                         vulnerability_distribution=vulnerability_distribution,
                         hazard_path=v.impact.path,
+                        hazard_units=v.event.units,
                     )
                 else:
                     calc_details = CalculationDetails(
@@ -682,6 +683,9 @@ def compile_asset_impacts(
                         hazard_path=[]
                         if v.hazard_data is None
                         else [h.path for h in v.hazard_data],
+                        hazard_units="default"
+                        if v.hazard_data is None
+                        else v.hazard_data[0].units,
                     )
 
             key = APIImpactKey(

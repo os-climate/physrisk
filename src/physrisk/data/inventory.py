@@ -3,6 +3,7 @@ import hashlib
 import importlib.resources
 import json
 from collections import defaultdict
+import re
 from typing import DefaultDict, Dict, Iterable, List, Tuple
 
 from pydantic import TypeAdapter
@@ -10,8 +11,12 @@ from pydantic import TypeAdapter
 import physrisk.data.colormap_provider as colormap_provider
 import physrisk.data.static.hazard
 from physrisk.data.inventory_reader import HazardModels
+from physrisk.kernel.hazards import (
+    CoastalInundation,
+    RiverineInundation,
+)
 
-from ..api.v1.hazard_data import HazardResource, Period
+from ..api.v1.hazard_data import Colormap, HazardResource, MapInfo, Period, Scenario
 
 # from physrisk.kernel.hazards import ChronicHeat
 
@@ -51,17 +56,54 @@ class EmbeddedInventory(Inventory):
 
     """
 
-    def __init__(self):
+    def __init__(self, include_api_based: bool = False):
         with importlib.resources.open_text(
             physrisk.data.static.hazard, "inventory.json"
         ) as f:
             models = TypeAdapter(HazardModels).validate_python(json.load(f)).resources
             expanded_models = expand(models)
+            if include_api_based:
+                expanded_models += list(self.api_based_resources())
             super().__init__(expanded_models)
 
     def colormaps(self):
         """Color maps. Key can be identical to a model identifier or more descriptive (if shared by many models)."""
         return colormap_provider.colormaps
+
+    def api_based_resources(self):
+        for hazard_type in [CoastalInundation, RiverineInundation]:  # PluvialInundation
+            hazard_words: list[str] = re.findall(
+                r"[A-Z]+(?=[A-Z])|[A-Z][a-z]+", hazard_type.__name__
+            )
+            yield HazardResource(
+                path="jba_" + hazard_words[0].lower(),
+                hazard_type=hazard_type.__name__,
+                indicator_id="flood_depth",
+                indicator_model_gcm="",
+                display_name="JBA Risk Management flood model",
+                description="Commercial flood model from JBA Risk Management (https://www.jbarisk.com/)",
+                scenarios=[
+                    Scenario(id="ssp126", years=[2030, 2050, 2080]),
+                    Scenario(id="ssp245", years=[2030, 2050, 2080]),
+                    Scenario(id="ssp585", years=[2030, 2050, 2080]),
+                ],
+                units="m",
+                map=MapInfo(
+                    path="jba_map",
+                    bounds=[],
+                    colormap=Colormap(
+                        min_index=1,
+                        min_value=0.0,
+                        max_index=255,
+                        max_value=7.0,
+                        name="flare",
+                        nodata_index=0,
+                        units="m",
+                    ),
+                    index_values=[20.0, 50.0, 100.0, 200.0, 500.0, 1500.0],
+                    source="map_array_pyramid",
+                ),
+            )
 
 
 def alphanumeric(text):

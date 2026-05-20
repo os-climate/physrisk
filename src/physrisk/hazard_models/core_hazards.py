@@ -124,6 +124,7 @@ class InventorySourcePaths(SourcePaths):
                         s: InventorySourcePaths.scenario_paths_for_resource(r, s)
                         for s in scenarios
                     },
+                    units=r.units,
                 )
             )
         return result

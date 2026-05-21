@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Annotated, List, Optional, Sequence, Union
 
 import numpy as np
@@ -21,20 +20,6 @@ NDArray = Annotated[
     BeforeValidator(before_validator),
     PlainSerializer(serialize_array, return_type=list),
 ]
-
-
-class HazardType(str, Enum):
-    coastal_inundation = "CoastalInundation"
-    chronic_heat = "ChronicHeat"
-    drought = "Drought"
-    fire = "Fire"
-    hail = "Hail"
-    pluvial_inundation = "PluvialInundation"
-    precipitation = "Precipitation"
-    riverine_inundation = "RiverineInundation"
-    subsidence = "Subsidence"
-    water_risk = "WaterRisk"
-    wind = "Wind"
 
 
 class Asset(BaseModel):

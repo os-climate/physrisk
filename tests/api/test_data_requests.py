@@ -1,12 +1,14 @@
 import pytest
 import json
 import numpy as np
+from pydantic import ValidationError
 
 from physrisk.data.hazard_data_provider import HazardDataHint
 from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_source_paths
+from physrisk.api.v1.hazard_data import HazardDataRequestItem
 from physrisk.kernel.hazards import ChronicHeat, RiverineInundation
 from physrisk.container import Container
 from physrisk import requests
@@ -25,6 +27,19 @@ def test_hazard_data_availability():
     container.override(TestContainer())
     requester = container.requester()
     _ = requester.get(request_id="get_hazard_data_availability", request_dict={})
+
+
+def test_hazard_data_request_item_rejects_unknown_hazard_type():
+    with pytest.raises(ValidationError, match="NotAHazard"):
+        HazardDataRequestItem(
+            request_item_id="test_unknown",
+            hazard_type="NotAHazard",
+            longitudes=[20.3162],
+            latitudes=[45.4089],
+            year=2035,
+            scenario="ssp585",
+            indicator_id="hazard_indicator",
+        )
 
 
 @pytest.mark.live_data("dev")

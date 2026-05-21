@@ -44,7 +44,7 @@ from physrisk.hazard_models.core_hazards import (
     get_default_source_paths,
 )
 from physrisk.kernel.exposure import JupterExposureMeasure, calculate_exposures
-from physrisk.kernel.hazards import Hazard, hazard_class
+from physrisk.kernel.hazards import Hazard, all_hazards, hazard_class
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey  # , ImpactKey
 from physrisk.kernel.impact_distrib import EmptyImpactDistrib, PlaceholderImpactDistrib
 from physrisk.kernel.risk import (
@@ -423,30 +423,19 @@ def _get_hazard_data(
     # ):
     #     raise PermissionError()
 
-    # get hazard event types:
-    event_types = Hazard.__subclasses__()
-    event_dict = dict((et.__name__, et) for et in event_types)
-    event_dict.update(
-        (est.__name__, est) for et in event_types for est in et.__subclasses__()
-    )
+    hazard_classes = {hazard.__name__: hazard for hazard in all_hazards()}
 
     # flatten list to let event processor decide how to group
     item_requests = []
     all_requests = []
     for item in request.items:
-        hazard_type = (
-            item.hazard_type
-            if item.hazard_type is not None
-            else item.event_type
-            if item.event_type is not None
-            else ""
-        )
-        event_type = event_dict[hazard_type]
+        hazard_type = item.hazard_type if item.hazard_type is not None else ""
+        hazard = hazard_classes[hazard_type]
         hint = None if item.path is None else HazardDataHint(path=item.path)
 
         data_requests = [
             hmHazardDataRequest(
-                event_type,
+                hazard,
                 lon,
                 lat,
                 indicator_id=item.indicator_id,
@@ -500,8 +489,8 @@ def _get_hazard_data(
             HazardDataResponseItem(
                 intensity_curve_set=intensity_curves,
                 request_item_id=item.request_item_id,
-                event_type=item.event_type,
-                model=item.indicator_id,
+                hazard_type=item.hazard_type,
+                indicator_id=item.indicator_id,
                 scenario=item.scenario,
                 year=item.year,
             )

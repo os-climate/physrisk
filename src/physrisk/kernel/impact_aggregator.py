@@ -80,7 +80,7 @@ class Aggregator:
 
     def reset(self):
         self.aggregation_pools = {}
-        self.aggregation_pool_contribs = defaultdict(list)
+        self.aggregation_pool_contribs = defaultdict(set)
 
 
 class ByAssetAggregationKeys(AggregationKeys):
@@ -180,6 +180,7 @@ def aggregate_impacts(
     for hazard_type, assets in acute_impacted_assets.items():
         logger.info(f"Hazard type {hazard_type} has {len(assets)} non-zero impacts.")
         all_acute_impacted_assets_set.update(assets)
+    all_assets_list = sorted(all_assets, key=lambda a: a.id if a.id is not None else "")
     all_acute_impacted_assets = sorted(
         all_acute_impacted_assets_set, key=lambda a: a.id if a.id is not None else ""
     )
@@ -200,10 +201,11 @@ def aggregate_impacts(
             for ik, v in impacts_exceed_curves.items()
             if ik.hazard_type == hazard_type
         }
-        sorted_assets = sorted(assets, key=lambda a: a.id if a.id is not None else "")
-        indices = [idx_lookup[asset] for asset in sorted_assets]
+        # these are the assets with non-zero impact for the hazard
+        sorted_assets_for_hazard = sorted(assets, key=lambda a: a.id if a.id is not None else "")
+        indices = [idx_lookup[asset] for asset in sorted_assets_for_hazard]
         impacts_exceed_curves_sorted[hazard_type] = [
-            impacts_exceed_curves_for_hazard[asset] for asset in sorted_assets
+            impacts_exceed_curves_for_hazard[asset] for asset in sorted_assets_for_hazard
         ]
         acute_impacted_asset_indices[hazard_type] = indices
 
@@ -222,7 +224,7 @@ def aggregate_impacts(
                         [],
                     )
                 )
-                for asset in sorted_assets
+                for asset in all_assets_list
             ]
         )
         chronic_impacts_histo = np.array(
@@ -239,7 +241,7 @@ def aggregate_impacts(
                         [],
                     )
                 )
-                for asset in sorted_assets
+                for asset in all_assets_list
             ]
         )
         chronic_impacts_sorted[hazard_type] = (
@@ -311,11 +313,13 @@ def aggregate_impacts(
                 severity_provider.severity_zone_to_asset_indices(hazard_type)
             )
             for sz_idx in range(inv_severities.shape[0]):
+                # loop over assets in the severity zone
                 for asset_idx in severity_zone_to_asset_indices[sz_idx]:
+                    # asset_idx is the index for just those assets impacted by the hazard
                     _, exceed_curve = impacts_exceed_curves_sorted_for_hazard[asset_idx]
                     # in this case asset_idx is equal to sz_idx
-                    impact_samples = exceed_curve.get_samples(inv_severities[sz_idx, :])
-                    all_non_zero_assets_idx = non_zero_asset_indices_for_hazard[sz_idx]
+                    impact_samples = exceed_curve.get_samples(1.0 - inv_severities[sz_idx, :])
+                    all_non_zero_assets_idx = non_zero_asset_indices_for_hazard[asset_idx]
                     asset = all_acute_impacted_assets[all_non_zero_assets_idx]
                     damage, revenue_loss = (
                         financial_model.frac_damage_to_restoration_cost_and_revenue_loss(
@@ -337,7 +341,7 @@ def aggregate_impacts(
         # now handle chronic risks: not based on events
         for hazard_type in chronic_hazards_in_scope:
             chronic_impacts = chronic_impacts_sorted[hazard_type]
-            for idx, asset in enumerate(sorted_assets):
+            for idx, asset in enumerate(all_assets_list):
                 by_hazard_agg.aggregate(
                     asset,
                     hazard_type,

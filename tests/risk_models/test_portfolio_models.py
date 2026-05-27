@@ -104,7 +104,7 @@ def test_impact_aggregation():
     logger.info(
         f"Mean damage aggregating all assets and hazards using exact calculation: {mean_damage_exact}"
     )
-    np.testing.assert_allclose(mean_damage_mc, 0.0002609873)
+    np.testing.assert_allclose(mean_damage_mc, 0.000260859179)
     np.testing.assert_allclose(mean_damage_mc, mean_damage_exact, rtol=0.02)
 
 

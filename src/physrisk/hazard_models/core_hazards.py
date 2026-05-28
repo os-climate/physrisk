@@ -13,7 +13,6 @@ from physrisk.data.hazard_data_provider import (
     SourcePaths,
 )
 from physrisk.data.inventory import EmbeddedInventory, Inventory
-from physrisk.kernel import hazards
 from physrisk.kernel.hazards import (
     ChronicHeat,
     CoastalInundation,
@@ -107,7 +106,15 @@ class InventorySourcePaths(SourcePaths):
         )
 
     def hazard_types(self):
-        return [hazards.hazard_class(ht) for ht in self.all_hazards()]
+        hazard_types = []
+        for hazard in self.all_hazards():
+            try:
+                hazard_types.append(hazard_class(hazard))
+            except AttributeError:
+                logger.warning(
+                    f"unable to find hazard class for hazard {hazard}, skipping"
+                )
+        return hazard_types
 
     def resource_paths(
         self,

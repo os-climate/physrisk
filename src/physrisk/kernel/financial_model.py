@@ -94,7 +94,7 @@ class FinancialModel(Protocol):
 
     def frac_disruption_to_revenue_loss(
         self, asset: Asset, impact: np.ndarray, year: int, currency: str
-    ):
+    ) -> np.ndarray:
         """Convert disruption, specified as a fraction of annual revenue, to loss of
         revenue.
 

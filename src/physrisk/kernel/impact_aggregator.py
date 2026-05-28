@@ -7,7 +7,7 @@ from typing_extensions import Protocol
 import numpy as np
 
 from physrisk.kernel.hazards import Hazard
-from physrisk.kernel.impact_distrib import ImpactDistrib
+from physrisk.kernel.impact_distrib import EmptyImpactDistrib, ImpactDistrib
 from physrisk.kernel.risk import Quantity, QuantityType, RiskQuantityKey
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.curve import ExceedanceCurve
@@ -154,6 +154,8 @@ def _classify_impacts(
                 f"Multiple impacts for asset {ik.asset} and hazard type {ik.hazard_type}: not permitted for acute hazards."
             )
         air = airs[0]
+        if isinstance(air.impact, EmptyImpactDistrib):
+            continue
         exceed_curve = air.impact.to_exceedance_curve()
         if exceed_curve.get_value(1.0 / 1500.0) > 1e-6:
             impacts_exceed_curves[ik] = (air.impact, exceed_curve)
@@ -213,6 +215,7 @@ def _build_chronic_arrays(
     impacts: dict[ImpactKey, list[AssetImpactResult]],
     scenario: str,
     key_year: Optional[int],
+    financial_model: FinancialModel,
 ) -> dict[type[Hazard], np.ndarray]:
     """Pre-compute per-asset chronic impact deltas (future minus historical) for each chronic hazard."""
     chronic_impacts_sorted: dict[type[Hazard], np.ndarray] = {}
@@ -220,7 +223,7 @@ def _build_chronic_arrays(
         chronic_impacts_future = np.array(
             [
                 sum(
-                    i.impact.mean_impact()
+                    financial_model.frac_disruption_to_revenue_loss(asset, i.impact.mean_impact(), key_year, "EUR")
                     for i in impacts.get(
                         ImpactKey(
                             asset=asset,
@@ -237,13 +240,13 @@ def _build_chronic_arrays(
         chronic_impacts_histo = np.array(
             [
                 sum(
-                    i.impact.mean_impact()
+                    financial_model.frac_disruption_to_revenue_loss(asset, i.impact.mean_impact(), key_year, "EUR")
                     for i in impacts.get(
                         ImpactKey(
                             asset=asset,
                             hazard_type=hazard_type,
                             scenario="historical",
-                            key_year=-1,
+                            key_year=None,
                         ),
                         [],
                     )
@@ -260,10 +263,11 @@ def _run_simulation(
     financial_model: FinancialModel,
     asset_tiv: dict[Asset, float],
     asset_revenue: dict[Asset, float],
+    n_events: int = 50000,
+    event_batch_sz: int = 1000,
+
 ) -> dict[RiskQuantityKey, np.ndarray]:
     """Run Monte Carlo simulation; return per-event impact arrays keyed by RiskQuantityKey."""
-    n_events = 50000
-    event_batch_sz = 1000
     quantity_types = [
         QuantityType.DAMAGE,
         QuantityType.REVENUE_LOSS,
@@ -391,6 +395,8 @@ def aggregate_impacts(
     financial_model: FinancialModel,
     scenario: str,
     key_year: Optional[int],
+    n_events: int = 50000,
+    event_batch_sz: int = 1000,
 ) -> dict[RiskQuantityKey, Quantity]:
     """Aggregate impacts over assets and hazards for a given scenario and year.
     For acute hazards, i.e. hazards associated with an event, a Monte Carlo approach is used whereby a large number of
@@ -435,7 +441,7 @@ def aggregate_impacts(
     )
     # chronic impacts per hazard for all assets
     chronic_impacts_sorted = _build_chronic_arrays(
-        chronic_hazards_in_scope, all_assets_list, impacts, scenario, key_year
+        chronic_hazards_in_scope, all_assets_list, impacts, scenario, key_year, financial_model
     )
     logger.info("Created non-zero asset indices for each hazard type.")
 
@@ -457,7 +463,7 @@ def aggregate_impacts(
         asset: financial_model.financial_data_provider.revenue_attributable_to_asset(asset, "EUR")
         for asset in all_assets
     }
-    all_results = _run_simulation(sim_inputs, financial_model, asset_tiv, asset_revenue)
+    all_results = _run_simulation(sim_inputs, financial_model, asset_tiv, asset_revenue, n_events=n_events, event_batch_sz=event_batch_sz)
     return _summarise_results(all_results, asset_tiv, asset_revenue)
 
 

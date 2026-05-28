@@ -112,7 +112,11 @@ class CompanyRiskMeasureCalculator(PortfolioRiskMeasureCalculator):
     Finally, scores are assigned based on the aggregate quantities.
     """
 
-    def __init__(self):
+    def __init__(self,
+                n_events: int = 50000,
+                event_batch_sz: int = 1000):
+        self._n_events = n_events
+        self._event_batch_sz = event_batch_sz
         self._definition = ScoreBasedRiskMeasureDefinition(
             hazard_types=[],
             values=[],
@@ -147,7 +151,7 @@ class CompanyRiskMeasureCalculator(PortfolioRiskMeasureCalculator):
             impacts_by_year_scen[(mk.scenario, mk.year)].append(mk)
         for scenario, year in impacts_by_year_scen.keys():
             portfolio_quantities = aggregate_impacts(
-                impacts, financial_model, scenario, year
+                impacts, financial_model, scenario, year, n_events=self._n_events, event_batch_sz=self._event_batch_sz
             )
             damage, revenue_loss, costs_increase = (
                 portfolio_quantities[RiskQuantityKey(quantity=qt)]

@@ -40,7 +40,7 @@ class AveragingAssetBasedPortfolioRiskMeasureCalculator(PortfolioRiskMeasureCalc
         financial_data_provider: FinancialDataProvider,
         asset_level_measures: dict[MeasureKey, Measure] = {},
         impacts: dict[ImpactKey, list[AssetImpactResult]] = {},
-    ) -> tuple[dict[MeasureKey, Measure], dict[RiskQuantityKey, Quantity]]:
+    ) -> tuple[dict[MeasureKey, Measure], dict[tuple[str, int | None], dict[RiskQuantityKey, Quantity]]]:
         portfolio_measures: dict[MeasureKey, Measure] = {}
         measure_by_year_scen: dict[tuple[str, int | None], list[MeasureKey]] = (
             defaultdict(list)
@@ -48,7 +48,6 @@ class AveragingAssetBasedPortfolioRiskMeasureCalculator(PortfolioRiskMeasureCalc
         for mk in asset_level_measures.keys():
             measure_by_year_scen[(mk.scenario, mk.year)].append(mk)
         for k, v in measure_by_year_scen.items():
-            # Calculate portfolio score-based risk measures for this year/scenario
             scores = [float(asset_level_measures[m].score) for m in v]
             average_score = statistics.mean(s for s in scores if s > 0)
             portfolio_measures[MeasureKey(None, k[0], k[1], None)] = Measure(

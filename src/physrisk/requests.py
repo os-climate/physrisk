@@ -52,8 +52,12 @@ from physrisk.kernel.risk import (
     PortfolioRiskModel,
     Measure,
     MeasureKey,
+    PortfolioQuantities,
+    Quantity,
+    QuantityType,
     RiskMeasureCalculator,
     RiskMeasuresFactory,
+    RiskQuantityKey,
 )
 from physrisk.kernel.risk import PortfolioRiskMeasureCalculator
 from physrisk.kernel.risk import (
@@ -90,6 +94,7 @@ from .api.v1.impact_req_resp import (
     AssetLevelImpact,
     Assets,
     AssetSingleImpact,
+    PortfolioImpact,
     RiskMeasure,
 )
 from .api.v1.impact_req_resp import ImpactKey as APIImpactKey
@@ -594,6 +599,7 @@ def _get_asset_impacts(
         else request.years
     )
     risk_measures = None
+    portfolio_quantities: PortfolioQuantities = {}
     if request.include_measures:
         impacts, measures, portfolio_quantities = risk_model.calculate_risk_measures(
             _assets, scenarios, years, financial_data_provider
@@ -624,7 +630,45 @@ def _get_asset_impacts(
         )
     else:
         asset_impacts = None
-    return AssetImpactResponse(asset_impacts=asset_impacts, risk_measures=risk_measures)
+    portfolio_impacts = _compile_portfolio_impacts(portfolio_quantities, sig_figures) if portfolio_quantities else None
+    return AssetImpactResponse(asset_impacts=asset_impacts, risk_measures=risk_measures, portfolio_impacts=portfolio_impacts)
+
+
+_QUANTITY_TYPE_TO_IMPACT_TYPE: dict[QuantityType, str] = {
+    QuantityType.DAMAGE: "damage",
+    QuantityType.REVENUE_LOSS: "disruption/revenue",
+    QuantityType.COSTS_INCREASE: "disruption/costs",
+}
+
+
+def _compile_portfolio_impacts(
+    portfolio_quantities: PortfolioQuantities,
+    sig_figures: Callable[[Union[np.ndarray, float]], Union[np.ndarray, float]],
+) -> Optional[List[PortfolioImpact]]:
+    results: List[PortfolioImpact] = []
+    for (scenario, year), quantities in portfolio_quantities.items():
+        for rk, qty in quantities.items():
+            if rk.hazard_type is None:
+                continue  # skip total-portfolio summary entries
+            semi_std = qty.semi_standard_deviation
+            results.append(
+                PortfolioImpact(
+                    key=APIImpactKey(
+                        hazard_type=rk.hazard_type.__name__,
+                        scenario_id=scenario,
+                        year=str(year) if year is not None else "",
+                    ),
+                    impact_type=_QUANTITY_TYPE_TO_IMPACT_TYPE.get(rk.quantity, "damage"),
+                    impact_exceedance=ExceedanceCurve(
+                        values=sig_figures(qty.exceedance_curve.values),
+                        exceed_probabilities=sig_figures(qty.exceedance_curve.probs),
+                    ),
+                    impact_mean=sig_figures(qty.mean),
+                    impact_std_deviation=None,
+                    impact_semi_std_deviation=sig_figures(semi_std) if semi_std is not None and not np.isnan(semi_std) else None,
+                )
+            )
+    return results or None
 
 
 def compile_asset_impacts(

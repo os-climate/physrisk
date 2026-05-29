@@ -36,6 +36,9 @@ from physrisk.kernel.vulnerability_model import VulnerabilityModels
 
 Impact = Dict[Tuple[Asset, type], AssetImpactResult]  # the key is (Asset, Hazard type)
 
+# portfolio_quantities keyed by (scenario, year) then by RiskQuantityKey
+PortfolioQuantities = Dict[Tuple[str, Optional[int]], Dict["RiskQuantityKey", "Quantity"]]
+
 
 class BatchId(NamedTuple):
     scenario: str
@@ -106,7 +109,7 @@ class PortfolioRiskMeasureCalculator(Protocol):
         financial_data_provider: FinancialDataProvider,
         asset_level_measures: dict[MeasureKey, Measure] = {},
         impacts: dict[ImpactKey, list[AssetImpactResult]] = {},
-    ) -> tuple[dict[MeasureKey, Measure], dict[RiskQuantityKey, Quantity]]: ...
+    ) -> tuple[dict[MeasureKey, Measure], PortfolioQuantities]: ...
 
     def asset_level_measures_required(self) -> bool: ...
 
@@ -126,7 +129,7 @@ class NullAssetBasedPortfolioRiskMeasureCalculator(PortfolioRiskMeasureCalculato
         financial_data_provider: FinancialDataProvider,
         asset_level_measures: dict[MeasureKey, Measure] = {},
         impacts: dict[ImpactKey, list[AssetImpactResult]] = {},
-    ) -> tuple[dict[MeasureKey, Measure], dict[RiskQuantityKey, Quantity]]:
+    ) -> tuple[dict[MeasureKey, Measure], PortfolioQuantities]:
         return {}, {}
 
     def asset_level_measures_required(self) -> bool:
@@ -389,7 +392,7 @@ class PortfolioRiskModel(RiskModel):
     ) -> tuple[
         dict[ImpactKey, list[AssetImpactResult]],
         dict[MeasureKey, Measure],
-        dict[RiskQuantityKey, Quantity],
+        PortfolioQuantities,
     ]:
         """Calculate risk measures for a set of assets, scenarios, and years, according to the selected method calculation.
 

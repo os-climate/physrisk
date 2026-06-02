@@ -45,8 +45,10 @@ from physrisk.hazard_models.core_hazards import (
     get_default_source_paths,
 )
 from physrisk.kernel.exposure import JupterExposureMeasure, calculate_exposures
+from physrisk.kernel.financial_model import DefaultFinancialModel
 from physrisk.kernel.hazards import Hazard, all_hazards, hazard_class
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey  # , ImpactKey
+from physrisk.kernel.impact_aggregator import asset_level_drilldown
 from physrisk.kernel.impact_distrib import EmptyImpactDistrib, PlaceholderImpactDistrib
 from physrisk.kernel.risk import (
     PortfolioRiskModel,
@@ -88,6 +90,7 @@ from .api.v1.hazard_data import (
     StaticInformationResponse,
 )
 from .api.v1.impact_req_resp import (
+    AssetMeasuresSpecification,
     CalculationDetails,
     AssetImpactRequest,
     AssetImpactResponse,
@@ -96,9 +99,11 @@ from .api.v1.impact_req_resp import (
     AssetSingleImpact,
     PortfolioImpact,
     RiskMeasure,
+    RiskMeasuresForAssets,
 )
 from .api.v1.impact_req_resp import ImpactKey as APIImpactKey
 from .api.v1.impact_req_resp import (
+    RiskMeasureDefinition,
     RiskMeasureKey,
     RiskMeasures,
     ScoreBasedRiskMeasuresForAssets,
@@ -600,6 +605,11 @@ def _get_asset_impacts(
     )
     risk_measures = None
     portfolio_quantities: PortfolioQuantities = {}
+    needs_impacts = (
+        request.include_measures
+        or request.include_asset_level
+        or request.measures_specification is not None
+    )
     if request.include_measures:
         impacts, measures, portfolio_quantities = risk_model.calculate_risk_measures(
             _assets, scenarios, years, financial_data_provider
@@ -621,8 +631,49 @@ def _get_asset_impacts(
             hazard_type_indicators=hazard_type_indicators,
             measure_ids_for_asset_drilldown=measure_ids_for_asset_drilldown,
         )
-    elif request.include_asset_level:
+    elif needs_impacts:
         impacts = risk_model.calculate_impacts(_assets, scenarios, years)
+
+    # Asset-level financial drilldown (analytical, not Monte Carlo)
+    drilldown_req = request.measures_specification
+    if drilldown_req is not None and financial_data_provider is not None:
+        financial_model = DefaultFinancialModel(
+            financial_data_provider, downtime_config=[]
+        )
+        drilldown_entries: List[RiskMeasuresForAssets] = []
+        for scenario in scenarios:
+            key_years: List[Optional[int]] = (
+                [None] if scenario == "historical" else list(years)
+            )
+            for key_year in key_years:
+                results = asset_level_drilldown(
+                    impacts, financial_model, scenario, key_year
+                )
+                drilldown_entries.extend(
+                    _compile_asset_financial_impacts(
+                        results, _assets, scenario, key_year, drilldown_req, sig_figures
+                    )
+                )
+        if drilldown_entries:
+            if risk_measures is None:
+                # create a minimal RiskMeasures container when include_measures is False
+                risk_measures = _create_risk_measures(
+                    {},
+                    {},
+                    {},
+                    _assets,
+                    scenarios,
+                    years,
+                    sig_figures,
+                )
+            risk_measures.measures_for_assets.extend(drilldown_entries)
+            financial_defns = _build_financial_measure_definitions(
+                drilldown_req.measure_ids, drilldown_req.quantity_types
+            )
+            if risk_measures.measures_definitions is None:
+                risk_measures.measures_definitions = financial_defns
+            else:
+                risk_measures.measures_definitions.extend(financial_defns)
 
     if request.include_asset_level:
         asset_impacts = compile_asset_impacts(
@@ -630,8 +681,16 @@ def _get_asset_impacts(
         )
     else:
         asset_impacts = None
-    portfolio_impacts = _compile_portfolio_impacts(portfolio_quantities, sig_figures) if portfolio_quantities else None
-    return AssetImpactResponse(asset_impacts=asset_impacts, risk_measures=risk_measures, portfolio_impacts=portfolio_impacts)
+    portfolio_impacts = (
+        _compile_portfolio_impacts(portfolio_quantities, sig_figures)
+        if portfolio_quantities
+        else None
+    )
+    return AssetImpactResponse(
+        asset_impacts=asset_impacts,
+        risk_measures=risk_measures,
+        portfolio_impacts=portfolio_impacts,
+    )
 
 
 _QUANTITY_TYPE_TO_IMPACT_TYPE: dict[QuantityType, str] = {
@@ -648,27 +707,167 @@ def _compile_portfolio_impacts(
     results: List[PortfolioImpact] = []
     for (scenario, year), quantities in portfolio_quantities.items():
         for rk, qty in quantities.items():
-            if rk.hazard_type is None:
-                continue  # skip total-portfolio summary entries
+            # if rk.hazard_type is None:
+            #    continue  # skip total-portfolio summary entries
             semi_std = qty.semi_standard_deviation
             results.append(
                 PortfolioImpact(
                     key=APIImpactKey(
-                        hazard_type=rk.hazard_type.__name__,
+                        hazard_type=rk.hazard_type.__name__
+                        if rk.hazard_type is not None
+                        else "",
                         scenario_id=scenario,
                         year=str(year) if year is not None else "",
                     ),
-                    impact_type=_QUANTITY_TYPE_TO_IMPACT_TYPE.get(rk.quantity, "damage"),
+                    impact_type=_QUANTITY_TYPE_TO_IMPACT_TYPE.get(rk.quantity, "damage")
+                    if rk.quantity is not None
+                    else "damage",
                     impact_exceedance=ExceedanceCurve(
                         values=sig_figures(qty.exceedance_curve.values),
                         exceed_probabilities=sig_figures(qty.exceedance_curve.probs),
                     ),
                     impact_mean=sig_figures(qty.mean),
                     impact_std_deviation=None,
-                    impact_semi_std_deviation=sig_figures(semi_std) if semi_std is not None and not np.isnan(semi_std) else None,
+                    impact_semi_std_deviation=sig_figures(semi_std)
+                    if semi_std is not None and not np.isnan(semi_std)
+                    else None,
                 )
             )
     return results or None
+
+
+# Return-period base measure_id → index into the exceedance_curve.values array produced by
+# asset_level_drilldown (aligned with _DRILLDOWN_RETURN_PERIODS = [10,20,50,100,200,500,1000]).
+# Output measure_ids combine base + impact type, e.g. "100y_damage", "mean_disruption/revenue".
+_RP_MEASURE_IDS: dict[str, int] = {
+    "10y": 0,
+    "20y": 1,
+    "50y": 2,
+    "100y": 3,
+    "200y": 4,
+    "500y": 5,
+    "1000y": 6,
+}
+_SCALAR_MEASURE_IDS = {"mean", "semi_std_dev"}
+_ALL_FINANCIAL_MEASURE_IDS = _SCALAR_MEASURE_IDS | set(_RP_MEASURE_IDS)
+
+_IMPACT_TYPE_LABEL: dict[str, tuple[str, str]] = {
+    # impact_type_str -> (impact noun, normaliser label)
+    "damage": ("damage", "total insurable value"),
+    "disruption/revenue": ("revenue loss", "revenue"),
+    "disruption/costs": ("cost increase", "revenue"),
+}
+
+
+def _build_financial_measure_definitions(
+    measure_ids: List[str], quantity_types: List[str]
+) -> List[RiskMeasureDefinition]:
+    """Return RiskMeasureDefinition objects for each valid (base_id, quantity_type) combination."""
+    defns: List[RiskMeasureDefinition] = []
+    for base_id in measure_ids:
+        if base_id not in _ALL_FINANCIAL_MEASURE_IDS:
+            continue
+        for impact_type_str in quantity_types:
+            noun, normaliser = _IMPACT_TYPE_LABEL.get(
+                impact_type_str, (impact_type_str, "TIV")
+            )
+            compound_id = f"{base_id}_{impact_type_str}"
+            if base_id == "mean":
+                label = f"Mean annual {noun}"
+                description = f"Mean annual {noun} as a fraction of {normaliser}."
+            elif base_id == "semi_std_dev":
+                label = f"Semi-std dev of {noun}"
+                description = f"Upside semi-standard deviation of annual {noun} as a fraction of {normaliser}."
+            else:
+                rp = base_id[:-1]  # strip trailing "y"
+                label = f"1-in-{rp} year {noun}"
+                description = f"1-in-{rp} year {noun} as a fraction of {normaliser}."
+            defns.append(
+                RiskMeasureDefinition(
+                    measure_id=compound_id,
+                    label=label,
+                    description=description,
+                    units="",
+                )
+            )
+    return defns
+
+
+def _extract_financial_value(qty: Optional[Quantity], measure_id: str) -> float:
+    """Extract a single scalar from a Quantity for the given measure_id; returns 0.0 if absent."""
+    if qty is None:
+        return 0.0
+    if measure_id == "mean":
+        return float(qty.mean)
+    if measure_id == "semi_std_dev":
+        sd = qty.semi_standard_deviation
+        return float(sd) if sd is not None else 0.0
+    rp_idx = _RP_MEASURE_IDS.get(measure_id)
+    if rp_idx is not None:
+        return float(qty.exceedance_curve.values[rp_idx])
+    return 0.0
+
+
+def _compile_asset_financial_impacts(
+    drilldown_results: dict[RiskQuantityKey, Quantity],
+    assets: List[Asset],
+    scenario: str,
+    year: Optional[int],
+    drilldown_req: AssetMeasuresSpecification,
+    sig_figures: Callable[[Union[np.ndarray, float]], Union[np.ndarray, float]],
+) -> List[RiskMeasuresForAssets]:
+    """Produce one RiskMeasuresForAssets entry per (measure_id, hazard_type, quantity_type).
+
+    Per-asset arrays are aligned with risk_measures.asset_ids; assets with no impact for a
+    given hazard type receive 0.0.  Unknown measure_ids in drilldown_req.measure_ids are
+    silently skipped.
+    """
+    # Group results by (hazard_type, quantity_type); hazard_type=None means all-hazards sum.
+    by_hazard_qty: dict[tuple, dict[Asset, Quantity]] = defaultdict(dict)
+    for rk, qty in drilldown_results.items():
+        if rk.asset is not None:
+            by_hazard_qty[(rk.hazard_type, rk.quantity)][rk.asset] = qty
+
+    year_str = str(year) if year is not None else ""
+    entries: List[RiskMeasuresForAssets] = []
+
+    for measure_id in drilldown_req.measure_ids:
+        if measure_id not in _ALL_FINANCIAL_MEASURE_IDS:
+            continue
+        for (hazard_type, quantity_type), asset_quantities in sorted(
+            by_hazard_qty.items(),
+            key=lambda x: (
+                x[0][0].__name__ if x[0][0] is not None else "",
+                str(x[0][1]),
+            ),
+        ):
+            impact_type_str = _QUANTITY_TYPE_TO_IMPACT_TYPE.get(quantity_type, "damage")
+            if impact_type_str not in drilldown_req.quantity_types:
+                continue
+            hazard_type_str = hazard_type.__name__ if hazard_type is not None else ""
+            compound_measure_id = f"{measure_id}_{impact_type_str}"
+            measures = [
+                float(
+                    sig_figures(
+                        _extract_financial_value(
+                            asset_quantities.get(asset), measure_id
+                        )
+                    )
+                )
+                for asset in assets
+            ]
+            entries.append(
+                RiskMeasuresForAssets(
+                    key=RiskMeasureKey(
+                        hazard_type=hazard_type_str,
+                        scenario_id=scenario,
+                        year=year_str,
+                        measure_id=compound_measure_id,
+                    ),
+                    measures=measures,
+                )
+            )
+    return entries
 
 
 def compile_asset_impacts(
@@ -787,7 +986,7 @@ def compile_asset_impacts(
     for a, imps in ordered_impacts.items():
         ordered_impacts[a] = sorted(
             imps,
-            key=lambda x: x.key.hazard_type + x.key.scenario_id + x.key.year,
+            key=lambda x: (x.key.hazard_type or "") + x.key.scenario_id + x.key.year,
         )
     return [
         AssetLevelImpact(asset_id=k.id if k.id is not None else "", impacts=v)

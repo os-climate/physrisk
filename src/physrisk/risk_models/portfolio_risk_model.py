@@ -112,9 +112,7 @@ class CompanyRiskMeasureCalculator(PortfolioRiskMeasureCalculator):
     Finally, scores are assigned based on the aggregate quantities.
     """
 
-    def __init__(self,
-                n_events: int = 50000,
-                event_batch_sz: int = 1000):
+    def __init__(self, n_events: int = 50000, event_batch_sz: int = 1000):
         self._n_events = n_events
         self._event_batch_sz = event_batch_sz
         self._definition = ScoreBasedRiskMeasureDefinition(
@@ -140,7 +138,10 @@ class CompanyRiskMeasureCalculator(PortfolioRiskMeasureCalculator):
         financial_data_provider: FinancialDataProvider,
         asset_level_measures: dict[MeasureKey, Measure] = {},
         impacts: dict[ImpactKey, list[AssetImpactResult]] = {},
-    ) -> tuple[dict[MeasureKey, Measure], dict[tuple[str, int | None], dict[RiskQuantityKey, Quantity]]]:
+    ) -> tuple[
+        dict[MeasureKey, Measure],
+        dict[tuple[str, int | None], dict[RiskQuantityKey, Quantity]],
+    ]:
         financial_model = DefaultFinancialModel(
             financial_data_provider, downtime_config=[]
         )
@@ -150,10 +151,17 @@ class CompanyRiskMeasureCalculator(PortfolioRiskMeasureCalculator):
         for mk in asset_level_measures.keys():
             impacts_by_year_scen[(mk.scenario, mk.year)].append(mk)
         measures: dict[MeasureKey, Measure] = {}
-        all_portfolio_quantities: dict[tuple[str, int | None], dict[RiskQuantityKey, Quantity]] = {}
+        all_portfolio_quantities: dict[
+            tuple[str, int | None], dict[RiskQuantityKey, Quantity]
+        ] = {}
         for scenario, year in impacts_by_year_scen.keys():
             portfolio_quantities = aggregate_impacts(
-                impacts, financial_model, scenario, year, n_events=self._n_events, event_batch_sz=self._event_batch_sz
+                impacts,
+                financial_model,
+                scenario,
+                year,
+                n_events=self._n_events,
+                event_batch_sz=self._event_batch_sz,
             )
             all_portfolio_quantities[(scenario, year)] = portfolio_quantities
             damage, revenue_loss, costs_increase = (

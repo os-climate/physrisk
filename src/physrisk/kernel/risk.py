@@ -37,7 +37,9 @@ from physrisk.kernel.vulnerability_model import VulnerabilityModels
 Impact = Dict[Tuple[Asset, type], AssetImpactResult]  # the key is (Asset, Hazard type)
 
 # portfolio_quantities keyed by (scenario, year) then by RiskQuantityKey
-PortfolioQuantities = Dict[Tuple[str, Optional[int]], Dict["RiskQuantityKey", "Quantity"]]
+PortfolioQuantities = Dict[
+    Tuple[str, Optional[int]], Dict["RiskQuantityKey", "Quantity"]
+]
 
 
 class BatchId(NamedTuple):

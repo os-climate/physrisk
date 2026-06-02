@@ -31,6 +31,38 @@ class CalcSettings(BaseModel):
     )
 
 
+class AssetMeasuresSpecification(BaseModel):
+    """Specifies which per-asset financial impact measures to append to
+    ``risk_measures.measures_for_assets`` as ``RiskMeasuresForAssets`` entries.
+
+    Each requested (``measure_id``, ``quantity_type``) combination produces one
+    ``RiskMeasuresForAssets`` entry per hazard type, with ``RiskMeasureKey.measure_id``
+    set to the base measure id combined with the impact type, e.g. ``"mean_damage"``,
+    ``"mean_disruption/revenue"``, ``"100y_damage"``.
+
+    Base ``measure_id`` values:
+
+    * ``"mean"``        — average annual loss (as a fraction of TIV or revenue)
+    * ``"semi_std_dev"`` — upside semi-standard deviation
+    * ``"10y"`` … ``"1000y"`` — loss at the given return period
+    """
+
+    measure_ids: List[str] = Field(
+        default_factory=lambda: ["mean"],
+        description=(
+            "Base measure identifiers to compute. Standard values: 'mean', 'semi_std_dev', "
+            "'10y', '20y', '50y', '100y', '200y', '500y', '1000y'."
+        ),
+    )
+    quantity_types: List[str] = Field(
+        default_factory=lambda: ["damage"],
+        description=(
+            "Quantity types to include. Valid values: 'damage', 'disruption/revenue', "
+            "'disruption/costs'."
+        ),
+    )
+
+
 class AssetImpactRequest(BaseModel):
     """Impact calculation request."""
 
@@ -47,6 +79,15 @@ class AssetImpactRequest(BaseModel):
     )
     include_calc_details: bool = Field(
         True, description="If true, include impact calculation details."
+    )
+    measures_specification: Optional[AssetMeasuresSpecification] = Field(
+        None,
+        description=(
+            "If set, append per-asset financial impact measures to "
+            "risk_measures.measures_for_assets as RiskMeasuresForAssets entries. "
+            "Impact distributions must be available (include_measures=True or "
+            "include_asset_level=True)."
+        ),
     )
     use_case_id: str = Field(
         "",
@@ -132,7 +173,9 @@ class ScoreBasedRiskMeasureDefinition(BaseModel):
 class RiskMeasureKey(BaseModel):
     """Hazard type (e.g. 'RiverineInundation'), scenario ID (e.g. 'ssp585'), year (e.g. '2050')
     and measure ID (e.g. 'measure_set_1') that together identify a risk measure.
-    For drill-down by hazard indicator ID, hazard_indicator_id can optionally be provided."""
+    For drill-down by hazard indicator ID, hazard_indicator_id can optionally be provided.
+    For financial impact measures, the impact type is embedded in measure_id
+    (e.g. 'mean_damage', '100y_disruption/revenue')."""
 
     hazard_type: str
     scenario_id: str

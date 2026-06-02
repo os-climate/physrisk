@@ -10,7 +10,13 @@ from physrisk.api.v1.scoring_schemes import Category
 from physrisk.kernel.financial_model import FinancialDataProvider
 from physrisk.kernel.hazards import Hazard
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey
-from physrisk.kernel.risk import Measure, MeasureKey, PortfolioRiskMeasureCalculator, Quantity, RiskQuantityKey
+from physrisk.kernel.risk import (
+    Measure,
+    MeasureKey,
+    PortfolioRiskMeasureCalculator,
+    Quantity,
+    RiskQuantityKey,
+)
 
 
 class AveragingAssetBasedPortfolioRiskMeasureCalculator(PortfolioRiskMeasureCalculator):
@@ -40,7 +46,10 @@ class AveragingAssetBasedPortfolioRiskMeasureCalculator(PortfolioRiskMeasureCalc
         financial_data_provider: FinancialDataProvider,
         asset_level_measures: dict[MeasureKey, Measure] = {},
         impacts: dict[ImpactKey, list[AssetImpactResult]] = {},
-    ) -> tuple[dict[MeasureKey, Measure], dict[tuple[str, int | None], dict[RiskQuantityKey, Quantity]]]:
+    ) -> tuple[
+        dict[MeasureKey, Measure],
+        dict[tuple[str, int | None], dict[RiskQuantityKey, Quantity]],
+    ]:
         portfolio_measures: dict[MeasureKey, Measure] = {}
         measure_by_year_scen: dict[tuple[str, int | None], list[MeasureKey]] = (
             defaultdict(list)
@@ -56,9 +65,9 @@ class AveragingAssetBasedPortfolioRiskMeasureCalculator(PortfolioRiskMeasureCalc
                 definition=self._definition,
             )
         return portfolio_measures, {}
-    
+
     def asset_level_measures_required(self):
         return True
-    
+
     def portfolio_quantities_required(self):
         return False

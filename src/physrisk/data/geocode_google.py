@@ -34,6 +34,7 @@ _ADDRESS_FIELD_MASK = ",".join(
         "results.granularity",
         "results.formattedAddress",
         "results.placeId",
+        "results.types",
     ]
 )
 
@@ -45,6 +46,37 @@ _DESTINATIONS_FIELD_MASK = ",".join(
 )
 
 BuildingShape = Union[Polygon, MultiPolygon]
+
+
+class _RateLimiter:
+    """Async token-bucket rate limiter.
+
+    Tokens accumulate at ``rate`` per second up to a burst cap of ``rate``.
+    The lock is released before sleeping so that multiple waiters can proceed
+    as soon as tokens become available rather than queuing strictly.
+    """
+
+    def __init__(self, rate: float) -> None:
+        self._rate = rate
+        self._tokens: float = rate
+        self._updated_at: float = 0.0
+        self._lock = asyncio.Lock()
+
+    async def acquire(self) -> None:
+        while True:
+            async with self._lock:
+                loop = asyncio.get_running_loop()
+                now = loop.time()
+                if self._updated_at == 0.0:
+                    self._updated_at = now
+                elapsed = now - self._updated_at
+                self._tokens = min(self._rate, self._tokens + elapsed * self._rate)
+                self._updated_at = now
+                if self._tokens >= 1.0:
+                    self._tokens -= 1.0
+                    return
+                wait = (1.0 - self._tokens) / self._rate
+            await asyncio.sleep(wait)
 
 
 class Granularity(str, Enum):
@@ -85,6 +117,7 @@ class GeocodeResult:
     place_id: str
     granularity: Granularity
     structure_type: StructureType
+    types: List[str] = field(default_factory=list)
     candidate_count: int = field(default=1)
 
 
@@ -109,6 +142,10 @@ class GoogleGeocoder:
         region_code: Default CLDR region code applied to every request (e.g. ``"GB"``).
             Can be overridden per-call via the ``region_code`` argument on
             ``geocode`` / ``geocode_many``.
+        requests_per_second: Maximum ``geocode`` calls dispatched per second
+            across the whole instance (token-bucket algorithm).  Each call
+            counts once regardless of whether ``fetch_building_shape`` is
+            enabled.  Set to ``None`` to disable throttling.
     """
 
     def __init__(
@@ -121,6 +158,7 @@ class GoogleGeocoder:
         region_code: Optional[str] = None,
         fetch_building_shape: bool = False,
         max_concurrency: int = 50,
+        requests_per_second: Optional[float] = 25.0,
     ) -> None:
         self._api_key = api_key
         self._proxy = proxy
@@ -130,6 +168,7 @@ class GoogleGeocoder:
         self._region_code = region_code
         self._fetch_building_shape = fetch_building_shape
         self._semaphore = asyncio.Semaphore(max_concurrency)
+        self._rate_limiter = _RateLimiter(requests_per_second) if requests_per_second else None
 
     async def __aenter__(self) -> "GoogleGeocoder":
         if self._external_session is None:
@@ -157,6 +196,8 @@ class GoogleGeocoder:
 
         effective_region = region_code if region_code is not None else self._region_code
 
+        if self._rate_limiter:
+            await self._rate_limiter.acquire()
         async with self._semaphore:
             if self._fetch_building_shape:
                 address_results, destinations_data = await asyncio.gather(
@@ -190,6 +231,7 @@ class GoogleGeocoder:
             place_id=geocode_data.get("placeId", ""),
             granularity=_parse_granularity(geocode_data.get("granularity")),
             structure_type=structure_type,
+            types=geocode_data.get("types") or [],
             candidate_count=len(address_results),
         )
 

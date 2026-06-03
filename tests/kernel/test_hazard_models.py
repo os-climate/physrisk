@@ -3,7 +3,7 @@ from typing import Dict, Mapping, NamedTuple, Sequence, Tuple
 
 import numpy as np
 
-import tests.data.test_hazard_model_store as hms
+from tests.data.test_hazard_model_store import TestData
 from physrisk.kernel.assets import RealEstateAsset
 from physrisk.kernel.hazard_model import (
     HazardDataRequest,
@@ -13,7 +13,7 @@ from physrisk.kernel.hazard_model import (
     HazardParameterDataResponse,
 )
 from physrisk.kernel.hazards import ChronicHeat, Wind
-from physrisk.kernel.impact import calculate_impacts
+from physrisk.kernel.impact import ImpactKey, calculate_impacts
 from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels
 from physrisk.vulnerability_models.real_estate_models import GenericTropicalCycloneModel
 
@@ -78,7 +78,7 @@ class PointBasedHazardModel(HazardModel):
                 and request.indicator_id == "days/above/35c"
             ):
                 response[request] = HazardParameterDataResponse(
-                    np.array(point.chronic_heat_intensity)
+                    parameters=np.array(point.chronic_heat_intensity),
                 )
             # etc
         return response
@@ -92,15 +92,15 @@ def test_using_point_based_hazard_model():
         RealEstateAsset(
             latitude=lat, longitude=lon, location="Asia", type="Buildings/Industrial"
         )
-        for lon, lat in zip(hms.TestData.longitudes[0:1], hms.TestData.latitudes[0:1])
+        for lon, lat in zip(TestData.longitudes[0:1], TestData.latitudes[0:1])
     ]
     # fmt: off
     wind_return_periods = np.array([10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 200.0, 300.0, 400.0, 500.0, 600.0, 700.0, 800.0, 900.0, 1000.0]) # noqa
     wind_intensities = np.array([37.279999, 44.756248, 48.712502, 51.685001, 53.520000, 55.230000, 56.302502, 57.336250, 58.452499, 59.283749, 63.312500, 65.482498, 66.352501, 67.220001, 67.767502, 68.117500, 68.372498, 69.127502, 70.897499 ]) # noqa
     # fmt: on
     point = SinglePointData(
-        hms.TestData.latitudes[0],
-        hms.TestData.longitudes[0],
+        TestData.latitudes[0],
+        TestData.longitudes[0],
         scenario=scenario,
         year=year,
         wind_return_periods=wind_return_periods,
@@ -115,6 +115,7 @@ def test_using_point_based_hazard_model():
     results = calculate_impacts(
         assets, hazard_model, vulnerability_models, scenarios=[scenario], years=[year]
     )
-    impact_distrib = results[(assets[0], Wind, scenario, year)][0].impact
+    key_result = ImpactKey(assets[0], Wind, scenario, year)
+    impact_distrib = results[key_result][0].impact
     mean_impact = impact_distrib.mean_impact()
     np.testing.assert_almost_equal(mean_impact, 0.009909858317497338)

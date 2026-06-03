@@ -60,7 +60,7 @@ def test_live_impacts():  # "latitude": 34.556, "longitude": 69.4787
 
 
 @pytest.mark.skip("only as example")
-def test_live_hazard_data():
+def test_live_hazard_data(requester):
     request = {
         "items": [
             {
@@ -75,25 +75,18 @@ def test_live_hazard_data():
             },
         ]
     }
-    from physrisk.container import Container
-
-    container = Container()
-    requester = container.requester()
     result = requester.get(request_id="get_hazard_data", request_dict=request)
     print(result)
 
 
 @pytest.mark.skip("only as example")
-def test_get_image_info():
+def test_get_image_info(requester):
     request = {
         "resource": "inundation/river_tudelft/v2/flood_depth_unprot_{scenario}_{year}",
         "scenario_id": "historical",
         "year": 1985,
     }
-    from physrisk.container import Container
 
-    container = Container()
-    requester = container.requester()
     result = requester.get(request_id="get_image_info", request_dict=request)
     print(result)
 
@@ -106,7 +99,7 @@ def requester(clear_credentials):
 
 @pytest.mark.live_data("dev")
 def test_live_impacts_regression(
-    requester: physrisk.requests.Requester, update_expected: str
+    requester: physrisk.requests.Requester, update_expected: bool
 ):  # "latitude": 34.556, "longitude": 69.4787
     request = {
         "assets": {
@@ -145,5 +138,5 @@ def test_live_impacts_regression(
     result_str = json.dumps(result_dict, indent=2)
     func_name = f"{__name__}.{test_live_impacts.__name__}"
     result_dict, expected_dict = get_result_expected(
-        result_str, func_name, update_expected == "True"
+        result_str, func_name, update_expected
     )

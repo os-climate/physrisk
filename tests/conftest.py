@@ -9,7 +9,6 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import numpy as np
-# from deepdiff import DeepDiff
 
 from physrisk.hazard_models.hazard_cache import (
     H3BasedCache,
@@ -169,7 +168,9 @@ def pytest_addoption(parser):
         help="Update the test expected result if true",
     )
     parser.addoption(
-        "--update_inputs", action="store", help="Update the test mocked data if true"
+        "--update_inputs",
+        action="store",
+        help="Update the test mocked data if true",
     )
 
 

@@ -66,7 +66,6 @@ from physrisk.vulnerability_models.real_estate_models import (
 )
 from physrisk.vulnerability_models.vulnerability import VulnerabilityModelsFactory
 
-from ..test_base import TestWithCredentials
 from ..data.test_hazard_model_store import (
     TestData,
     ZarrStoreMocker,
@@ -151,596 +150,591 @@ def _vulnerability_models(
     return models
 
 
-class TestRiskModels(TestWithCredentials):
-    def test_risk_indicator_model(self):
-        scenarios = ["ssp585"]
-        years = [2050]
+def test_risk_indicator_model():
+    scenarios = ["ssp585"]
+    years = [2050]
 
-        assets = self._create_assets()
-        hazard_model = self._create_hazard_model(scenarios, years)
+    assets = create_assets()
+    hazard_model = create_hazard_model(scenarios, years)
 
-        model = AssetLevelRiskModel(
-            hazard_model,
-            DictBasedVulnerabilityModels(
-                alternate_default_vulnerability_models_scores()
-            ),
-            {RealEstateAsset: RealEstateToyRiskMeasures()},
-            NullAssetBasedPortfolioRiskMeasureCalculator(),
+    model = AssetLevelRiskModel(
+        hazard_model,
+        DictBasedVulnerabilityModels(alternate_default_vulnerability_models_scores()),
+        {RealEstateAsset: RealEstateToyRiskMeasures()},
+        NullAssetBasedPortfolioRiskMeasureCalculator(),
+    )
+    measure_ids_for_asset, definitions, measure_ids_for_asset_drilldown = (
+        model.populate_measure_definitions(assets)
+    )
+    _, measures = model.calculate_risk_measures(
+        assets, scenarios=scenarios, years=years
+    )
+
+    # how to get a score using the MeasureKey
+    measure = measures[
+        MeasureKey(assets[0], scenarios[0], years[0], RiverineInundation)
+    ]
+    score = measure.score
+    measure_0 = measure.measure_0
+    np.testing.assert_allclose([measure_0], [0.89306593179])
+
+    # packing up the risk measures, e.g. for JSON transmission:
+    risk_measures = _create_risk_measures(
+        measures, measure_ids_for_asset, definitions, assets, scenarios, years
+    )
+    # we still have a key, but no asset:
+    key = RiskMeasureKey(
+        hazard_type="RiverineInundation",
+        scenario_id=scenarios[0],
+        year=str(years[0]),
+        measure_id=risk_measures.score_based_measure_set_defn.measure_set_id,
+    )
+    item = next(m for m in risk_measures.measures_for_assets if m.key == key)
+    score2 = item.scores[0]
+    measure_0_2 = item.measures_0[0]
+    assert score == score2
+    assert measure_0 == measure_0_2
+
+    helper = RiskMeasuresHelper(risk_measures)
+    asset_scores, measures, definitions = helper.get_measure(
+        "CoastalInundation", scenarios[0], years[0]
+    )
+    label, description = helper.get_score_details(asset_scores[0], definitions[0])
+    assert asset_scores[0] == 4
+
+
+def create_assets():
+    assets = [
+        RealEstateAsset(
+            latitude=TestData.latitudes[0],
+            longitude=TestData.longitudes[0],
+            location="Asia",
+            type="Buildings/Industrial",
+            id=f"unique_asset_{i}",
         )
-        measure_ids_for_asset, definitions, measure_ids_for_asset_drilldown = (
-            model.populate_measure_definitions(assets)
-        )
-        _, measures = model.calculate_risk_measures(
-            assets, scenarios=scenarios, years=years
-        )
+        for i in range(2)
+    ]
+    return assets
 
-        # how to get a score using the MeasureKey
-        measure = measures[
-            MeasureKey(assets[0], scenarios[0], years[0], RiverineInundation)
-        ]
-        score = measure.score
-        measure_0 = measure.measure_0
-        np.testing.assert_allclose([measure_0], [0.89306593179])
 
-        # packing up the risk measures, e.g. for JSON transmission:
-        risk_measures = _create_risk_measures(
-            measures, measure_ids_for_asset, definitions, assets, scenarios, years
-        )
-        # we still have a key, but no asset:
-        key = RiskMeasureKey(
-            hazard_type="RiverineInundation",
-            scenario_id=scenarios[0],
-            year=str(years[0]),
-            measure_id=risk_measures.score_based_measure_set_defn.measure_set_id,
-        )
-        item = next(m for m in risk_measures.measures_for_assets if m.key == key)
-        score2 = item.scores[0]
-        measure_0_2 = item.measures_0[0]
-        assert score == score2
-        assert measure_0 == measure_0_2
+def create_assets_json(assets: Sequence[RealEstateAsset]):
+    assets_dict = {
+        "items": [
+            {
+                "asset_class": type(asset).__name__,
+                "type": asset.type,
+                "location": asset.location,
+                "longitude": asset.longitude,
+                "latitude": asset.latitude,
+                "number_of_storeys": 2,
+            }
+            for asset in assets
+        ],
+    }
+    return assets_dict
 
-        helper = RiskMeasuresHelper(risk_measures)
-        asset_scores, measures, definitions = helper.get_measure(
-            "CoastalInundation", scenarios[0], years[0]
-        )
-        label, description = helper.get_score_details(asset_scores[0], definitions[0])
-        assert asset_scores[0] == 4
 
-    def _create_assets(self):
-        assets = [
-            RealEstateAsset(
-                latitude=TestData.latitudes[0],
-                longitude=TestData.longitudes[0],
-                location="Asia",
-                type="Buildings/Industrial",
-                id=f"unique_asset_{i}",
-            )
-            for i in range(2)
-        ]
-        return assets
+def create_hazard_model(scenarios, years):
+    source_paths = get_default_source_paths()
 
-    def _create_assets_json(self, assets: Sequence[RealEstateAsset]):
-        assets_dict = {
-            "items": [
-                {
-                    "asset_class": type(asset).__name__,
-                    "type": asset.type,
-                    "location": asset.location,
-                    "longitude": asset.longitude,
-                    "latitude": asset.latitude,
-                    "number_of_storeys": 2,
-                }
-                for asset in assets
-            ],
-        }
-        return assets_dict
-
-    def _create_hazard_model(self, scenarios, years):
-        source_paths = get_default_source_paths()
-
-        def sp_riverine(scenario, year):
-            return (
-                source_paths.resource_paths(
-                    RiverineInundation, indicator_id="flood_depth", scenarios=[scenario]
-                )[0]
-                .scenarios[scenario]
-                .path(year)
-            )
-
-        def sp_coastal(scenario, year):
-            return (
-                source_paths.resource_paths(
-                    CoastalInundation, indicator_id="flood_depth", scenarios=[scenario]
-                )[0]
-                .scenarios[scenario]
-                .path(year)
-            )
-
-        def sp_wind(scenario, year):
-            return (
-                source_paths.resource_paths(
-                    Wind, indicator_id="max_speed", scenarios=[scenario]
-                )[0]
-                .scenarios[scenario]
-                .path(year)
-            )
-
-        def sp_heat(scenario, year):
-            return (
-                source_paths.resource_paths(
-                    ChronicHeat, indicator_id="days_wbgt_above", scenarios=[scenario]
-                )[0]
-                .scenarios[scenario]
-                .path(year)
-            )
-
-        def sp_heat2(scenario, year):
-            return (
-                source_paths.resource_paths(
-                    ChronicHeat,
-                    indicator_id="mean_degree_days/above/index",
-                    scenarios=[scenario],
-                )[0]
-                .scenarios[scenario]
-                .path(year)
-            )
-
-        def sp_fire(scenario, year):
-            return (
-                source_paths.resource_paths(
-                    Fire, indicator_id="fire_probability", scenarios=[scenario]
-                )[0]
-                .scenarios[scenario]
-                .path(year)
-            )
-
-        def sp_hail(scenario, year):
-            return (
-                source_paths.resource_paths(
-                    Hail, indicator_id="days/above/5cm", scenarios=[scenario]
-                )[0]
-                .scenarios[scenario]
-                .path(year)
-            )
-
-        def sp_drought(scenario, year):
-            return (
-                source_paths.resource_paths(
-                    Drought,
-                    indicator_id="months/spei12m/below/threshold",
-                    scenarios=[scenario],
-                )[0]
-                .scenarios[scenario]
-                .path(year)
-            )
-
-        def sp_precipitation(scenario, year):
-            return (
-                source_paths.resource_paths(
-                    Precipitation,
-                    indicator_id="max/daily/water_equivalent",
-                    scenarios=[scenario],
-                )[0]
-                .scenarios[scenario]
-                .path(year)
-            )
-
-        mocker = ZarrStoreMocker()
-        return_periods = inundation_return_periods()
-        flood_histo_curve = np.array(
-            [0.0596, 0.333, 0.505, 0.715, 0.864, 1.003, 1.149, 1.163, 1.163]
-        )
-        flood_projected_curve = np.array(
-            [0.0596, 0.333, 0.605, 0.915, 1.164, 1.503, 1.649, 1.763, 1.963]
+    def sp_riverine(scenario, year):
+        return (
+            source_paths.resource_paths(
+                RiverineInundation, indicator_id="flood_depth", scenarios=[scenario]
+            )[0]
+            .scenarios[scenario]
+            .path(year)
         )
 
-        for path in [sp_riverine("historical", 1980), sp_coastal("historical", 1980)]:
-            mocker.add_curves_global(
-                path,
-                TestData.longitudes,
-                TestData.latitudes,
-                return_periods,
-                flood_histo_curve,
-            )
+    def sp_coastal(scenario, year):
+        return (
+            source_paths.resource_paths(
+                CoastalInundation, indicator_id="flood_depth", scenarios=[scenario]
+            )[0]
+            .scenarios[scenario]
+            .path(year)
+        )
 
-        for path in [sp_riverine("ssp585", 2050), sp_coastal("ssp585", 2050)]:
-            mocker.add_curves_global(
-                path,
-                TestData.longitudes,
-                TestData.latitudes,
-                return_periods,
-                flood_projected_curve,
-            )
+    def sp_wind(scenario, year):
+        return (
+            source_paths.resource_paths(
+                Wind, indicator_id="max_speed", scenarios=[scenario]
+            )[0]
+            .scenarios[scenario]
+            .path(year)
+        )
 
+    def sp_heat(scenario, year):
+        return (
+            source_paths.resource_paths(
+                ChronicHeat, indicator_id="days_wbgt_above", scenarios=[scenario]
+            )[0]
+            .scenarios[scenario]
+            .path(year)
+        )
+
+    def sp_heat2(scenario, year):
+        return (
+            source_paths.resource_paths(
+                ChronicHeat,
+                indicator_id="mean_degree_days/above/index",
+                scenarios=[scenario],
+            )[0]
+            .scenarios[scenario]
+            .path(year)
+        )
+
+    def sp_fire(scenario, year):
+        return (
+            source_paths.resource_paths(
+                Fire, indicator_id="fire_probability", scenarios=[scenario]
+            )[0]
+            .scenarios[scenario]
+            .path(year)
+        )
+
+    def sp_hail(scenario, year):
+        return (
+            source_paths.resource_paths(
+                Hail, indicator_id="days/above/5cm", scenarios=[scenario]
+            )[0]
+            .scenarios[scenario]
+            .path(year)
+        )
+
+    def sp_drought(scenario, year):
+        return (
+            source_paths.resource_paths(
+                Drought,
+                indicator_id="months/spei12m/below/threshold",
+                scenarios=[scenario],
+            )[0]
+            .scenarios[scenario]
+            .path(year)
+        )
+
+    def sp_precipitation(scenario, year):
+        return (
+            source_paths.resource_paths(
+                Precipitation,
+                indicator_id="max/daily/water_equivalent",
+                scenarios=[scenario],
+            )[0]
+            .scenarios[scenario]
+            .path(year)
+        )
+
+    mocker = ZarrStoreMocker()
+    return_periods = inundation_return_periods()
+    flood_histo_curve = np.array(
+        [0.0596, 0.333, 0.505, 0.715, 0.864, 1.003, 1.149, 1.163, 1.163]
+    )
+    flood_projected_curve = np.array(
+        [0.0596, 0.333, 0.605, 0.915, 1.164, 1.503, 1.649, 1.763, 1.963]
+    )
+
+    for path in [sp_riverine("historical", 1980), sp_coastal("historical", 1980)]:
         mocker.add_curves_global(
-            sp_wind("historical", -1),
+            path,
             TestData.longitudes,
             TestData.latitudes,
-            TestData.wind_return_periods,
-            TestData.wind_intensities_1,
-            units="m/s",
+            return_periods,
+            flood_histo_curve,
         )
+
+    for path in [sp_riverine("ssp585", 2050), sp_coastal("ssp585", 2050)]:
         mocker.add_curves_global(
-            sp_wind("ssp585", 2050),
+            path,
             TestData.longitudes,
             TestData.latitudes,
-            TestData.wind_return_periods,
-            TestData.wind_intensities_2,
-            units="m/s",
-        )
-        mocker.add_curves_global(
-            sp_heat("historical", -1),
-            TestData.longitudes,
-            TestData.latitudes,
-            [5.0, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60],
-            np.array(
-                [
-                    327.28,
-                    315.19,
-                    273.28,
-                    216.43,
-                    163.65,
-                    115.62,
-                    66.96,
-                    1.26,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                ]
-            ),
-        )
-        mocker.add_curves_global(
-            sp_heat("ssp585", 2050),
-            TestData.longitudes,
-            TestData.latitudes,
-            [5.0, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60],
-            np.array(
-                [
-                    363.65,
-                    350.21,
-                    303.64,
-                    240.48,
-                    181.83,
-                    128.47,
-                    74.40,
-                    1.40,
-                    0.0,
-                    0.0,
-                    0.0,
-                    0.0,
-                ]
-            ),
-        )
-        mocker.add_curves_global(
-            sp_heat2("historical", -1),
-            TestData.longitudes,
-            TestData.latitudes,
-            TestData.temperature_thresholds,
-            TestData.degree_days_above_index_1,
-        )
-        mocker.add_curves_global(
-            sp_heat2("ssp585", 2050),
-            TestData.longitudes,
-            TestData.latitudes,
-            TestData.temperature_thresholds,
-            TestData.degree_days_above_index_2,
-        )
-        mocker.add_curves_global(
-            sp_fire("historical", -1),
-            TestData.longitudes,
-            TestData.latitudes,
-            [0],
-            [0.15],
-        )
-        mocker.add_curves_global(
-            sp_fire("ssp585", 2050),
-            TestData.longitudes,
-            TestData.latitudes,
-            [0],
-            [0.2],
-        )
-        mocker.add_curves_global(
-            sp_hail("historical", -1),
-            TestData.longitudes,
-            TestData.latitudes,
-            [0],
-            [2.15],
-        )
-        mocker.add_curves_global(
-            sp_hail("ssp585", 2050),
-            TestData.longitudes,
-            TestData.latitudes,
-            [0],
-            [4],
-        )
-        mocker.add_curves_global(
-            sp_drought("historical", -1),
-            TestData.longitudes,
-            TestData.latitudes,
-            # data should be this way around, consistent with temperature type threshold curves
-            [0.0, -1.0, -1.5, -2.0, -2.5, -3.0, -3.6],
-            np.array([6.5, 2.1, 0.86, 0.29, 0.058, 0.0, 0.0]),
-        )
-        mocker.add_curves_global(
-            sp_drought("ssp585", 2050),
-            TestData.longitudes,
-            TestData.latitudes,
-            [0.0, -1.0, -1.5, -2.0, -2.5, -3.0, -3.6],
-            np.array([7.3, 3.7, 2.4, 1.5, 0.56, 0.075, 0.0]),
-        )
-        mocker.add_curves_global(
-            sp_precipitation("historical", -1),
-            TestData.longitudes,
-            TestData.latitudes,
-            [0],
-            [10],
-        )
-        mocker.add_curves_global(
-            sp_precipitation("ssp585", 2050),
-            TestData.longitudes,
-            TestData.latitudes,
-            [0],
-            [70],
+            return_periods,
+            flood_projected_curve,
         )
 
-        return ZarrHazardModel(
-            source_paths=get_default_source_paths(), store=mocker.store
+    mocker.add_curves_global(
+        sp_wind("historical", -1),
+        TestData.longitudes,
+        TestData.latitudes,
+        TestData.wind_return_periods,
+        TestData.wind_intensities_1,
+        units="m/s",
+    )
+    mocker.add_curves_global(
+        sp_wind("ssp585", 2050),
+        TestData.longitudes,
+        TestData.latitudes,
+        TestData.wind_return_periods,
+        TestData.wind_intensities_2,
+        units="m/s",
+    )
+    mocker.add_curves_global(
+        sp_heat("historical", -1),
+        TestData.longitudes,
+        TestData.latitudes,
+        [5.0, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60],
+        np.array(
+            [
+                327.28,
+                315.19,
+                273.28,
+                216.43,
+                163.65,
+                115.62,
+                66.96,
+                1.26,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+            ]
+        ),
+    )
+    mocker.add_curves_global(
+        sp_heat("ssp585", 2050),
+        TestData.longitudes,
+        TestData.latitudes,
+        [5.0, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60],
+        np.array(
+            [
+                363.65,
+                350.21,
+                303.64,
+                240.48,
+                181.83,
+                128.47,
+                74.40,
+                1.40,
+                0.0,
+                0.0,
+                0.0,
+                0.0,
+            ]
+        ),
+    )
+    mocker.add_curves_global(
+        sp_heat2("historical", -1),
+        TestData.longitudes,
+        TestData.latitudes,
+        TestData.temperature_thresholds,
+        TestData.degree_days_above_index_1,
+    )
+    mocker.add_curves_global(
+        sp_heat2("ssp585", 2050),
+        TestData.longitudes,
+        TestData.latitudes,
+        TestData.temperature_thresholds,
+        TestData.degree_days_above_index_2,
+    )
+    mocker.add_curves_global(
+        sp_fire("historical", -1),
+        TestData.longitudes,
+        TestData.latitudes,
+        [0],
+        [0.15],
+    )
+    mocker.add_curves_global(
+        sp_fire("ssp585", 2050),
+        TestData.longitudes,
+        TestData.latitudes,
+        [0],
+        [0.2],
+    )
+    mocker.add_curves_global(
+        sp_hail("historical", -1),
+        TestData.longitudes,
+        TestData.latitudes,
+        [0],
+        [2.15],
+    )
+    mocker.add_curves_global(
+        sp_hail("ssp585", 2050),
+        TestData.longitudes,
+        TestData.latitudes,
+        [0],
+        [4],
+    )
+    mocker.add_curves_global(
+        sp_drought("historical", -1),
+        TestData.longitudes,
+        TestData.latitudes,
+        # data should be this way around, consistent with temperature type threshold curves
+        [0.0, -1.0, -1.5, -2.0, -2.5, -3.0, -3.6],
+        np.array([6.5, 2.1, 0.86, 0.29, 0.058, 0.0, 0.0]),
+    )
+    mocker.add_curves_global(
+        sp_drought("ssp585", 2050),
+        TestData.longitudes,
+        TestData.latitudes,
+        [0.0, -1.0, -1.5, -2.0, -2.5, -3.0, -3.6],
+        np.array([7.3, 3.7, 2.4, 1.5, 0.56, 0.075, 0.0]),
+    )
+    mocker.add_curves_global(
+        sp_precipitation("historical", -1),
+        TestData.longitudes,
+        TestData.latitudes,
+        [0],
+        [10],
+    )
+    mocker.add_curves_global(
+        sp_precipitation("ssp585", 2050),
+        TestData.longitudes,
+        TestData.latitudes,
+        [0],
+        [70],
+    )
+
+    return ZarrHazardModel(source_paths=get_default_source_paths(), store=mocker.store)
+
+
+def test_generic_model_via_requests_default_vulnerability():
+    scenarios = ["ssp585", "historical"]
+    years = [2050]
+
+    # hazard_model = ZarrHazardModel(source_paths=get_default_source_paths())
+    hazard_model = create_hazard_model(scenarios, years)
+    assets = create_assets()
+    request_dict = {
+        "assets": create_assets_json(assets),
+        "include_asset_level": True,
+        "include_measures": True,
+        "include_calc_details": True,
+        "years": years,
+        "scenarios": scenarios,
+    }
+
+    container = Container()
+
+    class TestHazardModelFactory(HazardModelFactory):
+        def hazard_model(
+            self,
+            interpolation: Optional[str] = "floor",
+            provider_max_requests: Dict[str, int] = {},
+            interpolate_years: bool = False,
+        ):
+            return hazard_model
+
+    container.override_providers(
+        hazard_model_factory=providers.Factory(TestHazardModelFactory)
+    )
+    container.override_providers(
+        config=providers.Configuration(default={"zarr_sources": ["embedded"]})
+    )
+    container.override_providers(inventory_reader=None)
+    container.override_providers(zarr_reader=None)
+    container.override_providers(sig_figures=6)
+
+    requester = container.requester()
+    res = requester.get(request_id="get_asset_impact", request_dict=request_dict)
+    response = AssetImpactResponse.model_validate_json(res)
+
+    res = next(
+        ma
+        for ma in response.risk_measures.measures_for_assets
+        if ma.key.hazard_type == "RiverineInundation"
+    )
+    np.testing.assert_allclose(res.measures_0, [0.0959039, 0.0959039])
+
+    # now test the ability to return scores based on hazard indicator ID if needed
+
+    test_measure_defn = ScoreBasedRiskMeasureDefinition(
+        hazard_types=["Fire"], values=[], underlying_measures=[]
+    )
+
+    class TestMeasuresWithHazardIndicatorID(RiskMeasureCalculator):
+        def calc_measure(
+            self,
+            hazard_type: Type[Hazard],
+            base_impact: Sequence[AssetImpactResult],
+            impact: Sequence[AssetImpactResult],
+        ) -> Measure | dict[str | None, Measure]:
+            return {
+                impact[0].impact.hazard_indicator_id: Measure(
+                    0, 0.001, test_measure_defn
+                ),
+                None: Measure(0, 0.002, test_measure_defn),
+            }
+
+        def supported_hazards(self):
+            return [Fire]
+
+        def get_definition(self, hazard_type, hazard_indicator_id):
+            return test_measure_defn
+
+    class TestMeasuresFactory(RiskMeasuresFactory):
+        def asset_calculators(self, use_case_id: str):
+            return {Asset: TestMeasuresWithHazardIndicatorID()}
+
+        def portfolio_calculator(self, use_case_id: str):
+            return NullAssetBasedPortfolioRiskMeasureCalculator()
+
+    container.override_providers(
+        measures_factory=providers.Factory(TestMeasuresFactory)
+    )
+    container.reset_singletons()
+    requester = container.requester()
+    res = requester.get(request_id="get_asset_impact", request_dict=request_dict)
+    response = AssetImpactResponse.model_validate_json(res)
+    # just check that measures are hazard_indicator_id-level
+    assert (
+        response.risk_measures.measures_for_assets[0].key.hazard_indicator_id
+        == "fire_probability"
+    )
+
+
+def test_generic_model():
+    scenarios = ["ssp585"]
+    years = [2050]
+
+    assets = [
+        Asset(TestData.latitudes[0], TestData.longitudes[0], id=f"unique_id_{i}")
+        for i in range(2)
+    ]
+    # assets = [RealEstateAsset(TestData.latitudes[0], TestData.longitudes[0], location="Asia", type="Buildings/Industrial") for i in range(2)]
+    hazard_model = create_hazard_model(scenarios, years)
+    generic_measures = GenericScoreBasedRiskMeasures()
+
+    model = AssetLevelRiskModel(
+        hazard_model,
+        _vulnerability_models(),
+        {Asset: generic_measures, RealEstateAsset: generic_measures},
+        NullAssetBasedPortfolioRiskMeasureCalculator(),
+    )
+    measure_ids_for_asset, definitions, _ = model.populate_measure_definitions(assets)
+    _, measures = model.calculate_risk_measures(
+        assets, scenarios=scenarios, years=years
+    )
+    np.testing.assert_approx_equal(
+        measures[MeasureKey(assets[0], scenarios[0], years[0], Wind)].measure_0,
+        0.0101490442129,
+    )
+    # another check on drought.
+    # thresholds:
+    # [0.0, -1.0, -1.5, -2.0, -2.5, -3.0, -3.6],
+    # months/year above threshold:
+    # [6.5, 2.1, 0.86, 0.29, 0.058, 0.0, 0.0]
+    # [7.3, 3.7, 2.4, 1.5, 0.56, 0.075, 0.0]
+    # points_x = (np.array([-2, -2.5, -3, -3.5]),)
+    # points_y = (np.array([0, 0.1, 0.2, 1.0]),)
+    expected_hist = 0.058 * 0.15 / 12 + (0.29 - 0.058) * 0.05 / 12
+    expected_fut = (
+        0.075 * 0.6 / 12 + (0.56 - 0.075) * 0.15 / 12 + (1.5 - 0.56) * 0.05 / 12
+    )
+
+    np.testing.assert_approx_equal(
+        measures[MeasureKey(assets[0], scenarios[0], years[0], Drought)].measure_0,
+        expected_fut - expected_hist,
+    )
+    np.testing.assert_equal(
+        measures[MeasureKey(assets[0], scenarios[0], years[0], Drought)].score,
+        Category.MEDIUM,
+    )
+
+    # check some edge cases
+    # 1) for SSP245 Hail data not available
+    model = AssetLevelRiskModel(
+        hazard_model,
+        _vulnerability_models({Hail: None}),
+        {Asset: generic_measures, RealEstateAsset: generic_measures},
+        NullAssetBasedPortfolioRiskMeasureCalculator(),
+    )
+    _, measures = model.calculate_risk_measures(
+        assets, scenarios=["ssp245"], years=years
+    )
+    np.testing.assert_equal(
+        measures[MeasureKey(assets[0], "ssp245", years[0], Hail)].score,
+        Category.NO_DATA,
+    )
+    # 2) have a non-matching asset, so 'no vulnerability'
+    assets = [
+        Asset(
+            TestData.latitudes[0],
+            TestData.longitudes[0],
+            id="unique_id_0",
+            type="type_not_in_model",
         )
+    ]
+    model = AssetLevelRiskModel(
+        hazard_model,
+        _vulnerability_models({ChronicHeat: None}),
+        {Asset: generic_measures, RealEstateAsset: generic_measures},
+        NullAssetBasedPortfolioRiskMeasureCalculator(),
+    )
+    _, measures = model.calculate_risk_measures(assets, scenarios, years=years)
+    np.testing.assert_equal(
+        measures[MeasureKey(assets[0], scenarios[0], years[0], ChronicHeat)].score,
+        Category.NO_VULNERABILITY,
+    )
 
-    def test_generic_model_via_requests_default_vulnerability(self):
-        scenarios = ["ssp585", "historical"]
-        years = [2050]
 
-        assets = self._create_assets()
-        # hazard_model = ZarrHazardModel(source_paths=get_default_source_paths())
-        hazard_model = self._create_hazard_model(scenarios, years)
+def test_generic_model_via_requests_custom():
+    scenarios = ["ssp585", "historical"]
+    years = [2050]
 
-        request_dict = {
-            "assets": self._create_assets_json(assets),
-            "include_asset_level": False,
-            "include_measures": True,
-            "include_calc_details": True,
-            "years": years,
-            "scenarios": scenarios,
-        }
+    # hazard_model = ZarrHazardModel(source_paths=get_default_source_paths())
+    hazard_model = create_hazard_model(scenarios, years)
+    assets = create_assets()
+    request_dict = {
+        "assets": create_assets_json(assets),
+        "include_asset_level": True,
+        "include_measures": True,
+        "include_calc_details": True,
+        "years": years,
+        "scenarios": scenarios,
+    }
 
-        container = Container()
+    container = Container()
 
-        class TestHazardModelFactory(HazardModelFactory):
-            def hazard_model(
-                self,
-                interpolation: Optional[str] = "floor",
-                provider_max_requests: Dict[str, int] = {},
-                interpolate_years: bool = False,
-            ):
-                return hazard_model
+    class TestHazardModelFactory(HazardModelFactory):
+        def hazard_model(
+            self,
+            interpolation: Optional[str] = "floor",
+            provider_max_requests: Dict[str, int] = {},
+            interpolate_years: bool = False,
+        ):
+            return hazard_model
 
-        container.override_providers(
-            hazard_model_factory=providers.Factory(TestHazardModelFactory)
-        )
-        container.override_providers(
-            config=providers.Configuration(default={"zarr_sources": ["embedded"]})
-        )
-        container.override_providers(inventory_reader=None)
-        container.override_providers(zarr_reader=None)
-        container.override_providers(sig_figures=6)
+    class TestVulnerabilityModelsFactory(PVulnerabilityModelsFactory):
+        def vulnerability_models(
+            self, hazard_scope: dict[type[Hazard], set[str] | None] | None = None
+        ) -> VulnerabilityModels:
+            return _vulnerability_models()
 
-        requester = container.requester()
-        res = requester.get(request_id="get_asset_impact", request_dict=request_dict)
-        response = AssetImpactResponse.model_validate_json(res)
+    class TestMeasuresFactory(RiskMeasuresFactory):
+        def asset_calculators(self, use_case_id: str):
+            return {RealEstateAsset: GenericScoreBasedRiskMeasures()}
 
-        res = next(
-            ma
-            for ma in response.risk_measures.measures_for_assets
-            if ma.key.hazard_type == "RiverineInundation"
-        )
-        np.testing.assert_allclose(res.measures_0, [0.0959039, 0.0959039])
+        def portfolio_calculator(self, use_case_id: str):
+            return AveragingAssetBasedPortfolioRiskMeasureCalculator()
 
-        # now test the ability to return scores based on hazard indicator ID if needed
+    container.override_providers(
+        hazard_model_factory=providers.Factory(TestHazardModelFactory)
+    )
+    container.override_providers(
+        vulnerability_models_factory=providers.Factory(TestVulnerabilityModelsFactory)
+    )
+    container.override_providers(
+        measures_factory=providers.Factory(TestMeasuresFactory)
+    )
+    container.override_providers(
+        config=providers.Configuration(default={"zarr_sources": ["embedded"]})
+    )
+    container.override_providers(inventory_reader=None)
+    container.override_providers(zarr_reader=None)
+    container.override_providers(sig_figures=6)
 
-        test_measure_defn = ScoreBasedRiskMeasureDefinition(
-            hazard_types=["Fire"], values=[], underlying_measures=[]
-        )
+    requester = container.requester()
+    res = requester.get(request_id="get_asset_impact", request_dict=request_dict)
+    # check 'round-trip' validation:
+    response = AssetImpactResponse.model_validate_json(res, strict=False)
+    # check that when there is a placeholder vulnerability model with no impact, the calculation details are still returned.
+    impact_for_placeholder = next(
+        i for i in response.asset_impacts[0].impacts if i.key.hazard_type == "Fire"
+    )
+    assert impact_for_placeholder.calc_details.hazard_path is not None
 
-        class TestMeasuresWithHazardIndicatorID(RiskMeasureCalculator):
-            def calc_measure(
-                self,
-                hazard_type: Type[Hazard],
-                base_impact: Sequence[AssetImpactResult],
-                impact: Sequence[AssetImpactResult],
-            ) -> Measure | dict[str | None, Measure]:
-                return {
-                    impact[0].impact.hazard_indicator_id: Measure(
-                        0, 0.001, test_measure_defn
-                    ),
-                    None: Measure(0, 0.002, test_measure_defn),
-                }
 
-            def supported_hazards(self):
-                return [Fire]
-
-            def get_definition(self, hazard_type, hazard_indicator_id):
-                return test_measure_defn
-
-        class TestMeasuresFactory(RiskMeasuresFactory):
-            def asset_calculators(self, use_case_id: str):
-                return {Asset: TestMeasuresWithHazardIndicatorID()}
-
-            def portfolio_calculator(self, use_case_id: str):
-                return NullAssetBasedPortfolioRiskMeasureCalculator()
-
-        container.override_providers(
-            measures_factory=providers.Factory(TestMeasuresFactory)
-        )
-        container.reset_singletons()
-        requester = container.requester()
-        res = requester.get(request_id="get_asset_impact", request_dict=request_dict)
-        response = AssetImpactResponse.model_validate_json(res)
-        # just check that measures are hazard_indicator_id-level
-        assert (
-            response.risk_measures.measures_for_assets[0].key.hazard_indicator_id
-            == "fire_probability"
-        )
-
-    def test_generic_model(self):
-        scenarios = ["ssp585"]
-        years = [2050]
-
-        assets = [
-            Asset(TestData.latitudes[0], TestData.longitudes[0], id=f"unique_id_{i}")
-            for i in range(2)
-        ]
-        # assets = [RealEstateAsset(TestData.latitudes[0], TestData.longitudes[0], location="Asia", type="Buildings/Industrial") for i in range(2)]
-        hazard_model = self._create_hazard_model(scenarios, years)
-
-        generic_measures = GenericScoreBasedRiskMeasures()
-
-        model = AssetLevelRiskModel(
-            hazard_model,
-            _vulnerability_models(),
-            {Asset: generic_measures, RealEstateAsset: generic_measures},
-            NullAssetBasedPortfolioRiskMeasureCalculator(),
-        )
-        measure_ids_for_asset, definitions, _ = model.populate_measure_definitions(
-            assets
-        )
-        _, measures = model.calculate_risk_measures(
-            assets, scenarios=scenarios, years=years
-        )
-        np.testing.assert_approx_equal(
-            measures[MeasureKey(assets[0], scenarios[0], years[0], Wind)].measure_0,
-            0.0101490442129,
-        )
-        # another check on drought.
-        # thresholds:
-        # [0.0, -1.0, -1.5, -2.0, -2.5, -3.0, -3.6],
-        # months/year above threshold:
-        # [6.5, 2.1, 0.86, 0.29, 0.058, 0.0, 0.0]
-        # [7.3, 3.7, 2.4, 1.5, 0.56, 0.075, 0.0]
-        # points_x = (np.array([-2, -2.5, -3, -3.5]),)
-        # points_y = (np.array([0, 0.1, 0.2, 1.0]),)
-        expected_hist = 0.058 * 0.15 / 12 + (0.29 - 0.058) * 0.05 / 12
-        expected_fut = (
-            0.075 * 0.6 / 12 + (0.56 - 0.075) * 0.15 / 12 + (1.5 - 0.56) * 0.05 / 12
-        )
-
-        np.testing.assert_approx_equal(
-            measures[MeasureKey(assets[0], scenarios[0], years[0], Drought)].measure_0,
-            expected_fut - expected_hist,
-        )
-        np.testing.assert_equal(
-            measures[MeasureKey(assets[0], scenarios[0], years[0], Drought)].score,
-            Category.MEDIUM,
-        )
-
-        # check some edge cases
-        # 1) for SSP245 Hail data not available
-        model = AssetLevelRiskModel(
-            hazard_model,
-            _vulnerability_models({Hail: None}),
-            {Asset: generic_measures, RealEstateAsset: generic_measures},
-            NullAssetBasedPortfolioRiskMeasureCalculator(),
-        )
-        _, measures = model.calculate_risk_measures(
-            assets, scenarios=["ssp245"], years=years
-        )
-        np.testing.assert_equal(
-            measures[MeasureKey(assets[0], "ssp245", years[0], Hail)].score,
-            Category.NO_DATA,
-        )
-        # 2) have a non-matching asset, so 'no vulnerability'
-        assets = [
-            Asset(
-                TestData.latitudes[0],
-                TestData.longitudes[0],
-                id="unique_id_0",
-                type="type_not_in_model",
-            )
-        ]
-        model = AssetLevelRiskModel(
-            hazard_model,
-            _vulnerability_models({ChronicHeat: None}),
-            {Asset: generic_measures, RealEstateAsset: generic_measures},
-            NullAssetBasedPortfolioRiskMeasureCalculator(),
-        )
-        _, measures = model.calculate_risk_measures(assets, scenarios, years=years)
-        np.testing.assert_equal(
-            measures[MeasureKey(assets[0], scenarios[0], years[0], ChronicHeat)].score,
-            Category.NO_VULNERABILITY,
-        )
-
-    def test_generic_model_via_requests_custom(self):
-        scenarios = ["ssp585", "historical"]
-        years = [2050]
-
-        assets = self._create_assets()
-        # hazard_model = ZarrHazardModel(source_paths=get_default_source_paths())
-        hazard_model = self._create_hazard_model(scenarios, years)
-
-        request_dict = {
-            "assets": self._create_assets_json(assets),
-            "include_asset_level": True,
-            "include_measures": True,
-            "include_calc_details": True,
-            "years": years,
-            "scenarios": scenarios,
-        }
-
-        container = Container()
-
-        class TestHazardModelFactory(HazardModelFactory):
-            def hazard_model(
-                self,
-                interpolation: Optional[str] = "floor",
-                provider_max_requests: Dict[str, int] = {},
-                interpolate_years: bool = False,
-            ):
-                return hazard_model
-
-        class TestVulnerabilityModelsFactory(PVulnerabilityModelsFactory):
-            def vulnerability_models(
-                self, hazard_scope: dict[type[Hazard], set[str] | None] | None = None
-            ) -> VulnerabilityModels:
-                return _vulnerability_models()
-
-        class TestMeasuresFactory(RiskMeasuresFactory):
-            def asset_calculators(self, use_case_id: str):
-                return {RealEstateAsset: GenericScoreBasedRiskMeasures()}
-
-            def portfolio_calculator(self, use_case_id: str):
-                return AveragingAssetBasedPortfolioRiskMeasureCalculator()
-
-        container.override_providers(
-            hazard_model_factory=providers.Factory(TestHazardModelFactory)
-        )
-        container.override_providers(
-            vulnerability_models_factory=providers.Factory(
-                TestVulnerabilityModelsFactory
-            )
-        )
-        container.override_providers(
-            measures_factory=providers.Factory(TestMeasuresFactory)
-        )
-        container.override_providers(
-            config=providers.Configuration(default={"zarr_sources": ["embedded"]})
-        )
-        container.override_providers(inventory_reader=None)
-        container.override_providers(zarr_reader=None)
-        container.override_providers(sig_figures=6)
-
-        requester = container.requester()
-        res = requester.get(request_id="get_asset_impact", request_dict=request_dict)
-        # check 'round-trip' validation:
-        response = AssetImpactResponse.model_validate_json(res, strict=False)
-        # check that when there is a placeholder vulnerability model with no impact, the calculation details are still returned.
-        impact_for_placeholder = next(
-            i for i in response.asset_impacts[0].impacts if i.key.hazard_type == "Fire"
-        )
-        assert impact_for_placeholder.calc_details.hazard_path is not None
-
-    def test_scores_mapping_for_regression_tests(self):
-        assert map_to_original_category(Category.ERROR) == OriginalCategory.NODATA
-        assert map_to_original_category(-3) == 0
-        assert map_to_original_category(Category.NO_DATA) == OriginalCategory.NODATA
-        assert map_to_original_category(Category.VERY_LOW) == OriginalCategory.LOW
+def test_scores_mapping_for_regression_tests():
+    assert map_to_original_category(Category.ERROR) == OriginalCategory.NODATA
+    assert map_to_original_category(-3) == 0
+    assert map_to_original_category(Category.NO_DATA) == OriginalCategory.NODATA
+    assert map_to_original_category(Category.VERY_LOW) == OriginalCategory.LOW

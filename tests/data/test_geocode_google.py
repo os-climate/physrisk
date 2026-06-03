@@ -16,6 +16,7 @@ from physrisk.data.geocode_google import (
     _DESTINATIONS_FIELD_MASK,
     _DESTINATIONS_URL,
     _GEOCODE_ADDRESS_URL,
+    _RateLimiter,
     _parse_geojson,
     _parse_granularity,
     _parse_structure_type,
@@ -63,6 +64,7 @@ _ADDRESS_RESPONSE = {
             "granularity": "ROOFTOP",
             "formattedAddress": "1600 Amphitheatre Pkwy, Mountain View, CA 94043, USA",
             "placeId": "ChIJY8sv5-i2j4AR",
+            "types": ["street_address"],
         }
     ]
 }
@@ -74,12 +76,14 @@ _AMBIGUOUS_ADDRESS_RESPONSE = {
             "granularity": "APPROXIMATE",
             "formattedAddress": "High Street, London, UK",
             "placeId": "abc",
+            "types": ["route", "political"],
         },
         {
             "location": {"latitude": 51.5, "longitude": -0.1},
             "granularity": "APPROXIMATE",
             "formattedAddress": "High Street, Manchester, UK",
             "placeId": "def",
+            "types": ["route", "political"],
         },
     ]
 }
@@ -231,6 +235,7 @@ async def test_geocode_returns_result(default_session):
     assert isinstance(result.building_shape, Polygon)
     assert result.structure_type is StructureType.BUILDING
     assert result.structure_type.is_building_level is True
+    assert result.types == ["street_address"]
     assert result.candidate_count == 1
 
 
@@ -450,6 +455,76 @@ async def test_geocode_no_region_code_omitted_from_params():
         await geocoder.geocode("Some Address")
 
     assert "regionCode" not in session.get.call_args.kwargs["params"]
+
+
+# ---------------------------------------------------------------------------
+# types field
+# ---------------------------------------------------------------------------
+
+
+async def test_geocode_types_populated():
+    session = _mock_session()
+    async with GoogleGeocoder("test-key", session=session) as geocoder:
+        result = await geocoder.geocode("Some Address")
+
+    assert result is not None
+    assert result.types == ["street_address"]
+
+
+async def test_geocode_types_empty_when_absent_from_response():
+    address_payload = {
+        "results": [{"location": _LOCATION, "formattedAddress": "X", "placeId": "Y"}]
+    }
+    session = _mock_session(address_payload=address_payload)
+    async with GoogleGeocoder("test-key", session=session) as geocoder:
+        result = await geocoder.geocode("Some Address")
+
+    assert result is not None
+    assert result.types == []
+
+
+# ---------------------------------------------------------------------------
+# Rate limiting
+# ---------------------------------------------------------------------------
+
+
+def test_rate_limiter_disabled_when_requests_per_second_is_none():
+    geocoder = GoogleGeocoder("key", requests_per_second=None)
+    assert geocoder._rate_limiter is None
+
+
+def test_rate_limiter_enabled_by_default():
+    geocoder = GoogleGeocoder("key")
+    assert geocoder._rate_limiter is not None
+
+
+async def test_geocode_rate_limiter_acquire_is_called():
+    session = _mock_session()
+    async with GoogleGeocoder(
+        "test-key", session=session, requests_per_second=25.0
+    ) as geocoder:
+        geocoder._rate_limiter.acquire = AsyncMock()
+        await geocoder.geocode("Some Address")
+
+    geocoder._rate_limiter.acquire.assert_called_once()
+
+
+async def test_rate_limiter_burst_capacity_exhausted_then_delays():
+    """After the initial burst tokens are spent, acquire() should sleep."""
+    limiter = _RateLimiter(2.0)  # 2/s → burst of 2, then ~0.5 s per token
+
+    sleep_calls: list[float] = []
+
+    async def fake_sleep(delay: float) -> None:
+        sleep_calls.append(delay)
+
+    with patch("physrisk.data.geocode_google.asyncio.sleep", fake_sleep):
+        await limiter.acquire()  # token 1 — immediate
+        await limiter.acquire()  # token 2 — immediate (burst)
+        await limiter.acquire()  # token 3 — burst exhausted, must sleep
+
+    assert len(sleep_calls) >= 1
+    assert sleep_calls[0] == pytest.approx(0.5, abs=0.05)
 
 
 # ---------------------------------------------------------------------------

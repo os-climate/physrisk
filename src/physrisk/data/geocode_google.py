@@ -168,7 +168,9 @@ class GoogleGeocoder:
         self._region_code = region_code
         self._fetch_building_shape = fetch_building_shape
         self._semaphore = asyncio.Semaphore(max_concurrency)
-        self._rate_limiter = _RateLimiter(requests_per_second) if requests_per_second else None
+        self._rate_limiter = (
+            _RateLimiter(requests_per_second) if requests_per_second else None
+        )
 
     async def __aenter__(self) -> "GoogleGeocoder":
         if self._external_session is None:

@@ -249,7 +249,6 @@ class Requester:
             message = (
                 f"Empty for the combination of the following request parameters:\n"
                 f"include_all={request.include_all},\n"
-                f"USE_CASE_ID={request.use_case_id},\n"
                 f"selected_hazard_list={request.selected_hazards_list}"
             )
 
@@ -414,7 +413,9 @@ def _get_hazard_data_description(
 def _get_hazard_data(
     request: HazardDataRequest,
     hazard_model: HazardModel,
-    sig_figures: Callable[[Union[np.ndarray, float]], np.ndarray] = lambda x: x,
+    sig_figures: Callable[
+        [Union[np.ndarray, float]], Union[float, np.ndarray]
+    ] = lambda x: x,
 ):
     # if any(
     #     not _read_permitted(request.group_ids, inventory.resources_by_type_id[(i.event_type, i.model)][0])
@@ -471,16 +472,16 @@ def _get_hazard_data(
         intensity_curves = [
             (
                 IntensityCurve(
-                    intensities=list(sig_figures(resp.intensities)),
-                    index_values=list(sig_figures(resp.return_periods)),
+                    intensities=np.asarray(sig_figures(resp.intensities)).tolist(),
+                    index_values=np.asarray(sig_figures(resp.return_periods)).tolist(),
                     index_name="return period",
                     return_periods=[],
                 )
                 if isinstance(resp, hmHazardEventDataResponse)
                 else (
                     IntensityCurve(
-                        intensities=list(sig_figures(resp.parameters)),
-                        index_values=list(sig_figures(resp.param_defns)),
+                        intensities=np.asarray(sig_figures(resp.parameters)).tolist(),
+                        index_values=np.asarray(sig_figures(resp.param_defns)).tolist(),
                         index_name="threshold",
                         return_periods=[],
                     )
@@ -658,18 +659,28 @@ def compile_asset_impacts(
                 if v.event is not None and v.vulnerability is not None:
                     hazard_exceedance = v.event.to_exceedance_curve()
                     vulnerability_distribution = VulnerabilityDistrib(
-                        intensity_bin_edges=sig_figures(v.vulnerability.intensity_bins),
-                        impact_bin_edges=sig_figures(v.vulnerability.impact_bins),
-                        prob_matrix=sig_figures(v.vulnerability.prob_matrix),
+                        intensity_bin_edges=np.asarray(
+                            sig_figures(v.vulnerability.intensity_bins)
+                        ),
+                        impact_bin_edges=np.asarray(
+                            sig_figures(v.vulnerability.impact_bins)
+                        ),
+                        prob_matrix=np.asarray(
+                            sig_figures(v.vulnerability.prob_matrix)
+                        ),
                     )
                     calc_details = CalculationDetails(
                         hazard_exceedance=ExceedanceCurve(
-                            values=sig_figures(hazard_exceedance.values),
-                            exceed_probabilities=sig_figures(hazard_exceedance.probs),
+                            values=np.asarray(sig_figures(hazard_exceedance.values)),
+                            exceed_probabilities=np.asarray(
+                                sig_figures(hazard_exceedance.probs)
+                            ),
                         ),
                         hazard_distribution=Distribution(
-                            bin_edges=sig_figures(v.event.intensity_bin_edges),
-                            probabilities=sig_figures(v.event.prob),
+                            bin_edges=np.asarray(
+                                sig_figures(v.event.intensity_bin_edges)
+                            ),
+                            probabilities=np.asarray(sig_figures(v.event.prob)),
                         ),
                         vulnerability_distribution=vulnerability_distribution,
                         hazard_path=v.impact.path,

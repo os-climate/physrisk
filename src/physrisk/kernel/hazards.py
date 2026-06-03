@@ -79,6 +79,7 @@ class Fire(Hazard):
     kind = HazardKind.ACUTE
     indicator_data = {
         "fire_probability": IndicatorData.PARAMETERS,
+        "daily_probability_fwi20": IndicatorData.PARAMETERS,
     }
     pass
 
@@ -133,3 +134,11 @@ def all_hazards():
 
 def hazard_class(name: str) -> Type[Hazard]:
     return getattr(sys.modules[__name__], name)
+
+
+class Landslide(Hazard):
+    kind = HazardKind.ACUTE
+
+
+class Earthquake(Hazard):
+    kind = HazardKind.ACUTE

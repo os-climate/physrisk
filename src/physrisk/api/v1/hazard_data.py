@@ -214,6 +214,9 @@ class StaticInformationResponse(BaseModel):
     scenario_descriptions: Dict[str, str] = Field(
         description="For each scenario identifier (key, e.g. 'ssp585', 'rcp8p5'), the description markdown (value)."
     )
+    oed_occupancy_codes: Dict[int, str] = Field(
+        description="OED occupancy codes: mapping of OED Code (integer) to OED Label."
+    )
 
 
 def _supported_hazard_type_names() -> set[str]:

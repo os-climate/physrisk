@@ -164,14 +164,12 @@ def save_inputs_cache_store(store: Store, file: str):
 def pytest_addoption(parser):
     parser.addoption(
         "--update_expected",
-        action="store_true",
-        default=False,
+        action="store",
         help="Update the test expected result if true",
     )
     parser.addoption(
         "--update_inputs",
-        action="store_true",
-        default=False,
+        action="store",
         help="Update the test mocked data if true",
     )
 

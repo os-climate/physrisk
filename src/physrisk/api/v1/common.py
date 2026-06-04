@@ -2,7 +2,16 @@ from typing import Annotated, List, Optional, Sequence, Union
 
 import numpy as np
 import numpy.typing as npt
-from pydantic import BaseModel, BeforeValidator, ConfigDict, Field, PlainSerializer
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    ConfigDict,
+    Field,
+    PlainSerializer,
+    field_validator,
+)
+
+from physrisk.data.static.oed_occupancy import OED_OCCUPANCY_CODES
 
 
 def before_validator(list: list) -> npt.NDArray:
@@ -99,6 +108,13 @@ class Asset(BaseModel):
         description="Power generation capacity in MW for power generating assets.",
         kw_only=True,
     )
+
+    @field_validator("occupancy_code")
+    @classmethod
+    def validate_occupancy_code(cls, v: int) -> int:
+        if v not in OED_OCCUPANCY_CODES:
+            raise ValueError(f"occupancy_code {v} is not a valid OED occupancy code")
+        return v
 
     model_config = {
         "extra": "allow",

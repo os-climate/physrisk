@@ -1,6 +1,12 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
+from typing import Optional, Protocol, runtime_checkable
+
+from physrisk.kernel.hazards import (
+    CoastalInundation,
+    PluvialInundation,
+    RiverineInundation,
+)
 
 from pyproj import Transformer
 from shapely.ops import transform
@@ -252,10 +258,23 @@ class PowerGeneratingAsset(OEDAsset, SimpleTypeLocationAsset):
             if 0 < len(archetypes):
                 self.primary_fuel = FuelKind[archetypes[0]]
 
+    def get_protection_return_period(self, hazard_type: type) -> Optional[float]:
+        if issubclass(
+            hazard_type, (CoastalInundation, PluvialInundation, RiverineInundation)
+        ):
+            if self.primary_fuel == FuelKind.Hydro:
+                return 250.0
+        return None
+
 
 class RealEstateAsset(OEDAsset, SimpleTypeLocationAsset):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+
+
+@runtime_checkable
+class HasStandardOfProtection(Protocol):
+    def get_protection_return_period(self, hazard_type: type) -> Optional[float]: ...
 
 
 class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
@@ -288,11 +307,17 @@ class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
     # Designed to be protected against 250-year inundation events in the
     # baseline except for nuclear power plants which are designed to be
     # protected against 10,000-year inundation events in the baseline:
-    def get_inundation_protection_return_period(self):
-        if self.primary_fuel is not None:
-            if self.primary_fuel == FuelKind.Nuclear:
-                return 10000.0
+    def get_inundation_protection_return_period(self) -> float:
+        if self.primary_fuel is not None and self.primary_fuel == FuelKind.Nuclear:
+            return 10000.0
         return 250.0
+
+    def get_protection_return_period(self, hazard_type: type) -> Optional[float]:
+        if issubclass(
+            hazard_type, (CoastalInundation, PluvialInundation, RiverineInundation)
+        ):
+            return self.get_inundation_protection_return_period()
+        return super().get_protection_return_period(hazard_type)
 
 
 class TestAsset(Asset):

@@ -43,7 +43,9 @@ def _format_dict_as_source(codes: dict) -> str:
     return "\n".join(lines)
 
 
-@pytest.mark.skipif(not _run_manual, reason="manual update utility — set RUN_MANUAL_TESTS=1 to run")
+@pytest.mark.skipif(
+    not _run_manual, reason="manual update utility — set RUN_MANUAL_TESTS=1 to run"
+)
 def test_update_oed_occupancy_codes():
     """
     Fetches the current OccupancyValues.csv from OasisLMF/ODS_OpenExposureData and

@@ -1,9 +1,10 @@
 from enum import Flag, auto
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
-from pydantic import BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field, computed_field, field_validator
 
-from physrisk.api.v1.common import BaseHazardRequest, HazardType, IntensityCurve
+from physrisk.api.v1.common import BaseHazardRequest, IntensityCurve
+from physrisk.kernel.hazards import all_hazards
 
 
 class Colormap(BaseModel):
@@ -215,19 +216,44 @@ class StaticInformationResponse(BaseModel):
     )
 
 
+def _supported_hazard_type_names() -> set[str]:
+    return {hazard.__name__ for hazard in all_hazards()}
+
+
 class HazardDataRequestItem(BaseModel):
     longitudes: List[float]
     latitudes: List[float]
     request_item_id: str
-    hazard_type: Optional[HazardType] = None  # e.g. RiverineInundation
-    event_type: Optional[str] = (
-        None  # e.g. RiverineInundation; deprecated: use hazard_type
+    hazard_type: str | None = Field(
+        default=None,
+        description="Type of hazard, e.g. RiverineInundation.",
+        json_schema_extra={"enum": sorted(_supported_hazard_type_names())},
+        validation_alias=AliasChoices("hazard_type", "event_type"),
     )
     indicator_id: str
     indicator_model_gcm: Optional[str] = ""
     path: Optional[str] = None
     scenario: str  # e.g. rcp8p5
     year: int
+
+    @field_validator("hazard_type")
+    @classmethod
+    def validate_hazard_type(cls, hazard_type: Optional[str]) -> Optional[str]:
+        if hazard_type is None:
+            return None
+        supported_hazard_types = _supported_hazard_type_names()
+        if hazard_type not in supported_hazard_types:
+            raise ValueError(
+                f"hazard_type must be one of the hazard classes defined in physrisk.kernel.hazards. "
+                f"Got {hazard_type!r}; expected one of {sorted(supported_hazard_types)}."
+            )
+        return hazard_type
+
+    @computed_field(description="Deprecated: same as hazard_type")  # type: ignore[misc]
+    @property
+    def event_type(self) -> Optional[str]:
+        """Deprecated: use hazard_type instead."""
+        return self.hazard_type
 
 
 class HazardDataRequest(BaseHazardRequest):
@@ -299,10 +325,22 @@ class HazardDataRequest(BaseHazardRequest):
 class HazardDataResponseItem(BaseModel):
     intensity_curve_set: List[IntensityCurve]
     request_item_id: str
-    event_type: Optional[str]
-    model: str
+    hazard_type: str | None
+    indicator_id: str
     scenario: str
     year: int
+
+    @computed_field(description="Deprecated: same as hazard_type")  # type: ignore[misc]
+    @property
+    def event_type(self) -> str | None:
+        """Deprecated: use hazard_type instead."""
+        return self.hazard_type
+
+    @computed_field(description="Deprecated: same as indicator_id")  # type: ignore[misc]
+    @property
+    def model(self) -> str:
+        """Deprecated: use indicator_id instead."""
+        return self.indicator_id
 
 
 class HazardDataResponse(BaseModel):

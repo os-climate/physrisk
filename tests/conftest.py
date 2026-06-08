@@ -62,7 +62,7 @@ def clear_credentials(monkeypatch):
 
 
 @pytest.fixture(autouse=True)
-def skip_if_needs_live_data(request):
+def skip_if_needs_live_data(request, load_credentials):
     env = os.environ.get("PHYSRISK_ENVIRONMENT", "")
 
     marker = request.node.get_closest_marker("live_data")

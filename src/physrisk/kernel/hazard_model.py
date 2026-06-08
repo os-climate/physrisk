@@ -1,6 +1,5 @@
 import sys
 from abc import ABC, abstractmethod
-from collections import defaultdict
 from typing import (
     Any,
     Dict,
@@ -294,6 +293,11 @@ class HazardModelFactory(Protocol):
     ) -> HazardModel:
         """Create a HazardModel instance based on a number of options.
 
+        provider_max_requests gives the maximum number of API requests permitted if an external
+        provider is used. In addition:
+        -1 means: do not use external provider
+        0 means: use external provider but 0 API calls allowed: only rely on cached results (if applicable).
+
         Args:
             interpolation (str): Interpolation type to use for sub-pixel raster interpolation (where
             this is supported by hazard models).
@@ -312,25 +316,3 @@ class DataSource(Protocol):
     def __call__(
         self, longitudes, latitudes, *, model: str, scenario: str, year: int
     ) -> Tuple[np.ndarray, np.ndarray]: ...
-
-
-class CompositeHazardModel(HazardModel):
-    """Hazard Model that uses other models to process EventDataRequests."""
-
-    def __init__(self, hazard_models: Dict[type, HazardModel]):
-        self.hazard_models = hazard_models
-
-    def get_hazard_data(
-        self, requests: Sequence[HazardDataRequest]
-    ) -> Mapping[HazardDataRequest, HazardDataResponse]:
-        requests_by_event_type = defaultdict(list)
-
-        for request in requests:
-            requests_by_event_type[request.hazard_type].append(request)
-
-        responses: Dict[HazardDataRequest, HazardDataResponse] = {}
-        for event_type, reqs in requests_by_event_type.items():
-            events_reponses = self.hazard_models[event_type].get_hazard_data(reqs)
-            responses.update(events_reponses)
-
-        return responses

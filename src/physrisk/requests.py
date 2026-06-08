@@ -368,7 +368,7 @@ def _create_inventory(
     request_sources = ["embedded"] if sources is None else [s.lower() for s in sources]
     for source in request_sources:
         if source == "embedded":
-            inventory = EmbeddedInventory()
+            inventory = EmbeddedInventory(include_api_based=True)
             for res in inventory.resources.values():
                 resources.append(res)
             colormaps.update(inventory.colormaps())
@@ -384,15 +384,19 @@ def create_source_paths(inventory: Inventory):
 
 
 def _read_permitted(group_ids: List[str], resource: HazardResource):
-    """_summary_
+    """Check whether HazardResource is available to the user.
 
     Args:
-        group_ids (List[str]): Groups to which requester belongs.
+        group_ids (List[str]): Groups to which user belongs.
         resourceId (str): Resource identifier.
 
     Returns:
         bool: True is requester is permitted access to models comprising resource.
     """
+    providers = ["jba"]  # API-based providers
+    for provider in providers:
+        if resource.path.startswith(f"{provider}") and provider not in group_ids:
+            return False
     return ("osc" in group_ids) or resource.group_id == "public"
 
 

@@ -348,7 +348,7 @@ class CombinedImageCreator(HazardImageCreator):
     def _creator(self, resource_id: str) -> HazardImageCreator:
         return (
             self._jba_image_creator
-            if resource_id.startswith("jba_")
+            if self._jba_image_creator and resource_id.startswith("jba_")
             else self._image_creator
         )
 

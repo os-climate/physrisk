@@ -100,7 +100,7 @@ def requester(clear_credentials):
 @pytest.mark.live_data("dev")
 def test_live_impacts_regression(
     requester: physrisk.requests.Requester, update_expected: bool
-):  # "latitude": 34.556, "longitude": 69.4787
+):
     request = {
         "assets": {
             "items": [

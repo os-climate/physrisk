@@ -14,7 +14,11 @@ from physrisk.kernel.hazard_model import (
 from physrisk.kernel.hazard_model import (
     HazardModelFactory as HazardModelFactoryPhysrisk,
 )
-from physrisk.kernel.hazards import PluvialInundation, RiverineInundation
+from physrisk.kernel.hazards import (
+    CoastalInundation,
+    PluvialInundation,
+    RiverineInundation,
+)
 
 from physrisk.hazard_models.credentials_provider import CredentialsProvider
 from physrisk.hazard_models.hazard_cache import GeometryH3BasedCache
@@ -64,7 +68,9 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
 
 
 class CompositeHazardModel(HazardModel):
-    """Hazard Model that combines internal data from S3 and data sourced via API."""
+    """Hazard Model that combines internal data from S3 and data sourced via API.
+    API-based models currently limited to model from JBA Risk Management, but pattern
+    would be extended for other APIs."""
 
     def __init__(
         self,
@@ -75,13 +81,20 @@ class CompositeHazardModel(HazardModel):
         reader: Optional[ZarrReader] = None,
         interpolation: str = "floor",
         provider_max_requests: Dict[str, int] = {},
+        restrict_coverage: bool = False,
         interpolate_years: bool = False,
+        use_jba_coastal: bool = False,
     ):
         self.credentials = credentials
-        self.max_jba_requests = provider_max_requests.get("jba", 0)
+        self.max_jba_requests = provider_max_requests.get("jba", -1)
         self.jba_hazard_model = (
-            JBAHazardModel(cache_store, credentials, max_requests=self.max_jba_requests)
-            if not self.credentials.jba_api_disabled() and self.max_jba_requests >= 0
+            JBAHazardModel(
+                cache_store,
+                credentials,
+                max_requests=self.max_jba_requests,
+                restrict_coverage=restrict_coverage,
+            )
+            if not self.credentials.jba_api_disabled() and self.max_jba_requests > -1
             else None
         )
         self.zarr_hazard_model = ZarrHazardModel(
@@ -91,14 +104,15 @@ class CompositeHazardModel(HazardModel):
             interpolation=interpolation,
             interpolate_years=interpolate_years,
         )
+        self.use_jba_coastal = use_jba_coastal
 
-    def hazard_model(self, type):
-        if self.jba_hazard_model is not None and (
-            type == RiverineInundation or type == PluvialInundation
-        ):
-            return self.jba_hazard_model
-        else:
-            return self.zarr_hazard_model
+    def _zarr_hint_path(self, request: HazardDataRequest):
+        """Is there a hint path directing to the ZarrHazardModel?"""
+        return (
+            request.hint
+            and request.hint.path
+            and not request.hint.path.startswith("jba_")
+        )
 
     def get_hazard_data(
         self, requests: Sequence[HazardDataRequest]
@@ -106,9 +120,24 @@ class CompositeHazardModel(HazardModel):
         requests_by_model: Dict[HazardModel, List[HazardDataRequest]] = defaultdict(
             list
         )
-
         for request in requests:
-            requests_by_model[self.hazard_model(request.hazard_type)].append(request)
+            if (
+                self.jba_hazard_model
+                and (
+                    request.hazard_type == RiverineInundation
+                    or request.hazard_type == PluvialInundation
+                )
+                and not self._zarr_hint_path(request)
+            ):
+                requests_by_model[self.jba_hazard_model].append(request)
+            elif (
+                self.jba_hazard_model
+                and request.hazard_type == CoastalInundation
+                and not self._zarr_hint_path(request)
+            ):
+                requests_by_model[self.jba_hazard_model].append(request)
+            else:
+                requests_by_model[self.zarr_hazard_model].append(request)
 
         responses: Dict[HazardDataRequest, HazardDataResponse] = {}
 

@@ -128,7 +128,7 @@ class JBAHazardModel(HazardModel):
             credentials if credentials is not None else EnvCredentialsProvider()
         )
         self.default_buffer = default_buffer
-        self.geocoder = geocoder if geocoder is not None else Geocoder()
+        self.geocoder = geocoder if geocoder is not None else Geocoder.instance()
         self.indicators = set(
             [
                 Indicator(hazard_type="RiverineInundation", indicator_id="flood_depth"),

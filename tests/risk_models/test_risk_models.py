@@ -166,7 +166,7 @@ def test_risk_indicator_model():
     measure_ids_for_asset, definitions, measure_ids_for_asset_drilldown = (
         model.populate_measure_definitions(assets)
     )
-    _, measures = model.calculate_risk_measures(
+    _, measures, _ = model.calculate_risk_measures(
         assets, scenarios=scenarios, years=years
     )
 

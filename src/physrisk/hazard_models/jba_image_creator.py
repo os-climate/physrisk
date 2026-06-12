@@ -142,6 +142,7 @@ class JBAImageCreator(HazardImageCreator):
         min_value: Optional[float] = None,
         max_value: Optional[float] = None,
         index_value: Optional[Union[str, float]] = None,
+        scaling: str = "linear",
     ):
         assert tile is not None
 
@@ -177,7 +178,7 @@ class JBAImageCreator(HazardImageCreator):
             return map_defn[str(index)]
 
         rgba = ImageCreator.to_rgba(
-            depth, get_colors, min_value=min_value, max_value=max_value
+            depth, get_colors, min_value=min_value, max_value=max_value, scaling=scaling
         )
         image = Image.fromarray(rgba, mode="RGBA")
 
@@ -370,6 +371,7 @@ class CombinedImageCreator(HazardImageCreator):
         min_value: Optional[float] = None,
         max_value: Optional[float] = None,
         index_value: Optional[Union[str, float]] = None,
+        scaling: str = "linear",
     ):
         return self._creator(resource_id).create_image(
             resource_id,
@@ -381,6 +383,7 @@ class CombinedImageCreator(HazardImageCreator):
             min_value=min_value,
             max_value=max_value,
             index_value=index_value,
+            scaling=scaling,
         )
 
     def get_info(self, resource_id: str, scenario: str, year: int):

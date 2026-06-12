@@ -659,72 +659,12 @@ def aggregate_impacts(
         n_events=n_events,
         event_batch_sz=event_batch_sz,
     )
-    return _summarise_results(all_results, asset_tiv, asset_revenue)
-
-
-def asset_level_drilldown(
-    impacts: dict[ImpactKey, list[AssetImpactResult]],
-    financial_model: FinancialModel,
-    scenario: str,
-    key_year: Optional[int],
-) -> dict[RiskQuantityKey, Quantity]:
-    """Return per-asset AAL and return-period exceedance curves, inferred analytically from ImpactDistribs.
-
-    Unlike :func:`aggregate_impacts` this is purely analytical (no Monte Carlo), so results are
-    exact and fast.  The returned dict is keyed by ``RiskQuantityKey(quantity, asset, None,
-    hazard_type)``; there are no portfolio-level (``asset=None``) entries — use
-    ``aggregate_impacts`` for those.
-
-    Return-period exceedance probabilities are 1/[10, 20, 50, 100, 200, 500, 1000] years.
-
-    Args:
-        impacts: Impact results for each asset and hazard type, as produced by the hazard model.
-        financial_model: Converts fractional impacts to monetary losses (damage, revenue loss).
-        scenario: Scenario identifier (e.g. ``"ssp585"``).
-        key_year: Year for which to retrieve scenario impacts, or ``None`` for historical.
-    """
-    (
-        all_assets,
-        acute_impacted_assets,
-        impacts_exceed_curves,
-        chronic_hazards_in_scope,
-    ) = _classify_impacts(impacts, scenario, key_year)
-    all_assets_list = sorted(all_assets, key=lambda a: a.id if a.id is not None else "")
-    (
-        all_acute_impacted_assets,
-        impacts_exceed_curves_sorted,
-        acute_impacted_asset_indices,
-    ) = _build_acute_structures(acute_impacted_assets, impacts_exceed_curves)
-    chronic_impacts_sorted = _build_chronic_arrays(
-        chronic_hazards_in_scope,
-        all_assets_list,
-        impacts,
-        scenario,
-        key_year,
-        financial_model,
+    portfolio_results = _summarise_results(all_results, asset_tiv, asset_revenue)
+    asset_results = _asset_level_drilldown(
+        sim_inputs, financial_model, asset_tiv, asset_revenue
     )
-    sim_inputs = _SimulationInputs(
-        all_assets=all_assets,
-        all_assets_list=all_assets_list,
-        all_acute_impacted_assets=all_acute_impacted_assets,
-        impacts_exceed_curves_sorted=impacts_exceed_curves_sorted,
-        acute_impacted_asset_indices=acute_impacted_asset_indices,
-        chronic_impacts_sorted=chronic_impacts_sorted,
-        chronic_hazards_in_scope=chronic_hazards_in_scope,
-    )
-    asset_tiv = {
-        asset: financial_model.financial_data_provider.total_insurable_value(
-            asset, "EUR"
-        )
-        for asset in all_assets
-    }
-    asset_revenue = {
-        asset: financial_model.financial_data_provider.revenue_attributable_to_asset(
-            asset, "EUR"
-        )
-        for asset in all_assets
-    }
-    return _asset_level_drilldown(sim_inputs, financial_model, asset_tiv, asset_revenue)
+    # Portfolio keys have asset=None; asset-level keys have a specific asset — no collision.
+    return {**portfolio_results, **asset_results}
 
 
 class EventSeverityProvider(Protocol):

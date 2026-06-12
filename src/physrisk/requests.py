@@ -45,10 +45,8 @@ from physrisk.hazard_models.core_hazards import (
     get_default_source_paths,
 )
 from physrisk.kernel.exposure import JupterExposureMeasure, calculate_exposures
-from physrisk.kernel.financial_model import DefaultFinancialModel
 from physrisk.kernel.hazards import Hazard, all_hazards, hazard_class
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey  # , ImpactKey
-from physrisk.kernel.impact_aggregator import asset_level_drilldown
 from physrisk.kernel.impact_distrib import EmptyImpactDistrib, PlaceholderImpactDistrib
 from physrisk.kernel.risk import (
     PortfolioRiskModel,
@@ -634,21 +632,17 @@ def _get_asset_impacts(
     elif needs_impacts:
         impacts = risk_model.calculate_impacts(_assets, scenarios, years)
 
-    # Asset-level financial drilldown (analytical, not Monte Carlo)
+    # Asset-level financial drilldown — requires portfolio_quantities populated by
+    # calculate_risk_measures above.
     drilldown_req = request.measures_specification
-    if drilldown_req is not None and financial_data_provider is not None:
-        financial_model = DefaultFinancialModel(
-            financial_data_provider, downtime_config=[]
-        )
+    if drilldown_req is not None and portfolio_quantities:
         drilldown_entries: List[RiskMeasuresForAssets] = []
         for scenario in scenarios:
             key_years: List[Optional[int]] = (
                 [None] if scenario == "historical" else list(years)
             )
             for key_year in key_years:
-                results = asset_level_drilldown(
-                    impacts, financial_model, scenario, key_year
-                )
+                results = portfolio_quantities.get((scenario, key_year), {})
                 drilldown_entries.extend(
                     _compile_asset_financial_impacts(
                         results, _assets, scenario, key_year, drilldown_req, sig_figures
@@ -656,7 +650,6 @@ def _get_asset_impacts(
                 )
         if drilldown_entries:
             if risk_measures is None:
-                # create a minimal RiskMeasures container when include_measures is False
                 risk_measures = _create_risk_measures(
                     {},
                     {},
@@ -707,8 +700,8 @@ def _compile_portfolio_impacts(
     results: List[PortfolioImpact] = []
     for (scenario, year), quantities in portfolio_quantities.items():
         for rk, qty in quantities.items():
-            # if rk.hazard_type is None:
-            #    continue  # skip total-portfolio summary entries
+            if rk.asset is not None:
+                continue  # skip asset-level entries; portfolio_quantities merges both
             semi_std = qty.semi_standard_deviation
             results.append(
                 PortfolioImpact(
@@ -737,7 +730,7 @@ def _compile_portfolio_impacts(
 
 
 # Return-period base measure_id → index into the exceedance_curve.values array produced by
-# asset_level_drilldown (aligned with _DRILLDOWN_RETURN_PERIODS = [10,20,50,100,200,500,1000]).
+# _asset_level_drilldown (aligned with _DRILLDOWN_RETURN_PERIODS = [10,20,50,100,200,500,1000]).
 # Output measure_ids combine base + impact type, e.g. "100y_damage", "mean_disruption/revenue".
 _RP_MEASURE_IDS: dict[str, int] = {
     "10y": 0,

@@ -34,6 +34,7 @@ from physrisk.kernel.impact_distrib import (
 )
 from physrisk.kernel.risk import Measure, MeasureKey, RiskMeasureCalculator
 from pint import UnitRegistry
+from physrisk.utils.units import needs_conversion
 
 ureg = UnitRegistry()
 
@@ -445,7 +446,7 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 param = float(
                     np.interp(return_period, resp.return_periods, resp.intensities)
                 )
-                if resp.units != "default":
+                if needs_conversion(resp.units, bounds.units):
                     param = ureg.convert(param, resp.units, bounds.units)
             if math.isnan(param):
                 return Measure(

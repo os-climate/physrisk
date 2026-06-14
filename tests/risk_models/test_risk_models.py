@@ -36,14 +36,14 @@ from physrisk.kernel.hazards import (
 from physrisk.kernel.impact import AssetImpactResult
 from physrisk.kernel.impact_distrib import ImpactType
 from physrisk.kernel.risk import (
-    AssetLevelRiskModel,
+    PortfolioRiskModel,
     Measure,
     MeasureKey,
     NullAssetBasedPortfolioRiskMeasureCalculator,
     RiskMeasureCalculator,
     RiskMeasuresFactory,
 )
-from physrisk.risk_models.portfolio_risk_model import (
+from physrisk.risk_models.score_based_portfolio_risk_model import (
     AveragingAssetBasedPortfolioRiskMeasureCalculator,
 )
 from physrisk.kernel.vulnerability_model import (
@@ -157,7 +157,7 @@ def test_risk_indicator_model():
     assets = create_assets()
     hazard_model = create_hazard_model(scenarios, years)
 
-    model = AssetLevelRiskModel(
+    model = PortfolioRiskModel(
         hazard_model,
         DictBasedVulnerabilityModels(alternate_default_vulnerability_models_scores()),
         {RealEstateAsset: RealEstateToyRiskMeasures()},
@@ -166,7 +166,7 @@ def test_risk_indicator_model():
     measure_ids_for_asset, definitions, measure_ids_for_asset_drilldown = (
         model.populate_measure_definitions(assets)
     )
-    _, measures = model.calculate_risk_measures(
+    _, measures, _ = model.calculate_risk_measures(
         assets, scenarios=scenarios, years=years
     )
 
@@ -593,14 +593,14 @@ def test_generic_model():
     hazard_model = create_hazard_model(scenarios, years)
     generic_measures = GenericScoreBasedRiskMeasures()
 
-    model = AssetLevelRiskModel(
+    model = PortfolioRiskModel(
         hazard_model,
         _vulnerability_models(),
         {Asset: generic_measures, RealEstateAsset: generic_measures},
         NullAssetBasedPortfolioRiskMeasureCalculator(),
     )
     measure_ids_for_asset, definitions, _ = model.populate_measure_definitions(assets)
-    _, measures = model.calculate_risk_measures(
+    _, measures, _ = model.calculate_risk_measures(
         assets, scenarios=scenarios, years=years
     )
     np.testing.assert_approx_equal(
@@ -631,13 +631,13 @@ def test_generic_model():
 
     # check some edge cases
     # 1) for SSP245 Hail data not available
-    model = AssetLevelRiskModel(
+    model = PortfolioRiskModel(
         hazard_model,
         _vulnerability_models({Hail: None}),
         {Asset: generic_measures, RealEstateAsset: generic_measures},
         NullAssetBasedPortfolioRiskMeasureCalculator(),
     )
-    _, measures = model.calculate_risk_measures(
+    _, measures, _ = model.calculate_risk_measures(
         assets, scenarios=["ssp245"], years=years
     )
     np.testing.assert_equal(
@@ -653,13 +653,13 @@ def test_generic_model():
             type="type_not_in_model",
         )
     ]
-    model = AssetLevelRiskModel(
+    model = PortfolioRiskModel(
         hazard_model,
         _vulnerability_models({ChronicHeat: None}),
         {Asset: generic_measures, RealEstateAsset: generic_measures},
         NullAssetBasedPortfolioRiskMeasureCalculator(),
     )
-    _, measures = model.calculate_risk_measures(assets, scenarios, years=years)
+    _, measures, _ = model.calculate_risk_measures(assets, scenarios, years=years)
     np.testing.assert_equal(
         measures[MeasureKey(assets[0], scenarios[0], years[0], ChronicHeat)].score,
         Category.NO_VULNERABILITY,

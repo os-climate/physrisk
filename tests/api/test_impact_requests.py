@@ -82,7 +82,7 @@ def test_extra_fields():
             }
         ],
     }
-    assets = requests.create_assets(Assets(**assets))
+    assets, _ = requests.create_assets(Assets(**assets))
     # in the case of RealEstateAsset, extra fields are allowed, including those not in the Pydantic Asset object
     assert assets[0].capacity == 1000.0
     assert assets[0].extra_field == 2.0

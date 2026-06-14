@@ -38,7 +38,9 @@ def to_exceedance_curve(bin_edges, probs):
     a type of cumulative probability.
     """
     nz = np.asarray(probs > 0).nonzero()
-    fnz = nz[0][0] if len(nz[0]) > 0 else 0
+    if len(nz[0]) == 0:
+        return ExceedanceCurve([0.0], [0.0])
+    fnz = nz[0][0]
     nz_values = bin_edges[fnz:]
     nz_probs = probs[fnz:]
     cum_prob = np.insert(np.cumsum(nz_probs[::-1]), 0, 0.0)[::-1]

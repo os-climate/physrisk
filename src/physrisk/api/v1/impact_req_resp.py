@@ -184,7 +184,7 @@ class RiskMeasureKey(BaseModel):
     hazard_indicator_id: Optional[str] = None
 
 
-class RiskMeasure(BaseModel):
+class ScoreBasedRiskMeasure(BaseModel):
     """A single risk measure, most commonly for a portfolio."""
 
     key: RiskMeasureKey
@@ -236,8 +236,19 @@ class ScoreBasedRiskMeasureSetDefinition(BaseModel):
 class RiskMeasures(BaseModel):
     """Risk measures"""
 
-    measures_for_assets: List[RiskMeasuresForAssets | ScoreBasedRiskMeasuresForAssets]
-    measures_for_portfolio: List[RiskMeasure]
+    measures_for_assets: List[
+        RiskMeasuresForAssets | ScoreBasedRiskMeasuresForAssets
+    ] = Field(
+        default=[],
+        description="Risk measures for the individual assets. These can be quantities such as mean impact, "
+        "aka average annual loss (AAL), or the value for a particular return period. These can also be "
+        "score-based risk measures, where a score (often something operationally meaningful) is inferred from "
+        "one or more underlying measures.",
+    )
+    measures_for_portfolio: List[ScoreBasedRiskMeasure] = Field(
+        default=[],
+        description="Score-based risk measures for the portfolio.",
+    )
     score_based_measure_set_defn: ScoreBasedRiskMeasureSetDefinition
     measures_definitions: Optional[List[RiskMeasureDefinition]] = Field(
         [], description="Definitions of the risk measures."
@@ -278,9 +289,10 @@ class AssetSingleImpact(BaseModel):
     key: ImpactKey
     impact_type: str = Field(
         "damage",
-        description="""'damage' or 'disruption'. Whether the impact is fractional damage to the total insurable
-        value of the asset ('damage') or disruption, expressed as fractional decrease in the revenue attributable
-        to the asset.""",
+        description="Damage or business disruption (to revenue or costs). In the case of 'damage', impacts are a "
+        "fraction of asset total insurable value. In the case of 'disruption' impacts are a fraction of revenue "
+        "attributable to the asset.",
+        examples=["damage", "disruption", "disruption/revenue", "disruption/costs"],
     )
     hazard_indicator_id: str = Field("", description="The ID of the hazard indicator.")
     impact_distribution: Optional[Distribution] = Field(
@@ -309,12 +321,11 @@ class PortfolioImpact(BaseModel):
     impact_exceedance: Optional[ExceedanceCurve] = Field(
         None, description="Impact as exceedance curve."
     )
-    # quantity_type: QuantityType = Field(
-    #     QuantityType.DAMAGE, description="The type of quantity: damage, loss of revenue etc.",
-    # )
     impact_type: str = Field(
         "damage",
-        description="Damage or business disruption (to revenue or costs).",
+        description="Damage or business disruption (to revenue or costs). In the case of 'damage', impacts are a "
+        "fraction of asset total insurable value. In the case of 'disruption' impacts are a fraction of revenue "
+        "attributable to the asset.",
         examples=["damage", "disruption", "disruption/revenue", "disruption/costs"],
     )
     impact_mean: Optional[float]
@@ -344,9 +355,26 @@ class AssetLevelImpact(BaseModel):
 class AssetImpactResponse(BaseModel):
     """Response to impact request."""
 
-    asset_impacts: Optional[List[AssetLevelImpact]] = None
-    portfolio_impacts: Optional[List[PortfolioImpact]] = None
-    risk_measures: Optional[RiskMeasures] = None
+    asset_impacts: Optional[List[AssetLevelImpact]] = Field(
+        None,
+        description="Impacts for each asset and hazard type combination. Impacts are damage or disruption. "
+        "Damage is specified as a fraction of asset total insurable value. Disruption, to revenue generation "
+        "or increased costs, is specified as a fraction of revenue attributable to the asset. Impacts are "
+        "provided as probability distributions. Note the effects of damage from downtime and mitigants are "
+        "not included; these are only taken into account in portfolio_impacts.",
+    )
+    portfolio_impacts: Optional[List[PortfolioImpact]] = Field(
+        None,
+        description="Impacts for the portfolio, aggregated over assets and provided both per hazard type and "
+        "aggregated over hazard types. Impacts are damage or disruption. Damage is specified as a fraction of "
+        "asset total insurable value. Disruption, to revenue generation or increased costs, is specified as a "
+        "fraction of revenue attributable to the asset. Impacts are provided as probability distributions. "
+        "Downtime from damage and (optionally) mitigants (insurance and state support) are included.",
+    )
+    risk_measures: Optional[RiskMeasures] = Field(
+        None,
+        description="Risk measures: both score-based and non-score based.",
+    )
 
 
 class RiskMeasuresHelper:

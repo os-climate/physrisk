@@ -96,7 +96,7 @@ from .api.v1.impact_req_resp import (
     Assets,
     AssetSingleImpact,
     PortfolioImpact,
-    RiskMeasure,
+    ScoreBasedRiskMeasure,
     RiskMeasuresForAssets,
 )
 from .api.v1.impact_req_resp import ImpactKey as APIImpactKey
@@ -293,9 +293,10 @@ class Requester:
         vulnerability_models = self.vulnerability_models_factory.vulnerability_models(
             hazard_scope=hazard_scope
         )
-        measure_calculators = self.measures_factory.asset_calculators(
+        asset_measure_calculators = self.measures_factory.asset_calculators(
             request.use_case_id
         )
+        # use_case_id should be "company" for a portfolio calculation based on
         portfolio_measure_calculator = self.measures_factory.portfolio_calculator(
             request.use_case_id,
         )
@@ -304,7 +305,7 @@ class Requester:
             hazard_model,
             asset_factory=self.asset_factory,
             vulnerability_models=vulnerability_models,
-            measure_calculators=measure_calculators,
+            measure_calculators=asset_measure_calculators,
             portfolio_measure_calculator=portfolio_measure_calculator,
             sig_figures=self.round_sig_figures,
         )
@@ -632,8 +633,8 @@ def _get_asset_impacts(
     elif needs_impacts:
         impacts = risk_model.calculate_impacts(_assets, scenarios, years)
 
-    # Asset-level financial drilldown — requires portfolio_quantities populated by
-    # calculate_risk_measures above.
+    # Asset-level financial drilldown of portfolio calculations — requires portfolio_quantities
+    # populated by calculate_risk_measures above.
     drilldown_req = request.measures_specification
     if drilldown_req is not None and portfolio_quantities:
         drilldown_entries: List[RiskMeasuresForAssets] = []
@@ -669,7 +670,7 @@ def _get_asset_impacts(
                 risk_measures.measures_definitions.extend(financial_defns)
 
     if request.include_asset_level:
-        asset_impacts = compile_asset_impacts(
+        asset_impacts = _compile_asset_impacts(
             impacts, _assets, request.include_calc_details, sig_figures
         )
     else:
@@ -863,7 +864,7 @@ def _compile_asset_financial_impacts(
     return entries
 
 
-def compile_asset_impacts(
+def _compile_asset_impacts(
     impacts: Dict[ImpactKey, List[AssetImpactResult]],
     assets: List[Asset],
     include_calc_details: bool,
@@ -1024,7 +1025,7 @@ def _create_risk_measures(
     # hazard_types = all_hazards()
     measure_set_id = "measure_set_0"
     measures_for_assets: List[ScoreBasedRiskMeasuresForAssets] = []
-    measures_for_portfolio: List[RiskMeasure] = []
+    measures_for_portfolio: List[ScoreBasedRiskMeasure] = []
     for hazard_type in sorted(
         hazard_types, key=lambda x: x.__name__ if x is not None else ""
     ):
@@ -1082,7 +1083,7 @@ def _create_risk_measures(
                 if portfolio_measure_key in measures:
                     measure = measures[portfolio_measure_key]
                     measures_for_portfolio.append(
-                        RiskMeasure(
+                        ScoreBasedRiskMeasure(
                             key=RiskMeasureKey(
                                 hazard_type="",
                                 scenario_id=scenario_id,

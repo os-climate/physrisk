@@ -120,6 +120,7 @@ class JBAImageCreator(HazardImageCreator):
         # set_name = "WR30_202512_30m_4326"
         # set_name = "WR30C_202603_30m_4326"
         self.tileset = TileSet("WR30C", "202603", "30m", "4326")
+        self.tileset = TileSet("WR30", "202512", "30m", "4326")
         templates_tiles, templates_legends = self._get_urls_from_capability()
         self.templates_tiles: dict[str, str] = templates_tiles
         self.templates_legends: dict[str, str] = templates_legends
@@ -348,7 +349,7 @@ class CombinedImageCreator(HazardImageCreator):
     def _creator(self, resource_id: str) -> HazardImageCreator:
         return (
             self._jba_image_creator
-            if resource_id.startswith("jba_")
+            if self._jba_image_creator and resource_id.startswith("jba_")
             else self._image_creator
         )
 

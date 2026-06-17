@@ -6,12 +6,13 @@ from physrisk.data.hazard_data_provider import SourcePaths
 from physrisk.data.image_creator import ImageCreator
 from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.data.inventory_reader import InventoryReader
-from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.credentials_provider import (
     CredentialsProvider,
     EnvCredentialsProvider,
 )
+from physrisk.hazard_models.hazard_cache import GeometryH3BasedCache, MemoryStore
+from physrisk.hazard_models.hazard_model_factory import CompositeHazardModel
 from physrisk.hazard_models.jba_image_creator import (
     CombinedImageCreator,
     JBAImageCreator,
@@ -42,28 +43,31 @@ from physrisk.vulnerability_models.vulnerability import VulnerabilityModelsFacto
 class DefaultHazardModelFactory(HazardModelFactory):
     def __init__(
         self,
+        cache_store: GeometryH3BasedCache,
+        credentials: CredentialsProvider,
         inventory: Inventory,
         source_paths: SourcePaths,
         store: Optional[MutableMapping] = None,
         reader: Optional[ZarrReader] = None,
+        interpolate_years: bool = True,
         default_interpolation: str = "floor",
-        credentials: Optional[CredentialsProvider] = None,
-        third_party_apis: list[str] = [],
     ):
+        self.cache_store = cache_store
         self.inventory = inventory
         self.source_paths = source_paths
         self.store = store
         self.reader = reader
         self.default_interpolation = default_interpolation
         self.credentials = credentials
-        self.third_party_apis = third_party_apis
         self.zarr_image_creator = (
             ImageCreator(inventory, source_paths, reader)
             if reader is not None
             else None
         )
         self.jba_image_creator = (
-            JBAImageCreator(credentials) if "jba" in third_party_apis else None
+            JBAImageCreator(credentials)
+            if credentials.jba_vision_password() != ""
+            else None
         )
 
     def hazard_model(
@@ -72,25 +76,25 @@ class DefaultHazardModelFactory(HazardModelFactory):
         provider_max_requests: Dict[str, int] = {},
         interpolate_years: bool = True,
     ):
-        # this is done to allow interpolation to be set dynamically, e.g. different requests can have different
-        # parameters.
-
-        return ZarrHazardModel(
+        # this is done to allow interpolation etc to be set dynamically,
+        # e.g. different requests can have different parameters.
+        return CompositeHazardModel(
+            cache_store=self.cache_store,
+            credentials=self.credentials,
             source_paths=self.source_paths,
             store=self.store,
             reader=self.reader,
             interpolation=interpolation
             if interpolation is not None
             else self.default_interpolation,
+            provider_max_requests=provider_max_requests,
+            restrict_coverage=False,
             interpolate_years=interpolate_years,
+            use_jba_coastal=False,
         )
 
     def image_creator(self):
-        return (
-            CombinedImageCreator(self.zarr_image_creator, self.jba_image_creator)
-            if "jba" in self.third_party_apis
-            else self.zarr_image_creator
-        )
+        return CombinedImageCreator(self.zarr_image_creator, self.jba_image_creator)
 
 
 class DictBasedVulnerabilityModelsFactory(PVulnerabilityModelsFactory):
@@ -109,11 +113,11 @@ class DefaultVulnerabilityModelFactory(VulnerabilityModelsFactory):
     FEMA Hazus vulnerability-based models excluded by default (until non-experimental).
     """
 
-    def __init__(self):
+    def __init__(self, use_oed_hazus_curves: bool = False):
         super().__init__(
             config=VulnerabilityModelsFactory.embedded_vulnerability_config(),
             programmatic_models=calc.default_vulnerability_models(),
-            use_oed_hazus_curves=False,
+            use_oed_hazus_curves=use_oed_hazus_curves,
             standard_of_protection=StandardOfProtection.CONSTANT_DEPTH,
         )
 
@@ -121,11 +125,15 @@ class DefaultVulnerabilityModelFactory(VulnerabilityModelsFactory):
 class Container(containers.DeclarativeContainer):
     asset_factory = providers.Factory(DefaultAssetFactory)
 
+    cache_store = providers.Singleton(GeometryH3BasedCache, store=MemoryStore())
+
+    colormaps = providers.Singleton(lambda: EmbeddedInventory().colormaps())
+
     config = providers.Configuration(
         default={"zarr_sources": ["embedded"]}
     )  # , "hazard"]})
 
-    colormaps = providers.Singleton(lambda: EmbeddedInventory().colormaps())
+    credentials = providers.Singleton(EnvCredentialsProvider)
 
     inventory_reader = providers.Singleton(InventoryReader)
 
@@ -146,14 +154,13 @@ class Container(containers.DeclarativeContainer):
     # why do we have factories for hazard models, vulnerability models and measures?
     # this is because the models may need to be created with different parameters for different requests
 
-    credentials = providers.Singleton(EnvCredentialsProvider)
-
     hazard_model_factory = providers.Factory(
         DefaultHazardModelFactory,
+        cache_store=cache_store,
+        credentials=credentials,
         inventory=inventory,
         reader=zarr_reader,
         source_paths=source_paths,
-        credentials=credentials,
     )
 
     measures_factory = providers.Factory(calc.DefaultMeasuresFactory)

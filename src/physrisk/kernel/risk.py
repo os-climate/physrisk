@@ -20,6 +20,11 @@ import numpy.typing as npt
 
 from physrisk.api.v1.impact_req_resp import ScoreBasedRiskMeasureDefinition
 from physrisk.kernel.assets import Asset
+from physrisk.kernel.curve import ExceedanceCurve
+from physrisk.kernel.financial_model import (
+    EqualDistributionFinancialDataProvider,
+    FinancialDataProvider,
+)
 from physrisk.kernel.hazard_model import HazardModel
 from physrisk.kernel.hazards import Hazard
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey, calculate_impacts
@@ -31,6 +36,11 @@ from physrisk.kernel.vulnerability_model import VulnerabilityModels
 
 Impact = Dict[Tuple[Asset, type], AssetImpactResult]  # the key is (Asset, Hazard type)
 
+# portfolio_quantities keyed by (scenario, year) then by RiskQuantityKey
+PortfolioQuantities = Dict[
+    Tuple[str, Optional[int]], Dict["RiskQuantityKey", "Quantity"]
+]
+
 
 class BatchId(NamedTuple):
     scenario: str
@@ -38,25 +48,28 @@ class BatchId(NamedTuple):
 
 
 class QuantityType(str, Enum):
-    DAMAGE = "damage"
-    REVENUE_LOSS = "revenue_loss"
-    COSTS = "costs"
-    TIV = "tiv"
-    REVENUE = "revenue"
+    DAMAGE = "damage"  # damage as a fraction of total insurable value
+    REVENUE_LOSS = "revenue_loss"  # loss of revenue as a fraction of revenue
+    COSTS_INCREASE = "cost_increase"  # increase in costs as a fraction of revenue
+    TIV = "tiv"  # total insurable value
+    REVENUE = "revenue"  # revenue
 
 
 class RiskQuantityKey(NamedTuple):
     quantity: Optional[QuantityType] = None
+    asset: Optional[Asset] = None
     agg_id: Optional[str] = None
     hazard_type: Optional[type[Hazard]] = None
 
 
 @dataclass(frozen=True)
 class Quantity:
-    values: npt.NDArray[np.floating[Any]]
-    percentiles: npt.NDArray[np.floating[Any]]
-    percentile_values: npt.NDArray[np.floating[Any]]
+    values: Optional[npt.NDArray[np.floating[Any]]]
+    exceedance_curve: ExceedanceCurve
     mean: float
+    semi_standard_deviation: float
+    # percentiles: npt.NDArray[np.floating[Any]]
+    # percentile_values: npt.NDArray[np.floating[Any]]
 
 
 class MeasureKey(NamedTuple):
@@ -85,7 +98,8 @@ class Measure:
 
 class PortfolioRiskMeasureCalculator(Protocol):
     """Class to calculate portfolio-level score-based risk measures, either
-    from a set of asset-level score-based risk measures or from portfolio-level
+    from a set of asset-level score-based risk measures or from asset-level impacts
+    and financial data.
     """
 
     def get_definition(
@@ -94,9 +108,10 @@ class PortfolioRiskMeasureCalculator(Protocol):
 
     def calculate_risk_measures(
         self,
+        financial_data_provider: FinancialDataProvider,
         asset_level_measures: dict[MeasureKey, Measure] = {},
-        portfolio_quantities: dict[RiskQuantityKey, Quantity] = {},
-    ) -> dict[MeasureKey, Measure]: ...
+        impacts: dict[ImpactKey, list[AssetImpactResult]] = {},
+    ) -> tuple[dict[MeasureKey, Measure], PortfolioQuantities]: ...
 
     def asset_level_measures_required(self) -> bool: ...
 
@@ -113,10 +128,11 @@ class NullAssetBasedPortfolioRiskMeasureCalculator(PortfolioRiskMeasureCalculato
 
     def calculate_risk_measures(
         self,
+        financial_data_provider: FinancialDataProvider,
         asset_level_measures: dict[MeasureKey, Measure] = {},
-        portfolio_quantities: dict[RiskQuantityKey, Quantity] = {},
-    ) -> dict[MeasureKey, Measure]:
-        return {}
+        impacts: dict[ImpactKey, list[AssetImpactResult]] = {},
+    ) -> tuple[dict[MeasureKey, Measure], PortfolioQuantities]:
+        return {}, {}
 
     def asset_level_measures_required(self) -> bool:
         return True
@@ -146,7 +162,11 @@ class RiskModel:
         self._vulnerability_models = vulnerability_models
 
     def calculate_risk_measures(
-        self, assets: Sequence[Asset], prosp_scens: Sequence[str], years: Sequence[int]
+        self,
+        assets: Sequence[Asset],
+        prosp_scens: Sequence[str],
+        years: Sequence[int],
+        financial_data_provider: FinancialDataProvider,
     ):
         """Calculate risk measures for a set of assets, scenarios, and years."""
         ...
@@ -245,8 +265,8 @@ class RiskMeasuresFactory(Protocol):
         pass
 
 
-class AssetLevelRiskModel(RiskModel):
-    """Risk model that calculates risk measures at the asset level for various assets."""
+class PortfolioRiskModel(RiskModel):
+    """Risk model that calculates risk measures at asset and portfolio level."""
 
     def __init__(
         self,
@@ -255,15 +275,14 @@ class AssetLevelRiskModel(RiskModel):
         measure_calculators: Dict[type[Asset], RiskMeasureCalculator],
         portfolio_measure_calculator: PortfolioRiskMeasureCalculator = NullAssetBasedPortfolioRiskMeasureCalculator(),
     ):
-        """Risk model that calculates risk measures at the asset level for a sequence
-        of assets.
+        """Risk model that calculates risk measures at asset level and portfolio level.
 
         Args:
         ----
             hazard_model (HazardModel): The hazard model.
             vulnerability_models (VulnerabilityModels): Vulnerability models for asset types.
             measure_calculators (Dict[type, RiskMeasureCalculator]): Risk measure calculators for asset types.
-
+            portfolio_measure_calculator (PortfolioRiskMeasureCalculator): Risk measure calculator for portfolio-level measures.
         """
         super().__init__(hazard_model, vulnerability_models)
         self.asset_level_measures_required = (
@@ -367,8 +386,16 @@ class AssetLevelRiskModel(RiskModel):
         )
 
     def calculate_risk_measures(
-        self, assets: Sequence[Asset], scenarios: Sequence[str], years: Sequence[int]
-    ):
+        self,
+        assets: Sequence[Asset],
+        scenarios: Sequence[str],
+        years: Sequence[int],
+        financial_data_provider: FinancialDataProvider = EqualDistributionFinancialDataProvider(),
+    ) -> tuple[
+        dict[ImpactKey, list[AssetImpactResult]],
+        dict[MeasureKey, Measure],
+        PortfolioQuantities,
+    ]:
         """Calculate risk measures for a set of assets, scenarios, and years, according to the selected method calculation.
 
         For the Default Method:
@@ -390,9 +417,11 @@ class AssetLevelRiskModel(RiskModel):
             Tuple[
                 Dict[ImpactKey, List[AssetImpactResult]],
                 Dict[MeasureKey, Measure]
+                Dict[RiskQuantityKey, Quantity],
             ]: A tuple containing:
-                - A dictionary mapping asset and hazard type tuples to impact results.
-                - A dictionary mapping MeasureKeys to calculated measures.
+                - Asset-level results for each asset, hazard type, scenario and year.
+                - Score-based risk measures for each asset, hazard type, scenario and year; also portfolio-level scores.
+                - Portfolio-level quantities.
 
         """
         impacts = self._calculate_all_impacts(
@@ -460,12 +489,13 @@ class AssetLevelRiskModel(RiskModel):
             )
 
         # calculate portfolio measures
-
-        portfolio_measures = self._portfolio_measure_calculator.calculate_risk_measures(
-            aggregated_measures
+        portfolio_measures, portfolio_quantities = (
+            self._portfolio_measure_calculator.calculate_risk_measures(
+                financial_data_provider, aggregated_measures, impacts
+            )
         )
         aggregated_measures.update(portfolio_measures)
-        return impacts, aggregated_measures
+        return impacts, aggregated_measures, portfolio_quantities
 
     def _calculator_for_asset(self, asset: Asset) -> Optional[RiskMeasureCalculator]:
         return self._asset_level_measure_calculators.get(

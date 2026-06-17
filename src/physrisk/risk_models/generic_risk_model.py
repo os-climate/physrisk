@@ -168,7 +168,7 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                     measure_id="measure_damage_aal",
                     label="Average annual loss (AAL).",
                     description=(
-                        "Average annual loss (AAL). Annual damage as a fraction of the asset total insurable value (TIV)."
+                        "Average annual loss (AAL). Annual damage as a fraction of the asset total insurable value (TIV). "
                         "Where applicable, aggregates asset-restoration downtime loss, also as fraction of TIV."
                     ),
                     units="",  # value is fraction; percentage expected when visualising

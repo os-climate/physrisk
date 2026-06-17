@@ -332,7 +332,7 @@
             {
               "measure_id": "measure_damage_aal",
               "label": "Average annual loss (AAL).",
-              "description": "Average annual loss (AAL). Annual damage as a fraction of the asset total insurable value (TIV).Where applicable, aggregates asset-restoration downtime loss, also as fraction of TIV.",
+              "description": "Average annual loss (AAL). Annual damage as a fraction of the asset total insurable value (TIV). Where applicable, aggregates asset-restoration downtime loss, also as fraction of TIV.",
               "units": ""
             }
           ]
@@ -424,7 +424,7 @@
       }
     ],
     "asset_ids": [
-      "asset_0"
+      ""
     ]
   }
 }

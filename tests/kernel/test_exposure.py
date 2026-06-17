@@ -14,6 +14,8 @@ from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_source_paths
+from physrisk.hazard_models.credentials_provider import EnvCredentialsProvider
+from physrisk.hazard_models.hazard_cache import GeometryH3BasedCache, MemoryStore
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.calculation import DefaultMeasuresFactory
 from physrisk.kernel.exposure import (
@@ -133,7 +135,9 @@ def get_components():
     )
 
     hazard_model_factory = DefaultHazardModelFactory(
-        inventory,
+        cache_store=GeometryH3BasedCache(MemoryStore()),
+        credentials=EnvCredentialsProvider(),
+        inventory=inventory,
         source_paths=get_default_source_paths(EmbeddedInventory()),
         store=store,
     )

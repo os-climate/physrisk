@@ -1,3 +1,4 @@
+import threading
 from importlib.resources import files
 from typing import Dict, Optional, Sequence, Union
 
@@ -9,6 +10,17 @@ from physrisk.kernel.assets import Asset
 
 
 class Geocoder:
+    _instance: "Geocoder | None" = None
+    _lock: threading.Lock = threading.Lock()
+
+    @classmethod
+    def instance(cls) -> "Geocoder":
+        if cls._instance is None:
+            with cls._lock:
+                if cls._instance is None:
+                    cls._instance = cls()
+        return cls._instance
+
     def __init__(self):
         """Geocoder uses Natural Earth data to map lat/lon to country codes.
         High-resolution 'sub-unit' data is used, mainly to satisfy the needs

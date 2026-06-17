@@ -31,6 +31,24 @@ NDArray = Annotated[
 ]
 
 
+class FinancialDetails(BaseModel):
+    """Financial details needed for a portfolio-level company assessment."""
+
+    ccy: str = Field(
+        default="EUR",
+        description="Currency of the financial details, specified in ISO 4217 3 latter code.",
+    )
+    revenue_attributable: Optional[float] = Field(
+        description="Revenue attributable to the asset, in the specified currency."
+        "This is used to calculate business disruption impacts: if the asset operations are disrupted or associated costs"
+        "increase, this value will be used to estimate the financial impact.",
+        alias="revenueAttributable",
+    )  # noqa: E501
+    total_insurable_value: Optional[float] = Field(
+        description="Total insurable value of the asset, in the specified currency."
+    )
+
+
 class Asset(BaseModel):
     """Defines an asset.
 
@@ -47,6 +65,7 @@ class Asset(BaseModel):
     (or equivalent value, e.g. by increased expense or reduced sales).
     """
 
+    id: str = Field(default="", description="Unique identifier for the asset.")
     asset_class: Optional[str] = Field(
         default=None,
         description="name of asset class; corresponds to physrisk class names, e.g. PowerGeneratingAsset. If not provided, "
@@ -107,6 +126,10 @@ class Asset(BaseModel):
         default=None,
         description="Power generation capacity in MW for power generating assets.",
         kw_only=True,
+    )
+    financial: Optional[FinancialDetails] = Field(
+        default=None,
+        description="Financial details needed for a portfolio-level company assessment.",
     )
 
     @field_validator("occupancy_code")

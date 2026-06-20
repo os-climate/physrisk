@@ -1,0 +1,31 @@
+{
+    "items": [
+        {
+            "occupancy_code": 2780,
+            "latitude": 29.813594,
+            "longitude": -95.447615,
+            "comment": "US"
+        },
+        {
+            "occupancy_code": 1050,
+            "latitude": 51.736839,
+            "longitude": -1.253734,
+            "comment": "UK"
+        },
+        {
+            "occupancy_code": 1119,
+            "latitude": 46.019862,
+            "longitude": 7.747699,
+            "buffer": 50,
+            "comment": "Switzerland"
+        },
+        {
+            "occupancy_code": 1050,
+            "latitude": 47.39142,
+            "longitude": 0.72575,
+            "wkt_geometry": "POLYGON ((0.72585834 47.391388796, 0.72584470 47.39147138, 0.725643953 47.391456061, 0.72565775 47.39137347, 0.72585834 47.391388796))",
+            "number_of_storeys": 2,
+            "comment": "France"
+        }
+    ]
+}

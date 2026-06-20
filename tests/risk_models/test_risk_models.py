@@ -246,10 +246,28 @@ def create_hazard_model(scenarios, years):
             .path(year)
         )
 
+    def sp_riverine_sop(scenario, year):
+        return (
+            source_paths.resource_paths(
+                RiverineInundation, indicator_id="flood_sop", scenarios=[scenario]
+            )[0]
+            .scenarios[scenario]
+            .path(year)
+        )
+
     def sp_coastal(scenario, year):
         return (
             source_paths.resource_paths(
                 CoastalInundation, indicator_id="flood_depth", scenarios=[scenario]
+            )[0]
+            .scenarios[scenario]
+            .path(year)
+        )
+
+    def sp_coastal_sop(scenario, year):
+        return (
+            source_paths.resource_paths(
+                CoastalInundation, indicator_id="flood_sop", scenarios=[scenario]
             )[0]
             .scenarios[scenario]
             .path(year)
@@ -349,6 +367,15 @@ def create_hazard_model(scenarios, years):
             TestData.latitudes,
             return_periods,
             flood_projected_curve,
+        )
+
+    for path in [sp_riverine_sop("historical", -1), sp_coastal_sop("historical", -1)]:
+        mocker.add_curves_global(
+            path,
+            TestData.longitudes,
+            TestData.latitudes,
+            ["min", "max"],
+            np.array([100.0, 300.0]),
         )
 
     mocker.add_curves_global(
@@ -532,7 +559,7 @@ def test_generic_model_via_requests_default_vulnerability():
         for ma in response.risk_measures.measures_for_assets
         if ma.key.hazard_type == "RiverineInundation"
     )
-    np.testing.assert_allclose(res.measures_0, [0.0959039, 0.0959039])
+    np.testing.assert_allclose(res.measures_0, [0.0019592, 0.0019592])
 
     # now test the ability to return scores based on hazard indicator ID if needed
 

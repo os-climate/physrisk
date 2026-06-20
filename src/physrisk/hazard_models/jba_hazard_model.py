@@ -199,16 +199,17 @@ class JBAHazardModel(HazardModel):
             self.check_requests(requests)
             # some deviations from 2-letter country codes:
             country_mapping = {
+                "AU": "AUC",  # Australian model including coastal inundation
                 "ES-ML": "ES",  # Melilla as ES
+                "FR": "FR5C",  # France 5m model including coastal inundation
                 "GG": "GB",  # Guernsey uses GB map
                 "HK": "CN",
                 "IE": "IE30",
                 "JE": "FR5C",  # Jersey uses France map
                 "MC": "FR5C",  # Monaco uses France map
                 "NI": "NIC",  # Nicaragua uses NIC
-                "FR": "FR5C",  # France 5m model including coastal inundation
-                "AU": "AUC",
-            }  # Australian model including coastal inundation
+                "US": "US5",  # US 5 m model
+            }
             result: MutableMapping[HazardDataRequest, HazardDataResponse] = {}
             # group requests by common location
             requests_by_location: Dict[str, List[HazardDataRequest]] = defaultdict(list)

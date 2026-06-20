@@ -1,5 +1,6 @@
 import os
 import json
+from dependency_injector import providers
 import numpy as np
 import pyproj
 import pytest
@@ -12,6 +13,7 @@ from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_source_paths
+from physrisk.hazard_models.hazard_cache import GeometryH3BasedCache, LMDBStore
 import physrisk.kernel.assets
 from physrisk.kernel.assets import (
     PowerGeneratingAsset,
@@ -785,10 +787,10 @@ def mocker_store():
 
 
 @pytest.mark.live_data("dev")
-def test_example_portfolios(tmp_path, clear_credentials):
-    example_portfolios = physrisk.requests._get_example_portfolios()
+def test_example_portfolios(tmp_path, hazard_dir, clear_credentials):
+    example_portfolios = requests._get_example_portfolios()
     for name, assets in example_portfolios.items():
-        if name != "manufacturing":
+        if name != "oed_portfolio_international":
             continue
         logger.info(f"Running example portfolio: {name}")
         request_dict = {
@@ -796,10 +798,17 @@ def test_example_portfolios(tmp_path, clear_credentials):
             "include_asset_level": True,
             "include_calc_details": True,
             "include_measures": True,
-            "years": [2030, 2040, 2050],
-            "scenarios": ["ssp585"],
+            "years": [2050],
+            "scenarios": ["historical", "ssp585"],
+            "provider_max_requests": {"jba": 4},
         }
         container = Container()
+        container.override_providers(
+            cache_store=providers.Singleton(
+                GeometryH3BasedCache,
+                store=LMDBStore(str(hazard_dir / "hazard_cache_examples.db")),
+            )
+        )
         requester = container.requester()
         response = requester.get(
             request_id="get_asset_impact", request_dict=request_dict
@@ -816,6 +825,7 @@ def test_example_portfolios(tmp_path, clear_credentials):
             "Drought",
             "Fire",
             "Hail",
+            "PluvialInundation",
             "RiverineInundation",
             "Wind",
         ]:

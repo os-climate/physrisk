@@ -49,7 +49,6 @@ class DefaultHazardModelFactory(HazardModelFactory):
         source_paths: SourcePaths,
         store: Optional[MutableMapping] = None,
         reader: Optional[ZarrReader] = None,
-        interpolate_years: bool = True,
         default_interpolation: str = "floor",
     ):
         self.cache_store = cache_store
@@ -113,7 +112,7 @@ class DefaultVulnerabilityModelFactory(VulnerabilityModelsFactory):
     FEMA Hazus vulnerability-based models excluded by default (until non-experimental).
     """
 
-    def __init__(self, use_oed_hazus_curves: bool = False):
+    def __init__(self, use_oed_hazus_curves: bool = True):
         super().__init__(
             config=VulnerabilityModelsFactory.embedded_vulnerability_config(),
             programmatic_models=calc.default_vulnerability_models(),
@@ -133,7 +132,7 @@ class Container(containers.DeclarativeContainer):
         default={"zarr_sources": ["embedded"]}
     )  # , "hazard"]})
 
-    credentials = providers.Singleton(EnvCredentialsProvider)
+    credentials = providers.Singleton(EnvCredentialsProvider, disable_api_calls=False)
 
     inventory_reader = providers.Singleton(InventoryReader)
 

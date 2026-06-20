@@ -133,6 +133,7 @@ class CompositeHazardModel(HazardModel):
             elif (
                 self.jba_hazard_model
                 and request.hazard_type == CoastalInundation
+                and self.use_jba_coastal
                 and not self._zarr_hint_path(request)
             ):
                 requests_by_model[self.jba_hazard_model].append(request)

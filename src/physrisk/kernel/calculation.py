@@ -21,7 +21,6 @@ from physrisk.vulnerability_models.real_estate_models import (
     CoolingModel,
     GenericTropicalCycloneModel,
     RealEstateCoastalInundationModel,
-    RealEstatePluvialInundationModel,
     RealEstateRiverineInundationModel,
 )
 from physrisk.vulnerability_models.thermal_power_generation_models import (
@@ -69,12 +68,6 @@ def default_vulnerability_models() -> Dict[type, list[VulnerabilityModelBase]]:
     There is a specific treatment for power generating assets and real estate assets.
     """
     return {
-        PowerGeneratingAsset: [pgam.InundationModel()],
-        RealEstateAsset: [
-            RealEstateCoastalInundationModel(),
-            RealEstatePluvialInundationModel(),
-            RealEstateRiverineInundationModel(),
-        ],
         ThermalPowerGeneratingAsset: [
             ThermalPowerGenerationAirTemperatureModel(),
             ThermalPowerGenerationCoastalInundationModel(),

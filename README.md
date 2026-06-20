@@ -47,7 +47,7 @@ calculations.
 [physrisk-api](https://github.com/os-climate/physrisk-api) and
 [physrisk-ui](https://github.com/os-climate/physrisk-ui) provide an example
 API and user interface. A
-[development version of the UI](https://physrisk-ui-physrisk.apps.osc-cl1.apps.os-climate.org)
+[development version of the UI](https://physrisk.com)
 is hosted by OS-Climate.
 
 ## Using the library
@@ -65,7 +65,7 @@ Information about the project is available via the
 An inventory of the hazard data is maintained in the
 [hazard inventory](https://github.com/os-climate/hazard/blob/main/src/inventories/hazard/inventory.json)
 (this is used by the physrisk library itself). The
-[UI hazard viewer](https://physrisk-ui-physrisk.apps.osc-cl1.apps.os-climate.org)
+[UI hazard viewer](https://physrisk.com)
 is a convenient way to browse data sets.
 
 A good place to start is the Getting Started section in the documentation site which has a number of walk-throughs.

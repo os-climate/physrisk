@@ -50,6 +50,7 @@ class DefaultHazardModelFactory(HazardModelFactory):
         store: Optional[MutableMapping] = None,
         reader: Optional[ZarrReader] = None,
         default_interpolation: str = "floor",
+        zarr_max_workers: int = 32,
     ):
         self.cache_store = cache_store
         self.inventory = inventory
@@ -58,6 +59,7 @@ class DefaultHazardModelFactory(HazardModelFactory):
         self.reader = reader
         self.default_interpolation = default_interpolation
         self.credentials = credentials
+        self.zarr_max_workers = zarr_max_workers
         self.zarr_image_creator = (
             ImageCreator(inventory, source_paths, reader)
             if reader is not None
@@ -90,6 +92,7 @@ class DefaultHazardModelFactory(HazardModelFactory):
             restrict_coverage=False,
             interpolate_years=interpolate_years,
             use_jba_coastal=False,
+            zarr_max_workers=self.zarr_max_workers,
         )
 
     def image_creator(self):
@@ -129,8 +132,8 @@ class Container(containers.DeclarativeContainer):
     colormaps = providers.Singleton(lambda: EmbeddedInventory().colormaps())
 
     config = providers.Configuration(
-        default={"zarr_sources": ["embedded"]}
-    )  # , "hazard"]})
+        default={"zarr_sources": ["embedded"], "zarr_max_workers": 32}
+    )
 
     credentials = providers.Singleton(EnvCredentialsProvider, disable_api_calls=False)
 
@@ -160,6 +163,7 @@ class Container(containers.DeclarativeContainer):
         inventory=inventory,
         reader=zarr_reader,
         source_paths=source_paths,
+        zarr_max_workers=config.zarr_max_workers,
     )
 
     measures_factory = providers.Factory(calc.DefaultMeasuresFactory)

@@ -42,9 +42,11 @@ class PregeneratedHazardModel(HazardModel):
         self,
         hazard_data_providers: Dict[Type[Hazard], HazardDataProvider],
         interpolate_years: bool = False,
+        zarr_max_workers: int = 32,
     ):
         self.hazard_data_providers = hazard_data_providers
         self.interpolate_years = interpolate_years
+        self.zarr_max_workers = zarr_max_workers
 
     def get_hazard_data(  # noqa: C901
         self, requests: Sequence[HazardDataRequest]
@@ -185,7 +187,7 @@ class PregeneratedHazardModel(HazardModel):
                                 )
 
             asyncio.get_event_loop().set_default_executor(
-                concurrent.futures.ThreadPoolExecutor(max_workers=32)
+                concurrent.futures.ThreadPoolExecutor(max_workers=self.zarr_max_workers)
             )  # 1
             for request in requests:
                 batches[
@@ -252,6 +254,7 @@ class ZarrHazardModel(PregeneratedHazardModel):
         store=None,
         interpolation="floor",
         interpolate_years: bool = False,
+        zarr_max_workers: int = 32,
     ):
         # share ZarrReaders across HazardDataProviders
         zarr_reader = ZarrReader(store=store) if reader is None else reader
@@ -267,4 +270,5 @@ class ZarrHazardModel(PregeneratedHazardModel):
                 for t in hazard_types
             },
             interpolate_years,
+            zarr_max_workers,
         )

@@ -78,18 +78,24 @@ def image_to_flood_depth(
     Returns:
         float32 array of shape (H, W) with depth in metres, NaN for no-data.
     """
-    arr = np.array(img.convert("RGBA"), dtype=np.float32)
-    rgb_norm = arr[:, :, :3] / 255.0
+    arr = np.array(img.convert("RGBA"), dtype=np.uint8)
     alpha = arr[:, :, 3]
+    rgb = arr[:, :, :3]
+    pixel_l = (
+        rgb.max(axis=-1).astype(np.float32) + rgb.min(axis=-1).astype(np.float32)
+    ) * (0.5 / 255.0)
 
-    pixel_l = _rgb_to_lightness(rgb_norm)  # (H, W)
-    dist = np.abs(pixel_l[:, :, np.newaxis] - _FLOOD_DEPTH_LIGHTNESS)  # (H, W, 10)
-    idx = dist.argmin(axis=-1)  # (H, W)
-    min_dist = dist.min(axis=-1)
+    best_idx = np.zeros(pixel_l.shape, dtype=np.uint8)
+    best_dist = np.full(pixel_l.shape, np.inf, dtype=np.float32)
+    for i, ref_l in enumerate(_FLOOD_DEPTH_LIGHTNESS):
+        d = np.abs(pixel_l - ref_l)
+        closer = d < best_dist
+        best_dist[closer] = d[closer]
+        best_idx[closer] = i
 
-    depth = FLOOD_DEPTH_MID[idx].copy()
+    depth = FLOOD_DEPTH_MID[best_idx].copy()
     depth[alpha < 128] = np.nan
-    depth[min_dist > max_lightness_dist] = np.nan
+    depth[best_dist > max_lightness_dist] = np.nan
     return depth
 
 

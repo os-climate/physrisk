@@ -79,7 +79,6 @@ class Fire(Hazard):
     kind = HazardKind.ACUTE
     indicator_data = {
         "fire_probability": IndicatorData.PARAMETERS,
-        "daily_probability_fwi20": IndicatorData.PARAMETERS,
     }
     pass
 
@@ -120,7 +119,7 @@ class Wind(Hazard):
 
 
 class Subsidence(Hazard):
-    kind = HazardKind.CHRONIC
+    kind = HazardKind.ACUTE
     pass
 
 

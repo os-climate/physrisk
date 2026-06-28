@@ -13,6 +13,7 @@ import physrisk.data.static.hazard
 from physrisk.data.inventory_reader import HazardModels
 from physrisk.kernel.hazards import (
     CoastalInundation,
+    PluvialInundation,
     RiverineInundation,
 )
 
@@ -71,7 +72,7 @@ class EmbeddedInventory(Inventory):
         return colormap_provider.colormaps
 
     def api_based_resources(self):
-        for hazard_type in [CoastalInundation, RiverineInundation]:  # PluvialInundation
+        for hazard_type in [CoastalInundation, PluvialInundation, RiverineInundation]:
             hazard_words: list[str] = re.findall(
                 r"[A-Z]+(?=[A-Z])|[A-Z][a-z]+", hazard_type.__name__
             )

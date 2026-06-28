@@ -19,6 +19,7 @@ from physrisk.kernel.hazards import (
     CoastalInundation,
     Drought,
     Hazard,
+    PluvialInundation,
     RiverineInundation,
     Wind,
     Landslide,
@@ -302,6 +303,9 @@ class CoreInventorySourcePaths(InventorySourcePaths):
             Drought, "months/spei12m/below/threshold", self._select_drought
         )
         self.add_selector(
+            PluvialInundation, "flood_depth", self._select_pluvial_inundation
+        )
+        self.add_selector(
             RiverineInundation,
             "flood_depth",
             self._select_riverine_inundation
@@ -339,6 +343,14 @@ class CoreInventorySourcePaths(InventorySourcePaths):
         hint: Optional[HazardDataHint] = None,
     ):
         return candidates.with_model_gcm("multi_model_0").first()
+
+    @staticmethod
+    def _select_pluvial_inundation(
+        candidates: ResourceSubset,
+        hint: Optional[HazardDataHint] = None,
+    ):
+        # when JBA resources are API-only (not Zarr)
+        return [c for c in candidates.resources if not c.path.startswith("jba_")]
 
     @staticmethod
     def _select_riverine_inundation(

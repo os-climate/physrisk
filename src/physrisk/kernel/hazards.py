@@ -120,6 +120,9 @@ class Wind(Hazard):
 
 class Subsidence(Hazard):
     kind = HazardKind.ACUTE
+    indicator_data = {
+        "subsidence_probability": IndicatorData.PARAMETERS,
+    }
     pass
 
 

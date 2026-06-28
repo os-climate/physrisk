@@ -42,7 +42,7 @@ class FinancialDetails(BaseModel):
         description="Revenue attributable to the asset, in the specified currency."
         "This is used to calculate business disruption impacts: if the asset operations are disrupted or associated costs"
         "increase, this value will be used to estimate the financial impact.",
-        alias="revenueAttributable",
+        alias="revenue_attrib",
     )  # noqa: E501
     total_insurable_value: Optional[float] = Field(
         description="Total insurable value of the asset, in the specified currency."

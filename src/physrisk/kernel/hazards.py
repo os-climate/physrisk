@@ -140,6 +140,10 @@ def hazard_class(name: str) -> Type[Hazard]:
 
 class Landslide(Hazard):
     kind = HazardKind.ACUTE
+    indicator_data = {
+        "landslide_probability": IndicatorData.PARAMETERS,
+    }
+    pass
 
 
 class Earthquake(Hazard):

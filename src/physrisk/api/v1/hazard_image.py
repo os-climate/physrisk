@@ -1,4 +1,4 @@
-from typing import Any, List, NamedTuple, Optional
+from typing import Any, List, Literal, NamedTuple, Optional
 
 from pydantic import BaseModel, Field
 
@@ -54,6 +54,11 @@ class HazardImageRequest(BaseHazardRequest):
     tile: Optional[Tile]
     index_value: Optional[Any] = Field(
         None, description="(Non-spatial) index of the array to view."
+    )
+    scaling: Literal["linear", "log"] | None = Field(
+        None,
+        description="Value-to-colour scaling: 'linear' or 'log'. "
+        "'log' requires min_value > 0.",
     )
 
 

@@ -248,6 +248,7 @@ class HazardImageCreator(Protocol):
         min_value: Optional[float] = None,
         max_value: Optional[float] = None,
         index_value: Optional[Union[str, float]] = None,
+        scaling: str = "linear",
     ):
         """Creates an image Tile for display on maps.
 
@@ -261,6 +262,8 @@ class HazardImageCreator(Protocol):
             min_value (Optional[float], optional): Value of colormap minimum. Defaults to None.
             max_value (Optional[float], optional): Value of colormap maximum. Defaults to None.
             index_value (Optional[str | float], optional): Value of the non-spatial 'index' dimension. Defaults to None.
+            scaling (str): Value-to-colour scaling, 'linear' or 'log'.
+                'log' requires min_value > 0. Defaults to 'linear'.
         """
         ...
 

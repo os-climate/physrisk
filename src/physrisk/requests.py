@@ -327,6 +327,15 @@ class Requester:
             if request.colormap is not None
             else (model.map.colormap.name if model.map.colormap is not None else "None")
         )
+        scaling = (
+            request.scaling
+            if request.scaling is not None
+            else (
+                model.map.colormap.scaling
+                if model.map.colormap is not None
+                else "linear"
+            )
+        )
         creator: HazardImageCreator = self.hazard_model_factory.image_creator()
         return creator.create_image(
             request.resource,
@@ -341,6 +350,7 @@ class Requester:
             min_value=request.min_value,
             max_value=request.max_value,
             index_value=request.index_value,
+            scaling=scaling,
         )
 
     def get_image_info(self, request: HazardImageInfoRequest):

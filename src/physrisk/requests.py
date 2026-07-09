@@ -291,7 +291,8 @@ class Requester:
             }
 
         vulnerability_models = self.vulnerability_models_factory.vulnerability_models(
-            hazard_scope=hazard_scope
+            hazard_scope=hazard_scope,
+            map_unknown_occ=request.calc_settings.map_unknown_occ,
         )
         asset_measure_calculators = self.measures_factory.asset_calculators(
             request.use_case_id

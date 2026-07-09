@@ -722,7 +722,9 @@ def test_generic_model_via_requests_custom():
 
     class TestVulnerabilityModelsFactory(PVulnerabilityModelsFactory):
         def vulnerability_models(
-            self, hazard_scope: dict[type[Hazard], set[str] | None] | None = None
+            self,
+            hazard_scope: dict[type[Hazard], set[str] | None] | None = None,
+            map_unknown_occ: bool = True,
         ) -> VulnerabilityModels:
             return _vulnerability_models()
 

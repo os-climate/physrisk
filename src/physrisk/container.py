@@ -101,14 +101,16 @@ class DefaultHazardModelFactory(HazardModelFactory):
 
 class DictBasedVulnerabilityModelsFactory(PVulnerabilityModelsFactory):
     def vulnerability_models(
-        self, hazard_scope: dict[type[Hazard], set[str] | None] | None = None
+        self,
+        hazard_scope: dict[type[Hazard], set[str] | None] | None = None,
+        map_unknown_occ: bool = True,
     ) -> PVulnerabilityModels:
         return DictBasedVulnerabilityModels(
             calc.alternate_default_vulnerability_models_scores()
         )
 
 
-class DefaultVulnerabilityModelFactory(VulnerabilityModelsFactory):
+class DefaultVulnerabilityModelsFactory(VulnerabilityModelsFactory):
     """Default vulnerability approach. 'default_vulnerability_models'
     programmatic models are used, to which FEMA Hazus vulnerability-based
     models are added and finally configuration.
@@ -168,7 +170,7 @@ class Container(containers.DeclarativeContainer):
 
     measures_factory = providers.Factory(calc.DefaultMeasuresFactory)
 
-    vulnerability_models_factory = providers.Factory(DefaultVulnerabilityModelFactory)
+    vulnerability_models_factory = providers.Factory(DefaultVulnerabilityModelsFactory)
 
     requester = providers.Singleton(
         Requester,

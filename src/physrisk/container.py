@@ -103,7 +103,7 @@ class DictBasedVulnerabilityModelsFactory(PVulnerabilityModelsFactory):
     def vulnerability_models(
         self,
         hazard_scope: dict[type[Hazard], set[str] | None] | None = None,
-        map_unknown_occ: bool = True,
+        map_unknown_occ: bool = False,
     ) -> PVulnerabilityModels:
         return DictBasedVulnerabilityModels(
             calc.alternate_default_vulnerability_models_scores()

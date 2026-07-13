@@ -30,7 +30,7 @@ class CalcSettings(BaseModel):
         description="Dictionary of hazards and corresponding indicator ids to include in analysis.",
     )
     map_unknown_occ: bool = Field(
-        default=True,
+        default=False,
         description="If True, map unknown occupancy codes to an average of Hazus vulnerability curves."
         "Only acts if the requester is configured to use Hazus vulerability curves.",
     )

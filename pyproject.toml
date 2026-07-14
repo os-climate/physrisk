@@ -113,7 +113,7 @@ doc = [
     "myst-nb==1.4.0",
     "nbconvert>=7.17.1",
     "nbsphinx==0.9.5",
-    "numpydoc==1.9.0",
+    "numpydoc==1.10.0",
     "pandoc==2.4",
     "plotly>=6.0.0",
     "pydata-sphinx-theme==0.15.4",

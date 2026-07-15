@@ -1,5 +1,5 @@
 from enum import Flag, auto
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union
+from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union, Literal
 
 from pydantic import AliasChoices, BaseModel, Field, computed_field, field_validator
 
@@ -27,6 +27,11 @@ class Colormap(BaseModel):
     name: str = Field(description="Name of colormap, e.g. 'flare', 'heating'.")
     nodata_index: Optional[int] = Field(0, description="Index used for no data.")
     units: str = Field(description="Units, e.g. 'degree days', 'metres'.")
+    scaling: Literal["linear", "log"] = Field(
+        "linear",
+        description="Value-to-colour scaling: 'linear' (default) or 'log'. "
+        "'log' requires min_value > 0.",
+    )
 
 
 class MapInfo(BaseModel):

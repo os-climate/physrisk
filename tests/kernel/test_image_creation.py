@@ -75,6 +75,40 @@ def test_image_creation(mock_inventory):
     np.testing.assert_equal(result, expected.astype(np.uint8))
 
 
+def test_image_creation_log_scaling():
+    colormap = colormap_provider.colormap("test")
+
+    def get_colors(index: int):
+        return colormap[str(index)]
+
+    im = np.array([[0.3, 0.1], [0.01, 0.005]])
+    result = ImageCreator.to_rgba(
+        im.copy(), get_colors, min_value=0.01, max_value=0.3, scaling="log"
+    )
+    # 0.3 >= max -> 255; 0.01 and 0.005 <= min -> 1;
+    # 0.1 -> 2 + 253 * log(0.1 / 0.01) / log(0.3 / 0.01)
+    expected = np.array(
+        [
+            [255, 2 + 253 * np.log(0.1 / 0.01) / np.log(0.3 / 0.01)],
+            [1, 1],
+        ]
+    )
+    np.testing.assert_equal(result, expected.astype(np.uint8))
+
+
+def test_log_scaling_requires_positive_min():
+    colormap = colormap_provider.colormap("test")
+
+    def get_colors(index: int):
+        return colormap[str(index)]
+
+    im = np.array([[0.3, 0.1], [0.01, 0.005]])
+    with pytest.raises(ValueError):
+        ImageCreator.to_rgba(
+            im.copy(), get_colors, min_value=0.0, max_value=0.3, scaling="log"
+        )
+
+
 @pytest.fixture
 def mock_inventory():
     return Inventory(

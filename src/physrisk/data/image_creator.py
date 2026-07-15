@@ -48,6 +48,7 @@ class ImageCreator(HazardImageCreator):
         min_value: Optional[float] = None,
         max_value: Optional[float] = None,
         index_value: Optional[Union[str, float]] = None,
+        scaling: str = "linear",
     ):
         try:
             scenario_paths = self.source_paths.scenario_paths_for_id(
@@ -76,6 +77,7 @@ class ImageCreator(HazardImageCreator):
                 index_value=index_value,
                 min_value=min_value,
                 max_value=max_value,
+                scaling=scaling,
             )
         except Exception as e:
             # if we are creating a whole image that does not exist, we log the error
@@ -201,6 +203,7 @@ class ImageCreator(HazardImageCreator):
         index_value: Optional[Union[str, float, int]] = None,
         min_value: Optional[float] = None,
         max_value: Optional[float] = None,
+        scaling: str = "linear",
     ) -> Image.Image:
         """Get image for path specified as array of bytes."""
 
@@ -252,7 +255,9 @@ class ImageCreator(HazardImageCreator):
         def get_colors(index: int):
             return map_defn[str(index)]
 
-        rgba = self.to_rgba(data, get_colors, min_value=min_value, max_value=max_value)
+        rgba = self.to_rgba(
+            data, get_colors, min_value=min_value, max_value=max_value, scaling=scaling
+        )
         image = Image.fromarray(rgba, mode="RGBA")
         return image
 
@@ -266,6 +271,7 @@ class ImageCreator(HazardImageCreator):
         nodata_upper: Optional[float] = None,
         nodata_bin_transparent: bool = False,
         min_bin_transparent: bool = False,
+        scaling: str = "linear",
     ) -> np.ndarray:
         """Convert the data to an RGBA image using values provided by get_colors.
         We are particular about min and max values, ensuring that these get their own indices
@@ -275,6 +281,9 @@ class ImageCreator(HazardImageCreator):
         2: min_value < value < (max_value - min_value) / 253
         254: (max_value - min_value) / 253 <= value < max_value
         255 is >= max_value
+        With scaling='log' the in-between indices are assigned logarithmically
+        between min_value (which must be > 0) and max_value; the bin rules above
+        are unchanged.
 
         Args:
             data (np.ndarray): Two dimensional array.
@@ -285,6 +294,8 @@ class ImageCreator(HazardImageCreator):
             nodata_upper (Optional[float], optional): If supplied, values larger than or equal to nodata_upper threshold are considered nodata. Defaults to None.
             nodata_bin_transparent (bool, optional): If True make no_data bin transparent. Defaults to False.
             min_bin_transparent (bool, optional): If True make min_bin transparent. Defaults to False.
+            scaling (str): Value-to-colour scaling, 'linear' or 'log'.
+                'log' requires min_value > 0. Defaults to 'linear'.
 
         Returns:
             np.ndarray: RGBA array.
@@ -318,9 +329,22 @@ class ImageCreator(HazardImageCreator):
         mask_ge_max = data >= max_value
         mask_le_min = data <= min_value
 
-        np.add(data, -min_value, out=data)
-        np.multiply(data, 253.0 / (max_value - min_value), out=data)
-        np.add(data, 2.0, out=data)  # np.clip seems a bit slow so we do not use
+        if scaling == "log":
+            if min_value <= 0.0:
+                raise ValueError("scaling='log' requires a min_value greater than 0.")
+            # values <= min_value produce nan/-inf here; they are overwritten
+            # below via mask_le_min (and mask_nodata), as in the linear case
+            with np.errstate(divide="ignore", invalid="ignore"):
+                np.log(data, out=data)
+            np.add(data, -np.log(min_value), out=data)
+            np.multiply(data, 253.0 / (np.log(max_value) - np.log(min_value)), out=data)
+            np.add(data, 2.0, out=data)
+        elif scaling == "linear":
+            np.add(data, -min_value, out=data)
+            np.multiply(data, 253.0 / (max_value - min_value), out=data)
+            np.add(data, 2.0, out=data)  # np.clip seems a bit slow so we do not use
+        else:
+            raise ValueError(f"unsupported scaling: {scaling}")
 
         result = data.astype(np.uint8, casting="unsafe", copy=False)
         del data

@@ -290,9 +290,25 @@ class Requester:
                 for h, inds in request.calc_settings.hazard_scope_by_indicator.items()
             }
 
+        match request.calc_settings.vulnerability_curve_mapping:
+            case "hazus":
+                use_oed_hazus_curves = True
+                map_unknown_occ = True
+            case "hazus_no_unknown":
+                use_oed_hazus_curves = True
+                map_unknown_occ = False
+            case "config_only":
+                use_oed_hazus_curves = False
+                map_unknown_occ = False
+            case _:
+                raise ValueError(
+                    f"Unsupported value for `vulnerability_curve_mapping`: {request.calc_settings.vulnerability_curve_mapping}."
+                )
+
         vulnerability_models = self.vulnerability_models_factory.vulnerability_models(
             hazard_scope=hazard_scope,
-            map_unknown_occ=request.calc_settings.map_unknown_occ,
+            use_oed_hazus_curves=use_oed_hazus_curves,
+            map_unknown_occ=map_unknown_occ,
         )
         asset_measure_calculators = self.measures_factory.asset_calculators(
             request.use_case_id

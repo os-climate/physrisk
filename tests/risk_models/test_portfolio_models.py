@@ -162,7 +162,6 @@ def test_impact_aggregation_end_to_end():
     container.override_providers(
         vulnerability_models_factory=providers.Factory(
             VulnerabilityModelsFactory,
-            use_oed_hazus_curves=True,
             config=VulnerabilityModelsFactory.embedded_vulnerability_config(),
         )
     )
@@ -396,7 +395,6 @@ def test_impact_aggregation_end_to_end_multi_hazard():
     container.override_providers(
         vulnerability_models_factory=providers.Factory(
             VulnerabilityModelsFactory,
-            use_oed_hazus_curves=True,
             config=VulnerabilityModelsFactory.embedded_vulnerability_config(),
         )
     )
@@ -422,7 +420,8 @@ def test_impact_aggregation_end_to_end_multi_hazard():
         include_calc_details=False,
         use_case_id="company",
         calc_settings=CalcSettings(
-            hazard_scope="RiverineInundation,Wind,Fire,ChronicHeat"
+            hazard_scope="RiverineInundation,Wind,Fire,ChronicHeat",
+            vulnerability_curve_mapping="hazus",
         ),
         measures_specification=AssetMeasuresSpecification(
             measure_ids=["mean"],

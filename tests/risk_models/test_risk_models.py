@@ -527,7 +527,7 @@ def test_generic_model_via_requests_default_vulnerability():
         "include_calc_details": True,
         "years": years,
         "scenarios": scenarios,
-        "calc_settings": {"map_unknown_occ": True},
+        "calc_settings": {"vulnerability_curve_mapping": "hazus"},
     }
 
     container = Container()
@@ -725,6 +725,7 @@ def test_generic_model_via_requests_custom():
         def vulnerability_models(
             self,
             hazard_scope: dict[type[Hazard], set[str] | None] | None = None,
+            use_oed_hazus_curves: bool = False,
             map_unknown_occ: bool = False,
         ) -> VulnerabilityModels:
             return _vulnerability_models()

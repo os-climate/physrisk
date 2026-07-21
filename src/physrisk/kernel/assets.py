@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
+import math
 from typing import Optional, Protocol, runtime_checkable
 
 from physrisk.kernel.hazards import (
@@ -154,6 +155,7 @@ class Asset:
     @staticmethod
     def buffered_geometry(geometry: BaseGeometry, buffer: float) -> BaseGeometry:
         """Relatively simple buffer, suitable for small buffers in metres around lat/lon points.
+        This
 
         Args:
             geometry (BaseGeometry): Geometry in EPSG:4326.
@@ -162,8 +164,28 @@ class Asset:
         Returns:
             BaseGeometry: Buffered geometry in EPSG:4326.
         """
+
+        """
+        # an an aside/future feature if needed
+        # this more accurate version uses a azimuthal equidistant projection
+        # and finding the UTM CRS is yet another possibility, e.g. via query_utm_crs_info
+        from pyproj import CRS
+        lat, lon = geometry.centroid.y, geometry.centroid.x
+        aeqd_crs = CRS.from_proj4(
+        f"+proj=aeqd +lat_0={lat} +lon_0={lon} +x_0=0 +y_0=0 +datum=WGS84 +units=m"
+    )
+        project_4326_to_aeqd = Transformer.from_crs("EPSG:4326", aeqd_crs, always_xy=True).transform
+        project_aeqd_to_4326 = Transformer.from_crs(aeqd_crs, "EPSG:4326", always_xy=True).transform
+        point_proj = transform(project_4326_to_aeqd, geometry)
+        buffered = point_proj.buffer(buffer)
+        return transform(project_aeqd_to_4326, buffered)
+        """
+        # buffer metres are interpreted to be scaled Web Mercator metres
+        # i.e. a point would appear as a (polygon approximation to) a circle on a Web Mercator map
+        # not an ellipse
         geom_proj: BaseGeometry = transform(project_4326_to_3857, geometry)
-        buffered = geom_proj.buffer(buffer, quad_segs=4)
+        scaling_factor = 1.0 / math.cos(math.radians(geometry.centroid.y))
+        buffered = geom_proj.buffer(buffer * scaling_factor, quad_segs=4)
         return transform(project_3857_to_4326, buffered)
 
 

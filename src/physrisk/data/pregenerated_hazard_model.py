@@ -14,6 +14,8 @@ from physrisk.kernel.hazards import (
     Hail,
     Hazard,
     IndicatorData,
+    Landslide,
+    Subsidence,
     indicator_data,
 )
 
@@ -43,10 +45,32 @@ class PregeneratedHazardModel(HazardModel):
         hazard_data_providers: Dict[Type[Hazard], HazardDataProvider],
         interpolate_years: bool = False,
         zarr_max_workers: int = 32,
+        nan_is_zero: Optional[set[tuple[type[Hazard], str]]] = None,
+        nan_is_no_data: Optional[set[tuple[type[Hazard], str]]] = None,
     ):
+        """
+        Args:
+            hazard_data_providers: Map from hazard type to its data provider.
+            interpolate_years: Whether to interpolate hazard data between available years.
+            zarr_max_workers: Max threads for concurrent Zarr chunk reads.
+            nan_is_zero: (hazard_type, indicator_id) pairs where NaN is treated as 0. Defaults to common indicators (fire, drought, hail, subsidence, landslide).
+            nan_is_no_data: (hazard_type, indicator_id) pairs where NaN causes a failed response. Mutually exclusive with nan_is_zero.
+        """
         self.hazard_data_providers = hazard_data_providers
         self.interpolate_years = interpolate_years
         self.zarr_max_workers = zarr_max_workers
+        self._nan_is_zero: set[tuple[type[Hazard], str]] = (
+            nan_is_zero
+            if nan_is_zero is not None
+            else PregeneratedHazardModel._default_nan_is_zero()
+        )
+        self._nan_is_no_data: set[tuple[type[Hazard], str]] = (
+            nan_is_no_data if nan_is_no_data is not None else set()
+        )
+        if any(self._nan_is_zero & self._nan_is_no_data):
+            raise ValueError(
+                f"element {next(iter(self._nan_is_zero & self._nan_is_no_data))} appears in nan_is_zero and nan_is_no_data"
+            )
 
     def get_hazard_data(  # noqa: C901
         self, requests: Sequence[HazardDataRequest]
@@ -81,14 +105,8 @@ class PregeneratedHazardModel(HazardModel):
                 )
                 # for some indicators nan is taken to be 0 for purposes of calculation
                 # (nan might indicate the quantity cannot be calculated)
-                nan_is_zero = (
-                    (
-                        hazard_type == Drought
-                        and indicator_id == "months/spei3m/below/-2"
-                    )
-                    or (hazard_type == Hail and indicator_id == "days/above/5cm")
-                    or (hazard_type == Fire and indicator_id == "fire_probability")
-                )
+                nan_is_zero = (hazard_type, indicator_id) in self._nan_is_zero
+                nan_is_no_data = (hazard_type, indicator_id) in self._nan_is_no_data
                 # Add check that indicators are non-negative. This can occur in cases
                 # of extrapolation, even if underlying hazard data is well-behaved.
                 non_negative = nan_is_zero
@@ -175,6 +193,11 @@ class PregeneratedHazardModel(HazardModel):
                                     res.paths[index],
                                 )
                             else:
+                                if nan_is_no_data and np.any(np.isnan(values)):
+                                    responses[req] = HazardDataFailedResponse(
+                                        reason="unexpected nan"
+                                    )
+                                    continue
                                 if nan_is_zero:
                                     values[np.isnan(values)] = 0.0
                                 if non_negative:
@@ -244,6 +267,18 @@ class PregeneratedHazardModel(HazardModel):
             for v in values[0:5]:
                 logger.info(str(v[0]))
 
+    @staticmethod
+    def _default_nan_is_zero():
+        return set(
+            [
+                (Drought, "months/spei3m/below/-2"),
+                (Hail, "days/above/5cm"),
+                (Fire, "fire_probability"),
+                (Subsidence, "subsidence_probability"),
+                (Landslide, "landslide_probability"),
+            ]
+        )
+
 
 class ZarrHazardModel(PregeneratedHazardModel):
     def __init__(
@@ -255,7 +290,21 @@ class ZarrHazardModel(PregeneratedHazardModel):
         interpolation="floor",
         interpolate_years: bool = False,
         zarr_max_workers: int = 32,
+        nan_is_zero: Optional[set[tuple[type[Hazard], str]]] = None,
+        nan_is_no_data: Optional[set[tuple[type[Hazard], str]]] = None,
     ):
+        """Hazard model backed by Zarr arrays.
+
+        Args:
+            source_paths: Provides paths to Zarr arrays for each hazard type and indicator.
+            reader: Shared ZarrReader; created from store if not provided.
+            store: Zarr store (local, remote, or in-memory); used when reader is None.
+            interpolation: Spatial interpolation method ("floor" or "linear").
+            interpolate_years: Whether to interpolate hazard data between available years.
+            zarr_max_workers: Max threads for concurrent Zarr chunk reads.
+            nan_is_zero: (hazard_type, indicator_id) pairs where NaN is treated as 0. Defaults to common indicators (fire, drought, hail, subsidence, landslide).
+            nan_is_no_data: (hazard_type, indicator_id) pairs where NaN causes a failed response. Mutually exclusive with nan_is_zero.
+        """
         # share ZarrReaders across HazardDataProviders
         zarr_reader = ZarrReader(store=store) if reader is None else reader
         hazard_types = source_paths.hazard_types()
@@ -269,6 +318,8 @@ class ZarrHazardModel(PregeneratedHazardModel):
                 )
                 for t in hazard_types
             },
-            interpolate_years,
-            zarr_max_workers,
+            interpolate_years=interpolate_years,
+            zarr_max_workers=zarr_max_workers,
+            nan_is_zero=nan_is_zero,
+            nan_is_no_data=nan_is_no_data,
         )

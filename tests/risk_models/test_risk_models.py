@@ -559,7 +559,7 @@ def test_generic_model_via_requests_default_vulnerability():
         for ma in response.risk_measures.measures_for_assets
         if ma.key.hazard_type == "RiverineInundation"
     )
-    np.testing.assert_allclose(res.measures_0, [0.0019592, 0.0019592])
+    np.testing.assert_allclose(res.measures_0, [0.002224, 0.002224])
 
     # now test the ability to return scores based on hazard indicator ID if needed
 

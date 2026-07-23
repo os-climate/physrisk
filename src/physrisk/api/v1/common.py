@@ -82,8 +82,8 @@ class Asset(BaseModel):
         default=None,
         description="Well Known Text representation of asset geometry, specified in WGS84 (EPSG:4326).",
     )
-    buffer: float = Field(
-        default=0.0,
+    buffer: Optional[float] = Field(
+        default=None,
         description="Buffer to be applied to the geometry, in metres. "
         "If 'wkt' is not provided, the buffer is applied.",
     )

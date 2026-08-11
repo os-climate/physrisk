@@ -1,8 +1,29 @@
 import numpy as np
+import pytest
 from shapely import Point
 from shapely.ops import transform
 
-from physrisk.kernel.assets import Asset, project_4326_to_3857
+from physrisk.kernel.assets import (
+    Asset,
+    RealEstateAsset,
+    asset_class,
+    project_4326_to_3857,
+)
+
+
+@pytest.mark.parametrize(
+    "excluded", ["OEDAsset", "SimpleTypeLocationAsset", "TestAsset"]
+)
+def test_asset_class_returns_only_public_asset_types(excluded):
+    assert asset_class("RealEstateAsset") is RealEstateAsset
+
+    with pytest.raises(AttributeError, match="unknown asset class"):
+        asset_class(excluded)
+
+
+def test_asset_class_rejects_non_asset_types():
+    with pytest.raises(AttributeError, match="unknown asset class"):
+        asset_class("FuelKind")
 
 
 def test_buffered_geometry_contains_origin():

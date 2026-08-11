@@ -1,5 +1,3 @@
-import inspect
-import sys
 from enum import Enum
 from typing import Dict, Type
 
@@ -126,16 +124,30 @@ class Subsidence(Hazard):
     pass
 
 
-def all_hazards():
+def all_hazards() -> list[type[Hazard]]:
     return [
         obj
-        for _, obj in inspect.getmembers(sys.modules[__name__])
-        if inspect.isclass(obj) and issubclass(obj, Hazard) and obj is not Hazard
+        for _, obj in sorted(globals().items())
+        if isinstance(obj, type) and issubclass(obj, Hazard) and obj is not Hazard
     ]
 
 
-def hazard_class(name: str) -> Type[Hazard]:
-    return getattr(sys.modules[__name__], name)
+def hazard_class(name: str) -> type[Hazard]:
+    """Return the hazard class with the supplied name.
+
+    Args:
+        name: Name of a class defined in this module.
+
+    Returns:
+        The matching ``Hazard`` class or subclass.
+
+    Raises:
+        AttributeError: The name does not identify a ``Hazard`` class.
+    """
+    candidate = globals().get(name)
+    if not isinstance(candidate, type) or not issubclass(candidate, Hazard):
+        raise AttributeError(f"unknown hazard class {name!r}")
+    return candidate
 
 
 class Landslide(Hazard):

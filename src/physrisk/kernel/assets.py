@@ -366,6 +366,9 @@ class WindTurbine(Asset):
     rotor_diameter: Optional[float] = None
 
 
+_EXCLUDED_ASSET_TYPES = (OEDAsset, SimpleTypeLocationAsset, TestAsset)
+
+
 def all_asset_types():
     def all_subclasses(cls: type) -> set[type]:
         subclasses = set(cls.__subclasses__())
@@ -373,7 +376,52 @@ def all_asset_types():
             subclasses |= all_subclasses(subclass)
         return subclasses
 
-    all_asset_types = all_subclasses(Asset)
-    for a in [OEDAsset, SimpleTypeLocationAsset, TestAsset]:
-        all_asset_types.remove(a)
-    return all_asset_types
+    return all_subclasses(Asset).difference(_EXCLUDED_ASSET_TYPES)
+
+
+def asset_class(name: str) -> type[Asset]:
+    """Return the asset class with the supplied name.
+
+    Args:
+        name: Name of a class defined in this module.
+
+    Returns:
+        The matching ``Asset`` class or subclass.
+
+    Raises:
+        AttributeError: The name does not identify an ``Asset`` class.
+    """
+    candidate = globals().get(name)
+    if (
+        not isinstance(candidate, type)
+        or not issubclass(candidate, Asset)
+        or candidate in _EXCLUDED_ASSET_TYPES
+    ):
+        raise AttributeError(f"unknown asset class {name!r}")
+    return candidate
+
+
+class InfrastructureAsset(OEDAsset, SimpleTypeLocationAsset):
+    """
+    Generic infrastructure facility (energy, transport, telecom, water, etc.)
+    to be used when no more specific asset class exists in the portfolio.
+    """
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+
+class PowerInfrastructureAsset(OEDAsset, SimpleTypeLocationAsset):
+    """
+    Generic power sector facility: generation, transmission or distribution,
+    when a more specific class (PowerGeneratingAsset, ThermalPowerGeneratingAsset) is not known.
+    """
+
+    def __init__(self, capacity: float | None = None, **kwargs):
+        super().__init__(**kwargs)
+        self.capacity = capacity
+
+
+class TelecommunicationAsset(OEDAsset, SimpleTypeLocationAsset):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)

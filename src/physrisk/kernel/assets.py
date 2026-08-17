@@ -399,29 +399,3 @@ def asset_class(name: str) -> type[Asset]:
     ):
         raise AttributeError(f"unknown asset class {name!r}")
     return candidate
-
-
-class InfrastructureAsset(OEDAsset, SimpleTypeLocationAsset):
-    """
-    Generic infrastructure facility (energy, transport, telecom, water, etc.)
-    to be used when no more specific asset class exists in the portfolio.
-    """
-
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-
-class PowerInfrastructureAsset(OEDAsset, SimpleTypeLocationAsset):
-    """
-    Generic power sector facility: generation, transmission or distribution,
-    when a more specific class (PowerGeneratingAsset, ThermalPowerGeneratingAsset) is not known.
-    """
-
-    def __init__(self, capacity: float | None = None, **kwargs):
-        super().__init__(**kwargs)
-        self.capacity = capacity
-
-
-class TelecommunicationAsset(OEDAsset, SimpleTypeLocationAsset):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)

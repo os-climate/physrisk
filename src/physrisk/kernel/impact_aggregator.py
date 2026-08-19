@@ -250,6 +250,7 @@ def _build_chronic_arrays(
                         ),
                         [],
                     )
+                    if not isinstance(i.impact, EmptyImpactDistrib)
                 )
                 for asset in all_assets_list
             ]
@@ -271,6 +272,7 @@ def _build_chronic_arrays(
                         ),
                         [],
                     )
+                    if not isinstance(i.impact, EmptyImpactDistrib)
                 )
                 for asset in all_assets_list
             ]

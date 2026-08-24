@@ -1,4 +1,4 @@
-from typing import Any, List, Literal, NamedTuple, Optional
+from typing import Any, Literal, NamedTuple
 
 from pydantic import BaseModel, Field
 
@@ -9,8 +9,6 @@ class TileNotAvailableError(KeyError):
     """Raised if the requested tile is not available, most commonly because
     the zoom level requested is not present.
     """
-
-    pass
 
 
 class Tile(NamedTuple):
@@ -26,10 +24,10 @@ class HazardImageInfoRequest(BaseHazardRequest):
 
 
 class HazardImageInfoResponse(BaseHazardRequest):
-    all_index_values: List[Any] = Field(
+    all_index_values: list[Any] = Field(
         [], description="The coordinate values of the index dimension."
     )
-    available_index_values: List[Any] = Field(
+    available_index_values: list[Any] = Field(
         [],
         description="The coordinate values of the index dimension for which maps are available.",
     )
@@ -37,7 +35,7 @@ class HazardImageInfoResponse(BaseHazardRequest):
         "index", description="The name of the index dimension."
     )
     index_units: str = Field("", description="The units of the index dimension.")
-    max_zoom: Optional[int] = Field(
+    max_zoom: int | None = Field(
         default=None,
         description="The maximum zoom level for which tiles are available.",
     )
@@ -47,12 +45,12 @@ class HazardImageRequest(BaseHazardRequest):
     resource: str = Field(description="Hazard resource path (unique identifier).")
     scenario_id: str
     year: int
-    colormap: Optional[str] = Field("heating")
-    format: Optional[str] = Field("PNG")
-    min_value: Optional[float]
-    max_value: Optional[float]
-    tile: Optional[Tile]
-    index_value: Optional[Any] = Field(
+    colormap: str | None = Field("heating")
+    format: str | None = Field("PNG")
+    min_value: float | None
+    max_value: float | None
+    tile: Tile | None
+    index_value: Any | None = Field(
         None, description="(Non-spatial) index of the array to view."
     )
     scaling: Literal["linear", "log"] | None = Field(

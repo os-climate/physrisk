@@ -1,9 +1,10 @@
-from enum import Enum
 import logging
-from pathlib import PurePosixPath
-from typing import Dict, Iterable, List, NamedTuple, Optional, Protocol, Sequence, Type
 import re
 from collections import defaultdict
+from collections.abc import Iterable, Sequence
+from enum import Enum
+from pathlib import PurePosixPath
+from typing import NamedTuple, Protocol
 
 from physrisk.api.v1.hazard_data import HazardResource
 from physrisk.data.hazard_data_provider import (
@@ -18,10 +19,10 @@ from physrisk.kernel.hazards import (
     CoastalInundation,
     Drought,
     Hazard,
+    Landslide,
     PluvialInundation,
     RiverineInundation,
     Wind,
-    Landslide,
     hazard_class,
 )
 
@@ -74,8 +75,8 @@ class ResourceSelector(Protocol):
         self,
         *,
         candidates: ResourceSubset,
-        hint: Optional[HazardDataHint] = None,
-    ) -> List[HazardResource]: ...
+        hint: HazardDataHint | None = None,
+    ) -> list[HazardResource]: ...
 
 
 class ResourceSelectorKey(NamedTuple):
@@ -90,7 +91,7 @@ class InventorySourcePaths(SourcePaths):
 
     def __init__(self, inventory: Inventory):
         self._inventory = inventory
-        self._selectors: Dict[ResourceSelectorKey, ResourceSelector] = {}
+        self._selectors: dict[ResourceSelectorKey, ResourceSelector] = {}
         self._all_selected_resources_by_type_id: (
             defaultdict[tuple[str, str], list[HazardResource]] | None
         ) = None
@@ -118,11 +119,11 @@ class InventorySourcePaths(SourcePaths):
 
     def resource_paths(
         self,
-        hazard_type: Type[Hazard],
+        hazard_type: type[Hazard],
         indicator_id: str,
         scenarios: Sequence[str],
-        hint: Optional[HazardDataHint] = None,
-    ) -> List[ResourcePaths]:
+        hint: HazardDataHint | None = None,
+    ) -> list[ResourcePaths]:
         resources = self.get_resources(hazard_type, indicator_id, hint=hint)
         result = []
         for r in resources:
@@ -143,7 +144,7 @@ class InventorySourcePaths(SourcePaths):
         resource_id: str,
         scenarios: Sequence[str],
         map: bool = False,
-        map_zoom: Optional[int] = None,
+        map_zoom: int | None = None,
     ):
         r = self._inventory.resources[resource_id]
         return {
@@ -155,7 +156,7 @@ class InventorySourcePaths(SourcePaths):
         resource: HazardResource,
         scenario_id: str,
         map: bool = False,
-        map_zoom: Optional[int] = None,
+        map_zoom: int | None = None,
     ):
         if map:
             assert resource.map is not None
@@ -188,12 +189,18 @@ class InventorySourcePaths(SourcePaths):
             year = min(scenario.years)
             return ScenarioPaths(
                 [-1],
-                lambda y: path.format(
-                    id=resource.indicator_id,
-                    scenario=scenario.id,  # type:ignore
-                    year=year,
-                )
-                + ("/indicator" if (resource.store_netcdf_coords and not map) else ""),
+                lambda y: (
+                    path.format(
+                        id=resource.indicator_id,
+                        scenario=scenario.id,  # type:ignore
+                        year=year,
+                    )
+                    + (
+                        "/indicator"
+                        if (resource.store_netcdf_coords and not map)
+                        else ""
+                    )
+                ),
             )
         proxy_scenario_id = (
             cmip6_scenario_to_rcp(scenario_id)
@@ -209,18 +216,24 @@ class InventorySourcePaths(SourcePaths):
         else:
             return ScenarioPaths(
                 scenario.years,
-                lambda y: path.format(
-                    id=resource.indicator_id, scenario=proxy_scenario_id, year=y
-                )
-                + ("/indicator" if (resource.store_netcdf_coords and not map) else ""),
+                lambda y: (
+                    path.format(
+                        id=resource.indicator_id, scenario=proxy_scenario_id, year=y
+                    )
+                    + (
+                        "/indicator"
+                        if (resource.store_netcdf_coords and not map)
+                        else ""
+                    )
+                ),
             )
 
     def get_resources(
         self,
-        hazard_type: Type[Hazard],
+        hazard_type: type[Hazard],
         indicator_id: str,
-        hint: Optional[HazardDataHint] = None,
-    ) -> List[HazardResource]:
+        hint: HazardDataHint | None = None,
+    ) -> list[HazardResource]:
         # all matching resources in the inventory
         selector = self._selectors.get(
             ResourceSelectorKey(
@@ -246,14 +259,14 @@ class InventorySourcePaths(SourcePaths):
         except Exception as e:
             raise RuntimeError(
                 f"unable to select resources for hazard {hazard_type.__name__} "
-                f"and indicator ID {indicator_id}: {str(e)}"
+                f"and indicator ID {indicator_id}: {e!s}"
             )
         return resources
 
     @staticmethod
     def _no_selector(
         candidates: ResourceSubset,
-        hint: Optional[HazardDataHint] = None,
+        hint: HazardDataHint | None = None,
     ):
         return candidates.first()
 
@@ -333,28 +346,28 @@ class CoreInventorySourcePaths(InventorySourcePaths):
     @staticmethod
     def _select_chronic_heat(
         candidates: ResourceSubset,
-        hint: Optional[HazardDataHint] = None,
+        hint: HazardDataHint | None = None,
     ):
         return candidates.with_model_gcm("ACCESS-CM2").first()
 
     @staticmethod
     def _select_coastal_inundation(
         candidates: ResourceSubset,
-        hint: Optional[HazardDataHint] = None,
+        hint: HazardDataHint | None = None,
     ):
         return candidates.with_model_id("wtsub/95").first()
 
     @staticmethod
     def _select_drought(
         candidates: ResourceSubset,
-        hint: Optional[HazardDataHint] = None,
+        hint: HazardDataHint | None = None,
     ):
         return candidates.with_model_gcm("multi_model_0").first()
 
     @staticmethod
     def _select_pluvial_inundation(
         candidates: ResourceSubset,
-        hint: Optional[HazardDataHint] = None,
+        hint: HazardDataHint | None = None,
     ):
         # when JBA resources are API-only (not Zarr)
         return [c for c in candidates.resources if not c.path.startswith("jba_")]
@@ -362,7 +375,7 @@ class CoreInventorySourcePaths(InventorySourcePaths):
     @staticmethod
     def _select_riverine_inundation(
         candidates: ResourceSubset,
-        hint: Optional[HazardDataHint] = None,
+        hint: HazardDataHint | None = None,
     ):
         # we use this GCM, even for the historical scenario, where the earliest year is used.
         # because of noted discontinuities between baseline and GCM data sets.
@@ -371,7 +384,7 @@ class CoreInventorySourcePaths(InventorySourcePaths):
     @staticmethod
     def _select_riverine_inundation_tudelft(
         candidates: ResourceSubset,
-        hint: Optional[HazardDataHint] = None,
+        hint: HazardDataHint | None = None,
     ):
         return (
             candidates.with_model_id("tudelft").first()
@@ -381,7 +394,7 @@ class CoreInventorySourcePaths(InventorySourcePaths):
     @staticmethod
     def _select_wind(
         candidates: ResourceSubset,
-        hint: Optional[HazardDataHint] = None,
+        hint: HazardDataHint | None = None,
     ):
         return candidates.prefer_group_id("iris_osc").first()
 
@@ -389,8 +402,8 @@ class CoreInventorySourcePaths(InventorySourcePaths):
     def _select_landslide(
         *,
         candidates: ResourceSubset,
-        hint: Optional[HazardDataHint] = None,
-    ) -> List[HazardResource]:
+        hint: HazardDataHint | None = None,
+    ) -> list[HazardResource]:
         return candidates.with_group_id("landslide_jrc").first()
 
 

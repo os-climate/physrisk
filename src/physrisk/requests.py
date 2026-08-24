@@ -1,28 +1,27 @@
-from collections import defaultdict
 import importlib.resources
 import json
 import math
+from collections import defaultdict
+from collections.abc import Callable, Sequence
 from typing import (
     Any,
-    Callable,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Type,
-    Union,
 )
 
 import numpy as np
 
-from physrisk.api.v1.example_portfolios import ExamplePortfoliosResponse
 import physrisk.data.static.example_portfolios
 import physrisk.kernel.hazard_model
+from physrisk.api.v1.availability_sources import (
+    AvailabilitySourcesRequest,
+    AvailabilitySourcesResponse,
+    HazardTypeAvailability,
+)
 from physrisk.api.v1.common import (
     Distribution,
     ExceedanceCurve,
     VulnerabilityDistrib,
 )
+from physrisk.api.v1.example_portfolios import ExamplePortfoliosResponse
 from physrisk.api.v1.exposure_req_resp import (
     AssetExposure,
     AssetExposureRequest,
@@ -44,24 +43,23 @@ from physrisk.hazard_models.core_hazards import (
     InventorySourcePaths,
     get_default_source_paths,
 )
+from physrisk.kernel.assets import Asset, all_asset_types
 from physrisk.kernel.exposure import JupterExposureMeasure, calculate_exposures
 from physrisk.kernel.hazards import Hazard, all_hazards, hazard_class
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey  # , ImpactKey
 from physrisk.kernel.impact_distrib import EmptyImpactDistrib, PlaceholderImpactDistrib
 from physrisk.kernel.risk import (
-    PortfolioRiskModel,
     Measure,
     MeasureKey,
+    NullAssetBasedPortfolioRiskMeasureCalculator,
     PortfolioQuantities,
+    PortfolioRiskMeasureCalculator,
+    PortfolioRiskModel,
     Quantity,
     QuantityType,
     RiskMeasureCalculator,
     RiskMeasuresFactory,
     RiskQuantityKey,
-)
-from physrisk.kernel.risk import PortfolioRiskMeasureCalculator
-from physrisk.kernel.risk import (
-    NullAssetBasedPortfolioRiskMeasureCalculator,
 )
 from physrisk.kernel.vulnerability_model import (
     VulnerabilityModels,
@@ -88,47 +86,38 @@ from .api.v1.hazard_data import (
     StaticInformationResponse,
 )
 from .api.v1.impact_req_resp import (
-    AssetMeasuresSpecification,
-    CalculationDetails,
     AssetImpactRequest,
     AssetImpactResponse,
     AssetLevelImpact,
+    AssetMeasuresSpecification,
     Assets,
     AssetSingleImpact,
+    CalculationDetails,
     PortfolioImpact,
-    ScoreBasedRiskMeasure,
-    RiskMeasuresForAssets,
-)
-from .api.v1.impact_req_resp import ImpactKey as APIImpactKey
-from .api.v1.impact_req_resp import (
     RiskMeasureDefinition,
     RiskMeasureKey,
     RiskMeasures,
-    ScoreBasedRiskMeasuresForAssets,
+    RiskMeasuresForAssets,
+    ScoreBasedRiskMeasure,
     ScoreBasedRiskMeasureDefinition,
     ScoreBasedRiskMeasureSetDefinition,
+    ScoreBasedRiskMeasuresForAssets,
 )
-from physrisk.api.v1.availability_sources import (
-    AvailabilitySourcesRequest,
-    AvailabilitySourcesResponse,
-    HazardTypeAvailability,
-)
+from .api.v1.impact_req_resp import ImpactKey as APIImpactKey
 from .data.inventory import EmbeddedInventory, Inventory
-from physrisk.kernel.assets import Asset, all_asset_types
 from .kernel import calculation as calc
 from .kernel.hazard_model import (
     HazardDataRequest as hmHazardDataRequest,
-    HazardImageCreator,
 )
 from .kernel.hazard_model import HazardEventDataResponse as hmHazardEventDataResponse
 from .kernel.hazard_model import (
+    HazardImageCreator,
     HazardModel,
     HazardModelFactory,
     HazardParameterDataResponse,
 )
 
-
-Colormaps = Dict[str, Any]
+Colormaps = dict[str, Any]
 
 
 class Requester:
@@ -143,7 +132,7 @@ class Requester:
         reader: ZarrReader,
         colormaps: Colormaps,
         measures_factory: RiskMeasuresFactory,
-        json_encoder_cls: Type[json.JSONEncoder] = PhysriskDefaultEncoder,
+        json_encoder_cls: type[json.JSONEncoder] = PhysriskDefaultEncoder,
         sig_figures: int = -1,
     ):
         self.asset_factory = asset_factory
@@ -310,8 +299,8 @@ class Requester:
             sig_figures=self.round_sig_figures,
         )
 
-    def get_image(self, request_or_dict: Union[HazardImageRequest, Dict]):
-        if isinstance(request_or_dict, Dict):
+    def get_image(self, request_or_dict: HazardImageRequest | dict):
+        if isinstance(request_or_dict, dict):
             request = HazardImageRequest(**request_or_dict)
         else:
             request = request_or_dict
@@ -373,17 +362,17 @@ class Requester:
     def dumps(self, dict):
         return json.dumps(dict, cls=self.json_encoder_cls)
 
-    def round_sig_figures(self, x: Union[np.ndarray, float]):
+    def round_sig_figures(self, x: np.ndarray | float):
         if self.sig_figures == -1:
             return x
         return encoder.sig_figures(x, self.sig_figures)
 
 
 def _create_inventory(
-    reader: Optional[InventoryReader] = None, sources: Optional[List[str]] = None
+    reader: InventoryReader | None = None, sources: list[str] | None = None
 ):
-    resources: List[HazardResource] = []
-    colormaps: Dict[str, Dict[str, Any]] = {}
+    resources: list[HazardResource] = []
+    colormaps: dict[str, dict[str, Any]] = {}
     request_sources = ["embedded"] if sources is None else [s.lower() for s in sources]
     for source in request_sources:
         if source == "embedded":
@@ -402,7 +391,7 @@ def create_source_paths(inventory: Inventory):
     return get_default_source_paths(inventory)
 
 
-def _read_permitted(group_ids: List[str], resource: HazardResource):
+def _read_permitted(group_ids: list[str], resource: HazardResource):
     """Check whether HazardResource is available to the user.
 
     Args:
@@ -438,9 +427,7 @@ def _get_hazard_data_description(
 def _get_hazard_data(
     request: HazardDataRequest,
     hazard_model: HazardModel,
-    sig_figures: Callable[
-        [Union[np.ndarray, float]], Union[float, np.ndarray]
-    ] = lambda x: x,
+    sig_figures: Callable[[np.ndarray | float], float | np.ndarray] = lambda x: x,
 ):
     # if any(
     #     not _read_permitted(request.group_ids, inventory.resources_by_type_id[(i.event_type, i.model)][0])
@@ -526,7 +513,7 @@ def _get_hazard_data(
 
 def create_assets(
     api_assets: Assets,
-    assets: Optional[List[Asset]] = None,
+    assets: list[Asset] | None = None,
     asset_factory: AssetFactory = DefaultAssetFactory(),
 ):
     """Create list of Asset objects from the Assets API object:"""
@@ -546,7 +533,7 @@ def create_assets(
 def _get_asset_exposures(
     request: AssetExposureRequest,
     hazard_model: HazardModel,
-    assets: Optional[List[Asset]] = None,
+    assets: list[Asset] | None = None,
     asset_factory: AssetFactory = DefaultAssetFactory(),
 ):
     _assets, _ = create_assets(request.assets, assets, asset_factory)
@@ -573,12 +560,10 @@ def _get_asset_impacts(
     hazard_model: HazardModel,
     vulnerability_models: VulnerabilityModels,
     asset_factory: AssetFactory = DefaultAssetFactory(),
-    measure_calculators: Optional[Dict[Type[Asset], RiskMeasureCalculator]] = None,
-    portfolio_measure_calculator: Optional[PortfolioRiskMeasureCalculator] = None,
-    assets: Optional[List[Asset]] = None,
-    sig_figures: Callable[
-        [Union[np.ndarray, float]], Union[np.ndarray, float]
-    ] = lambda x: x,
+    measure_calculators: dict[type[Asset], RiskMeasureCalculator] | None = None,
+    portfolio_measure_calculator: PortfolioRiskMeasureCalculator | None = None,
+    assets: list[Asset] | None = None,
+    sig_figures: Callable[[np.ndarray | float], np.ndarray | float] = lambda x: x,
 ):
     # we keep API definition of asset separate from internal Asset class; convert by reflection
     # based on asset_class:
@@ -647,9 +632,9 @@ def _get_asset_impacts(
     # populated by calculate_risk_measures above.
     drilldown_req = request.measures_specification
     if drilldown_req is not None and portfolio_quantities:
-        drilldown_entries: List[RiskMeasuresForAssets] = []
+        drilldown_entries: list[RiskMeasuresForAssets] = []
         for scenario in scenarios:
-            key_years: List[Optional[int]] = (
+            key_years: list[int | None] = (
                 [None] if scenario == "historical" else list(years)
             )
             for key_year in key_years:
@@ -706,9 +691,9 @@ _QUANTITY_TYPE_TO_IMPACT_TYPE: dict[QuantityType, str] = {
 
 def _compile_portfolio_impacts(
     portfolio_quantities: PortfolioQuantities,
-    sig_figures: Callable[[Union[np.ndarray, float]], Union[np.ndarray, float]],
-) -> Optional[List[PortfolioImpact]]:
-    results: List[PortfolioImpact] = []
+    sig_figures: Callable[[np.ndarray | float], np.ndarray | float],
+) -> list[PortfolioImpact] | None:
+    results: list[PortfolioImpact] = []
     for (scenario, year), quantities in portfolio_quantities.items():
         for rk, qty in quantities.items():
             if rk.asset is not None:
@@ -764,10 +749,10 @@ _IMPACT_TYPE_LABEL: dict[str, tuple[str, str]] = {
 
 
 def _build_financial_measure_definitions(
-    measure_ids: List[str], quantity_types: List[str]
-) -> List[RiskMeasureDefinition]:
+    measure_ids: list[str], quantity_types: list[str]
+) -> list[RiskMeasureDefinition]:
     """Return RiskMeasureDefinition objects for each valid (base_id, quantity_type) combination."""
-    defns: List[RiskMeasureDefinition] = []
+    defns: list[RiskMeasureDefinition] = []
     for base_id in measure_ids:
         if base_id not in _ALL_FINANCIAL_MEASURE_IDS:
             continue
@@ -797,7 +782,7 @@ def _build_financial_measure_definitions(
     return defns
 
 
-def _extract_financial_value(qty: Optional[Quantity], measure_id: str) -> float:
+def _extract_financial_value(qty: Quantity | None, measure_id: str) -> float:
     """Extract a single scalar from a Quantity for the given measure_id; returns 0.0 if absent."""
     if qty is None:
         return 0.0
@@ -814,12 +799,12 @@ def _extract_financial_value(qty: Optional[Quantity], measure_id: str) -> float:
 
 def _compile_asset_financial_impacts(
     drilldown_results: dict[RiskQuantityKey, Quantity],
-    assets: List[Asset],
+    assets: list[Asset],
     scenario: str,
-    year: Optional[int],
+    year: int | None,
     drilldown_req: AssetMeasuresSpecification,
-    sig_figures: Callable[[Union[np.ndarray, float]], Union[np.ndarray, float]],
-) -> List[RiskMeasuresForAssets]:
+    sig_figures: Callable[[np.ndarray | float], np.ndarray | float],
+) -> list[RiskMeasuresForAssets]:
     """Produce one RiskMeasuresForAssets entry per (measure_id, hazard_type, quantity_type).
 
     Per-asset arrays are aligned with risk_measures.asset_ids; assets with no impact for a
@@ -833,7 +818,7 @@ def _compile_asset_financial_impacts(
             by_hazard_qty[(rk.hazard_type, rk.quantity)][rk.asset] = qty
 
     year_str = str(year) if year is not None else ""
-    entries: List[RiskMeasuresForAssets] = []
+    entries: list[RiskMeasuresForAssets] = []
 
     for measure_id in drilldown_req.measure_ids:
         if measure_id not in _ALL_FINANCIAL_MEASURE_IDS:
@@ -875,12 +860,10 @@ def _compile_asset_financial_impacts(
 
 
 def _compile_asset_impacts(
-    impacts: Dict[ImpactKey, List[AssetImpactResult]],
-    assets: List[Asset],
+    impacts: dict[ImpactKey, list[AssetImpactResult]],
+    assets: list[Asset],
     include_calc_details: bool,
-    sig_figures: Callable[
-        [Union[np.ndarray, float]], Union[np.ndarray, float]
-    ] = lambda x: x,
+    sig_figures: Callable[[np.ndarray | float], np.ndarray | float] = lambda x: x,
 ):
     """Convert (internal) list of AssetImpactResult objects to a list of AssetLevelImpact
     objects ready for serialization.
@@ -894,7 +877,7 @@ def _compile_asset_impacts(
     Returns:
         List[AssetLevelImpact]: AssetImpactResult objects for serialization.
     """
-    ordered_impacts: Dict[Asset, List[AssetSingleImpact]] = {}
+    ordered_impacts: dict[Asset, list[AssetSingleImpact]] = {}
     for asset in assets:
         ordered_impacts[asset] = []
     for k, value in impacts.items():
@@ -1005,9 +988,7 @@ def _create_risk_measures(
     assets: list[Asset],
     scenarios: Sequence[str],
     years: Sequence[int],
-    sig_figures: Callable[
-        [Union[np.ndarray, float]], Union[np.ndarray, float]
-    ] = lambda x: x,
+    sig_figures: Callable[[np.ndarray | float], np.ndarray | float] = lambda x: x,
     hazard_type_indicators: dict[type[Hazard], set[str]] = {},
     measure_ids_for_asset_drilldown: dict[tuple[type[Hazard], str], list[str]] = {},
 ) -> RiskMeasures:
@@ -1031,11 +1012,11 @@ def _create_risk_measures(
     """
 
     nan_value = -9999.0  # Nan not part of JSON spec
-    hazard_types = set(k.hazard_type for k in measures.keys())
+    hazard_types = set(k.hazard_type for k in measures)
     # hazard_types = all_hazards()
     measure_set_id = "measure_set_0"
-    measures_for_assets: List[ScoreBasedRiskMeasuresForAssets] = []
-    measures_for_portfolio: List[ScoreBasedRiskMeasure] = []
+    measures_for_assets: list[ScoreBasedRiskMeasuresForAssets] = []
+    measures_for_portfolio: list[ScoreBasedRiskMeasure] = []
     for hazard_type in sorted(
         hazard_types, key=lambda x: x.__name__ if x is not None else ""
     ):
@@ -1217,8 +1198,8 @@ def _get_hazards_from_vulnerability_models(
 def _hazard_type_indicators(measures: dict[MeasureKey, Measure]):
     # the measures keys might contain hazard_indicator_id for drill-down: we check for this
     # and create a look-up of the hazard_indicator_ids used for each hazard type.
-    hazard_type_indicators: Dict[type[Hazard], set[str]] = defaultdict(set)
-    for k in measures.keys():
+    hazard_type_indicators: dict[type[Hazard], set[str]] = defaultdict(set)
+    for k in measures:
         if k.hazard_type is not None and k.hazard_indicator_id is not None:
             hazard_type_indicators[k.hazard_type].add(k.hazard_indicator_id)
     return hazard_type_indicators

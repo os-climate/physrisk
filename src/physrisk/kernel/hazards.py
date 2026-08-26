@@ -62,6 +62,9 @@ class CoastalInundation(Inundation):
 
 class ChronicWind(Hazard):
     kind = HazardKind.CHRONIC
+    indicator_data = {
+        "windstorm_probability": IndicatorData.EVENT,
+    }
     pass
 
 
@@ -87,6 +90,7 @@ class Hail(Hazard):
     kind = HazardKind.ACUTE
     indicator_data = {
         "days/above/5cm": IndicatorData.PARAMETERS,
+        "hail_probability": IndicatorData.EVENT,
     }
     pass
 
@@ -122,6 +126,24 @@ class Subsidence(Hazard):
     kind = HazardKind.ACUTE
     indicator_data = {
         "subsidence_probability": IndicatorData.PARAMETERS,
+    }
+    pass
+
+
+class Snow(Hazard):
+    kind = HazardKind.ACUTE
+    indicator_data = {
+        "blizzard_probability": IndicatorData.PARAMETERS,
+        "heavy_snowfall_probability": IndicatorData.EVENT,
+        "crown_snow_load_probability": IndicatorData.EVENT,
+    }
+    pass
+
+
+class FreezingRain(Hazard):
+    kind = HazardKind.ACUTE
+    indicator_data = {
+        "freezing_rain_probability": IndicatorData.EVENT,
     }
     pass
 

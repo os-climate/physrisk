@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, NamedTuple, Optional, Sequence
+from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -28,6 +28,15 @@ class CalcSettings(BaseModel):
     hazard_scope_by_indicator: Optional[Dict[str, List[str] | None]] = Field(
         default=None,
         description="Dictionary of hazards and corresponding indicator ids to include in analysis.",
+    )
+    vulnerability_curve_mapping: Literal["hazus", "hazus_no_unknown", "config_only"] = (
+        Field(
+            "hazus_no_unknown",
+            description="Configuration for the vulnerability models."
+            "hazus: use hazus curves, for the unknown occupancy code, use an average of hazus curves."
+            "hazus_no_unknown: use hazus curves, for the unknown occupancy code, fallback to config based curves."
+            "config_only: do not use hazus curves.",
+        )
     )
 
 

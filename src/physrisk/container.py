@@ -101,25 +101,27 @@ class DefaultHazardModelFactory(HazardModelFactory):
 
 class DictBasedVulnerabilityModelsFactory(PVulnerabilityModelsFactory):
     def vulnerability_models(
-        self, hazard_scope: dict[type[Hazard], set[str] | None] | None = None
+        self,
+        hazard_scope: dict[type[Hazard], set[str] | None] | None = None,
+        use_oed_hazus_curves: bool = False,
+        map_unknown_occ: bool = False,
     ) -> PVulnerabilityModels:
         return DictBasedVulnerabilityModels(
             calc.alternate_default_vulnerability_models_scores()
         )
 
 
-class DefaultVulnerabilityModelFactory(VulnerabilityModelsFactory):
+class DefaultVulnerabilityModelsFactory(VulnerabilityModelsFactory):
     """Default vulnerability approach. 'default_vulnerability_models'
     programmatic models are used, to which FEMA Hazus vulnerability-based
     models are added and finally configuration.
-    FEMA Hazus vulnerability-based models excluded by default (until non-experimental).
+    FEMA Hazus vulnerability-based models use is toggled at runtime.
     """
 
-    def __init__(self, use_oed_hazus_curves: bool = True):
+    def __init__(self):
         super().__init__(
             config=VulnerabilityModelsFactory.embedded_vulnerability_config(),
             programmatic_models=calc.default_vulnerability_models(),
-            use_oed_hazus_curves=use_oed_hazus_curves,
             standard_of_protection=StandardOfProtection.CONSTANT_DEPTH,
         )
 
@@ -168,7 +170,7 @@ class Container(containers.DeclarativeContainer):
 
     measures_factory = providers.Factory(calc.DefaultMeasuresFactory)
 
-    vulnerability_models_factory = providers.Factory(DefaultVulnerabilityModelFactory)
+    vulnerability_models_factory = providers.Factory(DefaultVulnerabilityModelsFactory)
 
     requester = providers.Singleton(
         Requester,

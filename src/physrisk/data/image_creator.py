@@ -12,7 +12,7 @@ import zarr.storage
 from physrisk.api.v1.hazard_image import TileNotAvailableError
 from physrisk.kernel.hazards import Hazard, HazardKind
 from physrisk.data import colormap_provider
-from physrisk.data.hazard_data_provider import HazardDataProvider, SourcePaths
+from physrisk.data.hazard_data_provider import CascadingHazardDataProvider, SourcePaths
 from physrisk.data.inventory import Inventory
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.kernel.hazard_model import HazardImageCreator, Tile
@@ -59,7 +59,7 @@ class ImageCreator(HazardImageCreator):
             )
             weighted_sum = next(
                 iter(
-                    HazardDataProvider._weights(
+                    CascadingHazardDataProvider._weights(
                         scenario,
                         scenario_paths[scenario].years,
                         [year],

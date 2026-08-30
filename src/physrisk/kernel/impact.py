@@ -3,6 +3,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, NamedTuple, Optional, Sequence, Tuple, Union
 
+from physrisk.data.hazard_data_provider import ScenarioYear
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.hazard_event_distrib import HazardEventDistrib
 from physrisk.kernel.hazard_model import (
@@ -186,11 +187,6 @@ def calculate_impacts(  # noqa: C901
                     finally:
                         results[impact_key].append(asset_impact_result)
     return results
-
-
-class ScenarioYear(NamedTuple):
-    scenario: str
-    key_year: Optional[int] = None
 
 
 def _download_data_consolidated(

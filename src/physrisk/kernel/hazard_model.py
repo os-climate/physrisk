@@ -1,5 +1,6 @@
 import sys
 from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from typing import (
     Any,
     Dict,
@@ -106,9 +107,27 @@ class HazardDataRequest:
         )
 
 
+@dataclass(frozen=True)
+class HazardDataSource:
+    """Concrete source used to produce a hazard data response.
+
+    Attributes:
+        resource_id: Identifier of the selected hazard resource.
+        path: Concrete data-array path that was read.
+        scenario: Scenario of the source array.
+        year: Year of the source array.
+    """
+
+    resource_id: str
+    path: str
+    scenario: str
+    year: int
+
+
 class HazardDataResponse(Protocol):
     path: str
     units: str
+    source: HazardDataSource | None
 
 
 class HazardDataFailedResponse(HazardDataResponse):
@@ -117,6 +136,7 @@ class HazardDataFailedResponse(HazardDataResponse):
         self.reason = reason
         self.path = ""
         self.units = ""
+        self.source: HazardDataSource | None = None
 
     def __repr__(self):
         return self.reason if self.reason is not None else str(self.error)
@@ -131,19 +151,23 @@ class HazardEventDataResponse(HazardDataResponse):
         intensities: np.ndarray,
         units: str = "default",
         path: str = "unknown",
+        source: HazardDataSource | None = None,
     ):
         """Create HazardEventDataResponse.
 
         Args:
             return_periods: return periods in years.
             intensities: hazard event intensity for each return period, or set of hazard event intensities corresponding to different events. # noqa: E501
+            units: Units of the intensity values.
             path: path to the hazard indicator data source.
+            source: Concrete resource, path, scenario, and year used for the response.
         """
 
         self.return_periods = return_periods
         self.intensities = intensities
         self.units = sys.intern(units)
         self.path = sys.intern(path)
+        self.source = source
 
     def __repr__(self) -> str:
         return (
@@ -165,6 +189,7 @@ class HazardParameterDataResponse(HazardDataResponse):
         param_defns: np.ndarray = np.empty([]),
         units: str = "default",
         path: str = "unknown",
+        source: HazardDataSource | None = None,
     ):
         """Create HazardParameterDataResponse. In general the chronic parameters are an array of values.
         For example, a chronic hazard may be the number of days per year with average temperature
@@ -176,12 +201,15 @@ class HazardParameterDataResponse(HazardDataResponse):
         Args:
             parameters (np.ndarray): Chronic hazard parameter values.
             param_defns (np.ndarray): Chronic hazard parameter definitions.
+            units: Units of the parameter values.
             path: path to the hazard indicator data source.
+            source: Concrete resource, path, scenario, and year used for the response.
         """
         self.parameters = parameters
         self.param_defns = param_defns
         self.units = sys.intern(units)
         self.path = sys.intern(path)
+        self.source = source
 
     @property
     def parameter(self) -> float:

@@ -17,6 +17,7 @@ import numpy as np
 from shapely import Point
 from typing_extensions import Protocol
 
+from physrisk.api.v1.hazard_data import HazardResource
 from physrisk.kernel.hazards import Hazard
 
 from .zarr_reader import ZarrReader
@@ -108,6 +109,36 @@ class SourcePaths(Protocol):
         ...
 
 
+class HazardResourceProvider(Protocol):
+    """Provides hazard resources and the hazard types represented by them."""
+
+    def hazard_types(self) -> list[type[Hazard]]:
+        """Return the hazard types with available resources.
+
+        Returns:
+            Hazard classes represented by the provider's resources.
+        """
+        ...
+
+    def get_resources(
+        self,
+        hazard_type: type[Hazard],
+        indicator_id: str,
+        hint: HazardDataHint | None = None,
+    ) -> list[HazardResource]:
+        """Return matching resources in cascade order.
+
+        Args:
+            hazard_type: Hazard class requested by the caller.
+            indicator_id: Identifier of the requested hazard indicator.
+            hint: Optional resource-selection hint.
+
+        Returns:
+            Matching resources ordered from most to least preferred.
+        """
+        ...
+
+
 class DataSourcingError(Exception):
     pass
 
@@ -125,6 +156,27 @@ class ScenarioYear:
     year: int
 
 
+class ScenarioYearResolver(Protocol):
+    """Callable that selects one available scenario and year from a resource."""
+
+    def __call__(
+        self,
+        requested: ScenarioYear,
+        resource: HazardResource,
+        /,
+    ) -> ScenarioYear:
+        """Select a scenario and year available from a hazard resource.
+
+        Args:
+            requested: Scenario and year requested by the caller.
+            resource: Resource containing the available scenarios and years.
+
+        Returns:
+            The scenario and year to read from the resource.
+        """
+        ...
+
+
 @dataclass(frozen=True)
 class ScenarioYearRes:
     scenario: str
@@ -140,6 +192,7 @@ class ScenarioYearResult:
     coverage_mask: np.ndarray  # boolean mask giving the part of the original set of lats/lons that this applies to
     units: str
     paths: np.ndarray
+    sources: np.ndarray | None = None
 
 
 @dataclass

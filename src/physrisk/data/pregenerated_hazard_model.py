@@ -30,9 +30,13 @@ from .hazard_data_provider import (
     CascadingHazardDataProvider,
     HazardDataHint,
     HazardDataProvider,
+    HazardResourceProvider,
     ScenarioYear,
+    ScenarioYearResolver,
     SourcePaths,
 )
+from .hazard_data_resolution import resolve_nearest_scenario_year
+from .hierarchical_hazard_data_provider import HierarchicalHazardDataProvider
 
 logger = logging.getLogger(__name__)
 
@@ -204,6 +208,8 @@ class PregeneratedHazardModel(HazardModel):
             indices_length = int(result.indices_length[index])
             values = result.values[index, :indices_length]
             indices = result.indices[index, :indices_length]
+            path = result.paths[index]
+            source = None if result.sources is None else result.sources[index]
             if is_event:
                 valid = ~np.isnan(values)
                 valid_periods, valid_intensities = indices[valid], values[valid]
@@ -213,7 +219,8 @@ class PregeneratedHazardModel(HazardModel):
                     valid_periods,
                     valid_intensities.astype(dtype="float64"),
                     result.units,
-                    result.paths[index],
+                    path,
+                    source=source,
                 )
             else:
                 if nan_is_no_data and np.any(np.isnan(values)):
@@ -229,7 +236,8 @@ class PregeneratedHazardModel(HazardModel):
                     values.astype(dtype="float64"),
                     indices,
                     result.units,
-                    result.paths[index],
+                    path,
+                    source=source,
                 )
 
         return responses
@@ -303,6 +311,43 @@ class ZarrHazardModel(PregeneratedHazardModel):
                     interpolate_years=interpolate_years,
                 )
                 for t in hazard_types
+            },
+            zarr_max_workers=zarr_max_workers,
+            nan_is_zero=nan_is_zero,
+            nan_is_no_data=nan_is_no_data,
+        )
+
+
+class HierarchicalZarrHazardModel(PregeneratedHazardModel):
+    """Hazard model backed by Zarr data and hierarchical providers."""
+
+    def __init__(
+        self,
+        *,
+        resource_provider: HazardResourceProvider,
+        resolver: ScenarioYearResolver | None = None,
+        reader: ZarrReader | None = None,
+        store=None,
+        interpolation: str = "floor",
+        zarr_max_workers: int = 32,
+        nan_is_zero: set[tuple[type[Hazard], str]] | None = None,
+        nan_is_no_data: set[tuple[type[Hazard], str]] | None = None,
+    ):
+        """Create a Zarr hazard model with one provider per hazard type."""
+        zarr_reader = ZarrReader(store=store) if reader is None else reader
+        scenario_year_resolver = (
+            resolve_nearest_scenario_year if resolver is None else resolver
+        )
+        super().__init__(
+            {
+                hazard_type: HierarchicalHazardDataProvider(
+                    hazard_type,
+                    resource_provider,
+                    scenario_year_resolver,
+                    zarr_reader=zarr_reader,
+                    interpolation=interpolation,
+                )
+                for hazard_type in resource_provider.hazard_types()
             },
             zarr_max_workers=zarr_max_workers,
             nan_is_zero=nan_is_zero,

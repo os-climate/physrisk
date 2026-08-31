@@ -173,6 +173,9 @@ class ScenarioYearResolver(Protocol):
 
         Returns:
             The scenario and year to read from the resource.
+
+        Raises:
+            EmptyResourceError: The resource has no scenario containing any year.
         """
         ...
 
@@ -231,6 +234,49 @@ class HazardDataProvider(Protocol):
             coordinates.
         """
         ...
+
+
+async def read_single_item(
+    reader: ZarrReader,
+    interpolation: str,
+    item: ScenarioYear,
+    latitudes: np.ndarray,
+    longitudes: np.ndarray,
+    buffer: Optional[int],
+    path: str,
+):
+    """Read one concrete scenario/year array."""
+    indices, units = [], ""
+    mask_in_bounds = None
+    if buffer is None:
+        values, mask_in_bounds, indices, units = await asyncio.to_thread(
+            reader.get_curves,
+            path,
+            longitudes,
+            latitudes,
+            interpolation,
+        )
+    else:
+        if buffer < 0 or 1000 < buffer:
+            raise Exception("The buffer must be an integer between 0 and 1000 metres.")
+        values, indices, units = await asyncio.to_thread(
+            reader.get_max_curves,
+            path,
+            [
+                (
+                    Point(longitude, latitude)
+                    if buffer == 0
+                    else Point(longitude, latitude).buffer(
+                        ZarrReader._get_equivalent_buffer_in_arc_degrees(
+                            latitude, buffer
+                        )
+                    )
+                )
+                for longitude, latitude in zip(longitudes, latitudes)
+            ],
+            interpolation,
+        )  # type: ignore
+    return item, values, mask_in_bounds, indices, units, path
 
 
 class CascadingHazardDataProvider:
@@ -441,7 +487,9 @@ class CascadingHazardDataProvider:
             # Any errors should propagate up.
             res = await asyncio.gather(
                 *(
-                    self.get_single_item(
+                    read_single_item(
+                        self._reader,
+                        self._interpolation,
                         item,
                         latitudes,
                         longitudes,
@@ -513,48 +561,6 @@ class CascadingHazardDataProvider:
             ScenarioYearRes(k.scenario, k.year, resource_index): v
             for k, v in result.items()
         }
-
-    async def get_single_item(
-        self,
-        item: ScenarioYear,
-        latitudes: np.ndarray,
-        longitudes: np.ndarray,
-        buffer: Optional[int],
-        path: str,
-    ):
-        indices, units = [], ""
-        mask_in_bounds = None
-        if buffer is None:
-            values, mask_in_bounds, indices, units = await asyncio.to_thread(
-                self._reader.get_curves,
-                path,
-                longitudes,
-                latitudes,
-                self._interpolation,
-            )
-        else:
-            if buffer < 0 or 1000 < buffer:
-                raise Exception(
-                    "The buffer must be an integer between 0 and 1000 metres."
-                )
-            values, indices, units = await asyncio.to_thread(
-                self._reader.get_max_curves,
-                path,
-                [
-                    (
-                        Point(longitude, latitude)
-                        if buffer == 0
-                        else Point(longitude, latitude).buffer(
-                            ZarrReader._get_equivalent_buffer_in_arc_degrees(
-                                latitude, buffer
-                            )
-                        )
-                    )
-                    for longitude, latitude in zip(longitudes, latitudes)
-                ],
-                self._interpolation,
-            )  # type: ignore
-        return item, values, mask_in_bounds, indices, units, path
 
     @staticmethod
     def _weights(

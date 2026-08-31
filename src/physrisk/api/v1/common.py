@@ -221,6 +221,10 @@ class IntensityCurve(BaseModel):
         description="Name of the index. In the case of an acute hazard this is 'return period'; \
             for a multi-threshold chronic hazard this is 'threshold'.",
     )
+    source: HazardDataSource | None = Field(
+        None,
+        description="Concrete source array used to produce this intensity curve.",
+    )
 
 
 class ExceedanceCurve(BaseModel):

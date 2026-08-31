@@ -21,6 +21,7 @@ import physrisk.kernel.hazard_model
 from physrisk.api.v1.common import (
     Distribution,
     ExceedanceCurve,
+    HazardDataSource as APIHazardDataSource,
     VulnerabilityDistrib,
 )
 from physrisk.api.v1.exposure_req_resp import (
@@ -507,6 +508,7 @@ def _get_hazard_data(
                     index_values=np.asarray(sig_figures(resp.return_periods)).tolist(),
                     index_name="return period",
                     return_periods=[],
+                    source=_api_hazard_data_source(resp),
                 )
                 if isinstance(resp, hmHazardEventDataResponse)
                 else (
@@ -515,6 +517,7 @@ def _get_hazard_data(
                         index_values=np.asarray(sig_figures(resp.param_defns)).tolist(),
                         index_name="threshold",
                         return_periods=[],
+                        source=_api_hazard_data_source(resp),
                     )
                     if isinstance(resp, HazardParameterDataResponse)
                     else IntensityCurve(
@@ -522,6 +525,7 @@ def _get_hazard_data(
                         index_values=[],
                         index_name="",
                         return_periods=[],
+                        source=_api_hazard_data_source(resp),
                     )
                 )
             )
@@ -539,6 +543,19 @@ def _get_hazard_data(
         )
 
     return response
+
+
+def _api_hazard_data_source(response) -> APIHazardDataSource | None:
+    """Convert kernel source metadata to its API representation."""
+    source = getattr(response, "source", None)
+    if source is None:
+        return None
+    return APIHazardDataSource(
+        resource_id=source.resource_id,
+        path=source.path,
+        scenario=source.scenario,
+        year=source.year,
+    )
 
 
 def create_assets(
@@ -949,6 +966,12 @@ def _compile_asset_impacts(
                         vulnerability_distribution=vulnerability_distribution,
                         hazard_path=v.impact.path,
                         hazard_units=v.event.units,
+                        hazard_sources=[]
+                        if v.hazard_data is None
+                        else [
+                            _api_hazard_data_source(hazard_response)
+                            for hazard_response in v.hazard_data
+                        ],
                     )
                 else:
                     calc_details = CalculationDetails(
@@ -961,6 +984,12 @@ def _compile_asset_impacts(
                         hazard_units="default"
                         if v.hazard_data is None
                         else v.hazard_data[0].units,
+                        hazard_sources=[]
+                        if v.hazard_data is None
+                        else [
+                            _api_hazard_data_source(hazard_response)
+                            for hazard_response in v.hazard_data
+                        ],
                     )
 
             key = APIImpactKey(

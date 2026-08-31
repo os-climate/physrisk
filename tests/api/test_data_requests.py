@@ -1,24 +1,25 @@
-import pytest
 import json
+
 import numpy as np
+import pytest
 from pydantic import ValidationError
 
+from physrisk import requests
+from physrisk.api.v1.hazard_data import HazardDataRequestItem
+from physrisk.container import Container
 from physrisk.data.hazard_data_provider import HazardDataHint
 from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_source_paths
-from physrisk.api.v1.hazard_data import HazardDataRequestItem
 from physrisk.kernel.hazards import ChronicHeat, RiverineInundation
-from physrisk.container import Container
-from physrisk import requests
 
-from .test_container import TestContainer
 from ..data.test_hazard_model_store import (
     TestData,
     get_mock_hazard_model_store_single_curve,
     mock_hazard_model_store_heat,
 )
+from .test_container import TestContainer
 
 
 def test_hazard_data_availability():
@@ -145,14 +146,14 @@ def test_zarr_reading():
     )
 
     np.testing.assert_array_almost_equal_nulp(
-        result.items[0].intensity_curve_set[0].intensities, np.zeros((9))
+        result.items[0].intensity_curve_set[0].intensities, np.zeros(9)
     )
     np.testing.assert_array_almost_equal_nulp(
         result.items[0].intensity_curve_set[1].intensities,
         np.linspace(0.1, 1.0, 9, dtype="f4"),
     )
     np.testing.assert_array_almost_equal_nulp(
-        result.items[0].intensity_curve_set[2].intensities, np.zeros((9))
+        result.items[0].intensity_curve_set[2].intensities, np.zeros(9)
     )
 
 
@@ -195,9 +196,11 @@ def test_zarr_reading_live(clear_credentials):
     import json
     from zipfile import ZipFile
 
-    with ZipFile("./tests/api/test_lat_lons.json.zip") as z:
-        with z.open("test_lat_lons.json") as f:
-            data = json.loads(f.read())
+    with (
+        ZipFile("./tests/api/test_lat_lons.json.zip") as z,
+        z.open("test_lat_lons.json") as f,
+    ):
+        data = json.loads(f.read())
 
     request1 = {
         "items": [

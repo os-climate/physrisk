@@ -1,8 +1,7 @@
 """Test asset impact calculations."""
 
-import pytest
-
 import numpy as np
+import pytest
 
 from physrisk.kernel.assets import RealEstateAsset
 from physrisk.kernel.curve import ExceedanceCurve

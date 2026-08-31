@@ -1,19 +1,19 @@
+import math
 from dataclasses import dataclass
 from enum import Enum
-import math
-from typing import Optional, Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable
+
+import shapely.wkt
+from pyproj import Transformer
+from shapely import Point
+from shapely.geometry.base import BaseGeometry
+from shapely.ops import transform
 
 from physrisk.kernel.hazards import (
     CoastalInundation,
     PluvialInundation,
     RiverineInundation,
 )
-
-from pyproj import Transformer
-from shapely.ops import transform
-from shapely import Point
-from shapely.geometry.base import BaseGeometry
-import shapely.wkt
 
 project_4326_to_3857 = Transformer.from_crs(
     "EPSG:4326", "EPSG:3857", always_xy=True
@@ -108,11 +108,11 @@ class Asset:
 
     def __init__(
         self,
-        latitude: Optional[float] = None,
-        longitude: Optional[float] = None,
-        wkt_geometry: Optional[str] = None,
+        latitude: float | None = None,
+        longitude: float | None = None,
+        wkt_geometry: str | None = None,
         buffer: float = 0.0,
-        id: Optional[str] = None,
+        id: str | None = None,
         **kwargs,
     ):
         """
@@ -192,10 +192,10 @@ class Asset:
 class OEDAsset(Asset):
     def __init__(
         self,
-        latitude: Optional[float] = None,
-        longitude: Optional[float] = None,
+        latitude: float | None = None,
+        longitude: float | None = None,
         occupancy_code: int = 1000,
-        wkt_geometry: Optional[str] = None,
+        wkt_geometry: str | None = None,
         buffer: float = 0.0,
         number_of_storeys: int = -1,  # -1 = unknown No. storeys - low rise, -2 = unknown No. storeys - mid rise, -3 = Unknown no. storeys = high rise).
         basement: int = 0,  # 0 = unknown / default, 1 = unfinished, 2 = 100% finished
@@ -219,7 +219,7 @@ class OEDAsset(Asset):
 
 class SimpleTypeLocationAsset(Asset):
     def __init__(
-        self, *, location: Optional[str] = None, type: Optional[str] = None, **kwargs
+        self, *, location: str | None = None, type: str | None = None, **kwargs
     ):
         super().__init__(**kwargs)
         self.location = location
@@ -268,19 +268,19 @@ class OilGasAsset(OEDAsset, SimpleTypeLocationAsset):
 class PowerGeneratingAsset(OEDAsset, SimpleTypeLocationAsset):
     def __init__(
         self,
-        capacity: Optional[float] = None,
+        capacity: float | None = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self.capacity: Optional[float] = capacity
-        self.primary_fuel: Optional[FuelKind] = None
+        self.capacity: float | None = capacity
+        self.primary_fuel: FuelKind | None = None
 
         if self.type is not None:
             archetypes = self.type.split("/")
             if 0 < len(archetypes):
                 self.primary_fuel = FuelKind[archetypes[0]]
 
-    def get_protection_return_period(self, hazard_type: type) -> Optional[float]:
+    def get_protection_return_period(self, hazard_type: type) -> float | None:
         if issubclass(
             hazard_type, (CoastalInundation, PluvialInundation, RiverineInundation)
         ):
@@ -296,16 +296,16 @@ class RealEstateAsset(OEDAsset, SimpleTypeLocationAsset):
 
 @runtime_checkable
 class HasStandardOfProtection(Protocol):
-    def get_protection_return_period(self, hazard_type: type) -> Optional[float]: ...
+    def get_protection_return_period(self, hazard_type: type) -> float | None: ...
 
 
 class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
     def __init__(
         self,
         *,
-        type: Optional[str] = None,
-        location: Optional[str] = None,
-        capacity: Optional[float] = None,
+        type: str | None = None,
+        location: str | None = None,
+        capacity: float | None = None,
         **kwargs,
     ):
         super().__init__(
@@ -315,8 +315,8 @@ class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
             **kwargs,
         )
 
-        self.turbine: Optional[TurbineKind] = None
-        self.cooling: Optional[CoolingKind] = None
+        self.turbine: TurbineKind | None = None
+        self.cooling: CoolingKind | None = None
 
         if self.type is not None:
             archetypes = self.type.split("/")
@@ -334,7 +334,7 @@ class ThermalPowerGeneratingAsset(PowerGeneratingAsset):
             return 10000.0
         return 250.0
 
-    def get_protection_return_period(self, hazard_type: type) -> Optional[float]:
+    def get_protection_return_period(self, hazard_type: type) -> float | None:
         if issubclass(
             hazard_type, (CoastalInundation, PluvialInundation, RiverineInundation)
         ):
@@ -358,12 +358,12 @@ class UtilityAsset(OEDAsset, SimpleTypeLocationAsset):
 
 @dataclass
 class WindTurbine(Asset):
-    capacity: Optional[float] = None
-    hub_height: Optional[float] = None
-    cut_in_speed: Optional[float] = None
-    cut_out_speed: Optional[float] = None
-    fixed_base: Optional[bool] = True
-    rotor_diameter: Optional[float] = None
+    capacity: float | None = None
+    hub_height: float | None = None
+    cut_in_speed: float | None = None
+    cut_out_speed: float | None = None
+    fixed_base: bool | None = True
+    rotor_diameter: float | None = None
 
 
 def all_asset_types():

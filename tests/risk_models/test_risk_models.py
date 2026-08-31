@@ -1,21 +1,20 @@
 """Test asset impact calculations."""
 
-from typing import Dict, Optional, Sequence, Type
+from collections.abc import Sequence
 
 import numpy as np
 from dependency_injector import providers
 
-from physrisk.api.v1.scoring_schemes import (
-    Category,
-    OriginalCategory,
-    map_to_original_category,
-)
-from physrisk.kernel.hazards import Hazard
 from physrisk.api.v1.impact_req_resp import (
     AssetImpactResponse,
     RiskMeasureKey,
     RiskMeasuresHelper,
     ScoreBasedRiskMeasureDefinition,
+)
+from physrisk.api.v1.scoring_schemes import (
+    Category,
+    OriginalCategory,
+    map_to_original_category,
 )
 from physrisk.container import Container
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
@@ -29,6 +28,7 @@ from physrisk.kernel.hazards import (
     Drought,
     Fire,
     Hail,
+    Hazard,
     Precipitation,
     RiverineInundation,
     Wind,
@@ -36,24 +36,26 @@ from physrisk.kernel.hazards import (
 from physrisk.kernel.impact import AssetImpactResult
 from physrisk.kernel.impact_distrib import ImpactType
 from physrisk.kernel.risk import (
-    PortfolioRiskModel,
     Measure,
     MeasureKey,
     NullAssetBasedPortfolioRiskMeasureCalculator,
+    PortfolioRiskModel,
     RiskMeasureCalculator,
     RiskMeasuresFactory,
-)
-from physrisk.risk_models.score_based_portfolio_risk_model import (
-    AveragingAssetBasedPortfolioRiskMeasureCalculator,
 )
 from physrisk.kernel.vulnerability_model import (
     DictBasedVulnerabilityModels,
     VulnerabilityModels,
+)
+from physrisk.kernel.vulnerability_model import (
     VulnerabilityModelsFactory as PVulnerabilityModelsFactory,
 )
 from physrisk.requests import _create_risk_measures
 from physrisk.risk_models.generic_risk_model import GenericScoreBasedRiskMeasures
 from physrisk.risk_models.risk_models import RealEstateToyRiskMeasures
+from physrisk.risk_models.score_based_portfolio_risk_model import (
+    AveragingAssetBasedPortfolioRiskMeasureCalculator,
+)
 from physrisk.vulnerability_models.config_based_impact_curves import (
     VulnerabilityConfigItem,
 )
@@ -535,8 +537,8 @@ def test_generic_model_via_requests_default_vulnerability():
     class TestHazardModelFactory(HazardModelFactory):
         def hazard_model(
             self,
-            interpolation: Optional[str] = "floor",
-            provider_max_requests: Dict[str, int] = {},
+            interpolation: str | None = "floor",
+            provider_max_requests: dict[str, int] = {},
             interpolate_years: bool = False,
         ):
             return hazard_model
@@ -571,7 +573,7 @@ def test_generic_model_via_requests_default_vulnerability():
     class TestMeasuresWithHazardIndicatorID(RiskMeasureCalculator):
         def calc_measure(
             self,
-            hazard_type: Type[Hazard],
+            hazard_type: type[Hazard],
             base_impact: Sequence[AssetImpactResult],
             impact: Sequence[AssetImpactResult],
         ) -> Measure | dict[str | None, Measure]:
@@ -715,8 +717,8 @@ def test_generic_model_via_requests_custom():
     class TestHazardModelFactory(HazardModelFactory):
         def hazard_model(
             self,
-            interpolation: Optional[str] = "floor",
-            provider_max_requests: Dict[str, int] = {},
+            interpolation: str | None = "floor",
+            provider_max_requests: dict[str, int] = {},
             interpolate_years: bool = False,
         ):
             return hazard_model

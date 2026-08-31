@@ -1,6 +1,6 @@
 import threading
+from collections.abc import Sequence
 from importlib.resources import files
-from typing import Dict, Optional, Sequence, Union
 
 import geopandas as gpd
 import pandas as pd
@@ -36,7 +36,7 @@ class Geocoder:
                 "Continent"
             ].to_dict()
         )
-        self.subunit_mapping: Dict[str, Dict[str, str]] = {
+        self.subunit_mapping: dict[str, dict[str, str]] = {
             "ES": {"Canary Islands": "IC"},
             "-99": {"Crimea": "RU", "Cyprus No Mans Area": "CY", "Somaliland": "SO"},
             "PT": {"Madeira": "PT_M"},
@@ -77,7 +77,7 @@ class Geocoder:
 
     @staticmethod
     def get_continent_and_country_from_code_iso_3166(
-        country_codes: Optional[Sequence[Union[str, int]]] = None,
+        country_codes: Sequence[str | int] | None = None,
     ) -> pd.DataFrame:
         path = files(physrisk.data.ne_10m_admin_0_map_subunits).joinpath(
             "country_codes.tsv"

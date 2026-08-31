@@ -1,13 +1,13 @@
-from collections import defaultdict
 import logging
 import os
 import time
-import pytest
-from typing import List, Optional, Sequence, Type
+from collections import defaultdict
+from collections.abc import Sequence
 
 # import fsspec.implementations.local as local  # type: ignore
 import numpy as np
 import numpy.testing
+import pytest
 import scipy.interpolate
 import zarr
 from fsspec.implementations.memory import MemoryFileSystem
@@ -308,10 +308,8 @@ def test_years_interpolation():
     assert weights[ScenarioYear("ssp585", 2040)].weights[0][1] == (2050.0 - 2040.0) / (
         2050.0 - 2025.0
     )
-    #
     assert weights[ScenarioYear("ssp585", 2050)].weights[0][0].year == 2050
     assert weights[ScenarioYear("ssp585", 2050)].weights[0][1] == 1.0
-    #
     assert weights[ScenarioYear("ssp585", 2090)].weights[0][0].year == 2060
     assert weights[ScenarioYear("ssp585", 2090)].weights[0][1] == -(2090.0 - 2080.0) / (
         2080.0 - 2060.0
@@ -381,11 +379,11 @@ class SourcePathsTest(SourcePaths):
 
     def resource_paths(
         self,
-        hazard_type: Type[Hazard],
+        hazard_type: type[Hazard],
         indicator_id: str,
         scenarios: Sequence[str],
-        hint: Optional[HazardDataHint] = None,
-    ) -> List[ResourcePaths]:
+        hint: HazardDataHint | None = None,
+    ) -> list[ResourcePaths]:
         # try Europe-specific first and then the whole-world
         result = [
             ResourcePaths(
@@ -502,7 +500,7 @@ def test_cascade():
     )
     np.testing.assert_almost_equal(
         response[requests[9]].intensities,
-        [1.0, 2.0, 3.0],  #
+        [1.0, 2.0, 3.0],
     )
     assert isinstance(response[requests[10]], HazardDataFailedResponse)
     np.testing.assert_almost_equal(response[requests[15]].intensities, [1.0, 2.0, 3.0])
@@ -586,11 +584,11 @@ class SourcePathsYearsInterpolationTest(SourcePaths):
 
     def resource_paths(
         self,
-        hazard_type: Type[Hazard],
+        hazard_type: type[Hazard],
         indicator_id: str,
         scenarios: Sequence[str],
-        hint: Optional[HazardDataHint] = None,
-    ) -> List[ResourcePaths]:
+        hint: HazardDataHint | None = None,
+    ) -> list[ResourcePaths]:
         result = [
             ResourcePaths(
                 resource_path="",

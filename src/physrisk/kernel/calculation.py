@@ -1,18 +1,16 @@
-from typing import Dict, Sequence, Type
+from collections.abc import Sequence
 
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.hazards import ChronicHeat, Drought, Fire, Hail, Precipitation
 from physrisk.kernel.impact_distrib import ImpactType
 from physrisk.kernel.risk import (
+    NullAssetBasedPortfolioRiskMeasureCalculator,
     PortfolioRiskMeasureCalculator,
     RiskMeasureCalculator,
     RiskMeasuresFactory,
 )
 from physrisk.risk_models.generic_risk_model import GenericScoreBasedRiskMeasures
-from physrisk.kernel.risk import (
-    NullAssetBasedPortfolioRiskMeasureCalculator,
-)
 from physrisk.risk_models.portfolio_risk_model import CompanyRiskMeasureCalculator
 from physrisk.vulnerability_models import power_generating_asset_models as pgam
 from physrisk.vulnerability_models.chronic_heat_models import ChronicHeatGZNModel
@@ -63,7 +61,7 @@ def placeholder_models() -> Sequence[VulnerabilityModelBase]:
     ]
 
 
-def default_vulnerability_models() -> Dict[type, list[VulnerabilityModelBase]]:
+def default_vulnerability_models() -> dict[type, list[VulnerabilityModelBase]]:
     """Base set of programmatic models; other models are added on top of these
     There is a specific treatment for power generating assets and real estate assets.
     """
@@ -79,7 +77,7 @@ def default_vulnerability_models() -> Dict[type, list[VulnerabilityModelBase]]:
     }
 
 
-def alternate_default_vulnerability_models_scores() -> Dict[
+def alternate_default_vulnerability_models_scores() -> dict[
     type, Sequence[VulnerabilityModelBase]
 ]:
     """A vulnerability models set that combines loss-based and exposure-based scores."""
@@ -123,7 +121,7 @@ def alternate_default_vulnerability_models_scores() -> Dict[
     }
 
 
-def get_default_risk_measure_calculators() -> Dict[Type[Asset], RiskMeasureCalculator]:
+def get_default_risk_measure_calculators() -> dict[type[Asset], RiskMeasureCalculator]:
     """For asset-level risk measure, define the measure calculators to use."""
     return {Asset: GenericScoreBasedRiskMeasures()}
     # return {RealEstateAsset: RealEstateToyRiskMeasures()}
@@ -134,7 +132,7 @@ class DefaultMeasuresFactory(RiskMeasuresFactory):
 
     def asset_calculators(
         self, use_case_id: str
-    ) -> Dict[Type[Asset], RiskMeasureCalculator]:
+    ) -> dict[type[Asset], RiskMeasureCalculator]:
         """Get the appropriate risk measure calculators based on the use case identifier."""
 
         if use_case_id == "generic":

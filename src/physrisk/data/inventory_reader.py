@@ -1,6 +1,6 @@
 import json
+from collections.abc import Callable, Iterable
 from pathlib import PurePosixPath
-from typing import Callable, Dict, Iterable, List, Optional
 
 import s3fs
 from fsspec import AbstractFileSystem
@@ -12,7 +12,7 @@ from .zarr_reader import get_env
 
 
 class HazardModels(BaseModel):
-    resources: List[HazardResource]
+    resources: list[HazardResource]
 
 
 class InventoryReader:
@@ -24,9 +24,9 @@ class InventoryReader:
     def __init__(
         self,
         *,
-        get_env: Callable[[str, Optional[str]], str] = get_env,
-        fs: Optional[AbstractFileSystem] = None,
-        base_path: Optional[AbstractFileSystem] = None,
+        get_env: Callable[[str, str | None], str] = get_env,
+        fs: AbstractFileSystem | None = None,
+        base_path: AbstractFileSystem | None = None,
     ):
         """Class to read and update inventory stored in S3 or supplied AbstractFileSystem.
 
@@ -47,7 +47,7 @@ class InventoryReader:
         self._base_path = bucket if base_path is None else base_path
         self._fs = fs
 
-    def read(self, path: str) -> List[HazardResource]:
+    def read(self, path: str) -> list[HazardResource]:
         """Read inventory at path provided and return HazardModels."""
         if not self._fs.exists(self._full_path(path)):
             return []
@@ -57,9 +57,9 @@ class InventoryReader:
         )
         return models
 
-    def read_description_markdown(self, paths: List[str]) -> Dict[str, str]:
+    def read_description_markdown(self, paths: list[str]) -> dict[str, str]:
         """Read description markdown at path provided."""
-        md: Dict[str, str] = {}
+        md: dict[str, str] = {}
         for path in paths:
             try:
                 with self._fs.open(self._full_path(path), "r", encoding="utf-8") as f:

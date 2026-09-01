@@ -11,7 +11,12 @@ from physrisk.api.v1.hazard_data import HazardResource
 from physrisk.api.v1.hazard_image import TileNotAvailableError
 from physrisk.kernel.hazards import HazardKind, hazard_class
 from physrisk.data import colormap_provider
-from physrisk.data.hazard_data_provider import CascadingHazardDataProvider, SourcePaths
+from physrisk.data.hazard_data_provider import (
+    CascadingHazardDataProvider,
+    ScenarioYear,
+    ScenarioYearResolver,
+    SourcePaths,
+)
 from physrisk.data.inventory import Inventory
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.kernel.hazard_model import HazardImageCreator, Tile
@@ -365,3 +370,78 @@ def _get_image_info(
 @lru_cache(maxsize=32)
 def get_data(reader: ZarrReader, path: str):
     return reader.all_data(path)
+
+
+class ResolvingImageCreator:
+    """Render hazard maps after resolving requests against resource availability."""
+
+    def __init__(
+        self,
+        inventory: Inventory,
+        reader: ZarrReader,
+        resolver: ScenarioYearResolver,
+    ):
+        """Create an image creator.
+
+        Args:
+            inventory: Inventory used to look up requested resources.
+            reader: Reader used to retrieve map arrays.
+            resolver: Callable selecting an available scenario and year.
+        """
+        self.inventory = inventory
+        self.reader = reader
+        self.resolver = resolver
+
+    def create_image(
+        self,
+        resource_id: str,
+        scenario: str,
+        year: int,
+        format="PNG",
+        colormap: str = "heating",
+        tile: Tile | None = None,
+        min_value: float | None = None,
+        max_value: float | None = None,
+        index_value: str | float | None = None,
+        scaling: str = "linear",
+    ) -> bytes:
+        """Resolve and render one hazard map."""
+        try:
+            resource = self.inventory.resources[resource_id]
+            selected = self.resolver(ScenarioYear(scenario, year), resource)
+            path = resource.map_path_for_scenario_year(
+                selected.scenario,
+                selected.year,
+                tile.z + 1 if tile is not None else None,
+            )
+            data = _read_map_array(self.reader, path, tile, index_value)
+            image = _render_map_array(
+                data,
+                colormap,
+                min_value=min_value,
+                max_value=max_value,
+                scaling=scaling,
+            )
+        except Exception as error:
+            if tile is None:
+                logger.exception(error)
+                image = Image.fromarray(np.array([[0]]), mode="RGBA")
+            elif isinstance(error, KeyError):
+                raise TileNotAvailableError(error.args[0]) from error
+            else:
+                raise
+
+        image_bytes = io.BytesIO()
+        image.save(image_bytes, format=format)
+        return image_bytes.getvalue()
+
+    def get_info(
+        self, resource_id: str, scenario: str, year: int
+    ) -> tuple[Sequence[Any], Sequence[Any], str, str, int | None]:
+        """Return metadata for the map selected by the resolver."""
+        resource = self.inventory.resources[resource_id]
+        selected = self.resolver(ScenarioYear(scenario, year), resource)
+        path = resource.map_path_for_scenario_year(
+            selected.scenario, selected.year, zoom=1
+        )
+        return _get_image_info(self.reader, resource, path, resource_id)

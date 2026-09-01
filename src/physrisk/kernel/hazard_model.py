@@ -124,7 +124,15 @@ class HazardDataSource:
     year: int
 
 
-class HazardDataResponse(Protocol):
+class HazardDataResponse:
+    """Base class containing metadata common to hazard data responses.
+
+    Attributes:
+        path: Identifier of the hazard resource used for the response.
+        units: Units of the returned hazard values.
+        source: Concrete source array used for the response, when available.
+    """
+
     path: str
     units: str
     source: HazardDataSource | None

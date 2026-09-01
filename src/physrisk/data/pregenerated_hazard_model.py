@@ -347,7 +347,7 @@ class HierarchicalZarrHazardModel(PregeneratedHazardModel):
                     zarr_reader=zarr_reader,
                     interpolation=interpolation,
                 )
-                for hazard_type in resource_provider.hazard_types()
+                for hazard_type in resource_provider.hazard_indicators()
             },
             zarr_max_workers=zarr_max_workers,
             nan_is_zero=nan_is_zero,

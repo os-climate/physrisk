@@ -3,7 +3,6 @@ import logging
 from pathlib import PurePosixPath
 from typing import Dict, Iterable, List, NamedTuple, Optional, Protocol, Sequence, Type
 import re
-from collections import defaultdict
 
 from physrisk.api.v1.hazard_data import HazardResource
 from physrisk.data.hazard_data_provider import (
@@ -91,30 +90,27 @@ class InventorySourcePaths(SourcePaths):
     def __init__(self, inventory: Inventory):
         self._inventory = inventory
         self._selectors: Dict[ResourceSelectorKey, ResourceSelector] = {}
-        self._all_selected_resources_by_type_id: (
-            defaultdict[tuple[str, str], list[HazardResource]] | None
-        ) = None
 
     def add_selector(
         self, hazard_type: type, indicator_id: str, selector: ResourceSelector
     ):
         self._selectors[ResourceSelectorKey(hazard_type, indicator_id)] = selector
 
-    def all_hazards(self):
-        return set(
-            htype for ((htype, _), _) in self._inventory.resources_by_type_id.items()
-        )
-
     def hazard_types(self):
-        hazard_types = []
-        for hazard in self.all_hazards():
+        return list(self.hazard_indicators())
+
+    def hazard_indicators(self) -> dict[type[Hazard], list[str]]:
+        hazard_indicators: dict[type[Hazard], list[str]] = {}
+        for hazard, indicator_id in self._inventory.resources_by_type_id:
             try:
-                hazard_types.append(hazard_class(hazard))
+                hazard_type = hazard_class(hazard)
             except AttributeError:
                 logger.warning(
-                    f"unable to find hazard class for hazard {hazard}, skipping"
+                    "unable to find hazard class for hazard %s, skipping", hazard
                 )
-        return hazard_types
+                continue
+            hazard_indicators.setdefault(hazard_type, []).append(indicator_id)
+        return hazard_indicators
 
     def resource_paths(
         self,
@@ -188,12 +184,18 @@ class InventorySourcePaths(SourcePaths):
             year = min(scenario.years)
             return ScenarioPaths(
                 [-1],
-                lambda y: path.format(
-                    id=resource.indicator_id,
-                    scenario=scenario.id,  # type:ignore
-                    year=year,
-                )
-                + ("/indicator" if (resource.store_netcdf_coords and not map) else ""),
+                lambda y: (
+                    path.format(
+                        id=resource.indicator_id,
+                        scenario=scenario.id,  # type:ignore
+                        year=year,
+                    )
+                    + (
+                        "/indicator"
+                        if (resource.store_netcdf_coords and not map)
+                        else ""
+                    )
+                ),
             )
         proxy_scenario_id = (
             cmip6_scenario_to_rcp(scenario_id)
@@ -209,10 +211,16 @@ class InventorySourcePaths(SourcePaths):
         else:
             return ScenarioPaths(
                 scenario.years,
-                lambda y: path.format(
-                    id=resource.indicator_id, scenario=proxy_scenario_id, year=y
-                )
-                + ("/indicator" if (resource.store_netcdf_coords and not map) else ""),
+                lambda y: (
+                    path.format(
+                        id=resource.indicator_id, scenario=proxy_scenario_id, year=y
+                    )
+                    + (
+                        "/indicator"
+                        if (resource.store_netcdf_coords and not map)
+                        else ""
+                    )
+                ),
             )
 
     def get_resources(
@@ -256,32 +264,6 @@ class InventorySourcePaths(SourcePaths):
         hint: Optional[HazardDataHint] = None,
     ):
         return candidates.first()
-
-    @property
-    def all_selected_resources_by_type_id(
-        self,
-    ) -> dict[tuple[str, str], list[HazardResource]]:
-        if self._all_selected_resources_by_type_id is None:
-            self._all_selected_resources_by_type_id = defaultdict(list)
-
-            for (
-                hazard,
-                indicator_id,
-            ), _ in self._inventory.resources_by_type_id.items():
-                try:
-                    hazard_type = hazard_class(hazard)
-                except AttributeError:
-                    logger.warning(
-                        f"unable to find hazard class for hazard {hazard}, skipping"
-                    )
-                    continue
-
-                selected = self.get_resources(
-                    hazard_type=hazard_type, indicator_id=indicator_id, hint=None
-                )
-                self._all_selected_resources_by_type_id[hazard, indicator_id] = selected
-
-        return self._all_selected_resources_by_type_id
 
 
 class CoreFloodModels(Enum):

@@ -15,8 +15,8 @@ class OrderedHazardResourceProvider:
     def __init__(self, resources):
         self.resources = resources
 
-    def hazard_types(self):
-        return [RiverineInundation]
+    def hazard_indicators(self):
+        return {RiverineInundation: ["flood_depth"]}
 
     def get_resources(self, hazard_type, indicator_id, hint=None):
         if hint is not None and hint.path is not None:

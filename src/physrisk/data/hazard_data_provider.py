@@ -110,13 +110,13 @@ class SourcePaths(Protocol):
 
 
 class HazardResourceProvider(Protocol):
-    """Provides hazard resources and the hazard types represented by them."""
+    """Provides hazard resources and the hazard/indicator pairs they represent."""
 
-    def hazard_types(self) -> list[type[Hazard]]:
-        """Return the hazard types with available resources.
+    def hazard_indicators(self) -> dict[type[Hazard], list[str]]:
+        """Return the indicators available for each hazard type.
 
         Returns:
-            Hazard classes represented by the provider's resources.
+            Indicator identifiers grouped by their hazard class.
         """
         ...
 

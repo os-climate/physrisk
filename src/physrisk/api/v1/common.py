@@ -184,6 +184,22 @@ class Countries(BaseModel):
     items: List[Country]
 
 
+class HazardDataSource(BaseModel):
+    """Concrete source used to produce a hazard data response.
+
+    Attributes:
+        resource_id: Identifier of the selected hazard resource.
+        path: Concrete data-array path that was read.
+        scenario: Scenario of the source array.
+        year: Year of the source array.
+    """
+
+    resource_id: str
+    path: str
+    scenario: str
+    year: int
+
+
 class IntensityCurve(BaseModel):
     """Hazard indicator intensity curve. Acute hazards are parameterized by event intensities and
     return periods in years. Chronic hazards are parameterized by a set of index values.
@@ -204,6 +220,10 @@ class IntensityCurve(BaseModel):
         "",
         description="Name of the index. In the case of an acute hazard this is 'return period'; \
             for a multi-threshold chronic hazard this is 'threshold'.",
+    )
+    source: HazardDataSource | None = Field(
+        None,
+        description="Concrete source array used to produce this intensity curve.",
     )
 
 

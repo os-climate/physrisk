@@ -62,11 +62,22 @@ class ZarrReader:
         pass
 
     def all_data(self, set_id: str):
+        return self._get_array(set_id)
+
+    def _get_array(self, set_id: str) -> zarr.Array:
+        """Return the array identified by a set ID."""
         path = (
             self._path_provider(set_id) if self._path_provider is not None else set_id
         )
-        z = self._root[path]  # e.g. inundation/wri/v2/<filename>
-        return z
+        return self._root[path]  # type: ignore
+
+    @staticmethod
+    def _get_spatial_metadata(z: zarr.Array) -> tuple[Affine, str]:
+        """Return the affine transform and CRS of an array."""
+        t = z.attrs["transform_mat3x3"]
+        transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
+        crs = z.attrs.get("crs", "epsg:4326")
+        return transform, crs
 
     def ls(self, path: str):
         if not isinstance(self._store, FSMap):
@@ -119,15 +130,10 @@ class ZarrReader:
         # assume that calls to this are large, not chatty
         if len(longitudes) != len(latitudes):
             raise ValueError("length of longitudes and latitudes not equal")
-        path = (
-            self._path_provider(set_id) if self._path_provider is not None else set_id
-        )
-        z = self._root[path]  # e.g. inundation/wri/v2/<filename>
+        z = self._get_array(set_id)
 
         # OSC-specific attributes contain transform and return periods
-        t = z.attrs["transform_mat3x3"]  # type: ignore
-        transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
-        crs = z.attrs.get("crs", "epsg:4326")
+        transform, crs = self._get_spatial_metadata(z)
         units: str = z.attrs.get("units", "default")
 
         # in the case of acute risks, index_values will contain the return periods
@@ -137,21 +143,15 @@ class ZarrReader:
             latitudes,
             crs,
             transform,
-            pixel_is_area=interpolation != "floor",
+            apply_pixel_center_offset=interpolation != "floor",
             shape=z.shape,
         )
-        in_bounds = (image_coords[0, :] < z.shape[2]) & (
-            image_coords[0, :] >= -0.5
-        )  # x/lon coords
-        in_bounds = (
-            in_bounds & (image_coords[1, :] < z.shape[1]) & (image_coords[1, :] >= -0.5)
-        )  # y/lat coords
+        in_bounds = self._in_bounds(image_coords, z.shape, interpolation)
         image_coords = image_coords[:, in_bounds]
         res = np.zeros((len(longitudes), len(index_values)))
         res[~in_bounds] = np.nan
         if interpolation == "floor":
             image_coords = np.floor(image_coords).astype(int)
-            image_coords[0, :] %= z.shape[2]
             iz = np.tile(np.arange(z.shape[0]), image_coords.shape[1])  # type: ignore
             iy = np.repeat(image_coords[1, :], len(index_values))
             ix = np.repeat(image_coords[0, :], len(index_values))
@@ -159,7 +159,7 @@ class ZarrReader:
             data = z.get_coordinate_selection((iz, iy, ix))  # type: ignore
             data = ZarrReader._handle_legacy_nans(data)
             res[in_bounds] = data.reshape(
-                [len(longitudes[in_bounds]), len(index_values)]
+                [np.count_nonzero(in_bounds), len(index_values)]
             )
             return (
                 res,
@@ -185,24 +185,49 @@ class ZarrReader:
         set_id: str,
         longitudes: Union[np.ndarray, Sequence[float]],
         latitudes: Union[np.ndarray, Sequence[float]],
+        interpolation: str | None = None,
     ):
+        """Return whether coordinates lie within a hazard array.
+
+        Args:
+            set_id: Path of the hazard array.
+            longitudes: Longitude of each coordinate.
+            latitudes: Latitude of each coordinate.
+            interpolation: Sampling mode used for the subsequent read. ``None``
+                preserves the legacy bounds convention.
+
+        Returns:
+            A boolean array aligned with the input coordinates.
+        """
         if len(longitudes) != len(latitudes):
             raise ValueError("length of longitudes and latitudes not equal")
 
-        z = self._root[set_id]
-        t = z.attrs["transform_mat3x3"]  # type: ignore
-        transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
-        crs = z.attrs.get("crs", "epsg:4326")
+        z = self._get_array(set_id)
+        transform, crs = self._get_spatial_metadata(z)
         image_coords = self._get_coordinates(
-            longitudes, latitudes, crs, transform, pixel_is_area=True, shape=z.shape
+            longitudes,
+            latitudes,
+            crs,
+            transform,
+            apply_pixel_center_offset=interpolation != "floor",
+            shape=z.shape,
         )
-        in_bounds = (image_coords[0, :] < z.shape[2]) & (
-            image_coords[0, :] >= -0.5
-        )  # x/lon coords
-        in_bounds = (
-            in_bounds & (image_coords[1, :] < z.shape[1]) & (image_coords[1, :] >= -0.5)
-        )  # y/lat coords
-        return in_bounds
+        return self._in_bounds(image_coords, z.shape, interpolation)
+
+    @staticmethod
+    def _in_bounds(
+        image_coords: np.ndarray,
+        shape: tuple[int, ...],
+        interpolation: str | None,
+    ) -> np.ndarray:
+        """Return whether raster coordinates lie within an array shape."""
+        lower_bound = 0.0 if interpolation == "floor" else -0.5
+        return (
+            (image_coords[0, :] >= lower_bound)
+            & (image_coords[0, :] < shape[2])
+            & (image_coords[1, :] >= lower_bound)
+            & (image_coords[1, :] < shape[1])
+        )
 
     def get_index_values(self, z: zarr.Array) -> Tuple[List[Any], str]:
         # if dimensions attribute is present, assume that the first index
@@ -230,17 +255,12 @@ class ZarrReader:
             return_periods: return periods in years.
             units: units.
         """
-        path = (
-            self._path_provider(set_id) if self._path_provider is not None else set_id
-        )
-        z = self._root[path]  # e.g. inundation/wri/v2/<filename>
+        z = self._get_array(set_id)
 
         # in the case of acute risks, index_values will contain the return periods
         index_values, _ = self.get_index_values(z)
 
-        t = z.attrs["transform_mat3x3"]  # type: ignore
-        transform = Affine(t[0], t[1], t[2], t[3], t[4], t[5])
-        crs = z.attrs.get("crs", "epsg:4326")
+        transform, crs = self._get_spatial_metadata(z)
         units: str = z.attrs.get("units", "default")
 
         if crs.lower() != "epsg:4326":
@@ -509,9 +529,23 @@ class ZarrReader:
         latitudes,
         crs: str,
         transform: Affine,
-        pixel_is_area: bool,
+        apply_pixel_center_offset: bool,
         shape: Optional[Tuple[int, int, int]] = None,
     ):
+        """Transform geographic coordinates into fractional raster coordinates.
+
+        Args:
+            longitudes: Longitude of each coordinate.
+            latitudes: Latitude of each coordinate.
+            crs: Coordinate reference system of the raster.
+            transform: Affine transform from raster to projected coordinates.
+            apply_pixel_center_offset: Whether to align raster coordinates with
+                pixel centres by subtracting half a pixel.
+            shape: Raster shape used to detect the legacy 0–360 longitude layout.
+
+        Returns:
+            Fractional raster coordinates with one column per input coordinate.
+        """
         if crs.lower() != "epsg:4326":
             transproj = Transformer.from_crs("epsg:4326", crs, always_xy=True)
             x, y = transproj.transform(longitudes, latitudes)
@@ -530,10 +564,10 @@ class ZarrReader:
                 )
         inv_trans = ~transform
         mat = np.array(inv_trans).reshape(3, 3)
-        frac_image_coords = mat @ coords
-        if pixel_is_area:
-            frac_image_coords[:2, :] -= 0.5
-        return frac_image_coords
+        image_coords = mat @ coords
+        if apply_pixel_center_offset:
+            image_coords[:2, :] -= 0.5
+        return image_coords
 
     @staticmethod
     def _get_equivalent_buffer_in_arc_degrees(latitude, buffer_in_metres):

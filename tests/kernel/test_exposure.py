@@ -50,7 +50,7 @@ def test_jupiter_exposure_service(get_components):
         hazard_model_factory=hazard_model_factory,
         vulnerability_models_factory=vulnerability_models_factory,
         inventory=inventory,
-        source_paths=get_default_source_paths(inventory),
+        resource_provider=get_default_source_paths(inventory),
         inventory_reader=InventoryReader(fs=local.LocalFileSystem(), base_path=""),
         reader=ZarrReader(store=store),
         colormaps=inventory.colormaps(),

@@ -21,6 +21,7 @@ import physrisk.kernel.hazard_model
 from physrisk.api.v1.common import (
     Distribution,
     ExceedanceCurve,
+    HazardDataSource as APIHazardDataSource,
     VulnerabilityDistrib,
 )
 from physrisk.api.v1.exposure_req_resp import (
@@ -34,16 +35,13 @@ from physrisk.api.v1.hazard_image import (
     HazardImageInfoResponse,
     HazardImageRequest,
 )
-from physrisk.data.hazard_data_provider import HazardDataHint
+from physrisk.data.hazard_data_provider import HazardDataHint, HazardResourceProvider
 from physrisk.data.inventory import expand
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.static.oed_occupancy import OED_OCCUPANCY_CODES
 from physrisk.data.static.scenarios import scenario_description
 from physrisk.data.zarr_reader import ZarrReader
-from physrisk.hazard_models.core_hazards import (
-    InventorySourcePaths,
-    get_default_source_paths,
-)
+from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.exposure import JupterExposureMeasure, calculate_exposures
 from physrisk.kernel.hazards import Hazard, all_hazards, hazard_class
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey  # , ImpactKey
@@ -138,7 +136,7 @@ class Requester:
         hazard_model_factory: HazardModelFactory,
         vulnerability_models_factory: VulnerabilityModelsFactory,
         inventory: Inventory,
-        source_paths: InventorySourcePaths,
+        resource_provider: HazardResourceProvider,
         inventory_reader: InventoryReader,
         reader: ZarrReader,
         colormaps: Colormaps,
@@ -156,7 +154,7 @@ class Requester:
         self.inventory = inventory
         self.inventory_reader = inventory_reader
         self.zarr_reader = reader
-        self.source_paths = source_paths
+        self.resource_provider = resource_provider
 
     def get(self, *, request_id, request_dict):
         if request_id == "get_hazard_data":
@@ -231,16 +229,16 @@ class Requester:
     def get_available_sources(
         self, request: AvailabilitySourcesRequest
     ) -> AvailabilitySourcesResponse:
+        selected_hazards = set(request.selected_hazards_list)
         resources = [
             resource
-            for resources in self.source_paths.all_selected_resources_by_type_id.values()
-            for resource in resources
+            for hazard_type, indicator_ids in self.resource_provider.hazard_indicators().items()
+            if not selected_hazards or hazard_type.__name__ in selected_hazards
+            for indicator_id in indicator_ids
+            for resource in self.resource_provider.get_resources(
+                hazard_type, indicator_id
+            )
         ]
-
-        if request.selected_hazards_list:
-            resources = [
-                s for s in resources if s.hazard_type in request.selected_hazards_list
-            ]
         result = _create_available_sources_result(
             resources=resources,
         )
@@ -507,6 +505,7 @@ def _get_hazard_data(
                     index_values=np.asarray(sig_figures(resp.return_periods)).tolist(),
                     index_name="return period",
                     return_periods=[],
+                    source=_api_hazard_data_source(resp),
                 )
                 if isinstance(resp, hmHazardEventDataResponse)
                 else (
@@ -515,6 +514,7 @@ def _get_hazard_data(
                         index_values=np.asarray(sig_figures(resp.param_defns)).tolist(),
                         index_name="threshold",
                         return_periods=[],
+                        source=_api_hazard_data_source(resp),
                     )
                     if isinstance(resp, HazardParameterDataResponse)
                     else IntensityCurve(
@@ -522,6 +522,7 @@ def _get_hazard_data(
                         index_values=[],
                         index_name="",
                         return_periods=[],
+                        source=_api_hazard_data_source(resp),
                     )
                 )
             )
@@ -539,6 +540,19 @@ def _get_hazard_data(
         )
 
     return response
+
+
+def _api_hazard_data_source(response) -> APIHazardDataSource | None:
+    """Convert kernel source metadata to its API representation."""
+    source = getattr(response, "source", None)
+    if source is None:
+        return None
+    return APIHazardDataSource(
+        resource_id=source.resource_id,
+        path=source.path,
+        scenario=source.scenario,
+        year=source.year,
+    )
 
 
 def create_assets(
@@ -949,6 +963,12 @@ def _compile_asset_impacts(
                         vulnerability_distribution=vulnerability_distribution,
                         hazard_path=v.impact.path,
                         hazard_units=v.event.units,
+                        hazard_sources=[]
+                        if v.hazard_data is None
+                        else [
+                            _api_hazard_data_source(hazard_response)
+                            for hazard_response in v.hazard_data
+                        ],
                     )
                 else:
                     calc_details = CalculationDetails(
@@ -961,6 +981,12 @@ def _compile_asset_impacts(
                         hazard_units="default"
                         if v.hazard_data is None
                         else v.hazard_data[0].units,
+                        hazard_sources=[]
+                        if v.hazard_data is None
+                        else [
+                            _api_hazard_data_source(hazard_response)
+                            for hazard_response in v.hazard_data
+                        ],
                     )
 
             key = APIImpactKey(

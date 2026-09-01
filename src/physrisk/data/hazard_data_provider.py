@@ -1,4 +1,3 @@
-from abc import ABC
 import asyncio
 from dataclasses import dataclass
 import logging
@@ -8,7 +7,6 @@ from typing import (
     Dict,
     List,
     MutableMapping,
-    NamedTuple,
     Optional,
     Sequence,
     Tuple,
@@ -19,6 +17,7 @@ import numpy as np
 from shapely import Point
 from typing_extensions import Protocol
 
+from physrisk.api.v1.hazard_data import HazardResource
 from physrisk.kernel.hazards import Hazard
 
 from .zarr_reader import ZarrReader
@@ -110,19 +109,82 @@ class SourcePaths(Protocol):
         ...
 
 
+class HazardResourceProvider(Protocol):
+    """Provides hazard resources and the hazard/indicator pairs they represent."""
+
+    def hazard_indicators(self) -> dict[type[Hazard], list[str]]:
+        """Return the indicators available for each hazard type.
+
+        Returns:
+            Indicator identifiers grouped by their hazard class.
+        """
+        ...
+
+    def get_resources(
+        self,
+        hazard_type: type[Hazard],
+        indicator_id: str,
+        hint: HazardDataHint | None = None,
+    ) -> list[HazardResource]:
+        """Return matching resources in cascade order.
+
+        Args:
+            hazard_type: Hazard class requested by the caller.
+            indicator_id: Identifier of the requested hazard indicator.
+            hint: Optional resource-selection hint.
+
+        Returns:
+            Matching resources ordered from most to least preferred.
+        """
+        ...
+
+
 class DataSourcingError(Exception):
     pass
 
 
-class ScenarioYear(NamedTuple):
+@dataclass(frozen=True)
+class ScenarioYear:
+    """Scenario identifier and year used as a request or result key.
+
+    Attributes:
+        scenario: Climate scenario identifier.
+        year: Projection year, or ``-1`` for a historical request.
+    """
+
     scenario: str
     year: int
 
 
-class ScenarioYearRes(NamedTuple):
+class ScenarioYearResolver(Protocol):
+    """Callable that selects one available scenario and year from a resource."""
+
+    def __call__(
+        self,
+        requested: ScenarioYear,
+        resource: HazardResource,
+        /,
+    ) -> ScenarioYear:
+        """Select a scenario and year available from a hazard resource.
+
+        Args:
+            requested: Scenario and year requested by the caller.
+            resource: Resource containing the available scenarios and years.
+
+        Returns:
+            The scenario and year to read from the resource.
+
+        Raises:
+            EmptyResourceError: The resource has no scenario containing any year.
+        """
+        ...
+
+
+@dataclass(frozen=True)
+class ScenarioYearRes:
     scenario: str
     year: int
-    resource_index: Optional[int]
+    resource_index: int | None
 
 
 @dataclass
@@ -133,6 +195,7 @@ class ScenarioYearResult:
     coverage_mask: np.ndarray  # boolean mask giving the part of the original set of lats/lons that this applies to
     units: str
     paths: np.ndarray
+    sources: np.ndarray | None = None
 
 
 @dataclass
@@ -140,7 +203,85 @@ class WeightedSum:
     weights: List[Tuple[ScenarioYear, float]]
 
 
-class HazardDataProvider(ABC):
+class HazardDataProvider(Protocol):
+    """Provides hazard data for coordinates, scenarios, and years."""
+
+    async def get_data(
+        self,
+        longitudes: np.ndarray,
+        latitudes: np.ndarray,
+        *,
+        indicator_id: str,
+        scenarios: Sequence[str],
+        years: Sequence[int],
+        hint: HazardDataHint | None = None,
+        buffer: int | None = None,
+    ) -> dict[ScenarioYear, ScenarioYearResult]:
+        """Read hazard data for coordinates, scenarios, and years.
+
+        Args:
+            longitudes: Longitude of each requested coordinate.
+            latitudes: Latitude of each requested coordinate.
+            indicator_id: Identifier of the requested hazard indicator.
+            scenarios: Requested scenario identifiers.
+            years: Requested projection years.
+            hint: Optional resource-selection hint.
+            buffer: Radius in metres over which to take the maximum value. ``None``
+                performs point reads.
+
+        Returns:
+            Results keyed by requested scenario and year and aligned with the input
+            coordinates.
+        """
+        ...
+
+
+async def read_single_item(
+    reader: ZarrReader,
+    interpolation: str,
+    item: ScenarioYear,
+    latitudes: np.ndarray,
+    longitudes: np.ndarray,
+    buffer: Optional[int],
+    path: str,
+):
+    """Read one concrete scenario/year array."""
+    indices, units = [], ""
+    mask_in_bounds = None
+    if buffer is None:
+        values, mask_in_bounds, indices, units = await asyncio.to_thread(
+            reader.get_curves,
+            path,
+            longitudes,
+            latitudes,
+            interpolation,
+        )
+    else:
+        if buffer < 0 or 1000 < buffer:
+            raise Exception("The buffer must be an integer between 0 and 1000 metres.")
+        values, indices, units = await asyncio.to_thread(
+            reader.get_max_curves,
+            path,
+            [
+                (
+                    Point(longitude, latitude)
+                    if buffer == 0
+                    else Point(longitude, latitude).buffer(
+                        ZarrReader._get_equivalent_buffer_in_arc_degrees(
+                            latitude, buffer
+                        )
+                    )
+                )
+                for longitude, latitude in zip(longitudes, latitudes)
+            ],
+            interpolation,
+        )  # type: ignore
+    return item, values, mask_in_bounds, indices, units, path
+
+
+class CascadingHazardDataProvider:
+    """Reads hazard data by cascading through sorted sources."""
+
     def __init__(
         self,
         hazard_type: Type[Hazard],
@@ -149,6 +290,7 @@ class HazardDataProvider(ABC):
         store: Optional[MutableMapping] = None,
         zarr_reader: Optional[ZarrReader] = None,
         interpolation: Optional[str] = "floor",
+        interpolate_years: bool = False,
         historical_year: int = 2025,
     ):
         """Provides hazard data.
@@ -159,6 +301,7 @@ class HazardDataProvider(ABC):
             store (Optional[MutableMapping], optional): Zarr store instance. Defaults to None.
             zarr_reader (Optional[ZarrReader], optional): ZarrReader instance. Defaults to None.
             interpolation (Optional[str], optional): Interpolation type. Defaults to "floor".
+            interpolate_years: Whether to interpolate between available years.
             historical_year (int): The year to be considered as 'historical' for purposes of interpolation over years.
 
         Raises:
@@ -173,8 +316,9 @@ class HazardDataProvider(ABC):
         if interpolation not in ["floor", "linear", "max", "min"]:
             raise ValueError("interpolation must be 'floor', 'linear', 'max' or 'min'")
         self._interpolation = interpolation
+        self._interpolate_years = interpolate_years
 
-    async def get_data_cascading(
+    async def get_data(
         self,
         longitudes: np.ndarray,
         latitudes: np.ndarray,
@@ -184,8 +328,7 @@ class HazardDataProvider(ABC):
         years: Sequence[int],
         hint: Optional[HazardDataHint] = None,
         buffer: Optional[int] = None,
-        interpolate_years: bool = False,
-    ):
+    ) -> Dict[ScenarioYear, ScenarioYearResult]:
         """Returns data for set of latitude and longitudes.
 
         Args:
@@ -196,7 +339,6 @@ class HazardDataProvider(ABC):
             years (Sequence[int]): Projection years, e.g. [2050, 2080].
             hint (Optional[HazardDataHint], optional): Hint. Defaults to None.
             buffer (Optional[int], optional): _description_. Buffer around each point.
-            interpolate_years (bool, optional): If True, interpolate between years. Defaults to False.
 
         Returns:
             Dict[ScenarioYear, ScenarioYearResult]: Results.
@@ -246,6 +388,7 @@ class HazardDataProvider(ABC):
                 set_id,
                 longitudes[mask_unprocessed],
                 latitudes[mask_unprocessed],
+                self._interpolation,
             )
             coverage = mask_unprocessed.copy()
             coverage[mask_unprocessed] = coverage[mask_unprocessed] & mask_in_bounds
@@ -262,7 +405,6 @@ class HazardDataProvider(ABC):
                 resource_paths,
                 years,
                 buffer,
-                interpolate_years,
             )
             if len(resource_result) > 0:
                 results.update(resource_result)
@@ -308,7 +450,6 @@ class HazardDataProvider(ABC):
         resource_paths: ResourcePaths,
         years: Sequence[int],
         buffer: Optional[int],
-        interpolate_years: bool,
     ):
         """Get data for all scenarios and years using just a single HazardResource as the source.
         The importance of this is that interpolation of years is assumed to be feasible within the same resource as this
@@ -322,8 +463,8 @@ class HazardDataProvider(ABC):
             if len(paths.years) == 0:
                 continue
             requested_years = [-1] if scenario == "historical" else years
-            if interpolate_years:
-                year_weights = HazardDataProvider._weights(
+            if self._interpolate_years:
+                year_weights = CascadingHazardDataProvider._weights(
                     scenario, paths.years, requested_years, self.historical_year
                 )
             else:
@@ -346,7 +487,9 @@ class HazardDataProvider(ABC):
             # Any errors should propagate up.
             res = await asyncio.gather(
                 *(
-                    self.get_single_item(
+                    read_single_item(
+                        self._reader,
+                        self._interpolation,
                         item,
                         latitudes,
                         longitudes,
@@ -418,48 +561,6 @@ class HazardDataProvider(ABC):
             ScenarioYearRes(k.scenario, k.year, resource_index): v
             for k, v in result.items()
         }
-
-    async def get_single_item(
-        self,
-        item: ScenarioYear,
-        latitudes: np.ndarray,
-        longitudes: np.ndarray,
-        buffer: Optional[int],
-        path: str,
-    ):
-        indices, units = [], ""
-        mask_in_bounds = None
-        if buffer is None:
-            values, mask_in_bounds, indices, units = await asyncio.to_thread(
-                self._reader.get_curves,
-                path,
-                longitudes,
-                latitudes,
-                self._interpolation,
-            )
-        else:
-            if buffer < 0 or 1000 < buffer:
-                raise Exception(
-                    "The buffer must be an integer between 0 and 1000 metres."
-                )
-            values, indices, units = await asyncio.to_thread(
-                self._reader.get_max_curves,
-                path,
-                [
-                    (
-                        Point(longitude, latitude)
-                        if buffer == 0
-                        else Point(longitude, latitude).buffer(
-                            ZarrReader._get_equivalent_buffer_in_arc_degrees(
-                                latitude, buffer
-                            )
-                        )
-                    )
-                    for longitude, latitude in zip(longitudes, latitudes)
-                ],
-                self._interpolation,
-            )  # type: ignore
-        return item, values, mask_in_bounds, indices, units, path
 
     @staticmethod
     def _weights(

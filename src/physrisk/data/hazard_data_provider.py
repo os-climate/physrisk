@@ -1,18 +1,11 @@
-from abc import ABC
 import asyncio
-from dataclasses import dataclass
 import logging
 import sys
+from abc import ABC
+from collections.abc import Callable, MutableMapping, Sequence
+from dataclasses import dataclass
 from typing import (
-    Callable,
-    Dict,
-    List,
-    MutableMapping,
     NamedTuple,
-    Optional,
-    Sequence,
-    Tuple,
-    Type,
 )
 
 import numpy as np
@@ -23,7 +16,6 @@ from physrisk.kernel.hazards import Hazard
 
 from .zarr_reader import ZarrReader
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -33,7 +25,7 @@ class HazardDataHint:
     A hazard resource path can be specified which uniquely defines the hazard resource; otherwise the resource
     is inferred from the indicator_id."""
 
-    path: Optional[str] = None
+    path: str | None = None
     # consider adding: indicator_model_gcm: str
 
     def group_key(self):
@@ -63,12 +55,12 @@ class ResourcePaths:
     # the path (unique identifier) of the HazardResource
     resource_path: str
     # note the key is the *requested* scenario, not the scenario it may be proxied to
-    scenarios: Dict[str, ScenarioPaths]
+    scenarios: dict[str, ScenarioPaths]
     units: str
 
 
 class SourcePaths(Protocol):
-    def hazard_types(self) -> List[Type[Hazard]]:
+    def hazard_types(self) -> list[type[Hazard]]:
         """Lists the available hazard types.
 
         Returns:
@@ -78,11 +70,11 @@ class SourcePaths(Protocol):
 
     def resource_paths(
         self,
-        hazard_type: Type[Hazard],
+        hazard_type: type[Hazard],
         indicator_id: str,
         scenarios: Sequence[str],
-        hint: Optional[HazardDataHint] = None,
-    ) -> List[ResourcePaths]:
+        hint: HazardDataHint | None = None,
+    ) -> list[ResourcePaths]:
         """Provides a list of ResourcePaths. Each item in the list provides the paths for
         a different HazardResource. The ResourcePaths will be tried in order. If a
         latitude/longitude is out of bounds of one HazardResource
@@ -104,8 +96,8 @@ class SourcePaths(Protocol):
         resource_id: str,
         scenarios: Sequence[str],
         map: bool = False,
-        map_zoom: Optional[int] = None,
-    ) -> Dict[str, ScenarioPaths]:
+        map_zoom: int | None = None,
+    ) -> dict[str, ScenarioPaths]:
         """Returns the ScenarioPaths when a unique ID is specified."""
         ...
 
@@ -122,7 +114,7 @@ class ScenarioYear(NamedTuple):
 class ScenarioYearRes(NamedTuple):
     scenario: str
     year: int
-    resource_index: Optional[int]
+    resource_index: int | None
 
 
 @dataclass
@@ -137,18 +129,18 @@ class ScenarioYearResult:
 
 @dataclass
 class WeightedSum:
-    weights: List[Tuple[ScenarioYear, float]]
+    weights: list[tuple[ScenarioYear, float]]
 
 
 class HazardDataProvider(ABC):
     def __init__(
         self,
-        hazard_type: Type[Hazard],
+        hazard_type: type[Hazard],
         source_paths: SourcePaths,
         *,
-        store: Optional[MutableMapping] = None,
-        zarr_reader: Optional[ZarrReader] = None,
-        interpolation: Optional[str] = "floor",
+        store: MutableMapping | None = None,
+        zarr_reader: ZarrReader | None = None,
+        interpolation: str | None = "floor",
         historical_year: int = 2025,
     ):
         """Provides hazard data.
@@ -182,8 +174,8 @@ class HazardDataProvider(ABC):
         indicator_id: str,
         scenarios: Sequence[str],
         years: Sequence[int],
-        hint: Optional[HazardDataHint] = None,
-        buffer: Optional[int] = None,
+        hint: HazardDataHint | None = None,
+        buffer: int | None = None,
         interpolate_years: bool = False,
     ):
         """Returns data for set of latitude and longitudes.
@@ -202,18 +194,18 @@ class HazardDataProvider(ABC):
             Dict[ScenarioYear, ScenarioYearResult]: Results.
         """
         # For each scenario, we find the list of array paths and available years for each path.
-        final_result: Dict[ScenarioYear, ScenarioYearResult] = {}
+        final_result: dict[ScenarioYear, ScenarioYearResult] = {}
         # mask_unprocessed is the mask of lats and lons that remain unprocessed.
         # This always has the same length and is updated for each path_item.
         # combined data for each year
         mask_unprocessed = np.ones(len(longitudes), dtype=bool)
-        resource_paths_set: List[ResourcePaths] = self._source_paths.resource_paths(
+        resource_paths_set: list[ResourcePaths] = self._source_paths.resource_paths(
             self.hazard_type,
             indicator_id=indicator_id,
             scenarios=scenarios,
             hint=hint,
         )
-        results: Dict[ScenarioYearRes, ScenarioYearResult] = {}
+        results: dict[ScenarioYearRes, ScenarioYearResult] = {}
         max_dim = 0
         for i, resource_paths in enumerate(resource_paths_set):
             # within a HazardResource the arrays have the same spatial coverage
@@ -307,16 +299,16 @@ class HazardDataProvider(ABC):
         indicator_id: str,
         resource_paths: ResourcePaths,
         years: Sequence[int],
-        buffer: Optional[int],
+        buffer: int | None,
         interpolate_years: bool,
     ):
         """Get data for all scenarios and years using just a single HazardResource as the source.
         The importance of this is that interpolation of years is assumed to be feasible within the same resource as this
         is a single model (with consistent meaning of the values).
         """
-        result: Dict[ScenarioYear, ScenarioYearResult] = {}
+        result: dict[ScenarioYear, ScenarioYearResult] = {}
         # Retrieve the data for all available years for the path in question.
-        weights: Dict[ScenarioYear, WeightedSum] = {}
+        weights: dict[ScenarioYear, WeightedSum] = {}
         expected_units = resource_paths.units
         for scenario, paths in resource_paths.scenarios.items():
             if len(paths.years) == 0:
@@ -338,10 +330,10 @@ class HazardDataProvider(ABC):
 
         all_items = set(w[0] for ws in weights.values() for w in ws.weights)
         if len(all_items) == 0:
-            empty: Dict[ScenarioYearRes, ScenarioYearResult] = {}
+            empty: dict[ScenarioYearRes, ScenarioYearResult] = {}
             return empty
         masks_in_bounds = {}
-        targets: Dict[ScenarioYear, ScenarioYearResult] = {}
+        targets: dict[ScenarioYear, ScenarioYearResult] = {}
         try:
             # Any errors should propagate up.
             res = await asyncio.gather(
@@ -424,7 +416,7 @@ class HazardDataProvider(ABC):
         item: ScenarioYear,
         latitudes: np.ndarray,
         longitudes: np.ndarray,
-        buffer: Optional[int],
+        buffer: int | None,
         path: str,
     ):
         indices, units = [], ""
@@ -467,7 +459,7 @@ class HazardDataProvider(ABC):
         available_years: Sequence[int],
         requested_years: Sequence[int],
         historical_year: int,
-    ) -> Dict[ScenarioYear, WeightedSum]:
+    ) -> dict[ScenarioYear, WeightedSum]:
         available_with_current = sorted(
             np.array([historical_year] + list(available_years))
         )
@@ -476,9 +468,9 @@ class HazardDataProvider(ABC):
         # 2045 gives index 2, need 1 and 2
         # 2050 gives index 2, need 2
         # 2060 gives index 3, need 1 and 2
-        weights: List[Tuple[ScenarioYear, float]] = []
+        weights: list[tuple[ScenarioYear, float]] = []
         indices = np.searchsorted(available_with_current, requested_years, side="left")
-        result: Dict[ScenarioYear, WeightedSum] = {}
+        result: dict[ScenarioYear, WeightedSum] = {}
 
         if scenario == "historical":
             result[ScenarioYear("historical", -1)] = WeightedSum(

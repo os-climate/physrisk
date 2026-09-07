@@ -1,4 +1,4 @@
-from typing import List, Sequence, Union
+from collections.abc import Sequence
 
 import numpy as np
 from scipy.stats import norm
@@ -52,7 +52,7 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
 
     def get_data_requests(
         self, asset: Asset, *, scenario: str, year: int
-    ) -> Union[HazardDataRequest, Sequence[HazardDataRequest]]:
+    ) -> HazardDataRequest | Sequence[HazardDataRequest]:
         """Request the hazard data needed by the vulnerability model for a specific asset
         (this is a Google-style doc string)
 
@@ -138,7 +138,7 @@ def get_impact_distrib(
     fraction_loss_mean: float,
     fraction_loss_std: float,
     hazard_type: type,
-    hazard_paths: List[str],
+    hazard_paths: list[str],
     hazard_indicator_id: str,
     impact_type: ImpactType,
 ) -> ImpactDistrib:

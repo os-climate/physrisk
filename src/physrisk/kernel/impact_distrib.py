@@ -1,6 +1,6 @@
-from enum import Enum
 import sys
-from typing import Sequence, Type, Union
+from collections.abc import Sequence
+from enum import Enum
 
 import numpy as np
 
@@ -17,19 +17,19 @@ class ImpactDistrib:
     """Impact distributions specific to an asset."""
 
     __slots__ = [
+        "_hazard_indicator_id",
         "_hazard_type",
         "_impact_bin_edges",
-        "_probabilities",
-        "_hazard_indicator_id",
         "_impact_type",
         "_path",
+        "_probabilities",
     ]
 
     def __init__(
         self,
-        hazard_type: Type[Hazard],
-        impact_bin_edges: Union[Sequence[float], np.ndarray],
-        probabilities: Union[Sequence[float], np.ndarray],
+        hazard_type: type[Hazard],
+        impact_bin_edges: Sequence[float] | np.ndarray,
+        probabilities: Sequence[float] | np.ndarray,
         hazard_indicator_id: str,
         impact_type: ImpactType = ImpactType.damage,
         path: Sequence[str] = [],

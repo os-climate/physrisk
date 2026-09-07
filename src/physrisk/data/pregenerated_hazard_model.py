@@ -1,9 +1,9 @@
 import asyncio
 import concurrent.futures
-from collections import defaultdict
 import logging
 import threading
-from typing import Dict, List, Mapping, MutableMapping, Optional, Sequence, Tuple, Type
+from collections import defaultdict
+from collections.abc import Mapping, MutableMapping, Sequence
 
 import numpy as np
 
@@ -42,11 +42,11 @@ class PregeneratedHazardModel(HazardModel):
 
     def __init__(
         self,
-        hazard_data_providers: Dict[Type[Hazard], HazardDataProvider],
+        hazard_data_providers: dict[type[Hazard], HazardDataProvider],
         interpolate_years: bool = False,
         zarr_max_workers: int = 32,
-        nan_is_zero: Optional[set[tuple[type[Hazard], str]]] = None,
-        nan_is_no_data: Optional[set[tuple[type[Hazard], str]]] = None,
+        nan_is_zero: set[tuple[type[Hazard], str]] | None = None,
+        nan_is_no_data: set[tuple[type[Hazard], str]] | None = None,
     ):
         """
         Args:
@@ -72,7 +72,7 @@ class PregeneratedHazardModel(HazardModel):
                 f"element {next(iter(self._nan_is_zero & self._nan_is_no_data))} appears in nan_is_zero and nan_is_no_data"
             )
 
-    def get_hazard_data(  # noqa: C901
+    def get_hazard_data(
         self, requests: Sequence[HazardDataRequest]
     ) -> Mapping[HazardDataRequest, HazardDataResponse]:
         # A note on concurrency.
@@ -89,17 +89,17 @@ class PregeneratedHazardModel(HazardModel):
 
     def _get_cascading_hazard_data_batches(self, requests: Sequence[HazardDataRequest]):
         responses: MutableMapping[HazardDataRequest, HazardDataResponse] = {}
-        batches: Dict[Tuple[str, str], List[HazardDataRequest]] = defaultdict(list)
+        batches: dict[tuple[str, str], list[HazardDataRequest]] = defaultdict(list)
         # find the requests for the same indicator, but different scenarios and years
 
         async def all_requests():
             async def single_indicator(
-                hazard_type: Type[Hazard],
+                hazard_type: type[Hazard],
                 indicator_id: str,
-                hint: Optional[HazardDataHint],
-                batch: List[HazardDataRequest],
+                hint: HazardDataHint | None,
+                batch: list[HazardDataRequest],
             ):
-                lat_lon_index: Dict[Tuple[float, float, Optional[int]], int] = {}
+                lat_lon_index: dict[tuple[float, float, int | None], int] = {}
                 is_event = (
                     indicator_data(hazard_type, indicator_id) == IndicatorData.EVENT
                 )
@@ -116,10 +116,8 @@ class PregeneratedHazardModel(HazardModel):
                     )
                 # get the list of scenarios and years needed
                 scenarios = list(set(req.scenario for req in batch))
-                years = list(
-                    sorted(
-                        set(req.year for req in batch if req.scenario != "historical")
-                    )
+                years = sorted(
+                    set(req.year for req in batch if req.scenario != "historical")
                 )
 
                 latitudes = np.array([lat_lon[0] for lat_lon in lat_lon_index])
@@ -249,12 +247,12 @@ class PregeneratedHazardModel(HazardModel):
         return responses
 
     def log_response_issues(
-        self, responses: Dict[HazardDataRequest, HazardDataResponse]
+        self, responses: dict[HazardDataRequest, HazardDataResponse]
     ):
         # in some cases requested data cannot be retrieved, leading to a HazardDataFailedResponse
         # this may be handled by the vulnerability model or might result in missing results.
-        grouped_failures: Dict[
-            str, List[Tuple[HazardDataRequest, HazardDataFailedResponse]]
+        grouped_failures: dict[
+            str, list[tuple[HazardDataRequest, HazardDataFailedResponse]]
         ] = defaultdict(list)
         for req, resp in responses.items():
             if isinstance(resp, HazardDataFailedResponse):
@@ -285,13 +283,13 @@ class ZarrHazardModel(PregeneratedHazardModel):
         self,
         *,
         source_paths: SourcePaths,
-        reader: Optional[ZarrReader] = None,
+        reader: ZarrReader | None = None,
         store=None,
         interpolation="floor",
         interpolate_years: bool = False,
         zarr_max_workers: int = 32,
-        nan_is_zero: Optional[set[tuple[type[Hazard], str]]] = None,
-        nan_is_no_data: Optional[set[tuple[type[Hazard], str]]] = None,
+        nan_is_zero: set[tuple[type[Hazard], str]] | None = None,
+        nan_is_no_data: set[tuple[type[Hazard], str]] | None = None,
     ):
         """Hazard model backed by Zarr arrays.
 

@@ -1,4 +1,5 @@
-from typing import Any, Dict, List, NamedTuple, Optional, Sequence, Literal
+from collections.abc import Sequence
+from typing import Any, Literal, NamedTuple
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -12,11 +13,11 @@ from physrisk.api.v1.hazard_data import Scenario
 
 
 class CalcSettings(BaseModel):
-    hazard_interp: Optional[str] = Field(
+    hazard_interp: str | None = Field(
         default=None,  # previously "floor",
         description="Method used for interpolation of hazards: 'floor' or 'bilinear'.",
     )
-    hazard_scope: Optional[str] = Field(
+    hazard_scope: str | None = Field(
         default=None,
         description="Comma separated list of hazards to include in analysis.",
         examples=["RiverineInundation,Wind", "Hail,Fire"],
@@ -25,7 +26,7 @@ class CalcSettings(BaseModel):
         default=True,
         description="If True, the hazard model interpolates the available years to provide data for the requested years. ",
     )
-    hazard_scope_by_indicator: Optional[Dict[str, List[str] | None]] = Field(
+    hazard_scope_by_indicator: dict[str, list[str] | None] | None = Field(
         default=None,
         description="Dictionary of hazards and corresponding indicator ids to include in analysis.",
     )
@@ -56,14 +57,14 @@ class AssetMeasuresSpecification(BaseModel):
     * ``"10y"`` … ``"1000y"`` — loss at the given return period
     """
 
-    measure_ids: List[str] = Field(
+    measure_ids: list[str] = Field(
         default_factory=lambda: ["mean"],
         description=(
             "Base measure identifiers to compute. Standard values: 'mean', 'semi_std_dev', "
             "'10y', '20y', '50y', '100y', '200y', '500y', '1000y'."
         ),
     )
-    quantity_types: List[str] = Field(
+    quantity_types: list[str] = Field(
         default_factory=lambda: ["damage"],
         description=(
             "Quantity types to include. Valid values: 'damage', 'disruption/revenue', "
@@ -89,7 +90,7 @@ class AssetImpactRequest(BaseModel):
     include_calc_details: bool = Field(
         True, description="If true, include impact calculation details."
     )
-    measures_specification: Optional[AssetMeasuresSpecification] = Field(
+    measures_specification: AssetMeasuresSpecification | None = Field(
         None,
         description=(
             "If set, append per-asset financial impact measures to "
@@ -102,16 +103,16 @@ class AssetImpactRequest(BaseModel):
         "",
         description="Identifier for 'use case' used in the risk measures calculation.",
     )
-    provider_max_requests: Dict[str, int] = Field(
+    provider_max_requests: dict[str, int] = Field(
         {},
         description="The maximum permitted number of requests \
         to external providers. This setting is intended in particular for paid-for data. The key is the provider \
         ID and the value is the maximum permitted requests.",
     )
-    scenarios: Optional[Sequence[str]] = Field(
+    scenarios: Sequence[str] | None = Field(
         [], description="Name of scenarios ('rcp8p5')"
     )
-    years: Optional[Sequence[int]] = Field(
+    years: Sequence[int] | None = Field(
         [],
         description="""Projection year (2030, 2050, 2080). Any year before 2030,
         e.g. 1980, is treated as historical.""",
@@ -148,24 +149,24 @@ class RiskScoreValue(BaseModel):
         description="Full description of value, \
         e.g. 'very low impact: very unlikely to cause asset devaluation'.",
     )
-    lower_bound: Optional[List[Any]] = Field(
+    lower_bound: list[Any] | None = Field(
         default=None,
         description="Lower bound(s) of the measure(s) from which the score is derived",
     )
-    upper_bound: Optional[List[Any]] = Field(
+    upper_bound: list[Any] | None = Field(
         default=None,
         description="Upper bound(s) of the measure(s) from which the score is derived",
     )
 
 
 class ScoreBasedRiskMeasureDefinition(BaseModel):
-    hazard_types: List[str] = Field(
+    hazard_types: list[str] = Field(
         [], description="Defines the hazards that the measure is used for."
     )
-    values: List[RiskScoreValue] = Field(
+    values: list[RiskScoreValue] = Field(
         [], description="Defines the set of values that the score can take."
     )
-    underlying_measures: List[RiskMeasureDefinition] = Field(
+    underlying_measures: list[RiskMeasureDefinition] = Field(
         [],
         description="Defines the underlying risk measures from which the scores are inferred.",
     )
@@ -190,7 +191,7 @@ class RiskMeasureKey(BaseModel):
     scenario_id: str
     year: str
     measure_id: str
-    hazard_indicator_id: Optional[str] = None
+    hazard_indicator_id: str | None = None
 
 
 class ScoreBasedRiskMeasure(BaseModel):
@@ -199,7 +200,7 @@ class ScoreBasedRiskMeasure(BaseModel):
     key: RiskMeasureKey
     score: int = Field([0], description="Identifier for the risk measure.")
     measure_0: float
-    measure_1: Optional[float] = Field(
+    measure_1: float | None = Field(
         None,
         description="Underlying measures for case where there are multiple underlying measures.",
     )
@@ -212,11 +213,11 @@ class ScoreBasedRiskMeasuresForAssets(BaseModel):
     """
 
     key: RiskMeasureKey
-    scores: Optional[list[int]] = Field(
+    scores: list[int] | None = Field(
         [0], description="Identifier for the risk measure."
     )
-    measures_0: Optional[list[float]]
-    measures_1: Optional[List[float]] = Field(
+    measures_0: list[float] | None
+    measures_1: list[float] | None = Field(
         [],
         description="Underlying measures for case where there are multiple underlying measures.",
     )
@@ -233,8 +234,8 @@ class RiskMeasuresForAssets(BaseModel):
 class ScoreBasedRiskMeasureSetDefinition(BaseModel):
     measure_set_id: str
     # for each hazard type, gives the measure ID used to calculate the measure for each asset:
-    asset_measure_ids_for_hazard: Dict[str, List[str]]
-    score_definitions: Dict[str, ScoreBasedRiskMeasureDefinition]
+    asset_measure_ids_for_hazard: dict[str, list[str]]
+    score_definitions: dict[str, ScoreBasedRiskMeasureDefinition]
     # where drill-down by hazard indicator ID is relevant, give the measure IDs for each
     # (hazard type, indicator ID) combination :
     asset_measure_ids_for_hazard_drilldown: dict[str, dict[str, list[str]]] = Field(
@@ -245,7 +246,7 @@ class ScoreBasedRiskMeasureSetDefinition(BaseModel):
 class RiskMeasures(BaseModel):
     """Risk measures"""
 
-    measures_for_assets: List[
+    measures_for_assets: list[
         RiskMeasuresForAssets | ScoreBasedRiskMeasuresForAssets
     ] = Field(
         default=[],
@@ -254,32 +255,32 @@ class RiskMeasures(BaseModel):
         "score-based risk measures, where a score (often something operationally meaningful) is inferred from "
         "one or more underlying measures.",
     )
-    measures_for_portfolio: List[ScoreBasedRiskMeasure] = Field(
+    measures_for_portfolio: list[ScoreBasedRiskMeasure] = Field(
         default=[],
         description="Score-based risk measures for the portfolio.",
     )
     score_based_measure_set_defn: ScoreBasedRiskMeasureSetDefinition
-    measures_definitions: Optional[List[RiskMeasureDefinition]] = Field(
+    measures_definitions: list[RiskMeasureDefinition] | None = Field(
         [], description="Definitions of the risk measures."
     )
-    scenarios: List[Scenario]
-    asset_ids: List[str]
+    scenarios: list[Scenario]
+    asset_ids: list[str]
 
 
 class CalculationDetails(BaseModel):
     """Details of a calculation. hazard_exceedance, hazard_distribution and
     vulnerability_distribution are only set in the case of an acute hazard calculation."""
 
-    hazard_exceedance: Optional[ExceedanceCurve] = Field(
+    hazard_exceedance: ExceedanceCurve | None = Field(
         None, description="Hazard data as exceedance curve."
     )
-    hazard_distribution: Optional[Distribution] = Field(
+    hazard_distribution: Distribution | None = Field(
         None, description="Hazard data as probability distribution."
     )
-    vulnerability_distribution: Optional[VulnerabilityDistrib] = Field(
+    vulnerability_distribution: VulnerabilityDistrib | None = Field(
         None, description="Vulnerability distribution."
     )
-    hazard_path: List[str] = Field(
+    hazard_path: list[str] = Field(
         ["unknown"], description="Path to the hazard indicator data source."
     )
     hazard_units: str = Field(["unknown"], description="Hazard indicator units.")
@@ -304,22 +305,22 @@ class AssetSingleImpact(BaseModel):
         examples=["damage", "disruption", "disruption/revenue", "disruption/costs"],
     )
     hazard_indicator_id: str = Field("", description="The ID of the hazard indicator.")
-    impact_distribution: Optional[Distribution] = Field(
+    impact_distribution: Distribution | None = Field(
         None, description="Impact as probability distribution."
     )
-    impact_exceedance: Optional[ExceedanceCurve] = Field(
+    impact_exceedance: ExceedanceCurve | None = Field(
         None, description="Impact as exceedance curve."
     )
-    impact_mean: Optional[float]
-    impact_std_deviation: Optional[float] = Field(
+    impact_mean: float | None
+    impact_std_deviation: float | None = Field(
         default=None,
         description="""Impact standard deviation.""",
     )
-    impact_semi_std_deviation: Optional[float] = Field(
+    impact_semi_std_deviation: float | None = Field(
         default=None,
         description="""Impact semi standard deviation: dispersion above the mean.""",
     )
-    calc_details: Optional[CalculationDetails] = Field(
+    calc_details: CalculationDetails | None = Field(
         None,
         description="""Details of impact calculation for acute hazard calculations.""",
     )
@@ -327,7 +328,7 @@ class AssetSingleImpact(BaseModel):
 
 class PortfolioImpact(BaseModel):
     key: ImpactKey
-    impact_exceedance: Optional[ExceedanceCurve] = Field(
+    impact_exceedance: ExceedanceCurve | None = Field(
         None, description="Impact as exceedance curve."
     )
     impact_type: str = Field(
@@ -337,12 +338,12 @@ class PortfolioImpact(BaseModel):
         "attributable to the asset.",
         examples=["damage", "disruption", "disruption/revenue", "disruption/costs"],
     )
-    impact_mean: Optional[float]
-    impact_std_deviation: Optional[float] = Field(
+    impact_mean: float | None
+    impact_std_deviation: float | None = Field(
         default=None,
         description="""Impact standard deviation.""",
     )
-    impact_semi_std_deviation: Optional[float] = Field(
+    impact_semi_std_deviation: float | None = Field(
         default=None,
         description="""Impact semi standard deviation: dispersion above the mean.""",
     )
@@ -351,12 +352,12 @@ class PortfolioImpact(BaseModel):
 class AssetLevelImpact(BaseModel):
     """Impact at asset level. Each asset can have impacts for multiple hazard types."""
 
-    asset_id: Optional[str] = Field(
+    asset_id: str | None = Field(
         None,
         description="""Asset identifier; will appear if provided in the request
         otherwise order of assets in response is identical to order of assets in request.""",
     )
-    impacts: List[AssetSingleImpact] = Field(
+    impacts: list[AssetSingleImpact] = Field(
         [], description="Impacts for each hazard type."
     )
 
@@ -364,7 +365,7 @@ class AssetLevelImpact(BaseModel):
 class AssetImpactResponse(BaseModel):
     """Response to impact request."""
 
-    asset_impacts: Optional[List[AssetLevelImpact]] = Field(
+    asset_impacts: list[AssetLevelImpact] | None = Field(
         None,
         description="Impacts for each asset and hazard type combination. Impacts are damage or disruption. "
         "Damage is specified as a fraction of asset total insurable value. Disruption, to revenue generation "
@@ -372,7 +373,7 @@ class AssetImpactResponse(BaseModel):
         "provided as probability distributions. Note the effects of damage from downtime and mitigants are "
         "not included; these are only taken into account in portfolio_impacts.",
     )
-    portfolio_impacts: Optional[List[PortfolioImpact]] = Field(
+    portfolio_impacts: list[PortfolioImpact] | None = Field(
         None,
         description="Impacts for the portfolio, aggregated over assets and provided both per hazard type and "
         "aggregated over hazard types. Impacts are damage or disruption. Damage is specified as a fraction of "
@@ -380,7 +381,7 @@ class AssetImpactResponse(BaseModel):
         "fraction of revenue attributable to the asset. Impacts are provided as probability distributions. "
         "Downtime from damage and (optionally) mitigants (insurance and state support) are included.",
     )
-    risk_measures: Optional[RiskMeasures] = Field(
+    risk_measures: RiskMeasures | None = Field(
         None,
         description="Risk measures: both score-based and non-score based.",
     )

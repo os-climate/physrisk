@@ -1,6 +1,6 @@
 from collections import defaultdict
+from collections.abc import Sequence
 from enum import Enum
-from typing import Optional, Sequence
 
 import numpy as np
 import scipy.interpolate
@@ -130,7 +130,7 @@ class CompanyRiskMeasureCalculator(PortfolioRiskMeasureCalculator):
             ],
         )
 
-    def get_definition(self, hazard_type: Optional[type[Hazard]] = None):
+    def get_definition(self, hazard_type: type[Hazard] | None = None):
         return self._definition
 
     def calculate_risk_measures(
@@ -148,13 +148,13 @@ class CompanyRiskMeasureCalculator(PortfolioRiskMeasureCalculator):
         impacts_by_year_scen: dict[tuple[str, int | None], list[MeasureKey]] = (
             defaultdict(list)
         )
-        for mk in asset_level_measures.keys():
+        for mk in asset_level_measures:
             impacts_by_year_scen[(mk.scenario, mk.year)].append(mk)
         measures: dict[MeasureKey, Measure] = {}
         all_portfolio_quantities: dict[
             tuple[str, int | None], dict[RiskQuantityKey, Quantity]
         ] = {}
-        for scenario, year in impacts_by_year_scen.keys():
+        for scenario, year in impacts_by_year_scen:
             portfolio_quantities = aggregate_impacts(
                 impacts,
                 financial_model,

@@ -1,9 +1,9 @@
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
-from typing import Dict, Mapping, NamedTuple, Sequence, Tuple
+from typing import NamedTuple
 
 import numpy as np
 
-from tests.data.test_hazard_model_store import TestData
 from physrisk.kernel.assets import RealEstateAsset
 from physrisk.kernel.hazard_model import (
     HazardDataRequest,
@@ -16,6 +16,7 @@ from physrisk.kernel.hazards import ChronicHeat, Wind
 from physrisk.kernel.impact import ImpactKey, calculate_impacts
 from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels
 from physrisk.vulnerability_models.real_estate_models import GenericTropicalCycloneModel
+from tests.data.test_hazard_model_store import TestData
 
 
 @dataclass
@@ -45,7 +46,7 @@ class PointBasedHazardModel(HazardModel):
         Args:
             points (Sequence[SinglePointData]): List of points.
         """
-        self.points: Dict[Tuple[PointsKey, float, float], SinglePointData] = {
+        self.points: dict[tuple[PointsKey, float, float], SinglePointData] = {
             self._get_key(p.latitude, p.longitude, p.scenario, p.year): p
             for p in points
         }
@@ -61,7 +62,7 @@ class PointBasedHazardModel(HazardModel):
     def get_hazard_data(
         self, requests: Sequence[HazardDataRequest]
     ) -> Mapping[HazardDataRequest, HazardDataResponse]:
-        response: Dict[HazardDataRequest, HazardDataResponse] = {}
+        response: dict[HazardDataRequest, HazardDataResponse] = {}
         for request in requests:
             point = self.points[
                 self._get_key(
@@ -95,8 +96,8 @@ def test_using_point_based_hazard_model():
         for lon, lat in zip(TestData.longitudes[0:1], TestData.latitudes[0:1])
     ]
     # fmt: off
-    wind_return_periods = np.array([10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 200.0, 300.0, 400.0, 500.0, 600.0, 700.0, 800.0, 900.0, 1000.0]) # noqa
-    wind_intensities = np.array([37.279999, 44.756248, 48.712502, 51.685001, 53.520000, 55.230000, 56.302502, 57.336250, 58.452499, 59.283749, 63.312500, 65.482498, 66.352501, 67.220001, 67.767502, 68.117500, 68.372498, 69.127502, 70.897499 ]) # noqa
+    wind_return_periods = np.array([10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 200.0, 300.0, 400.0, 500.0, 600.0, 700.0, 800.0, 900.0, 1000.0])
+    wind_intensities = np.array([37.279999, 44.756248, 48.712502, 51.685001, 53.520000, 55.230000, 56.302502, 57.336250, 58.452499, 59.283749, 63.312500, 65.482498, 66.352501, 67.220001, 67.767502, 68.117500, 68.372498, 69.127502, 70.897499 ])
     # fmt: on
     point = SinglePointData(
         TestData.latitudes[0],

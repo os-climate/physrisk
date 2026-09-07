@@ -1,7 +1,8 @@
 import logging
 from collections import defaultdict
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, NamedTuple, Optional, Sequence, Tuple, Union
+from typing import NamedTuple
 
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.hazard_event_distrib import HazardEventDistrib
@@ -36,7 +37,7 @@ class ImpactKey(NamedTuple):
     # if the calculation is for a given scenario and year
     # impact_type: Optional[str] = None # consider adding: whether damage or disruption
     scenario: str
-    key_year: Optional[int] = None  # this is None for 'historical' scenario
+    key_year: int | None = None  # this is None for 'historical' scenario
 
     def __repr__(self) -> str:
         asset_id = self.asset.id if self.asset.id is not None else "no_id"
@@ -49,24 +50,24 @@ class ImpactKey(NamedTuple):
 @dataclass
 class AssetImpactResult:
     impact: ImpactDistrib
-    vulnerability: Optional[VulnerabilityDistrib] = None
-    event: Optional[HazardEventDistrib] = None
-    hazard_data: Optional[Sequence[HazardDataResponse]] = (
+    vulnerability: VulnerabilityDistrib | None = None
+    event: HazardEventDistrib | None = None
+    hazard_data: Sequence[HazardDataResponse] | None = (
         None  # optional detailed results for drill-down
     )
 
 
-def calculate_impacts(  # noqa: C901
+def calculate_impacts(
     assets: Iterable[Asset],
     hazard_model: HazardModel,
     vulnerability_models: VulnerabilityModels,
     *,
     scenarios: Sequence[str],
     years: Sequence[int],
-) -> Dict[ImpactKey, List[AssetImpactResult]]:
+) -> dict[ImpactKey, list[AssetImpactResult]]:
     """Calculate asset level impacts."""
 
-    model_assets: Dict[DataRequester, List[Asset]] = defaultdict(
+    model_assets: dict[DataRequester, list[Asset]] = defaultdict(
         list
     )  # list of assets to be modelled using vulnerability model
 
@@ -75,7 +76,7 @@ def calculate_impacts(  # noqa: C901
         mappings = vulnerability_models.vuln_model_for_asset_of_type(asset_type)
         for mapping in mappings:
             model_assets[mapping].append(asset)
-    results: Dict[ImpactKey, List[AssetImpactResult]] = {}
+    results: dict[ImpactKey, list[AssetImpactResult]] = {}
 
     scen_year_asset_requests, responses = _download_data_consolidated(
         hazard_model, model_assets, scenarios, years
@@ -108,7 +109,7 @@ def calculate_impacts(  # noqa: C901
     #             print("%r generated an exception: %s" % (tag, exc))
 
     logging.info("Calculating impacts")
-    summary: Dict[str, List[Tuple[str, int, str]]] = defaultdict(list)
+    summary: dict[str, list[tuple[str, int, str]]] = defaultdict(list)
     for model, assets in model_assets.items():
         assert isinstance(model, VulnerabilityModelBase)
         summary[model.hazard_type.__name__].append(
@@ -190,12 +191,12 @@ def calculate_impacts(  # noqa: C901
 
 class ScenarioYear(NamedTuple):
     scenario: str
-    key_year: Optional[int] = None
+    key_year: int | None = None
 
 
 def _download_data_consolidated(
     hazard_model: HazardModel,
-    requester_assets: Dict[DataRequester, List[Asset]],
+    requester_assets: dict[DataRequester, list[Asset]],
     scenarios: Sequence[str],
     years: Sequence[int],
 ):
@@ -204,18 +205,18 @@ def _download_data_consolidated(
     note that key for a single request is (requester, asset).
     """
     # the list of requests for each requester and asset
-    scen_year_asset_requests: Dict[
+    scen_year_asset_requests: dict[
         ScenarioYear,
-        Dict[
-            Tuple[DataRequester, Asset],
-            Union[HazardDataRequest, Sequence[HazardDataRequest]],
+        dict[
+            tuple[DataRequester, Asset],
+            HazardDataRequest | Sequence[HazardDataRequest],
         ],
     ] = {}
     for scenario in scenarios:
         for year in [-1] if scenario == "historical" else years:
-            asset_requests: Dict[
-                Tuple[DataRequester, Asset],
-                Union[HazardDataRequest, Sequence[HazardDataRequest]],
+            asset_requests: dict[
+                tuple[DataRequester, Asset],
+                HazardDataRequest | Sequence[HazardDataRequest],
             ] = {}
             for requester, assets in requester_assets.items():
                 for asset in assets:

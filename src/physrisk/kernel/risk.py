@@ -1,18 +1,11 @@
 from collections import defaultdict
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
 from typing import (
     Any,
-    Dict,
-    List,
     NamedTuple,
-    Optional,
     Protocol,
-    Sequence,
-    Set,
-    Tuple,
-    Type,
-    Union,
 )
 
 import numpy as np
@@ -34,17 +27,15 @@ from physrisk.kernel.vulnerability_model import VulnerabilityModels
 # import concurrent.futures
 
 
-Impact = Dict[Tuple[Asset, type], AssetImpactResult]  # the key is (Asset, Hazard type)
+Impact = dict[tuple[Asset, type], AssetImpactResult]  # the key is (Asset, Hazard type)
 
 # portfolio_quantities keyed by (scenario, year) then by RiskQuantityKey
-PortfolioQuantities = Dict[
-    Tuple[str, Optional[int]], Dict["RiskQuantityKey", "Quantity"]
-]
+PortfolioQuantities = dict[tuple[str, int | None], dict["RiskQuantityKey", "Quantity"]]
 
 
 class BatchId(NamedTuple):
     scenario: str
-    key_year: Optional[int]
+    key_year: int | None
 
 
 class QuantityType(str, Enum):
@@ -56,15 +47,15 @@ class QuantityType(str, Enum):
 
 
 class RiskQuantityKey(NamedTuple):
-    quantity: Optional[QuantityType] = None
-    asset: Optional[Asset] = None
-    agg_id: Optional[str] = None
-    hazard_type: Optional[type[Hazard]] = None
+    quantity: QuantityType | None = None
+    asset: Asset | None = None
+    agg_id: str | None = None
+    hazard_type: type[Hazard] | None = None
 
 
 @dataclass(frozen=True)
 class Quantity:
-    values: Optional[npt.NDArray[np.floating[Any]]]
+    values: npt.NDArray[np.floating[Any]] | None
     exceedance_curve: ExceedanceCurve
     mean: float
     semi_standard_deviation: float
@@ -81,11 +72,11 @@ class MeasureKey(NamedTuple):
     e.g. for ChronicHeat, multiple hazard indicators may be used to capture different mechanisms of impact.
     """
 
-    asset: Optional[Asset]
+    asset: Asset | None
     scenario: str
-    year: Optional[int]
-    hazard_type: Optional[Type[Hazard]]
-    hazard_indicator_id: Optional[str] = None
+    year: int | None
+    hazard_type: type[Hazard] | None
+    hazard_indicator_id: str | None = None
 
 
 @dataclass
@@ -93,7 +84,7 @@ class Measure:
     score: int
     measure_0: float
     definition: ScoreBasedRiskMeasureDefinition  # reference to single instance of ScoreBasedRiskMeasureDefinition
-    measure_1: Optional[float] = None
+    measure_1: float | None = None
 
 
 class PortfolioRiskMeasureCalculator(Protocol):
@@ -103,7 +94,7 @@ class PortfolioRiskMeasureCalculator(Protocol):
     """
 
     def get_definition(
-        self, hazard_type: Optional[type[Hazard]] = None
+        self, hazard_type: type[Hazard] | None = None
     ) -> ScoreBasedRiskMeasureDefinition: ...
 
     def calculate_risk_measures(
@@ -121,7 +112,7 @@ class PortfolioRiskMeasureCalculator(Protocol):
 class NullAssetBasedPortfolioRiskMeasureCalculator(PortfolioRiskMeasureCalculator):
     """Calculates portfolio score-based risk measures from asset-level score-based risk measures only."""
 
-    def get_definition(self, hazard_type: Optional[Type[Hazard]] = None):
+    def get_definition(self, hazard_type: type[Hazard] | None = None):
         return ScoreBasedRiskMeasureDefinition(
             hazard_types=[], values=[], underlying_measures=[]
         )
@@ -169,7 +160,6 @@ class RiskModel:
         financial_data_provider: FinancialDataProvider,
     ):
         """Calculate risk measures for a set of assets, scenarios, and years."""
-        ...
 
     def _calculate_all_impacts(
         self,
@@ -195,7 +185,7 @@ class RiskModel:
 class RiskMeasureCalculator(Protocol):
     def calc_measure(
         self,
-        hazard_type: Type[Hazard],
+        hazard_type: type[Hazard],
         base_impacts: Sequence[AssetImpactResult],
         impacts: Sequence[AssetImpactResult],
     ) -> Measure | dict[str | None, Measure]:
@@ -219,18 +209,18 @@ class RiskMeasureCalculator(Protocol):
         ...
 
     def get_definition(
-        self, hazard_type: Type[Hazard], hazard_indicator_id: Optional[str] = None
+        self, hazard_type: type[Hazard], hazard_indicator_id: str | None = None
     ) -> ScoreBasedRiskMeasureDefinition: ...
 
-    def supported_hazards(self) -> Set[type]: ...
+    def supported_hazards(self) -> set[type]: ...
 
     def aggregate_risk_measures(
         self,
-        measures: Dict[MeasureKey, Measure],
+        measures: dict[MeasureKey, Measure],
         assets: Sequence[Asset],
         prosp_scens: Sequence[str],
         years: Sequence[int],
-    ) -> Dict[MeasureKey, Measure]:
+    ) -> dict[MeasureKey, Measure]:
         """The RiskMeasureCalculator can aggregate child hazards into parent hazards
         or proxy one hazard to another. If no aggregation or proxying is needed, the measures
         input is returned unchanged.
@@ -251,7 +241,7 @@ class RiskMeasuresFactory(Protocol):
 
     def asset_calculators(
         self, use_case_id: str
-    ) -> Dict[Type[Asset], RiskMeasureCalculator]:
+    ) -> dict[type[Asset], RiskMeasureCalculator]:
         """Get risk measure calculators for asset types.
 
         Args:
@@ -259,7 +249,6 @@ class RiskMeasuresFactory(Protocol):
             use_case_id (Optional[str]): Optional use case ID to filter calculators.
 
         """
-        pass
 
     def portfolio_calculator(self, use_case_id: str) -> PortfolioRiskMeasureCalculator:
         pass
@@ -272,7 +261,7 @@ class PortfolioRiskModel(RiskModel):
         self,
         hazard_model: HazardModel,
         vulnerability_models: VulnerabilityModels,
-        measure_calculators: Dict[type[Asset], RiskMeasureCalculator],
+        measure_calculators: dict[type[Asset], RiskMeasureCalculator],
         portfolio_measure_calculator: PortfolioRiskMeasureCalculator = NullAssetBasedPortfolioRiskMeasureCalculator(),
     ):
         """Risk model that calculates risk measures at asset level and portfolio level.
@@ -341,7 +330,7 @@ class PortfolioRiskModel(RiskModel):
                         )
                         if item is not None
                     ),
-                    key=lambda c: list(sorted(c.hazard_types))[0],
+                    key=lambda c: sorted(c.hazard_types)[0],
                 )
             )
         }
@@ -355,9 +344,9 @@ class PortfolioRiskModel(RiskModel):
             )
 
         def get_measure_id(
-            measure_calc: Union[RiskMeasureCalculator, None],
+            measure_calc: RiskMeasureCalculator | None,
             hazard_type: type[Hazard],
-            hazard_indicator_id: Optional[str] = None,
+            hazard_indicator_id: str | None = None,
         ):
             if measure_calc is None:
                 return "na"
@@ -427,9 +416,9 @@ class PortfolioRiskModel(RiskModel):
         impacts = self._calculate_all_impacts(
             assets, scenarios, years, include_histo=True
         )
-        measures: Dict[MeasureKey, Measure] = {}
-        aggregated_measures: Dict[MeasureKey, Measure] = {}
-        measure_calc_assets: Dict[RiskMeasureCalculator, List[Asset]] = defaultdict(
+        measures: dict[MeasureKey, Measure] = {}
+        aggregated_measures: dict[MeasureKey, Measure] = {}
+        measure_calc_assets: dict[RiskMeasureCalculator, list[Asset]] = defaultdict(
             list
         )
         for asset in assets:
@@ -497,7 +486,7 @@ class PortfolioRiskModel(RiskModel):
         aggregated_measures.update(portfolio_measures)
         return impacts, aggregated_measures, portfolio_quantities
 
-    def _calculator_for_asset(self, asset: Asset) -> Optional[RiskMeasureCalculator]:
+    def _calculator_for_asset(self, asset: Asset) -> RiskMeasureCalculator | None:
         return self._asset_level_measure_calculators.get(
             type(asset), self._asset_level_measure_calculators.get(Asset, None)
         )

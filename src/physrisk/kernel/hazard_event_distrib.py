@@ -1,5 +1,3 @@
-from typing import List, Union
-
 import numpy as np
 
 from physrisk.kernel.hazards import Hazard
@@ -13,19 +11,19 @@ class HazardEventDistrib:
 
     __slots__ = [
         "__event_type",
-        "__intensity_bins",
-        "__prob",
-        "__path",
         "__exceedance",
+        "__intensity_bins",
+        "__path",
+        "__prob",
         "__units",
     ]
 
     def __init__(
         self,
         event_type: type[Hazard],
-        intensity_bins: Union[List[float], np.ndarray],
-        prob: Union[List[float], np.ndarray],
-        path: List[str],
+        intensity_bins: list[float] | np.ndarray,
+        prob: list[float] | np.ndarray,
+        path: list[str],
         units: str,
     ):
         """Create a new asset event distribution.
@@ -60,7 +58,7 @@ class HazardEventDistrib:
         return self.__prob
 
     @property
-    def path(self) -> List[str]:
+    def path(self) -> list[str]:
         return self.__path
 
     @property

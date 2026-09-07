@@ -1,4 +1,5 @@
-from typing import Annotated, List, Optional, Sequence, Union
+from collections.abc import Sequence
+from typing import Annotated
 
 import numpy as np
 import numpy.typing as npt
@@ -38,13 +39,13 @@ class FinancialDetails(BaseModel):
         default="EUR",
         description="Currency of the financial details, specified in ISO 4217 3 latter code.",
     )
-    revenue_attributable: Optional[float] = Field(
+    revenue_attributable: float | None = Field(
         description="Revenue attributable to the asset, in the specified currency."
         "This is used to calculate business disruption impacts: if the asset operations are disrupted or associated costs"
         "increase, this value will be used to estimate the financial impact.",
         alias="revenue_attrib",
-    )  # noqa: E501
-    total_insurable_value: Optional[float] = Field(
+    )
+    total_insurable_value: float | None = Field(
         description="Total insurable value of the asset, in the specified currency."
     )
 
@@ -66,33 +67,33 @@ class Asset(BaseModel):
     """
 
     id: str = Field(default="", description="Unique identifier for the asset.")
-    asset_class: Optional[str] = Field(
+    asset_class: str | None = Field(
         default=None,
         description="name of asset class; corresponds to physrisk class names, e.g. PowerGeneratingAsset. If not provided, "
         "physrisk will infer the class from 'occupancy_code'.",
     )
-    latitude: Optional[float] = Field(
+    latitude: float | None = Field(
         default=None, description="Latitude in degrees, specified in WGS84 (EPSG:4326)."
     )
-    longitude: Optional[float] = Field(
+    longitude: float | None = Field(
         default=None,
         description="Longitude in degrees, specified in WGS84 (EPSG:4326).",
     )
-    wkt: Optional[str] = Field(
+    wkt: str | None = Field(
         default=None,
         description="Well Known Text representation of asset geometry, specified in WGS84 (EPSG:4326).",
     )
-    buffer: Optional[float] = Field(
+    buffer: float | None = Field(
         default=None,
         description="Buffer to be applied to the geometry, in metres. "
         "If 'wkt' is not provided, the buffer is applied.",
     )
-    type: Optional[str] = Field(
+    type: str | None = Field(
         None,
         description="Type of the asset <level_1>/<level_2>/<level_3>. This is free-text that matches lines in the vulnerability config, or"
         " programmatic vulnerability models",
     )
-    location: Optional[str] = Field(
+    location: str | None = Field(
         default=None,
         description="Location (e.g. Africa, Asia, Europe, North America, Oceania, South America); this is used to select location-specific"
         "vulnerability functions where available.",
@@ -102,7 +103,7 @@ class Asset(BaseModel):
         description="Occupancy code. This is Open Exposure Data occupancy code, unless otherwise specified (and currently no other scheme supported)."
         "Defaults to 1000, which is 'unknown', in which case physrisk asset class is inferred from 'asset_class'.",
     )
-    number_of_storeys: Optional[int] = Field(
+    number_of_storeys: int | None = Field(
         default=-1,
         description="Number of storeys. Can also take special values: "
         "-1 = unknown number of storeys - low rise, -2 = unknown number of storeys - mid rise, -3 = Unknown number of storeys = high rise)",
@@ -122,12 +123,12 @@ class Asset(BaseModel):
         "example.",
     )
     # see https://www.fema.gov/sites/default/files/documents/fema_hazus-inventory-technical-manual-6.1.pdf for information about first floor heights in US
-    capacity: Optional[float] = Field(
+    capacity: float | None = Field(
         default=None,
         description="Power generation capacity in MW for power generating assets.",
         kw_only=True,
     )
-    financial: Optional[FinancialDetails] = Field(
+    financial: FinancialDetails | None = Field(
         default=None,
         description="Financial details needed for a portfolio-level company assessment.",
     )
@@ -158,11 +159,11 @@ class Asset(BaseModel):
 class Assets(BaseModel):
     """Defines a collection of assets."""
 
-    items: List[Asset]
+    items: list[Asset]
 
 
 class BaseHazardRequest(BaseModel):
-    group_ids: List[str] = Field(
+    group_ids: list[str] = Field(
         ["public"],
         description="""List of data groups which can be used to service the request,
             e.g. 'osc': available to OS-Climate members (e.g. pending license decision),
@@ -181,7 +182,7 @@ class Country(BaseModel):
 class Countries(BaseModel):
     """List of Country."""
 
-    items: List[Country]
+    items: list[Country]
 
 
 class IntensityCurve(BaseModel):
@@ -189,12 +190,12 @@ class IntensityCurve(BaseModel):
     return periods in years. Chronic hazards are parameterized by a set of index values.
     Index values are defined per indicator."""
 
-    intensities: List[float] = Field([], description="Hazard indicator intensities.")
-    return_periods: Optional[Sequence[float]] = Field(
+    intensities: list[float] = Field([], description="Hazard indicator intensities.")
+    return_periods: Sequence[float] | None = Field(
         [],
         description="[Deprecated] Return period in years in the case of an acute hazard.",
     )
-    index_values: Optional[Union[Sequence[float], Sequence[str]]] = Field(
+    index_values: Sequence[float] | Sequence[str] | None = Field(
         [],
         description="Set of index values. \
             This is return period in years in the case of an acute hazard or \
@@ -233,7 +234,7 @@ class HazardEventDistrib(BaseModel):
         default_factory=lambda: np.zeros(10), description=""
     )
     probabilities: NDArray = Field(default_factory=lambda: np.zeros(10), description="")
-    path: List[str] = Field([], description="Path to the hazard indicator data source.")
+    path: list[str] = Field([], description="Path to the hazard indicator data source.")
 
 
 class VulnerabilityCurve(BaseModel):
@@ -244,10 +245,10 @@ class VulnerabilityCurve(BaseModel):
     location: str = Field(...)
     event_type: str = Field(description="hazard event type, e.g. RiverineInundation")
     impact_type: str = Field(description="'Damage' or 'Disruption'")
-    intensity: List[float] = Field(...)
+    intensity: list[float] = Field(...)
     intensity_units: str = Field(description="units of the intensity")
-    impact_mean: List[float] = Field(description="mean impact (damage or disruption)")
-    impact_std: List[float] = Field(
+    impact_mean: list[float] = Field(description="mean impact (damage or disruption)")
+    impact_std: list[float] = Field(
         description="standard deviation of impact (damage or disruption)"
     )
 
@@ -255,7 +256,7 @@ class VulnerabilityCurve(BaseModel):
 class VulnerabilityCurves(BaseModel):
     """List of VulnerabilityCurve."""
 
-    items: List[VulnerabilityCurve]
+    items: list[VulnerabilityCurve]
 
 
 class VulnerabilityDistrib(BaseModel):

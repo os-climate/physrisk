@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Sequence, Tuple, Union
+from collections.abc import Sequence
 
 import numpy as np
 import numpy.typing as npt
@@ -42,8 +42,8 @@ class ZarrStoreMocker:
         array_path: str,
         longitudes: Sequence[float],
         latitudes: Sequence[float],
-        index_values: Union[List[float], npt.NDArray, List[str]],
-        intensities: Union[List[float], npt.NDArray],
+        index_values: list[float] | npt.NDArray | list[str],
+        intensities: list[float] | npt.NDArray,
         width: int = 43200,
         height: int = 21600,
         units: str = "default",
@@ -68,7 +68,7 @@ class ZarrStoreMocker:
         self,
         width: int = 43200,
         height: int = 21600,
-        index_values: Union[List[float], npt.NDArray, List[str]] = [0.0],
+        index_values: list[float] | npt.NDArray | list[str] = [0.0],
     ):
         return self._crs_shape_transform(width, height, index_values)
 
@@ -78,10 +78,10 @@ class ZarrStoreMocker:
         longitudes: Sequence[float],
         latitudes: Sequence[float],
         crs: str,
-        shape: Tuple[int, int, int],
-        trans: List[float],
-        index_values: Union[Sequence[float], npt.NDArray, List[str]],
-        intensities: Union[Sequence[float], npt.NDArray],
+        shape: tuple[int, int, int],
+        trans: list[float],
+        index_values: Sequence[float] | npt.NDArray | list[str],
+        intensities: Sequence[float] | npt.NDArray,
         units: str = "default",
     ):
         z = self._root.create_dataset(  # type: ignore
@@ -122,7 +122,7 @@ class ZarrStoreMocker:
         self,
         width: int,
         height: int,
-        index_values: Union[List[float], npt.NDArray, List[str]] = [0.0],
+        index_values: list[float] | npt.NDArray | list[str] = [0.0],
     ):
         t = [360.0 / width, 0.0, -180.0, 0.0, -180.0 / height, 90.0, 0.0, 0.0, 1.0]
         return "epsg:4326", (len(index_values), height, width), t
@@ -131,7 +131,7 @@ class ZarrStoreMocker:
 def shape_transform_21600_43200(
     width: int = 43200,
     height: int = 21600,
-    return_periods: Union[List[float], npt.NDArray] = [0.0],
+    return_periods: list[float] | npt.NDArray = [0.0],
 ):
     t = [360.0 / width, 0.0, -180.0, 0.0, -180.0 / height, 90.0, 0.0, 0.0, 1.0]
     return (len(return_periods), height, width), t
@@ -147,10 +147,10 @@ def add_curves(
     longitudes,
     latitudes,
     array_path: str,
-    shape: Tuple[int, int, int],
+    shape: tuple[int, int, int],
     curve: np.ndarray,
-    return_periods: List[float],
-    trans: List[float],
+    return_periods: list[float],
+    trans: list[float],
 ):
     z = root.create_dataset(  # type: ignore
         array_path,
@@ -294,7 +294,7 @@ def inundation_return_periods():
 
 
 def mock_hazard_model_store_path_curves(
-    longitudes, latitudes, path_curves: Dict[str, np.ndarray]
+    longitudes, latitudes, path_curves: dict[str, np.ndarray]
 ):
     """Create a MemoryStore for creation of Zarr hazard model to be used with unit tests,
     with the specified longitudes and latitudes set to the curve supplied."""

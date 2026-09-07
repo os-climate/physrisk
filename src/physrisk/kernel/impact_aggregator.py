@@ -1,20 +1,19 @@
-from collections import defaultdict
-from dataclasses import dataclass
 import logging
-from typing import Generator, NamedTuple, Optional
-from typing_extensions import Protocol
+from collections import defaultdict
+from collections.abc import Generator
+from dataclasses import dataclass
+from typing import NamedTuple
 
 import numpy as np
+from typing_extensions import Protocol
 
-from physrisk.kernel.hazards import Hazard
-from physrisk.kernel.impact_distrib import EmptyImpactDistrib, ImpactDistrib
-from physrisk.kernel.risk import Quantity, QuantityType, RiskQuantityKey
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.curve import ExceedanceCurve
 from physrisk.kernel.financial_model import FinancialModel
-from physrisk.kernel.hazards import HazardKind
+from physrisk.kernel.hazards import Hazard, HazardKind
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey
-
+from physrisk.kernel.impact_distrib import EmptyImpactDistrib, ImpactDistrib
+from physrisk.kernel.risk import Quantity, QuantityType, RiskQuantityKey
 
 logger = logging.getLogger(__name__)
 
@@ -32,14 +31,14 @@ class AggregationKeys(Protocol):
 
 class ContributionKey(NamedTuple):
     # key describing the contribution to the aggregated result
-    asset_id: Optional[str] = None
-    quantity: Optional[QuantityType] = None
-    hazard_type: Optional[type[Hazard]] = None
+    asset_id: str | None = None
+    quantity: QuantityType | None = None
+    hazard_type: type[Hazard] | None = None
 
 
 class Aggregator:
     def __init__(
-        self, key_provider: AggregationKeys, size: Optional[tuple[int, ...]] = None
+        self, key_provider: AggregationKeys, size: tuple[int, ...] | None = None
     ):
         self.key_provider = key_provider
         self.aggregation_pools: dict[RiskQuantityKey, np.ndarray] = {}
@@ -49,7 +48,7 @@ class Aggregator:
         )
         self.size = size
 
-    def zero(self, shape: Optional[tuple[int, ...]] = None) -> None:
+    def zero(self, shape: tuple[int, ...] | None = None) -> None:
         if shape is not None:
             for k in self.aggregation_pools.keys():
                 self.aggregation_pools[k] = np.zeros(shape)
@@ -63,7 +62,7 @@ class Aggregator:
         hazard_type: type[Hazard],
         quantity: QuantityType,
         values: np.ndarray,
-        slice: Optional[tuple[slice, ...]] = None,
+        slice: tuple[slice, ...] | None = None,
     ):
         for key in self.key_provider.get_aggregation_keys(asset, hazard_type, quantity):
             if key not in self.aggregation_pools:
@@ -131,7 +130,7 @@ class _SimulationInputs:
 def _classify_impacts(
     impacts: dict[ImpactKey, list[AssetImpactResult]],
     scenario: str,
-    key_year: Optional[int],
+    key_year: int | None,
 ) -> tuple[
     set[Asset],
     dict[type[Hazard], set[Asset]],
@@ -226,7 +225,7 @@ def _build_chronic_arrays(
     all_assets_list: list[Asset],
     impacts: dict[ImpactKey, list[AssetImpactResult]],
     scenario: str,
-    key_year: Optional[int],
+    key_year: int | None,
     financial_model: FinancialModel,
 ) -> dict[type[Hazard], np.ndarray]:
     """Pre-compute per-asset chronic impact deltas (future minus historical) for each chronic hazard."""
@@ -570,7 +569,7 @@ def aggregate_impacts(
     impacts: dict[ImpactKey, list[AssetImpactResult]],
     financial_model: FinancialModel,
     scenario: str,
-    key_year: Optional[int],
+    key_year: int | None,
     n_events: int = 50000,
     event_batch_sz: int = 1000,
 ) -> dict[RiskQuantityKey, Quantity]:
@@ -716,7 +715,7 @@ class UncorrelatedEventSeverityProvider(EventSeverityProvider):
         return self.severity_zone_to_asset_indices_by_hazard[hazard_type]
 
 
-class Events(object):
+class Events:
     def __init__(
         self,
         hazard_type: type[Hazard],

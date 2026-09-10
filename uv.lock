@@ -2569,23 +2569,6 @@ wheels = [
 ]
 
 [[package]]
-name = "nbsphinx"
-version = "0.9.5"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "docutils" },
-    { name = "jinja2" },
-    { name = "nbconvert" },
-    { name = "nbformat" },
-    { name = "sphinx" },
-    { name = "traitlets" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/af/49/a6b1ed510bcc7734daa20372222804d6109d3087ced82f65c8720da90ef4/nbsphinx-0.9.5.tar.gz", hash = "sha256:736916e7b0dab28fc904f4a9ae3b53a9a50c29fccc6329c052fcc7485abcf2b7", size = 179599, upload-time = "2024-08-13T16:58:23.475Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/ae/8a/5a1e56efa95e2038de5646e2bc5c0abe18678ae5d167e267c0fbaa17a372/nbsphinx-0.9.5-py3-none-any.whl", hash = "sha256:d82f71084425db1f48e72515f15c25b4de8652ceaab513ee462ac05f1b8eae0a", size = 31349, upload-time = "2024-08-13T16:58:21.461Z" },
-]
-
-[[package]]
 name = "nest-asyncio"
 version = "1.6.0"
 source = { registry = "https://pypi.org/simple" }
@@ -3151,7 +3134,6 @@ doc = [
     { name = "graphviz" },
     { name = "myst-nb" },
     { name = "nbconvert" },
-    { name = "nbsphinx" },
     { name = "numpydoc" },
     { name = "pandoc" },
     { name = "plotly" },
@@ -3228,7 +3210,6 @@ doc = [
     { name = "graphviz", specifier = "==0.21" },
     { name = "myst-nb", specifier = "==1.4.0" },
     { name = "nbconvert", specifier = ">=7.17.1" },
-    { name = "nbsphinx", specifier = "==0.9.5" },
     { name = "numpydoc", specifier = "==1.9.0" },
     { name = "pandoc", specifier = "==2.4" },
     { name = "plotly", specifier = ">=6.0.0" },

@@ -72,6 +72,18 @@ repos:
       - id: markdownlint
         args: ["--fix"]
 
+  # Strips volatile per-execution metadata (e.g. cell.metadata.execution
+  # timestamps, execution_count) from committed notebooks so re-running them
+  # doesn't produce spurious diffs. --keep-output preserves the outputs,
+  # since docs/conf.py builds from the stored outputs (nb_execution_mode =
+  # "off"); execution_count is not needed for that and is just as volatile
+  # as the timing metadata, so it's left to the default (stripped) behavior.
+  - repo: https://github.com/kynan/nbstripout
+    rev: 34071b78c181af3bf5af955c1426466e096fc3db  # frozen: 0.9.1
+    hooks:
+      - id: nbstripout
+        args: ["--keep-output"]
+
   - repo: https://github.com/jorisroovers/gitlint
     rev: acc9d9de6369b76d22cb4167029d2035e8730b98 # frozen: v0.19.1
     hooks:

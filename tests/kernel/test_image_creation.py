@@ -1,5 +1,6 @@
 import io
 import os
+import warnings
 from typing import Dict, Optional
 import pytest
 
@@ -13,13 +14,12 @@ from physrisk.api.v1.hazard_data import HazardResource, Scenario, MapInfo
 from physrisk.container import Container
 from physrisk.data import colormap_provider
 from physrisk.data.hazard_data_provider import ScenarioPaths, SourcePaths
-from physrisk.data.image_creator import ImageCreator
+from physrisk.data.image_creator import ImageCreator, _read_map_array, to_rgba
 from physrisk.data.inventory import Inventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import (
     InventorySourcePaths,
-    get_default_source_paths,
 )
 from physrisk.kernel.hazard_model import HazardModelFactory, Tile
 
@@ -40,31 +40,14 @@ class SourcePathsTest(SourcePaths):
         }
 
 
-def test_image_creation(mock_inventory):
-    path = "test_array"
-    store = zarr.storage.MemoryStore(root="hazard.zarr")
-    root = zarr.open(store=store, mode="w")
-
+def test_to_rgba():
     im = np.array([[1.2, 0.8], [0.5, 0.4]])
-    z = root.create_dataset(  # type: ignore
-        path,
-        shape=(1, im.shape[0], im.shape[1]),
-        chunks=(1, im.shape[0], im.shape[1]),
-        dtype="f4",
-    )
-    z[0, :, :] = im
-
-    converter = ImageCreator(
-        inventory=mock_inventory,
-        reader=ZarrReader(store),
-        source_paths=get_default_source_paths(),
-    )
     colormap = colormap_provider.colormap("test")
 
     def get_colors(index: int):
         return colormap[str(index)]
 
-    result = converter.to_rgba(im, get_colors)
+    result = to_rgba(im, get_colors)
     # Max should be 255, min should be 1. Other values span the 253 elements from 2 to 254.
     expected = np.array(
         [
@@ -75,6 +58,47 @@ def test_image_creation(mock_inventory):
     np.testing.assert_equal(result, expected.astype(np.uint8))
 
 
+def index_colors(index: int):
+    return [index, 0, 0, 0]
+
+
+@pytest.mark.parametrize(
+    ("values", "kwargs", "expected"),
+    [
+        ([-1.0, 0.0, 1.0], {"nodata_lower": 0.0}, [0, 0, 1]),
+        ([-1.0, 0.0, 1.0], {"nodata_upper": 0.0}, [1, 0, 0]),
+        ([-9999.0, 0.0, 10.0], {"nodata_lower": -999.0}, [0, 1, 255]),
+    ],
+)
+def test_to_rgba_excludes_nodata_from_scaling(values, kwargs, expected):
+    result = to_rgba(np.array([values]), index_colors, **kwargs)
+
+    np.testing.assert_array_equal(result, [expected])
+
+
+def test_to_rgba_handles_constant_arrays_without_warnings():
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        result = to_rgba(np.array([[5.0, 5.0]]), index_colors)
+
+    np.testing.assert_array_equal(result, [[1, 1]])
+
+
+def test_to_rgba_handles_all_nodata():
+    result = to_rgba(np.array([[np.nan, -1.0]]), index_colors, nodata_lower=0.0)
+
+    np.testing.assert_array_equal(result, [[0, 0]])
+
+
+def test_read_map_array_rejects_unsupported_dimensions():
+    store = zarr.storage.MemoryStore(root="hazard.zarr")
+    root = zarr.open(store=store, mode="w")
+    root.create_dataset("map", shape=(2, 2), dtype="f4")  # type: ignore
+
+    with pytest.raises(ValueError):
+        _read_map_array(ZarrReader(store), "map", tile=None, index_value=None)
+
+
 def test_image_creation_log_scaling():
     colormap = colormap_provider.colormap("test")
 
@@ -82,7 +106,7 @@ def test_image_creation_log_scaling():
         return colormap[str(index)]
 
     im = np.array([[0.3, 0.1], [0.01, 0.005]])
-    result = ImageCreator.to_rgba(
+    result = to_rgba(
         im.copy(), get_colors, min_value=0.01, max_value=0.3, scaling="log"
     )
     # 0.3 >= max -> 255; 0.01 and 0.005 <= min -> 1;
@@ -104,9 +128,7 @@ def test_log_scaling_requires_positive_min():
 
     im = np.array([[0.3, 0.1], [0.01, 0.005]])
     with pytest.raises(ValueError):
-        ImageCreator.to_rgba(
-            im.copy(), get_colors, min_value=0.0, max_value=0.3, scaling="log"
-        )
+        to_rgba(im.copy(), get_colors, min_value=0.0, max_value=0.3, scaling="log")
 
 
 @pytest.fixture
@@ -244,5 +266,5 @@ def test_write_file(mock_inventory):
         os.path.join(test_output_dir, "hazard_test", "hazard.zarr")
     )
     source_paths = InventorySourcePaths(mock_inventory)
-    creator = ImageCreator(ZarrReader(store), source_paths=source_paths)
+    creator = ImageCreator(mock_inventory, source_paths, ZarrReader(store))
     creator.to_file(os.path.join(test_output_dir, "test.png"), test_path)

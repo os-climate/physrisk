@@ -1,3 +1,4 @@
+import asyncio
 from collections import defaultdict
 import logging
 import os
@@ -19,8 +20,8 @@ from physrisk.api.v1.hazard_data import (
     Scenario,
 )
 from physrisk.data.hazard_data_provider import (
+    CascadingHazardDataProvider,
     HazardDataHint,
-    HazardDataProvider,
     ResourcePaths,
     ScenarioPaths,
     ScenarioYear,
@@ -28,7 +29,10 @@ from physrisk.data.hazard_data_provider import (
 )
 from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.data.inventory_reader import InventoryReader
-from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
+from physrisk.data.pregenerated_hazard_model import (
+    PregeneratedHazardModel,
+    ZarrHazardModel,
+)
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.kernel.hazard_model import HazardDataFailedResponse, HazardDataRequest
 from physrisk.kernel.hazards import Hazard, RiverineInundation, Wind
@@ -266,20 +270,59 @@ def test_zarr_geomax():
         for x, y in zip(longitudes, latitudes)
     ]
     store = mock_hazard_model_store_inundation(longitudes, latitudes, curve)
-    zarr_reader = ZarrReader(store)
+    zarr_reader = ZarrReader(store, path_provider=lambda _: set_id)
     curves_max_expected = np.array([[0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4, 0.4]])
 
     curves_max_candidate, _, _ = zarr_reader.get_max_curves(
-        set_id, shapes, interpolation="floor"
+        "alias", shapes, interpolation="floor"
     )
     numpy.testing.assert_allclose(curves_max_candidate, curves_max_expected, rtol=1e-6)
 
     curves_max_candidate, _, _ = zarr_reader.get_max_curves(
-        set_id, shapes, interpolation="linear"
+        "alias", shapes, interpolation="linear"
     )
     numpy.testing.assert_allclose(
         curves_max_candidate, curves_max_expected / 4, rtol=1e-6
     )
+
+
+def test_floor_read_and_in_bounds_use_same_raster_footprint():
+    mocker = ZarrStoreMocker()
+    mocker.add_curves_global(
+        "test",
+        [0.0],
+        [0.0],
+        [10.0],
+        [1.0],
+        width=360,
+        height=180,
+    )
+    reader = ZarrReader(store=mocker.store, path_provider=lambda _: "test")
+    coordinates = [
+        (-180.001, 0.0, False),
+        (-180.0, 0.0, True),
+        (179.999, 0.0, True),
+        (180.0, 0.0, False),
+        (0.0, 90.001, False),
+        (0.0, 90.0, True),
+        (0.0, -89.999, True),
+        (0.0, -90.0, False),
+    ]
+    longitudes = np.array([longitude for longitude, _, _ in coordinates])
+    latitudes = np.array([latitude for _, latitude, _ in coordinates])
+
+    values, read_mask, _, _ = reader.get_curves(
+        "alias", longitudes, latitudes, interpolation="floor"
+    )
+    bounds_mask = reader.in_bounds(
+        "alias", longitudes, latitudes, interpolation="floor"
+    )
+
+    expected = np.array([in_bounds for _, _, in_bounds in coordinates])
+    np.testing.assert_array_equal(read_mask, expected)
+    np.testing.assert_array_equal(bounds_mask, expected)
+    assert np.all(np.isnan(values[~expected]))
+    assert np.all(np.isfinite(values[expected]))
 
 
 def test_reproject():
@@ -301,7 +344,7 @@ def test_reproject():
 
 
 def test_years_interpolation():
-    weights = HazardDataProvider._weights(
+    weights = CascadingHazardDataProvider._weights(
         "ssp585", [2050, 2060, 2080], [2040, 2050, 2065, 2090], 2025
     )
     assert weights[ScenarioYear("ssp585", 2040)].weights[0][0].scenario == "historical"
@@ -319,7 +362,7 @@ def test_years_interpolation():
     # v_e = v_2 + (y_e - y_2) * (v_2 - v_1) / (y_2 - y_1)
     # w1 = - (y_e - y_2) / (y_2 - y_1)
     # w2 = 1 + (y_e - y_2) / (y_2 - y_1)
-    weights = HazardDataProvider._weights("ssp585", [2050], [2040, 2090], 2025)
+    weights = CascadingHazardDataProvider._weights("ssp585", [2050], [2040, 2090], 2025)
     assert weights[ScenarioYear("ssp585", 2090)].weights[0][0].year == -1
 
 
@@ -575,6 +618,28 @@ def test_error_cases():
     )
     # non-matching scenario
     assert isinstance(response[requests[5]], HazardDataFailedResponse)
+
+
+def test_provider_error_propagates_inside_running_event_loop():
+    class FailingProvider:
+        async def get_data(self, *args, **kwargs):
+            raise RuntimeError("provider failure")
+
+    model = PregeneratedHazardModel({RiverineInundation: FailingProvider()})
+    request = HazardDataRequest(
+        RiverineInundation,
+        1.1,
+        47.0,
+        indicator_id="flood_depth",
+        scenario="ssp585",
+        year=2050,
+    )
+
+    async def get_hazard_data():
+        return model.get_hazard_data([request])
+
+    with pytest.raises(RuntimeError, match="provider failure"):
+        asyncio.run(get_hazard_data())
 
 
 class SourcePathsYearsInterpolationTest(SourcePaths):

@@ -6,6 +6,7 @@ from physrisk.api.v1.common import (
     Assets,
     Distribution,
     ExceedanceCurve,
+    HazardDataSource,
     VulnerabilityDistrib,
 )
 from physrisk.api.v1.hazard_data import Scenario
@@ -283,6 +284,13 @@ class CalculationDetails(BaseModel):
         ["unknown"], description="Path to the hazard indicator data source."
     )
     hazard_units: str = Field(["unknown"], description="Hazard indicator units.")
+    hazard_sources: list[HazardDataSource | None] = Field(
+        default_factory=list,
+        description=(
+            "Concrete sources used for the hazard data inputs, aligned with "
+            "hazard_path."
+        ),
+    )
 
 
 class ImpactKey(BaseModel):

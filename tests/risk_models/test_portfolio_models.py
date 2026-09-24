@@ -628,3 +628,39 @@ def test_impact_aggregation_multi_hazard():
     assert (
         RiskQuantityKey(QuantityType.REVENUE_LOSS, None, None, ChronicHeat) in results
     )
+
+
+def test_portfolio_semi_standard_deviation():
+    """Portfolio upside semi-standard deviation must use the same definition as
+    ImpactDistrib.semi_standard_deviation, i.e. sqrt(E[max(X - mean, 0)^2]) over all
+    simulated years, and not the semi-variance conditional on exceeding the mean.
+    """
+    impact_bin_edges = np.array([0.1, 0.2, 0.4, 0.8])
+    impact_probabilities = np.array([0.005, 0.004, 0.001])
+    asset = Asset(id="asset_1", latitude=0.0, longitude=0.0)
+    distrib = ImpactDistrib(
+        RiverineInundation, impact_bin_edges, impact_probabilities, ""
+    )
+    impacts = {
+        ImpactKey(
+            asset=asset,
+            hazard_type=RiverineInundation,
+            scenario="historical",
+            key_year=None,
+        ): [AssetImpactResult(impact=distrib)]
+    }
+    financial_model = DefaultFinancialModel(
+        data_provider=TestFinancialDataProvider(), downtime_config=[]
+    )
+    results = aggregate_impacts(impacts, financial_model, "historical", None)
+    damage = results[RiskQuantityKey(QuantityType.DAMAGE, None, None, None)]
+    values = damage.values
+    semi_std_exp = np.sqrt(np.mean(np.maximum(values - np.mean(values), 0.0) ** 2))
+    np.testing.assert_allclose(damage.semi_standard_deviation, semi_std_exp)
+    # single asset, single hazard: Monte Carlo result converges to the analytic asset-level value
+    np.testing.assert_allclose(
+        damage.semi_standard_deviation, distrib.semi_standard_deviation(), rtol=0.1
+    )
+    # no revenue loss in any simulated year: semi-standard deviation is zero, not NaN
+    revenue_loss = results[RiskQuantityKey(QuantityType.REVENUE_LOSS, None, None, None)]
+    assert revenue_loss.semi_standard_deviation == 0.0

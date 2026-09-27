@@ -100,6 +100,7 @@ from .api.v1.impact_req_resp import (
     RiskMeasuresForAssets,
 )
 from .api.v1.impact_req_resp import ImpactKey as APIImpactKey
+from .api.v1.impact_req_resp import PortfolioImpactKey
 from .api.v1.impact_req_resp import (
     RiskMeasureDefinition,
     RiskMeasureKey,
@@ -733,12 +734,13 @@ def _compile_portfolio_impacts(
             semi_std = qty.semi_standard_deviation
             results.append(
                 PortfolioImpact(
-                    key=APIImpactKey(
+                    key=PortfolioImpactKey(
                         hazard_type=rk.hazard_type.__name__
                         if rk.hazard_type is not None
                         else "",
                         scenario_id=scenario,
                         year=str(year) if year is not None else "",
+                        aggregation_id=rk.agg_id or "",
                     ),
                     impact_type=_QUANTITY_TYPE_TO_IMPACT_TYPE.get(rk.quantity, "damage")
                     if rk.quantity is not None

@@ -113,6 +113,7 @@ class Asset:
         wkt_geometry: Optional[str] = None,
         buffer: float = 0.0,
         id: Optional[str] = None,
+        aggregation_id: Optional[str] = None,
         **kwargs,
     ):
         """
@@ -126,10 +127,15 @@ class Asset:
             wkt_geometry (Optional[str], optional): Well-Known Text representation of geometry. Defaults to None.
             buffer (float, optional): Buffer distance in metres. Defaults to 0.0.
             id (Optional[str], optional): Identifier for the asset. Defaults to None.
+            aggregation_id (Optional[str], optional): Identifier of the sub-portfolio this asset belongs
+                to. Assets sharing the same aggregation_id are aggregated together into independent
+                portfolio-level results, separate from assets with a different (or no) aggregation_id.
+                Defaults to None.
         Raises:
             ValueError: If neither lat/lon nor wkt_geometry is provided.
         """
         self.id = id
+        self.aggregation_id = aggregation_id
         if latitude is None or longitude is None:
             if wkt_geometry is None:
                 raise ValueError("either latitude/longitude or wkt must be provided")

@@ -153,7 +153,6 @@ class RiskModel:
         """Initialize a RiskModel instance.
 
         Parameter:
-        ---------
             hazard_model (HazardModel): The hazard model to be used for risk calculations.
             vulnerability_models (Optional[VulnerabilityModels]): Optional vulnerability models; if not provided, will use default.
 
@@ -255,7 +254,6 @@ class RiskMeasuresFactory(Protocol):
         """Get risk measure calculators for asset types.
 
         Args:
-        ----
             use_case_id (Optional[str]): Optional use case ID to filter calculators.
 
         """
@@ -278,7 +276,6 @@ class PortfolioRiskModel(RiskModel):
         """Risk model that calculates risk measures at asset level and portfolio level.
 
         Args:
-        ----
             hazard_model (HazardModel): The hazard model.
             vulnerability_models (VulnerabilityModels): Vulnerability models for asset types.
             measure_calculators (Dict[type, RiskMeasureCalculator]): Risk measure calculators for asset types.
@@ -407,13 +404,11 @@ class PortfolioRiskModel(RiskModel):
         measures_0 (future_loss), and a definition.
 
         Args:
-        ----
             assets (Sequence[Asset]): List of assets.
             scenarios (Sequence[str]): List of prospective scenarios.
             years (Sequence[int]): List of years for the calculations.
 
         Return:
-        ------
             Tuple[
                 Dict[ImpactKey, List[AssetImpactResult]],
                 Dict[MeasureKey, Measure]

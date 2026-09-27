@@ -16,6 +16,7 @@ from physrisk.kernel.financial_model import DefaultFinancialModel, FinancialData
 from physrisk.kernel.hazards import Hazard
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey
 from physrisk.kernel.impact_aggregator import aggregate_impacts
+from physrisk.kernel.insurance_model import InsuranceDataProvider
 from physrisk.kernel.risk import (
     Measure,
     MeasureKey,
@@ -112,9 +113,15 @@ class CompanyRiskMeasureCalculator(PortfolioRiskMeasureCalculator):
     Finally, scores are assigned based on the aggregate quantities.
     """
 
-    def __init__(self, n_events: int = 50000, event_batch_sz: int = 1000):
+    def __init__(
+        self,
+        n_events: int = 50000,
+        event_batch_sz: int = 1000,
+        insurance_provider: Optional[InsuranceDataProvider] = None,
+    ):
         self._n_events = n_events
         self._event_batch_sz = event_batch_sz
+        self._insurance_provider = insurance_provider
         self._definition = ScoreBasedRiskMeasureDefinition(
             hazard_types=[],
             values=[],
@@ -162,6 +169,7 @@ class CompanyRiskMeasureCalculator(PortfolioRiskMeasureCalculator):
                 year,
                 n_events=self._n_events,
                 event_batch_sz=self._event_batch_sz,
+                insurance_provider=self._insurance_provider,
             )
             all_portfolio_quantities[(scenario, year)] = portfolio_quantities
             damage, revenue_loss, costs_increase = (

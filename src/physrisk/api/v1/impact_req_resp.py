@@ -291,6 +291,14 @@ class ImpactKey(BaseModel):
     year: str = Field("", description="Year of impact.")
 
 
+class PortfolioImpactKey(ImpactKey):
+    aggregation_id: str = Field(
+        "",
+        description="Identifier of the sub-portfolio (asset 'aggregation_id') this "
+        "result belongs to; empty for the pooled portfolio total.",
+    )
+
+
 class AssetSingleImpact(BaseModel):
     """Impact at level of single asset and single type of hazard."""
 
@@ -326,7 +334,7 @@ class AssetSingleImpact(BaseModel):
 
 
 class PortfolioImpact(BaseModel):
-    key: ImpactKey
+    key: PortfolioImpactKey
     impact_exceedance: Optional[ExceedanceCurve] = Field(
         None, description="Impact as exceedance curve."
     )

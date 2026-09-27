@@ -3675,7 +3675,6 @@ doc = [
     { name = "pandoc" },
     { name = "plotly" },
     { name = "pydata-sphinx-theme" },
-    { name = "setuptools" },
     { name = "sphinx" },
     { name = "sphinx-autodoc-typehints" },
     { name = "sphinx-copybutton" },
@@ -3689,7 +3688,6 @@ doc = [
     { name = "sphinx-toolbox" },
     { name = "sphinxcontrib-applehelp" },
     { name = "sphinxcontrib-bibtex" },
-    { name = "sphinxcontrib-details-directive" },
     { name = "sphinxcontrib-devhelp" },
     { name = "sphinxcontrib-htmlhelp" },
     { name = "sphinxcontrib-jquery" },
@@ -3751,7 +3749,6 @@ doc = [
     { name = "pandoc", specifier = "==2.4" },
     { name = "plotly", specifier = ">=7.1.0" },
     { name = "pydata-sphinx-theme", specifier = "==0.15.4" },
-    { name = "setuptools", specifier = "<81" },
     { name = "sphinx", specifier = "==7.4.7" },
     { name = "sphinx-autodoc-typehints", specifier = "==2.3.0" },
     { name = "sphinx-copybutton", specifier = "==0.5.2" },
@@ -3765,7 +3762,6 @@ doc = [
     { name = "sphinx-toolbox", specifier = "==3.8.0" },
     { name = "sphinxcontrib-applehelp", specifier = "==2.0.0" },
     { name = "sphinxcontrib-bibtex", specifier = "==2.6.3" },
-    { name = "sphinxcontrib-details-directive", specifier = "==0.1.0" },
     { name = "sphinxcontrib-devhelp", specifier = "==2.0.0" },
     { name = "sphinxcontrib-htmlhelp", specifier = "==2.1.0" },
     { name = "sphinxcontrib-jquery", specifier = "==4.1" },
@@ -5763,18 +5759,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/c1/ce/054a8ec04063f9a27772fea7188f796edbfa382e656d3b76428323861f0e/sphinxcontrib_bibtex-2.6.3.tar.gz", hash = "sha256:7c790347ef1cb0edf30de55fc324d9782d085e89c52c2b8faafa082e08e23946", size = 117177, upload-time = "2024-09-12T14:23:44.662Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/8e/49/c23f9493c0a5d5881fb7ed3002e87708454fef860aa96a48e755d27bf6f0/sphinxcontrib_bibtex-2.6.3-py3-none-any.whl", hash = "sha256:ff016b738fcc867df0f75c29e139b3b2158d26a2c802db27963cb128be3b75fb", size = 40340, upload-time = "2024-09-12T14:23:43.593Z" },
-]
-
-[[package]]
-name = "sphinxcontrib-details-directive"
-version = "0.1.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "sphinx" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/62/0a/2de87a4f6e0e33415692ed4b03e0b7dfde7d91a691d1486c1577191f875c/sphinxcontrib-details-directive-0.1.0.tar.gz", hash = "sha256:78bd6a67f786a21868abf0e6a5973340d7e7a6fd71b1890de9c856f92877b38b", size = 7969, upload-time = "2019-09-22T13:24:27.707Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/10/9e/9cb96fbdca829ba3eb094d966d0f48bb018215e73f96c8750088e73f2f19/sphinxcontrib_details_directive-0.1.0-py2.py3-none-any.whl", hash = "sha256:ed4d4f47b36e3e905601d425945cbe9d50d4cbcf9964bbf9c863d5a983fb7bf6", size = 10724, upload-time = "2019-09-22T13:24:25.279Z" },
 ]
 
 [[package]]

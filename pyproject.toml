@@ -73,7 +73,7 @@ test = [
 
 [build-system]
 requires = [
-    "setuptools>=80.10.2",
+    "setuptools>=83.0.0",
     "wheel",
     "setuptools-git-versioning"
 ]
@@ -116,7 +116,6 @@ doc = [
     "pandoc==2.4",
     "plotly>=7.1.0",
     "pydata-sphinx-theme==0.15.4",
-    "setuptools<81",
     "sphinx==7.4.7",
     "sphinx-autodoc-typehints==2.3.0",
     "sphinx-copybutton==0.5.2",
@@ -130,7 +129,6 @@ doc = [
     "sphinx-toolbox==3.8.0",
     "sphinxcontrib-applehelp==2.0.0",
     "sphinxcontrib-bibtex==2.6.3",
-    "sphinxcontrib-details-directive==0.1.0",
     "sphinxcontrib-devhelp==2.0.0",
     "sphinxcontrib-htmlhelp==2.1.0",
     "sphinxcontrib-jquery==4.1",

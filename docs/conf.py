@@ -38,7 +38,6 @@ extensions = [
     "sphinx_design",
     "sphinx.ext.intersphinx",
     "myst_nb",
-    "sphinxcontrib.details.directive",
     "sphinxcontrib.bibtex",
     "sphinx.ext.mathjax",
     "sphinx_simplepdf",

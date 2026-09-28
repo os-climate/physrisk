@@ -601,7 +601,9 @@ def _summarise_results(
     for k, v in all_results.items():
         exceed = ExceedanceCurve(1.0 / return_periods, np.quantile(v, quantiles))
         mean = np.mean(v)
-        semi_std = np.sqrt(np.mean(np.square(v[v > mean] - mean)))
+        # upside semi-variance is taken over all events (not only those above the mean),
+        # consistent with ImpactDistrib.semi_standard_deviation
+        semi_std = np.sqrt(np.mean(np.square(np.maximum(v - mean, 0.0))))
         summary_stats[k] = Quantity(
             values=v if k.hazard_type is None else None,
             exceedance_curve=exceed,

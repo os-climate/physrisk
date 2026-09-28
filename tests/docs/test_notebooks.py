@@ -29,12 +29,23 @@ LIVE_DATA_NOTEBOOKS = {
     "getting_started/hazard_inventory.ipynb",
 }
 
+# Standalone utilities that aren't part of the documentation itself (see the
+# matching exclude_patterns entry in docs/conf.py) and aren't meant to be
+# re-executed automatically: references.ipynb generates a Word-importable
+# Sources.xml with a fresh random GUID per bib entry on every run, so its
+# output is inherently non-reproducible. Run it manually when needed.
+EXCLUDED_NOTEBOOKS = {
+    "references.ipynb",
+}
+
 
 def _discover_notebooks():
     return sorted(
         path
         for path in DOCS_DIR.rglob("*.ipynb")
-        if "_build" not in path.parts and ".ipynb_checkpoints" not in path.parts
+        if "_build" not in path.parts
+        and ".ipynb_checkpoints" not in path.parts
+        and path.relative_to(DOCS_DIR).as_posix() not in EXCLUDED_NOTEBOOKS
     )
 
 

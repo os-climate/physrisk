@@ -14,10 +14,10 @@ Subpackages
 Submodules
 ----------
 
-physrisk.data.static.world
----------------------------------
+physrisk.data.static.oed\_occupancy
+---------------------------------------
 
-.. automodule:: physrisk.data.static.world
+.. automodule:: physrisk.data.static.oed_occupancy
    :members:
    :undoc-members:
    :show-inheritance:

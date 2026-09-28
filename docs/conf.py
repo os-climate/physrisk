@@ -38,7 +38,6 @@ extensions = [
     "sphinx_design",
     "sphinx.ext.intersphinx",
     "myst_nb",
-    "sphinxcontrib.details.directive",
     "sphinxcontrib.bibtex",
     "sphinx.ext.mathjax",
     "sphinx_simplepdf",
@@ -56,6 +55,11 @@ nb_execution_mode = "off"
 # otherwise mangle (e.g. \[ is a valid backslash-escape in CommonMark).
 myst_enable_extensions = ["dollarmath", "amsmath"]
 
+# Generate GitHub-style #anchor targets for markdown headings up to h4, so
+# in-page tables of contents (e.g. docs/SECURITY-SCANNING.md's) that link to
+# "#some-heading" actually resolve.
+myst_heading_anchors = 4
+
 # text/markdown cell outputs (e.g. display(Markdown(...))) default to plain
 # CommonMark, which has no table support and mangles "_" in identifiers as
 # emphasis. "myst" reuses myst_enable_extensions above (tables work out of
@@ -66,6 +70,13 @@ templates_path = ["_templates"]
 # references.ipynb is a standalone utility (converts references.bib to a
 # Word-importable Sources.xml) and is not part of the documentation itself.
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "references.ipynb"]
+
+# The api/v1 layer (request/response DTOs) and the kernel layer (internal
+# domain types) deliberately reuse names like Asset, Tile, HazardDataRequest
+# for their respective public- and internal-facing types. Autodoc can't tell
+# which one a bare type-hint reference means, so it warns about ambiguity;
+# that's inherent to the layering, not a docs bug, so suppress it here.
+suppress_warnings = ["ref.python"]
 
 # Not show module
 python_module_index = False

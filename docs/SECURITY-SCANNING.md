@@ -1,3 +1,7 @@
+---
+orphan: true
+---
+
 # Security Scanning Guide
 
 This guide explains how to generate Software Bill of Materials (SBOM) and perform security
@@ -207,7 +211,7 @@ For complete usage information:
 
 The SBOM files contain a complete inventory of all dependencies:
 
-```json
+```text
 {
   "bomFormat": "CycloneDX",
   "specVersion": "1.4",

@@ -1,8 +1,9 @@
 import importlib.util
 import sys
+from collections.abc import Callable
 from threading import Lock
 from types import ModuleType
-from typing import Callable, Generic
+from typing import Generic
 
 from typing_extensions import TypeVar
 

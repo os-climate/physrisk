@@ -1,28 +1,27 @@
-from collections import defaultdict
-from dataclasses import dataclass
 import logging
-from typing import Generator, NamedTuple, Optional
-from typing_extensions import Protocol
+from collections import defaultdict
+from collections.abc import Generator
+from dataclasses import dataclass
+from typing import NamedTuple
 
 import numpy as np
+from typing_extensions import Protocol
 
-from physrisk.kernel.hazards import Hazard
-from physrisk.kernel.impact_distrib import EmptyImpactDistrib, ImpactDistrib
-from physrisk.kernel.insurance_model import InsuranceDataProvider
-from physrisk.kernel.risk import Quantity, QuantityType, RiskQuantityKey
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.curve import ExceedanceCurve
 from physrisk.kernel.financial_model import FinancialDataProvider, FinancialModel
-from physrisk.kernel.hazards import HazardKind
+from physrisk.kernel.hazards import Hazard, HazardKind
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey
-
+from physrisk.kernel.impact_distrib import EmptyImpactDistrib, ImpactDistrib
+from physrisk.kernel.insurance_model import InsuranceDataProvider
+from physrisk.kernel.risk import Quantity, QuantityType, RiskQuantityKey
 
 logger = logging.getLogger(__name__)
 
 
 class AggregationKeys(Protocol):
     def get_aggregation_keys(
-        self, asset: Asset, hazard_type: Optional[type[Hazard]], quantity: QuantityType
+        self, asset: Asset, hazard_type: type[Hazard] | None, quantity: QuantityType
     ) -> list[RiskQuantityKey]: ...
 
     """Returns a list of keys for aggregation.
@@ -33,14 +32,14 @@ class AggregationKeys(Protocol):
 
 class ContributionKey(NamedTuple):
     # key describing the contribution to the aggregated result
-    asset_id: Optional[str] = None
-    quantity: Optional[QuantityType] = None
-    hazard_type: Optional[type[Hazard]] = None
+    asset_id: str | None = None
+    quantity: QuantityType | None = None
+    hazard_type: type[Hazard] | None = None
 
 
 class Aggregator:
     def __init__(
-        self, key_provider: AggregationKeys, size: Optional[tuple[int, ...]] = None
+        self, key_provider: AggregationKeys, size: tuple[int, ...] | None = None
     ):
         self.key_provider = key_provider
         self.aggregation_pools: dict[RiskQuantityKey, np.ndarray] = {}
@@ -50,7 +49,7 @@ class Aggregator:
         )
         self.size = size
 
-    def zero(self, shape: Optional[tuple[int, ...]] = None) -> None:
+    def zero(self, shape: tuple[int, ...] | None = None) -> None:
         if shape is not None:
             for k in self.aggregation_pools.keys():
                 self.aggregation_pools[k] = np.zeros(shape)
@@ -61,10 +60,10 @@ class Aggregator:
     def aggregate(
         self,
         asset: Asset,
-        hazard_type: Optional[type[Hazard]],
+        hazard_type: type[Hazard] | None,
         quantity: QuantityType,
         values: np.ndarray,
-        slice: Optional[tuple[slice, ...]] = None,
+        slice: tuple[slice, ...] | None = None,
     ):
         for key in self.key_provider.get_aggregation_keys(asset, hazard_type, quantity):
             if key not in self.aggregation_pools:
@@ -89,7 +88,7 @@ class ByAssetAggregationKeys(AggregationKeys):
     """Aggregator that provides aggregated results by asset and quantity type."""
 
     def get_aggregation_keys(
-        self, asset: Asset, hazard_type: Optional[type[Hazard]], quantity: QuantityType
+        self, asset: Asset, hazard_type: type[Hazard] | None, quantity: QuantityType
     ) -> list[RiskQuantityKey]:
         return [
             RiskQuantityKey(asset=asset, quantity=quantity),
@@ -101,7 +100,7 @@ class PortfolioAggregationKeys(AggregationKeys):
     hazard type but split by portfolio via the asset's 'aggregation_id' attribute."""
 
     def get_aggregation_keys(
-        self, asset: Asset, hazard_type: Optional[type[Hazard]], quantity: QuantityType
+        self, asset: Asset, hazard_type: type[Hazard] | None, quantity: QuantityType
     ) -> list[RiskQuantityKey]:
         agg_id = asset.aggregation_id
         return [
@@ -114,7 +113,7 @@ class HazardQuantityAggregationKeys(AggregationKeys):
     portfolio via the asset's 'aggregation_id' attribute."""
 
     def get_aggregation_keys(
-        self, asset: Asset, hazard_type: Optional[type[Hazard]], quantity: QuantityType
+        self, asset: Asset, hazard_type: type[Hazard] | None, quantity: QuantityType
     ) -> list[RiskQuantityKey]:
         agg_id = asset.aggregation_id
         return [
@@ -140,7 +139,7 @@ class _SimulationInputs:
 def _classify_impacts(
     impacts: dict[ImpactKey, list[AssetImpactResult]],
     scenario: str,
-    key_year: Optional[int],
+    key_year: int | None,
 ) -> tuple[
     set[Asset],
     dict[type[Hazard], set[Asset]],
@@ -235,7 +234,7 @@ def _build_chronic_arrays(
     all_assets_list: list[Asset],
     impacts: dict[ImpactKey, list[AssetImpactResult]],
     scenario: str,
-    key_year: Optional[int],
+    key_year: int | None,
     financial_model: FinancialModel,
 ) -> dict[type[Hazard], np.ndarray]:
     """Pre-compute per-asset chronic impact deltas (future minus historical) for each chronic hazard."""
@@ -299,7 +298,7 @@ def _run_simulation(
     asset_revenue: dict[Asset, float],
     n_events: int = 50000,
     event_batch_sz: int = 1000,
-    insurance_provider: Optional[InsuranceDataProvider] = None,
+    insurance_provider: InsuranceDataProvider | None = None,
 ) -> dict[RiskQuantityKey, np.ndarray]:
     """Run Monte Carlo simulation; return per-event impact arrays keyed by RiskQuantityKey."""
     severity_provider = UncorrelatedEventSeverityProvider(
@@ -582,8 +581,8 @@ def _summarise_results(
     asset_revenue: dict[Asset, float],
 ) -> dict[RiskQuantityKey, Quantity]:
     """Normalise per-event arrays by portfolio totals and build exceedance-curve summaries."""
-    sum_tiv_by_agg_id: dict[Optional[str], float] = defaultdict(float)
-    sum_revenue_by_agg_id: dict[Optional[str], float] = defaultdict(float)
+    sum_tiv_by_agg_id: dict[str | None, float] = defaultdict(float)
+    sum_revenue_by_agg_id: dict[str | None, float] = defaultdict(float)
     for asset, tiv in asset_tiv.items():
         sum_tiv_by_agg_id[asset.aggregation_id] += tiv
     for asset, revenue in asset_revenue.items():
@@ -615,10 +614,10 @@ def aggregate_impacts(
     impacts: dict[ImpactKey, list[AssetImpactResult]],
     financial_model: FinancialModel,
     scenario: str,
-    key_year: Optional[int],
+    key_year: int | None,
     n_events: int = 50000,
     event_batch_sz: int = 1000,
-    insurance_provider: Optional[InsuranceDataProvider] = None,
+    insurance_provider: InsuranceDataProvider | None = None,
 ) -> dict[RiskQuantityKey, Quantity]:
     """Aggregate impacts over assets and hazards for a given scenario and year.
     For acute hazards, i.e. hazards associated with an event, a Monte Carlo approach is used whereby a large number of
@@ -779,7 +778,7 @@ class EventInsuranceProvider(Protocol):
 class SimpleEventInsuranceProvider(EventInsuranceProvider):
     def __init__(
         self,
-        insurance: Optional[InsuranceDataProvider],
+        insurance: InsuranceDataProvider | None,
         financials: FinancialDataProvider,
         all_acute_impacted_assets: list[Asset],
     ):
@@ -859,7 +858,7 @@ class UncorrelatedEventSeverityProvider(EventSeverityProvider):
         return self.severity_zone_to_asset_indices_by_hazard[hazard_type]
 
 
-class Events(object):
+class Events:
     def __init__(
         self,
         hazard_type: type[Hazard],

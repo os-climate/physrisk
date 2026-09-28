@@ -1,4 +1,4 @@
-from typing import Dict, MutableMapping, Optional
+from collections.abc import MutableMapping
 
 from dependency_injector import containers, providers
 
@@ -22,7 +22,11 @@ from physrisk.kernel.hazard_model import HazardModelFactory
 from physrisk.kernel.hazards import Hazard
 from physrisk.kernel.vulnerability_model import (
     DictBasedVulnerabilityModels,
+)
+from physrisk.kernel.vulnerability_model import (
     VulnerabilityModels as PVulnerabilityModels,
+)
+from physrisk.kernel.vulnerability_model import (
     VulnerabilityModelsFactory as PVulnerabilityModelsFactory,
 )
 from physrisk.requests import (
@@ -47,8 +51,8 @@ class DefaultHazardModelFactory(HazardModelFactory):
         credentials: CredentialsProvider,
         inventory: Inventory,
         source_paths: SourcePaths,
-        store: Optional[MutableMapping] = None,
-        reader: Optional[ZarrReader] = None,
+        store: MutableMapping | None = None,
+        reader: ZarrReader | None = None,
         default_interpolation: str = "floor",
         zarr_max_workers: int = 32,
     ):
@@ -73,8 +77,8 @@ class DefaultHazardModelFactory(HazardModelFactory):
 
     def hazard_model(
         self,
-        interpolation: Optional[str] = None,
-        provider_max_requests: Dict[str, int] = {},
+        interpolation: str | None = None,
+        provider_max_requests: dict[str, int] = {},
         interpolate_years: bool = True,
     ):
         # this is done to allow interpolation etc to be set dynamically,

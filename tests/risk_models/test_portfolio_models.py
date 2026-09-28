@@ -1,13 +1,14 @@
 import logging
-from typing import Dict, Optional, cast
+from typing import cast
 
-from dependency_injector import providers
 import numpy as np
+from dependency_injector import providers
 
-from physrisk.api.v1.common import Asset as APIAsset, Assets
+from physrisk.api.v1.common import Asset as APIAsset
+from physrisk.api.v1.common import Assets
 from physrisk.api.v1.impact_req_resp import (
-    AssetMeasuresSpecification,
     AssetImpactRequest,
+    AssetMeasuresSpecification,
     CalcSettings,
     RiskMeasuresForAssets,
     ScoreBasedRiskMeasuresForAssets,
@@ -16,11 +17,11 @@ from physrisk.container import Container
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.hazard_models.core_hazards import get_default_source_paths
 from physrisk.kernel.assets import Asset, ManufacturingAsset, OEDAsset
+from physrisk.kernel.calculation import DefaultMeasuresFactory
 from physrisk.kernel.financial_model import (
     DefaultFinancialModel,
     FinancialDataProvider,
 )
-from physrisk.kernel.calculation import DefaultMeasuresFactory
 from physrisk.kernel.hazard_model import HazardModelFactory
 from physrisk.kernel.hazards import (
     ChronicHeat,
@@ -36,14 +37,13 @@ from physrisk.kernel.impact_aggregator import (
     SimpleEventInsuranceProvider,
     aggregate_impacts,
 )
-from physrisk.kernel.insurance_model import SectoralInsuranceData
 from physrisk.kernel.impact_distrib import ImpactDistrib
+from physrisk.kernel.insurance_model import SectoralInsuranceData
 from physrisk.kernel.risk import QuantityType, RiskQuantityKey
 from physrisk.risk_models.portfolio_risk_model import CompanyRiskMeasureCalculator
 from physrisk.vulnerability_models.vulnerability import VulnerabilityModelsFactory
 from tests.data.test_hazard_model_store import ZarrStoreMocker
 from tests.vulnerability_models.test_config_based_vulnerability import create_store
-
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ def test_impact_aggregation():
     impact_bin_edges_zero = np.array([0.0, 0.0])
     impact_probabilities_zero = np.array([0.0])
 
-    impacts: Dict[ImpactKey, list[AssetImpactResult]] = {}
+    impacts: dict[ImpactKey, list[AssetImpactResult]] = {}
     # in this example, we have 1,000,000 assets. We assume that 10% of assets have a non-zero impact probability.
     n_assets = 10000
     generator = np.random.default_rng(seed=111)
@@ -145,7 +145,7 @@ def test_impact_aggregation_multiple_portfolios():
 
     # portfolio A's assets have 10x the impact severity of portfolio B's
     portfolio_scale = {"A": 10.0, "B": 1.0}
-    impacts: Dict[ImpactKey, list[AssetImpactResult]] = {}
+    impacts: dict[ImpactKey, list[AssetImpactResult]] = {}
     n_assets = 4000
     for i in range(n_assets):
         portfolio = "A" if i % 2 == 0 else "B"
@@ -255,7 +255,7 @@ def test_impact_aggregation_multi_hazard():
     def ik(asset, hazard_type, sc=scenario, yr=key_year):
         return ImpactKey(asset=asset, hazard_type=hazard_type, scenario=sc, key_year=yr)
 
-    impacts: Dict[ImpactKey, list[AssetImpactResult]] = {
+    impacts: dict[ImpactKey, list[AssetImpactResult]] = {
         # Wind – assets 0, 1
         ik(a[0], Wind): [air(Wind, wind_edges, wind_probs)],
         ik(a[1], Wind): [air(Wind, wind_edges, wind_probs)],
@@ -491,7 +491,7 @@ def test_impact_aggregation_end_to_end():
     class TestHazardModelFactory(HazardModelFactory):
         def hazard_model(
             self,
-            interpolation: Optional[str] = "floor",
+            interpolation: str | None = "floor",
             provider_max_requests: dict[str, int] = {},
             interpolate_years: bool = False,
         ):
@@ -738,7 +738,7 @@ def test_impact_aggregation_end_to_end_multi_hazard():
     class TestHazardModelFactory(HazardModelFactory):
         def hazard_model(
             self,
-            interpolation: Optional[str] = "floor",
+            interpolation: str | None = "floor",
             provider_max_requests: dict[str, int] = {},
             interpolate_years: bool = False,
         ):

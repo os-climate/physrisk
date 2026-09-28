@@ -16,9 +16,10 @@ Authentication uses the ``X-Goog-Api-Key`` header.
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional, Sequence, Union
+from typing import Any, Union
 from urllib.parse import quote
 
 import aiohttp
@@ -112,12 +113,12 @@ class StructureType(str, Enum):
 class GeocodeResult:
     latitude: float
     longitude: float
-    building_shape: Optional[BuildingShape]
+    building_shape: BuildingShape | None
     formatted_address: str
     place_id: str
     granularity: Granularity
     structure_type: StructureType
-    types: List[str] = field(default_factory=list)
+    types: list[str] = field(default_factory=list)
     candidate_count: int = field(default=1)
 
 
@@ -152,18 +153,18 @@ class GoogleGeocoder:
         self,
         api_key: str,
         *,
-        proxy: Optional[str] = None,
-        session: Optional[aiohttp.ClientSession] = None,
+        proxy: str | None = None,
+        session: aiohttp.ClientSession | None = None,
         language_code: str = "en",
-        region_code: Optional[str] = None,
+        region_code: str | None = None,
         fetch_building_shape: bool = False,
         max_concurrency: int = 50,
-        requests_per_second: Optional[float] = 25.0,
+        requests_per_second: float | None = 25.0,
     ) -> None:
         self._api_key = api_key
         self._proxy = proxy
         self._external_session = session
-        self._session: Optional[aiohttp.ClientSession] = session
+        self._session: aiohttp.ClientSession | None = session
         self._language_code = language_code
         self._region_code = region_code
         self._fetch_building_shape = fetch_building_shape
@@ -172,7 +173,7 @@ class GoogleGeocoder:
             _RateLimiter(requests_per_second) if requests_per_second else None
         )
 
-    async def __aenter__(self) -> "GoogleGeocoder":
+    async def __aenter__(self) -> GoogleGeocoder:
         if self._external_session is None:
             self._session = aiohttp.ClientSession()
         return self
@@ -183,8 +184,8 @@ class GoogleGeocoder:
             self._session = None
 
     async def geocode(
-        self, address: str, *, region_code: Optional[str] = None
-    ) -> Optional[GeocodeResult]:
+        self, address: str, *, region_code: str | None = None
+    ) -> GeocodeResult | None:
         """Resolve one address; calls geocode/address and destinations concurrently.
 
         Args:
@@ -217,7 +218,7 @@ class GoogleGeocoder:
 
         geocode_data = address_results[0]
 
-        building_shape: Optional[BuildingShape] = None
+        building_shape: BuildingShape | None = None
         structure_type = StructureType.UNSPECIFIED
         if destinations_data:
             primary = destinations_data[0].get("primary", {})
@@ -241,8 +242,8 @@ class GoogleGeocoder:
         self,
         addresses: Sequence[str],
         *,
-        region_codes: Optional[Sequence[Optional[str]]] = None,
-    ) -> List[Optional[GeocodeResult]]:
+        region_codes: Sequence[str | None] | None = None,
+    ) -> list[GeocodeResult | None]:
         """Geocode a batch of addresses, bounded by ``max_concurrency``.
 
         Args:
@@ -257,7 +258,7 @@ class GoogleGeocoder:
             raise ValueError(
                 f"region_codes length ({len(region_codes)}) must match addresses length ({len(addresses)})"
             )
-        codes: Sequence[Optional[str]] = (
+        codes: Sequence[str | None] = (
             region_codes if region_codes is not None else [None] * len(addresses)
         )
         return list(
@@ -270,18 +271,18 @@ class GoogleGeocoder:
     # Private helpers
     # ------------------------------------------------------------------
 
-    def _common_headers(self, field_mask: str) -> Dict[str, str]:
+    def _common_headers(self, field_mask: str) -> dict[str, str]:
         return {
             "X-Goog-Api-Key": self._api_key,
             "X-Goog-FieldMask": field_mask,
         }
 
     async def _fetch_geocode_address(
-        self, address: str, region_code: Optional[str]
-    ) -> Optional[List[Dict[str, Any]]]:
+        self, address: str, region_code: str | None
+    ) -> list[dict[str, Any]] | None:
         """Call geocode/address → returns the full results list or None."""
         assert self._session is not None
-        params: Dict[str, str] = {"languageCode": self._language_code}
+        params: dict[str, str] = {"languageCode": self._language_code}
         if region_code:
             params["regionCode"] = region_code
 
@@ -298,11 +299,11 @@ class GoogleGeocoder:
         return data.get("results") or None
 
     async def _fetch_destinations(
-        self, address: str, region_code: Optional[str]
-    ) -> Optional[List[Dict[str, Any]]]:
+        self, address: str, region_code: str | None
+    ) -> list[dict[str, Any]] | None:
         """Call destinations → returns the destinations list or None."""
         assert self._session is not None
-        body: Dict[str, Any] = {
+        body: dict[str, Any] = {
             "addressQuery": {"addressQuery": address},
             "languageCode": self._language_code,
         }
@@ -330,21 +331,21 @@ class GoogleGeocoder:
 # ------------------------------------------------------------------
 
 
-def _parse_granularity(value: Optional[str]) -> Granularity:
+def _parse_granularity(value: str | None) -> Granularity:
     try:
         return Granularity(value) if value else Granularity.UNSPECIFIED
     except ValueError:
         return Granularity.UNSPECIFIED
 
 
-def _parse_structure_type(value: Optional[str]) -> StructureType:
+def _parse_structure_type(value: str | None) -> StructureType:
     try:
         return StructureType(value) if value else StructureType.UNSPECIFIED
     except ValueError:
         return StructureType.UNSPECIFIED
 
 
-def _parse_geojson(geojson: Optional[Dict[str, Any]]) -> Optional[BuildingShape]:
+def _parse_geojson(geojson: dict[str, Any] | None) -> BuildingShape | None:
     """Convert a GeoJSON dict returned by ``displayPolygon`` to a shapely geometry."""
     if not geojson:
         return None

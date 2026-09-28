@@ -1,24 +1,24 @@
 import asyncio
-from dataclasses import dataclass
 import io
 import logging
-from typing import Any, List, Optional, Sequence, Tuple, Union
+from collections.abc import Sequence
+from dataclasses import dataclass
+from typing import Any
 
 import aiohttp
 import numpy as np
-import PIL.Image as Image
 from lxml import etree
+from PIL import Image
 
 from physrisk.api.v1.hazard_image import TileNotAvailableError
 from physrisk.data import colormap_provider
 from physrisk.data.image_creator import ImageCreator
-from physrisk.kernel.hazard_model import HazardImageCreator, Tile
-
-from physrisk.utils.event_loop import get_loop, run
 from physrisk.hazard_models.credentials_provider import (
     CredentialsProvider,
     EnvCredentialsProvider,
 )
+from physrisk.kernel.hazard_model import HazardImageCreator, Tile
+from physrisk.utils.event_loop import get_loop, run
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +110,7 @@ class TileSet:
         return f"{self.name}_{self.release_date}_{self.resolution}_{self.projection}"
 
 
-TileSpec = Tuple[int, int, int]  # (z, x, y)
+TileSpec = tuple[int, int, int]  # (z, x, y)
 
 
 class JBAImageCreator(HazardImageCreator):
@@ -118,7 +118,7 @@ class JBAImageCreator(HazardImageCreator):
 
     def __init__(
         self,
-        credentials: Optional[CredentialsProvider] = None,
+        credentials: CredentialsProvider | None = None,
     ):
         self.credentials = (
             credentials if credentials is not None else EnvCredentialsProvider()
@@ -138,10 +138,10 @@ class JBAImageCreator(HazardImageCreator):
         year: int,
         format="PNG",
         colormap: str = "heating",
-        tile: Optional[Tile] = None,
-        min_value: Optional[float] = None,
-        max_value: Optional[float] = None,
-        index_value: Optional[Union[str, float]] = None,
+        tile: Tile | None = None,
+        min_value: float | None = None,
+        max_value: float | None = None,
+        index_value: str | float | None = None,
         scaling: str = "linear",
     ):
         assert tile is not None
@@ -201,22 +201,24 @@ class JBAImageCreator(HazardImageCreator):
         loop = get_loop()
 
         async def _fetch() -> bytes:
-            async with aiohttp.ClientSession(
-                proxy=self.credentials.proxies()["https"],
-                auth=aiohttp.BasicAuth(
-                    self.credentials.jba_vision_username(),
-                    self.credentials.jba_vision_password(),
-                ),
-            ) as session:
-                async with session.get(url) as resp:
-                    resp.raise_for_status()
-                    return await resp.read()
+            async with (
+                aiohttp.ClientSession(
+                    proxy=self.credentials.proxies()["https"],
+                    auth=aiohttp.BasicAuth(
+                        self.credentials.jba_vision_username(),
+                        self.credentials.jba_vision_password(),
+                    ),
+                ) as session,
+                session.get(url) as resp,
+            ):
+                resp.raise_for_status()
+                return await resp.read()
 
         return run(_fetch(), loop=loop)
 
     def get_info(
         self, resource_id: str, scenario: str, year: int
-    ) -> Tuple[Sequence[Any], Sequence[Any], str, str, Optional[int]]:
+    ) -> tuple[Sequence[Any], Sequence[Any], str, str, int | None]:
         index_values = [20, 50, 100, 200, 500, 1500]
         return (index_values, index_values, "return period", "years", 12)
 
@@ -283,7 +285,7 @@ class JBAImageCreator(HazardImageCreator):
             return Image.open(io.BytesIO(data)).convert("RGBA")  # ensure RGBA
 
     async def _fetch_all_tiles(
-        self, resource_id: str, return_period: int, tile_specs: List[TileSpec]
+        self, resource_id: str, return_period: int, tile_specs: list[TileSpec]
     ):
         """Download all tiles concurrently and return them in the same order."""
         try:
@@ -367,10 +369,10 @@ class CombinedImageCreator(HazardImageCreator):
         year: int,
         format="PNG",
         colormap: str = "heating",
-        tile: Optional[Tile] = None,
-        min_value: Optional[float] = None,
-        max_value: Optional[float] = None,
-        index_value: Optional[Union[str, float]] = None,
+        tile: Tile | None = None,
+        min_value: float | None = None,
+        max_value: float | None = None,
+        index_value: str | float | None = None,
         scaling: str = "linear",
     ):
         return self._creator(resource_id).create_image(

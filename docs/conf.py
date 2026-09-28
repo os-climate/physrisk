@@ -37,10 +37,7 @@ extensions = [
     "sphinx.ext.autosectionlabel",
     "sphinx_design",
     "sphinx.ext.intersphinx",
-    # 'myst_nb',
-    # "myst_parser",
-    "nbsphinx",
-    "sphinxcontrib.details.directive",
+    "myst_nb",
     "sphinxcontrib.bibtex",
     "sphinx.ext.mathjax",
     "sphinx_simplepdf",
@@ -50,8 +47,36 @@ bibtex_bibfiles = ["references.bib"]
 bibtex_default_style = "alpha"
 bibtex_encoding = "latin"
 
+# Use the outputs already stored in the notebooks rather than re-executing
+# them at build time (matches previous nbsphinx behavior).
+nb_execution_mode = "off"
+
+# Notebooks use $...$ / \(...\) / \[...\] math, which plain CommonMark would
+# otherwise mangle (e.g. \[ is a valid backslash-escape in CommonMark).
+myst_enable_extensions = ["dollarmath", "amsmath"]
+
+# Generate GitHub-style #anchor targets for markdown headings up to h4, so
+# in-page tables of contents (e.g. docs/SECURITY-SCANNING.md's) that link to
+# "#some-heading" actually resolve.
+myst_heading_anchors = 4
+
+# text/markdown cell outputs (e.g. display(Markdown(...))) default to plain
+# CommonMark, which has no table support and mangles "_" in identifiers as
+# emphasis. "myst" reuses myst_enable_extensions above (tables work out of
+# the box; "gfm" would also work but additionally requires linkify-it-py).
+nb_render_markdown_format = "myst"
+
 templates_path = ["_templates"]
-exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
+# references.ipynb is a standalone utility (converts references.bib to a
+# Word-importable Sources.xml) and is not part of the documentation itself.
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "references.ipynb"]
+
+# The api/v1 layer (request/response DTOs) and the kernel layer (internal
+# domain types) deliberately reuse names like Asset, Tile, HazardDataRequest
+# for their respective public- and internal-facing types. Autodoc can't tell
+# which one a bare type-hint reference means, so it warns about ambiguity;
+# that's inherent to the layering, not a docs bug, so suppress it here.
+suppress_warnings = ["ref.python"]
 
 # Not show module
 python_module_index = False

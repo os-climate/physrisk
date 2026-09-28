@@ -131,6 +131,12 @@ class Asset(BaseModel):
         default=None,
         description="Financial details needed for a portfolio-level company assessment.",
     )
+    aggregation_id: Optional[str] = Field(
+        default=None,
+        description="Identifier of the sub-portfolio this asset belongs to. Assets sharing the same "
+        "aggregation_id are aggregated together into independent portfolio-level results, separate "
+        "from assets with a different (or no) aggregation_id.",
+    )
 
     @field_validator("occupancy_code")
     @classmethod

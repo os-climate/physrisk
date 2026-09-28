@@ -8,10 +8,11 @@ import numpy as np
 
 from physrisk.kernel.hazards import Hazard
 from physrisk.kernel.impact_distrib import EmptyImpactDistrib, ImpactDistrib
+from physrisk.kernel.insurance_model import InsuranceDataProvider
 from physrisk.kernel.risk import Quantity, QuantityType, RiskQuantityKey
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.curve import ExceedanceCurve
-from physrisk.kernel.financial_model import FinancialModel
+from physrisk.kernel.financial_model import FinancialDataProvider, FinancialModel
 from physrisk.kernel.hazards import HazardKind
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey
 
@@ -21,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 class AggregationKeys(Protocol):
     def get_aggregation_keys(
-        self, asset: Asset, hazard_type: type[Hazard], quantity: QuantityType
+        self, asset: Asset, hazard_type: Optional[type[Hazard]], quantity: QuantityType
     ) -> list[RiskQuantityKey]: ...
 
     """Returns a list of keys for aggregation.
@@ -60,7 +61,7 @@ class Aggregator:
     def aggregate(
         self,
         asset: Asset,
-        hazard_type: type[Hazard],
+        hazard_type: Optional[type[Hazard]],
         quantity: QuantityType,
         values: np.ndarray,
         slice: Optional[tuple[slice, ...]] = None,
@@ -88,30 +89,36 @@ class ByAssetAggregationKeys(AggregationKeys):
     """Aggregator that provides aggregated results by asset and quantity type."""
 
     def get_aggregation_keys(
-        self, asset: Asset, hazard_type: type[Hazard], quantity: QuantityType
+        self, asset: Asset, hazard_type: Optional[type[Hazard]], quantity: QuantityType
     ) -> list[RiskQuantityKey]:
         return [
             RiskQuantityKey(asset=asset, quantity=quantity),
         ]
 
 
-class HazardQuantityAggregationKeys(AggregationKeys):
+class PortfolioAggregationKeys(AggregationKeys):
+    """Aggregator that provides a portfolio-wide total per quantity type, ignoring
+    hazard type but split by portfolio via the asset's 'aggregation_id' attribute."""
+
     def get_aggregation_keys(
-        self, asset: Asset, hazard_type: type[Hazard], quantity: QuantityType
+        self, asset: Asset, hazard_type: Optional[type[Hazard]], quantity: QuantityType
     ) -> list[RiskQuantityKey]:
+        agg_id = asset.aggregation_id
         return [
-            RiskQuantityKey(quantity=quantity, hazard_type=hazard_type),
+            RiskQuantityKey(quantity=quantity, agg_id=agg_id),
         ]
 
 
-class DefaultAggregationKeys(AggregationKeys):
+class HazardQuantityAggregationKeys(AggregationKeys):
+    """Aggregator that provides results by hazard type and quantity type, split by
+    portfolio via the asset's 'aggregation_id' attribute."""
+
     def get_aggregation_keys(
-        self, asset: Asset, hazard_type: type[Hazard], quantity: QuantityType
+        self, asset: Asset, hazard_type: Optional[type[Hazard]], quantity: QuantityType
     ) -> list[RiskQuantityKey]:
-        agg_id = getattr(asset, "agg_id", None)
+        agg_id = asset.aggregation_id
         return [
-            RiskQuantityKey(quantity=quantity, agg_id=agg_id),
-            RiskQuantityKey(quantity=quantity, agg_id=agg_id, hazard_type=hazard_type),
+            RiskQuantityKey(quantity=quantity, hazard_type=hazard_type, agg_id=agg_id),
         ]
 
 
@@ -123,7 +130,9 @@ class _SimulationInputs:
     impacts_exceed_curves_sorted: dict[
         type[Hazard], list[tuple[ImpactDistrib, ExceedanceCurve]]
     ]
-    acute_impacted_asset_indices: dict[type[Hazard], list[int]]
+    idx_in_all_acute_impacted_assets: dict[
+        type[Hazard], list[int]
+    ]  # for each hazard the indices of the affected assets as look-up into all_acute_impacted_assets
     chronic_impacts_sorted: dict[type[Hazard], np.ndarray]
     chronic_hazards_in_scope: set[type[Hazard]]
 
@@ -196,7 +205,7 @@ def _build_acute_structures(
     impacts_exceed_curves_sorted: dict[
         type[Hazard], list[tuple[ImpactDistrib, ExceedanceCurve]]
     ] = defaultdict(list)
-    acute_impacted_asset_indices: dict[type[Hazard], list[int]] = defaultdict(list)
+    idx_in_all_acute_impacted_assets: dict[type[Hazard], list[int]] = defaultdict(list)
 
     for hazard_type, assets in acute_impacted_assets.items():
         impacts_exceed_curves_for_hazard = {
@@ -212,12 +221,12 @@ def _build_acute_structures(
             impacts_exceed_curves_for_hazard[asset]
             for asset in sorted_assets_for_hazard
         ]
-        acute_impacted_asset_indices[hazard_type] = indices
+        idx_in_all_acute_impacted_assets[hazard_type] = indices
 
     return (
         all_acute_impacted_assets,
         impacts_exceed_curves_sorted,
-        acute_impacted_asset_indices,
+        idx_in_all_acute_impacted_assets,
     )
 
 
@@ -290,35 +299,44 @@ def _run_simulation(
     asset_revenue: dict[Asset, float],
     n_events: int = 50000,
     event_batch_sz: int = 1000,
+    insurance_provider: Optional[InsuranceDataProvider] = None,
 ) -> dict[RiskQuantityKey, np.ndarray]:
     """Run Monte Carlo simulation; return per-event impact arrays keyed by RiskQuantityKey."""
-    quantity_types = [
-        QuantityType.DAMAGE,
-        QuantityType.REVENUE_LOSS,
-        QuantityType.COSTS_INCREASE,
-    ]
-
     severity_provider = UncorrelatedEventSeverityProvider(
-        {h: len(v) for h, v in inputs.acute_impacted_asset_indices.items()}
+        {h: len(v) for h, v in inputs.idx_in_all_acute_impacted_assets.items()}
     )
     generator = np.random.default_rng(seed=111)
+    insurance_generator = np.random.default_rng(seed=111)
 
     by_asset_batch_agg = Aggregator(key_provider=ByAssetAggregationKeys())
     by_hazard_agg = Aggregator(
         key_provider=HazardQuantityAggregationKeys(), size=(n_events,)
     )
-    all_impacts: dict[QuantityType, np.ndarray] = {
-        qt: np.zeros(shape=(n_events)) for qt in quantity_types
-    }
+    portfolio_agg = Aggregator(
+        key_provider=PortfolioAggregationKeys(), size=(n_events,)
+    )
 
     logger.info(
         f"Starting to aggregate impacts for {n_events} events, in batches of {event_batch_sz}, "
         f"for {len(inputs.all_acute_impacted_assets)} assets."
     )
 
+    event_insurance_provider = SimpleEventInsuranceProvider(
+        insurance_provider,
+        financial_model.financial_data_provider,
+        inputs.all_acute_impacted_assets,
+    )
+
+    # for a batch of events
     for event_start in range(0, n_events, event_batch_sz):
         by_asset_batch_agg.zero()
         event_end = min(event_start + event_batch_sz, n_events)
+
+        # insurance model: for each asset in the batch we draw variates
+        # used to model if the asset is insured for a given hazard given statistical uptake
+        claim_payment = event_insurance_provider.next_claim_payments_in_batch(
+            event_end - event_start, insurance_generator
+        )
 
         for (
             hazard_type,
@@ -326,8 +344,9 @@ def _run_simulation(
         ) in severity_provider.next_inv_severities_in_batch(
             event_end - event_start, generator
         ):
+            # get the severities for each zone for the batch of events of the given hazard type
             impacts_ec = inputs.impacts_exceed_curves_sorted[hazard_type]
-            non_zero_indices = inputs.acute_impacted_asset_indices[hazard_type]
+            non_zero_indices = inputs.idx_in_all_acute_impacted_assets[hazard_type]
             sz_to_assets = severity_provider.severity_zone_to_asset_indices(hazard_type)
             for sz_idx in range(inv_severities.shape[0]):
                 for asset_idx in sz_to_assets[sz_idx]:
@@ -335,14 +354,29 @@ def _run_simulation(
                     impact_samples = exceed_curve.get_samples(
                         1.0 - inv_severities[sz_idx, :]
                     )
+                    idx_in_all_acute_impacted_assets = non_zero_indices[asset_idx]
                     asset = inputs.all_acute_impacted_assets[
-                        non_zero_indices[asset_idx]
+                        idx_in_all_acute_impacted_assets
                     ]
                     damage, revenue_loss = (
                         financial_model.frac_damage_to_restoration_cost_and_revenue_loss(
                             asset, impact_samples, "EUR"
                         )
                     )
+                    # mitigation of losses through insurance claims:
+                    damage = damage - claim_payment(
+                        damage,
+                        idx_in_all_acute_impacted_assets,
+                        hazard_type,
+                        QuantityType.DAMAGE,
+                    )
+                    revenue_loss = revenue_loss - claim_payment(
+                        revenue_loss,
+                        idx_in_all_acute_impacted_assets,
+                        hazard_type,
+                        QuantityType.REVENUE_LOSS,
+                    )
+
                     for val, qt in [
                         (damage, QuantityType.DAMAGE),
                         (revenue_loss, QuantityType.REVENUE_LOSS),
@@ -380,20 +414,26 @@ def _run_simulation(
             (QuantityType.COSTS_INCREASE, asset_revenue),
         ]:
             for asset in inputs.all_assets:
-                all_impacts[qt][event_start:event_end] += np.minimum(
+                capped = np.minimum(
                     by_asset_batch_agg.aggregation_pools.get(
                         RiskQuantityKey(quantity=qt, asset=asset), np.array(0.0)
                     ),
                     cap[asset],
                 )
+                portfolio_agg.aggregate(
+                    asset,
+                    None,
+                    qt,
+                    capped,
+                    slice=(slice(event_start, event_end),),
+                )
 
         if (event_end // event_batch_sz) % 20 == 0:
             logger.info(f"Processed {event_end} events out of {n_events}.")
 
-    # return both by hazard and
+    # return combined by-hazard and capped 'total' results (one 'total' per portfolio, i.e. per agg_id)
     all_results = by_hazard_agg.aggregation_pools
-    for qt in quantity_types:
-        all_results[RiskQuantityKey(quantity=qt)] = all_impacts[qt]
+    all_results.update(portfolio_agg.aggregation_pools)
     return all_results
 
 
@@ -425,7 +465,7 @@ def _asset_level_drilldown(
 
     # --- Acute hazards -----------------------------------------------------------
     for hazard_type, impacts_ec in inputs.impacts_exceed_curves_sorted.items():
-        non_zero_indices = inputs.acute_impacted_asset_indices[hazard_type]
+        non_zero_indices = inputs.idx_in_all_acute_impacted_assets[hazard_type]
         for asset_idx, (distrib, ec) in enumerate(impacts_ec):
             asset = inputs.all_acute_impacted_assets[non_zero_indices[asset_idx]]
 
@@ -542,13 +582,18 @@ def _summarise_results(
     asset_revenue: dict[Asset, float],
 ) -> dict[RiskQuantityKey, Quantity]:
     """Normalise per-event arrays by portfolio totals and build exceedance-curve summaries."""
-    sum_asset_tiv = sum(asset_tiv.values())
-    sum_asset_revenue = sum(asset_revenue.values())
+    sum_tiv_by_agg_id: dict[Optional[str], float] = defaultdict(float)
+    sum_revenue_by_agg_id: dict[Optional[str], float] = defaultdict(float)
+    for asset, tiv in asset_tiv.items():
+        sum_tiv_by_agg_id[asset.aggregation_id] += tiv
+    for asset, revenue in asset_revenue.items():
+        sum_revenue_by_agg_id[asset.aggregation_id] += revenue
+
     for k, v in all_results.items():
         if k.quantity == QuantityType.DAMAGE:
-            all_results[k] = v / sum_asset_tiv
+            all_results[k] = v / sum_tiv_by_agg_id[k.agg_id]
         elif k.quantity == QuantityType.REVENUE_LOSS:
-            all_results[k] = v / sum_asset_revenue
+            all_results[k] = v / sum_revenue_by_agg_id[k.agg_id]
 
     return_periods = np.array([10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0])
     quantiles = 1.0 - 1.0 / return_periods
@@ -556,7 +601,9 @@ def _summarise_results(
     for k, v in all_results.items():
         exceed = ExceedanceCurve(1.0 / return_periods, np.quantile(v, quantiles))
         mean = np.mean(v)
-        semi_std = np.sqrt(np.mean(np.square(v[v > mean] - mean)))
+        # upside semi-variance is taken over all events (not only those above the mean),
+        # consistent with ImpactDistrib.semi_standard_deviation
+        semi_std = np.sqrt(np.mean(np.square(np.maximum(v - mean, 0.0))))
         summary_stats[k] = Quantity(
             values=v if k.hazard_type is None else None,
             exceedance_curve=exceed,
@@ -573,6 +620,7 @@ def aggregate_impacts(
     key_year: Optional[int],
     n_events: int = 50000,
     event_batch_sz: int = 1000,
+    insurance_provider: Optional[InsuranceDataProvider] = None,
 ) -> dict[RiskQuantityKey, Quantity]:
     """Aggregate impacts over assets and hazards for a given scenario and year.
     For acute hazards, i.e. hazards associated with an event, a Monte Carlo approach is used whereby a large number of
@@ -613,12 +661,12 @@ def aggregate_impacts(
     ) = _classify_impacts(impacts, scenario, key_year)
     all_assets_list = sorted(all_assets, key=lambda a: a.id if a.id is not None else "")
     # all_acute_impacted_assets: sorted list of all assets with any acute impact (i.e. from any hazard type)
-    # acute_impacted_asset_indices: index of asset in all_acute_impacted_assets, for assets impacted by the given hazard type
     # impacts_exceed_curves_sorted: the corresponding ImpactDistribs and ExceedanceCurves
+    # idx_in_all_acute_impacted_assets: index of asset in all_acute_impacted_assets, for assets impacted by the given hazard type
     (
         all_acute_impacted_assets,
         impacts_exceed_curves_sorted,
-        acute_impacted_asset_indices,
+        idx_in_all_acute_impacted_assets,
     ) = _build_acute_structures(acute_impacted_assets, impacts_exceed_curves)
     # chronic impacts per hazard for all assets
     chronic_impacts_sorted = _build_chronic_arrays(
@@ -637,7 +685,7 @@ def aggregate_impacts(
         all_acute_impacted_assets=all_acute_impacted_assets,
         impacts_exceed_curves_sorted=impacts_exceed_curves_sorted,  # impacts and exceedance curves for assets with acute impact
         # for hazard
-        acute_impacted_asset_indices=acute_impacted_asset_indices,  # index
+        idx_in_all_acute_impacted_assets=idx_in_all_acute_impacted_assets,  # indices of assets with acute impact for hazard
         chronic_impacts_sorted=chronic_impacts_sorted,
         chronic_hazards_in_scope=chronic_hazards_in_scope,
     )
@@ -660,6 +708,7 @@ def aggregate_impacts(
         asset_revenue,
         n_events=n_events,
         event_batch_sz=event_batch_sz,
+        insurance_provider=insurance_provider,
     )
     portfolio_results = _summarise_results(all_results, asset_tiv, asset_revenue)
     asset_results = _asset_level_drilldown(
@@ -669,18 +718,25 @@ def aggregate_impacts(
     return {**portfolio_results, **asset_results}
 
 
+class HazardSeverities(NamedTuple):
+    hazard_type: type[Hazard]
+    inv_severities: np.ndarray
+    """Inverse severities with shape (number of severity zones, number of events in batch)."""
+
+
 class EventSeverityProvider(Protocol):
     def next_inv_severities_in_batch(
         self, n_events: int, generator: np.random.Generator
-    ) -> Generator[tuple[type[Hazard], np.ndarray], None, None]:
-        """Returns a generator that gives the inverse severities for each hazard type.
+    ) -> Generator[HazardSeverities, None, None]:
+        """Returns a Generator that gives the inverse severities for each hazard type for this
+        batch of events.
 
         Args:
             n_events (int): Number of events in the batch.
             generator (np.random.Generator): Random number generator.
 
         Yields:
-            Generator[tuple[type[Hazard], np.ndarray], None, None]: The severities for each hazard type.
+            HazardSeverities: The hazard type and its inverse severities for the batch.
         """
         ...
 
@@ -689,6 +745,95 @@ class EventSeverityProvider(Protocol):
     ) -> list[list[int]]:
         """Returns a mapping from severity zone index to asset indices for a given hazard type."""
         ...
+
+
+class ClaimPayment(Protocol):
+    def __call__(
+        self,
+        loss: np.ndarray,
+        idx_in_all_acute_impacted_assets: int,
+        hazard_type: type[Hazard],
+        impact_type: QuantityType,
+    ) -> np.ndarray:
+        """Insurer's payout (indemnity) for a loss, net of deductible and capped at limit,
+        which are looked up for the asset of the given index. Name of index
+        emphasizes that this is the index of the asset within the list of all assets
+        potentially impacted by an event (i.e. acute-impacted)."""
+        ...
+
+
+class EventInsuranceProvider(Protocol):
+    def next_claim_payments_in_batch(
+        self, n_events: int, generator: np.random.Generator
+    ) -> ClaimPayment:
+        """Returns a function that gives the insurer's claim payment for a loss, for this
+        batch of events.
+
+        Args:
+            n_events (int): Number of events in the batch.
+            generator (np.random.Generator): Random number generator.
+
+        Returns:
+            ClaimPayment: Function providing the claim payment for a given loss.
+        """
+
+
+class SimpleEventInsuranceProvider(EventInsuranceProvider):
+    def __init__(
+        self,
+        insurance: Optional[InsuranceDataProvider],
+        financials: FinancialDataProvider,
+        all_acute_impacted_assets: list[Asset],
+    ):
+        self._all_acute_impacted_assets = all_acute_impacted_assets
+        self._insurance = insurance
+        self._financials = financials
+
+    def next_claim_payments_in_batch(
+        self, n_events: int, generator: np.random.Generator
+    ):
+        insurance = self._insurance
+        if insurance is None:
+            return self._no_claim
+        randoms = generator.random(
+            size=(len(self._all_acute_impacted_assets), n_events),
+            dtype=np.float32,
+        )
+
+        def claim_payment(
+            loss: np.ndarray,
+            idx_in_all_acute_impacted_assets: int,
+            hazard_type: type[Hazard],
+            impact_type: QuantityType,
+        ) -> np.ndarray:
+            """Insurer's payout net of deductible and capped at limit;
+            indemnity or claim payment/net claim
+            """
+            asset = self._all_acute_impacted_assets[idx_in_all_acute_impacted_assets]
+            info = insurance(asset, hazard_type, impact_type)
+            is_insured = randoms[idx_in_all_acute_impacted_assets, :] > (
+                1.0 - info.uptake
+            )
+            insured_value = (
+                self._financials.total_insurable_value(asset, "EUR")
+                if impact_type == QuantityType.DAMAGE
+                else self._financials.revenue_attributable_to_asset(asset, "EUR")
+            )
+            deductible = insured_value * info.deductable
+            limit = insured_value * info.limit
+            claimed_loss = is_insured * loss
+            return np.minimum(np.maximum(claimed_loss - deductible, 0), limit)
+
+        return claim_payment
+
+    def _no_claim(
+        self,
+        loss: np.ndarray,
+        idx_in_all_acute_impacted_assets: int,
+        hazard_type: type[Hazard],
+        impact_type: QuantityType,
+    ) -> np.ndarray:
+        return np.zeros_like(loss)
 
 
 class UncorrelatedEventSeverityProvider(EventSeverityProvider):
@@ -701,13 +846,13 @@ class UncorrelatedEventSeverityProvider(EventSeverityProvider):
 
     def next_inv_severities_in_batch(
         self, n_events: int, generator: np.random.Generator
-    ) -> Generator[tuple[type[Hazard], np.ndarray], None, None]:
+    ) -> Generator[HazardSeverities, None, None]:
         for hazard_type in self.n_severity_zones_by_hazard.keys():
             randoms = generator.random(
                 size=(self.n_severity_zones_by_hazard[hazard_type], n_events),
                 dtype=np.float32,
             )
-            yield hazard_type, randoms
+            yield HazardSeverities(hazard_type, randoms)
 
     def severity_zone_to_asset_indices(
         self, hazard_type: type[Hazard]

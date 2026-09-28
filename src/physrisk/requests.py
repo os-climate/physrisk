@@ -100,6 +100,7 @@ from .api.v1.impact_req_resp import (
     RiskMeasuresForAssets,
 )
 from .api.v1.impact_req_resp import ImpactKey as APIImpactKey
+from .api.v1.impact_req_resp import PortfolioImpactKey
 from .api.v1.impact_req_resp import (
     RiskMeasureDefinition,
     RiskMeasureKey,
@@ -145,6 +146,7 @@ class Requester:
         measures_factory: RiskMeasuresFactory,
         json_encoder_cls: Type[json.JSONEncoder] = PhysriskDefaultEncoder,
         sig_figures: int = -1,
+        enforce_permissions: bool = True,
     ):
         self.asset_factory = asset_factory
         self.colormaps = colormaps
@@ -157,6 +159,7 @@ class Requester:
         self.inventory_reader = inventory_reader
         self.zarr_reader = reader
         self.source_paths = source_paths
+        self.enforce_permissions = enforce_permissions
 
     def get(self, *, request_id, request_dict):
         if request_id == "get_hazard_data":
@@ -333,7 +336,7 @@ class Requester:
         else:
             request = request_or_dict
         inventory = self.inventory
-        if not _read_permitted(
+        if self.enforce_permissions and not _read_permitted(
             request.group_ids, inventory.resources[request.resource]
         ):
             raise PermissionError()
@@ -733,12 +736,13 @@ def _compile_portfolio_impacts(
             semi_std = qty.semi_standard_deviation
             results.append(
                 PortfolioImpact(
-                    key=APIImpactKey(
+                    key=PortfolioImpactKey(
                         hazard_type=rk.hazard_type.__name__
                         if rk.hazard_type is not None
                         else "",
                         scenario_id=scenario,
                         year=str(year) if year is not None else "",
+                        aggregation_id=rk.agg_id or "",
                     ),
                     impact_type=_QUANTITY_TYPE_TO_IMPACT_TYPE.get(rk.quantity, "damage")
                     if rk.quantity is not None

@@ -19,4 +19,5 @@ The following sections document the structures and conventions of Physrisk and a
    introduction
    hazard_indicators/hazard_indicators
    vulnerability/vulnerability
+   vulnerability/vulnerability_functions
    hosting/hosting

@@ -134,7 +134,11 @@ class Container(containers.DeclarativeContainer):
     colormaps = providers.Singleton(lambda: EmbeddedInventory().colormaps())
 
     config = providers.Configuration(
-        default={"zarr_sources": ["embedded"], "zarr_max_workers": 32}
+        default={
+            "zarr_sources": ["embedded"],
+            "zarr_max_workers": 32,
+            "enforce_permissions": True,
+        }
     )
 
     credentials = providers.Singleton(EnvCredentialsProvider, disable_api_calls=False)
@@ -185,4 +189,5 @@ class Container(containers.DeclarativeContainer):
         measures_factory=measures_factory,
         json_encoder_cls=json_encoder_cls,
         sig_figures=sig_figures,
+        enforce_permissions=config.enforce_permissions,
     )

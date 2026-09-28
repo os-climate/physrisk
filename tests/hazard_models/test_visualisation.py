@@ -1,15 +1,13 @@
 import io
-from typing import Tuple
 
 import numpy as np
 import pytest
-import PIL.Image as Image
+from PIL import Image
 
 from physrisk.api.v1.hazard_image import HazardImageRequest
 from physrisk.container import Container
-from physrisk.kernel.hazard_model import Tile
 from physrisk.hazard_models.jba_image_creator import JBAImageCreator
-
+from physrisk.kernel.hazard_model import Tile
 
 # https://jbavision.jbarisk.com/cog/tiles/9/265/176.png?LAYERS=853_WR30_202512_30m_4326:WR30_202512_FLRF_U_RP1500_RE_30m_4326
 
@@ -63,7 +61,7 @@ def test_get_jba_legend_png(load_credentials):
     assert image.width > 0 and image.height > 0
 
 
-def _locate_colorbar(image: Image.Image) -> Tuple[int, int, int, int]:
+def _locate_colorbar(image: Image.Image) -> tuple[int, int, int, int]:
     """Return (x_min, y_min, x_max, y_max) bounding the colour swatches in a legend.
 
     Works for discrete stepped legends (e.g. JBA flood depth) where each swatch

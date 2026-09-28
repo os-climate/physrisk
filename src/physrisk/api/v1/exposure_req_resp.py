@@ -1,5 +1,3 @@
-from typing import Dict, List, Optional
-
 from pydantic import BaseModel, Field
 
 from physrisk.api.v1.common import Assets
@@ -19,7 +17,7 @@ class AssetExposureRequest(BaseModel):
         2050,
         description="Projection year (2030, 2050, 2080). Any year before 2030, e.g. 1980, is treated as historical.",
     )
-    provider_max_requests: Dict[str, int] = Field(
+    provider_max_requests: dict[str, int] = Field(
         {},
         description="The maximum permitted number of \
         requests to external providers. This setting is intended in particular for paid-for data. The key \
@@ -29,7 +27,7 @@ class AssetExposureRequest(BaseModel):
 
 class Exposure(BaseModel):
     category: str
-    value: Optional[float]
+    value: float | None
     path: str = Field(
         "unknown", description="Path to the hazard indicator data source."
     )
@@ -38,12 +36,12 @@ class Exposure(BaseModel):
 class AssetExposure(BaseModel):
     """Impact at asset level. Each asset can have impacts for multiple hazard types."""
 
-    asset_id: Optional[str] = Field(
+    asset_id: str | None = Field(
         None,
         description="""Asset identifier; will appear if provided in the request
         otherwise order of assets in response is identical to order of assets in request.""",
     )
-    exposures: Dict[str, Exposure] = Field(
+    exposures: dict[str, Exposure] = Field(
         {}, description="Category (value) for each hazard type (key)."
     )
 
@@ -51,4 +49,4 @@ class AssetExposure(BaseModel):
 class AssetExposureResponse(BaseModel):
     """Response to impact request."""
 
-    items: List[AssetExposure]
+    items: list[AssetExposure]

@@ -1,5 +1,5 @@
-from typing import Dict, List
 from pydantic import BaseModel, Field
+
 from physrisk.api.v1.hazard_data import Scenario
 
 
@@ -16,13 +16,13 @@ class AvailabilitySourcesRequest(BaseModel):
 
 
 class HazardTypeAvailability(BaseModel):
-    scenarios: List[Scenario] = []
-    available_for_assets_type: List[str] = []
+    scenarios: list[Scenario] = []
+    available_for_assets_type: list[str] = []
     indicator_display_name: str = ""
 
 
 class AvailabilitySourcesResponse(BaseModel):
-    hazards: Dict[str, Dict[str, HazardTypeAvailability]] = Field(
+    hazards: dict[str, dict[str, HazardTypeAvailability]] = Field(
         {},
         description="Information of available sources for the hazards in the inventory",
     )

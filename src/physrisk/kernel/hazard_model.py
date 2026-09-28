@@ -1,16 +1,10 @@
 import sys
 from abc import ABC, abstractmethod
+from collections.abc import Mapping, Sequence
 from typing import (
     Any,
-    Dict,
-    Mapping,
     NamedTuple,
-    Optional,
     Protocol,
-    Sequence,
-    Tuple,
-    Type,
-    Union,
 )
 
 import numpy as np
@@ -27,29 +21,29 @@ class HazardDataRequest:
     and the parameter value is returned."""
 
     __slots__ = (
+        "buffer",
+        "geometry",
         "hazard_type",
-        "longitude",
-        "latitude",
+        "hint",
         "indicator_id",
+        "latitude",
+        "longitude",
         "scenario",
         "year",
-        "hint",
-        "geometry",
-        "buffer",
     )
 
     def __init__(
         self,
-        hazard_type: Type[Hazard],
+        hazard_type: type[Hazard],
         longitude: float,
         latitude: float,
         *,
         indicator_id: str,
         scenario: str,
         year: int,
-        hint: Optional[HazardDataHint] = None,
-        geometry: Optional[BaseGeometry] = None,
-        buffer: Optional[int] = None,
+        hint: HazardDataHint | None = None,
+        geometry: BaseGeometry | None = None,
+        buffer: int | None = None,
     ):
         """Create HazardDataRequest.
 
@@ -112,7 +106,7 @@ class HazardDataResponse(Protocol):
 
 
 class HazardDataFailedResponse(HazardDataResponse):
-    def __init__(self, err: Optional[Exception] = None, reason: Optional[str] = None):
+    def __init__(self, err: Exception | None = None, reason: str | None = None):
         self.error = err
         self.reason = reason
         self.path = ""
@@ -244,10 +238,10 @@ class HazardImageCreator(Protocol):
         year: int,
         format="PNG",
         colormap: str = "heating",
-        tile: Optional[Tile] = None,
-        min_value: Optional[float] = None,
-        max_value: Optional[float] = None,
-        index_value: Optional[Union[str, float]] = None,
+        tile: Tile | None = None,
+        min_value: float | None = None,
+        max_value: float | None = None,
+        index_value: str | float | None = None,
         scaling: str = "linear",
     ):
         """Creates an image Tile for display on maps.
@@ -269,7 +263,7 @@ class HazardImageCreator(Protocol):
 
     def get_info(
         self, resource_id: str, scenario: str, year: int
-    ) -> Tuple[Sequence[Any], Sequence[Any], str, str, Optional[int]]:
+    ) -> tuple[Sequence[Any], Sequence[Any], str, str, int | None]:
         """Provides additional image information required to create an image.
 
         Args:
@@ -290,8 +284,8 @@ class HazardImageCreator(Protocol):
 class HazardModelFactory(Protocol):
     def hazard_model(
         self,
-        interpolation: Optional[str] = None,
-        provider_max_requests: Dict[str, int] = {},
+        interpolation: str | None = None,
+        provider_max_requests: dict[str, int] = {},
         interpolate_years: bool = False,
     ) -> HazardModel:
         """Create a HazardModel instance based on a number of options.
@@ -318,4 +312,4 @@ class HazardModelFactory(Protocol):
 class DataSource(Protocol):
     def __call__(
         self, longitudes, latitudes, *, model: str, scenario: str, year: int
-    ) -> Tuple[np.ndarray, np.ndarray]: ...
+    ) -> tuple[np.ndarray, np.ndarray]: ...

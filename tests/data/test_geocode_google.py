@@ -8,18 +8,18 @@ from dotenv import load_dotenv
 from shapely.geometry import MultiPolygon, Polygon
 
 from physrisk.data.geocode_google import (
-    GeocodeResult,
-    GoogleGeocoder,
-    Granularity,
-    StructureType,
     _ADDRESS_FIELD_MASK,
     _DESTINATIONS_FIELD_MASK,
     _DESTINATIONS_URL,
     _GEOCODE_ADDRESS_URL,
-    _RateLimiter,
+    GeocodeResult,
+    GoogleGeocoder,
+    Granularity,
+    StructureType,
     _parse_geojson,
     _parse_granularity,
     _parse_structure_type,
+    _RateLimiter,
 )
 
 # ---------------------------------------------------------------------------

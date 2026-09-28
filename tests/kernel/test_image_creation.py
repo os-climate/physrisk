@@ -109,12 +109,12 @@ def test_log_scaling_requires_positive_min():
         )
 
 
-@pytest.fixture
-def mock_inventory():
+def _make_inventory(group_id: str = "public"):
     return Inventory(
         hazard_resources=[
             HazardResource(
                 path="test_array_{scenario}_{year}",
+                group_id=group_id,
                 hazard_type="",
                 indicator_id="",
                 indicator_model_gcm="",
@@ -131,6 +131,11 @@ def mock_inventory():
             )
         ]
     )
+
+
+@pytest.fixture
+def mock_inventory():
+    return _make_inventory()
 
 
 @pytest.fixture
@@ -186,19 +191,28 @@ def test_interpolation(mock_inventory, zarr_store):
     np.testing.assert_equal(result, expected)
 
 
-def test_request(mock_inventory, zarr_store):
-    request_dict = {
-        "resource": "test_array_{scenario}_{year}",
-        "scenario_id": "ssp585",
-        "year": 2040,
-        "min_value": 0.0,
-        "max_value": 2.0,
-        "tile": Tile(0, 0, 0),
-        "index": 0,
-    }
+_TEST_REQUEST_DICT = {
+    "resource": "test_array_{scenario}_{year}",
+    "scenario_id": "ssp585",
+    "year": 2040,
+    "min_value": 0.0,
+    "max_value": 2.0,
+    "tile": Tile(0, 0, 0),
+    "index": 0,
+}
 
-    container = Container()
-    source_paths = InventorySourcePaths(mock_inventory)
+
+def _expected_test_image_bytes():
+    rgba = np.array(
+        [[3359392974, 3361568744], [3363412211, 3364135926]], dtype=np.uint32
+    )
+    image_bytes = io.BytesIO()
+    Image.fromarray(rgba, mode="RGBA").save(image_bytes, format="PNG")
+    return image_bytes.getvalue()
+
+
+def _build_requester(inventory, zarr_store, enforce_permissions: bool = True):
+    source_paths = InventorySourcePaths(inventory)
 
     class TestHazardModelFactory(HazardModelFactory):
         def hazard_model(
@@ -210,28 +224,36 @@ def test_request(mock_inventory, zarr_store):
             return ZarrHazardModel(source_paths=source_paths, store=zarr_store)
 
         def image_creator(self):
-            return ImageCreator(
-                mock_inventory, source_paths, ZarrReader(store=zarr_store)
-            )
+            return ImageCreator(inventory, source_paths, ZarrReader(store=zarr_store))
 
+    container = Container()
     container.override_providers(
         hazard_model_factory=providers.Factory(TestHazardModelFactory)
     )
     container.override_providers(source_paths=providers.Factory(SourcePathsTest))
-    container.override_providers(inventory=providers.Singleton(lambda: mock_inventory))
+    container.override_providers(inventory=providers.Singleton(lambda: inventory))
     container.override_providers(zarr_reader=ZarrReader(store=zarr_store))
+    container.config.enforce_permissions.from_value(enforce_permissions)
+    return container.requester()
 
-    requester = container.requester()
-    res = requester.get_image(request_dict)
 
-    rgba = np.array(
-        [[3359392974, 3361568744], [3363412211, 3364135926]], dtype=np.uint32
-    )
-    image_bytes = io.BytesIO()
-    Image.fromarray(rgba, mode="RGBA").save(image_bytes, format="PNG")
-    expected = image_bytes.getvalue()
+def test_request(mock_inventory, zarr_store):
+    res = _build_requester(mock_inventory, zarr_store).get_image(_TEST_REQUEST_DICT)
+    np.testing.assert_equal(res, _expected_test_image_bytes())
 
-    np.testing.assert_equal(res, expected)
+
+def test_request_permission_enforcement(zarr_store):
+    """get_image should reject a restricted-group resource by default, but
+    allow it when the container's enforce_permissions config is disabled."""
+    restricted_inventory = _make_inventory(group_id="restricted")
+
+    with pytest.raises(PermissionError):
+        _build_requester(restricted_inventory, zarr_store).get_image(_TEST_REQUEST_DICT)
+
+    res = _build_requester(
+        restricted_inventory, zarr_store, enforce_permissions=False
+    ).get_image(_TEST_REQUEST_DICT)
+    np.testing.assert_equal(res, _expected_test_image_bytes())
 
 
 @pytest.mark.skip(reason="just example")

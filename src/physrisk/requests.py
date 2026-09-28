@@ -146,6 +146,7 @@ class Requester:
         measures_factory: RiskMeasuresFactory,
         json_encoder_cls: Type[json.JSONEncoder] = PhysriskDefaultEncoder,
         sig_figures: int = -1,
+        enforce_permissions: bool = True,
     ):
         self.asset_factory = asset_factory
         self.colormaps = colormaps
@@ -158,6 +159,7 @@ class Requester:
         self.inventory_reader = inventory_reader
         self.zarr_reader = reader
         self.source_paths = source_paths
+        self.enforce_permissions = enforce_permissions
 
     def get(self, *, request_id, request_dict):
         if request_id == "get_hazard_data":
@@ -334,7 +336,7 @@ class Requester:
         else:
             request = request_or_dict
         inventory = self.inventory
-        if not _read_permitted(
+        if self.enforce_permissions and not _read_permitted(
             request.group_ids, inventory.resources[request.resource]
         ):
             raise PermissionError()

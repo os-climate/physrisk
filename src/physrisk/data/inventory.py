@@ -84,6 +84,7 @@ class EmbeddedInventory(Inventory):
                 display_name="JBA Risk Management flood model",
                 description="Commercial flood model from JBA Risk Management (https://www.jbarisk.com/)",
                 scenarios=[
+                    Scenario(id="historical", years=[2020]),
                     Scenario(id="ssp126", years=[2030, 2050, 2080]),
                     Scenario(id="ssp245", years=[2030, 2050, 2080]),
                     Scenario(id="ssp585", years=[2030, 2050, 2080]),

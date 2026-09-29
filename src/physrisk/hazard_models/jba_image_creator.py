@@ -119,14 +119,14 @@ class JBAImageCreator(HazardImageCreator):
     def __init__(
         self,
         credentials: Optional[CredentialsProvider] = None,
+        tileset: TileSet = TileSet("WR30", "202512", "30m", "4326"),
     ):
         self.credentials = (
             credentials if credentials is not None else EnvCredentialsProvider()
         )
-        # set_name = "WR30_202512_30m_4326"
-        # set_name = "WR30C_202603_30m_4326"
-        self.tileset = TileSet("WR30C", "202603", "30m", "4326")
-        self.tileset = TileSet("WR30", "202512", "30m", "4326")
+        self.tileset = tileset
+        # self.tileset = TileSet("WR30C", "202603", "30m", "4326")
+        # self.tileset = TileSet("WR", "202603", "5m", "4326")
         templates_tiles, templates_legends = self._get_urls_from_capability()
         self.templates_tiles: dict[str, str] = templates_tiles
         self.templates_legends: dict[str, str] = templates_legends

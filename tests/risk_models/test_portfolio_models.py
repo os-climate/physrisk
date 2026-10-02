@@ -3,6 +3,7 @@ from typing import Dict, Optional, cast
 
 from dependency_injector import providers
 import numpy as np
+import pytest
 
 from physrisk.api.v1.common import Asset as APIAsset, Assets
 from physrisk.api.v1.impact_req_resp import (
@@ -37,7 +38,7 @@ from physrisk.kernel.impact_aggregator import (
     aggregate_impacts,
 )
 from physrisk.kernel.insurance_model import SectoralInsuranceData
-from physrisk.kernel.impact_distrib import ImpactDistrib
+from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
 from physrisk.kernel.risk import QuantityType, RiskQuantityKey
 from physrisk.risk_models.portfolio_risk_model import CompanyRiskMeasureCalculator
 from physrisk.vulnerability_models.vulnerability import VulnerabilityModelsFactory
@@ -384,6 +385,114 @@ def test_impact_aggregation_multi_hazard():
         ].mean,
         expected_heat_rev_loss,
     )
+
+
+def test_impact_aggregation_acute_damage_and_disruption():
+    """A single acute hazard can carry one damage impact and one disruption impact for
+    the same asset; both are driven by the same event severity and their financial
+    consequences should combine rather than conflict.
+
+    Damage  [0.0, 0.5], p=0.02  →  mean fraction of TIV     = 0.25 × 0.02 = 0.005
+    Disrupt [0.0, 0.3], p=0.04  →  mean fraction of revenue = 0.15 × 0.04 = 0.006
+
+    Financial params (TestFinancialDataProvider): TIV = 100, Revenue = 200.
+    No downtime model, so acute REVENUE_LOSS comes entirely from the disruption impact.
+    """
+    scenario, key_year = "ssp585", 2050
+    asset = ManufacturingAsset(id="asset_0", latitude=0.0, longitude=0.0)
+
+    damage_edges = np.array([0.0, 0.5])
+    damage_probs = np.array([0.02])  # mean 0.005
+    disruption_edges = np.array([0.0, 0.3])
+    disruption_probs = np.array([0.04])  # mean 0.006
+
+    impacts: Dict[ImpactKey, list[AssetImpactResult]] = {
+        ImpactKey(
+            asset=asset, hazard_type=Wind, scenario=scenario, key_year=key_year
+        ): [
+            AssetImpactResult(
+                impact=ImpactDistrib(
+                    Wind,
+                    damage_edges.copy(),
+                    damage_probs.copy(),
+                    "",
+                    impact_type=ImpactType.damage,
+                )
+            ),
+            AssetImpactResult(
+                impact=ImpactDistrib(
+                    Wind,
+                    disruption_edges.copy(),
+                    disruption_probs.copy(),
+                    "",
+                    impact_type=ImpactType.disruption,
+                )
+            ),
+        ],
+    }
+
+    financial_model = DefaultFinancialModel(
+        data_provider=TestFinancialDataProvider(), downtime_config=[]
+    )
+    results = aggregate_impacts(impacts, financial_model, scenario, key_year)
+
+    expected_damage_mean = 0.005  # fraction of TIV
+    expected_disruption_mean = 0.006  # fraction of revenue
+
+    # Asset-level drilldown results are computed analytically (exact, no Monte Carlo noise).
+    np.testing.assert_allclose(
+        results[RiskQuantityKey(QuantityType.DAMAGE, asset, None, Wind)].mean,
+        expected_damage_mean,
+    )
+    np.testing.assert_allclose(
+        results[RiskQuantityKey(QuantityType.REVENUE_LOSS, asset, None, Wind)].mean,
+        expected_disruption_mean,
+    )
+
+    # Portfolio-level results come from the Monte Carlo simulation - allow some tolerance.
+    rtol = 0.05
+    np.testing.assert_allclose(
+        results[RiskQuantityKey(QuantityType.DAMAGE, None, None, Wind)].mean,
+        expected_damage_mean,
+        rtol=rtol,
+    )
+    np.testing.assert_allclose(
+        results[RiskQuantityKey(QuantityType.REVENUE_LOSS, None, None, Wind)].mean,
+        expected_disruption_mean,
+        rtol=rtol,
+    )
+
+
+def test_impact_aggregation_acute_duplicate_impact_type_raises():
+    """Two acute impacts of the same ImpactType (e.g. two 'damage' impacts) for the same
+    asset/hazard are ambiguous and remain unsupported."""
+    scenario, key_year = "ssp585", 2050
+    asset = ManufacturingAsset(id="asset_0", latitude=0.0, longitude=0.0)
+    edges = np.array([0.0, 0.5])
+    probs = np.array([0.02])
+
+    impacts: Dict[ImpactKey, list[AssetImpactResult]] = {
+        ImpactKey(
+            asset=asset, hazard_type=Wind, scenario=scenario, key_year=key_year
+        ): [
+            AssetImpactResult(
+                impact=ImpactDistrib(
+                    Wind, edges.copy(), probs.copy(), "", impact_type=ImpactType.damage
+                )
+            ),
+            AssetImpactResult(
+                impact=ImpactDistrib(
+                    Wind, edges.copy(), probs.copy(), "", impact_type=ImpactType.damage
+                )
+            ),
+        ],
+    }
+
+    financial_model = DefaultFinancialModel(
+        data_provider=TestFinancialDataProvider(), downtime_config=[]
+    )
+    with pytest.raises(NotImplementedError):
+        aggregate_impacts(impacts, financial_model, scenario, key_year)
 
 
 def test_simple_event_insurance_provider():

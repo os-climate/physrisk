@@ -7,7 +7,7 @@ from typing_extensions import Protocol
 import numpy as np
 
 from physrisk.kernel.hazards import Hazard
-from physrisk.kernel.impact_distrib import EmptyImpactDistrib, ImpactDistrib
+from physrisk.kernel.impact_distrib import EmptyImpactDistrib, ImpactDistrib, ImpactType
 from physrisk.kernel.insurance_model import InsuranceDataProvider
 from physrisk.kernel.risk import Quantity, QuantityType, RiskQuantityKey
 from physrisk.kernel.assets import Asset
@@ -122,19 +122,27 @@ class HazardQuantityAggregationKeys(AggregationKeys):
         ]
 
 
+class AcuteImpactCurves(NamedTuple):
+    """The (up to) two acute impacts for a given asset and hazard type: a damage
+    impact (fraction of TIV) and/or a disruption impact (fraction of revenue),
+    both driven by the same underlying event severity."""
+
+    damage: Optional[tuple[ImpactDistrib, ExceedanceCurve]] = None
+    disruption: Optional[tuple[ImpactDistrib, ExceedanceCurve]] = None
+
+
 @dataclass
 class _SimulationInputs:
     all_assets: set[Asset]
     all_assets_list: list[Asset]
     all_acute_impacted_assets: list[Asset]
-    impacts_exceed_curves_sorted: dict[
-        type[Hazard], list[tuple[ImpactDistrib, ExceedanceCurve]]
-    ]
+    impacts_exceed_curves_sorted: dict[type[Hazard], list[AcuteImpactCurves]]
     idx_in_all_acute_impacted_assets: dict[
         type[Hazard], list[int]
     ]  # for each hazard the indices of the affected assets as look-up into all_acute_impacted_assets
     chronic_impacts_sorted: dict[type[Hazard], np.ndarray]
     chronic_hazards_in_scope: set[type[Hazard]]
+    year: int  # resolved key_year, used for frac_disruption_to_revenue_loss
 
 
 def _classify_impacts(
@@ -144,13 +152,18 @@ def _classify_impacts(
 ) -> tuple[
     set[Asset],
     dict[type[Hazard], set[Asset]],
-    dict[ImpactKey, tuple[ImpactDistrib, ExceedanceCurve]],
+    dict[ImpactKey, AcuteImpactCurves],
     set[type[Hazard]],
 ]:
-    """Filter impacts by scenario/year; split into acute (with exceedance curves) and chronic."""
+    """Filter impacts by scenario/year; split into acute (with exceedance curves) and chronic.
+
+    For acute hazards, at most one damage impact and one disruption impact (as determined by
+    ImpactDistrib.impact_type) are permitted per asset/hazard type; they are driven by the same
+    event severity, so both are kept and later sampled from the same quantile.
+    """
     all_assets: set[Asset] = set()
     acute_impacted_assets: dict[type[Hazard], set[Asset]] = defaultdict(set)
-    impacts_exceed_curves: dict[ImpactKey, tuple[ImpactDistrib, ExceedanceCurve]] = {}
+    impacts_exceed_curves: dict[ImpactKey, AcuteImpactCurves] = {}
     chronic_hazards_in_scope: set[type[Hazard]] = set()
 
     for ik, airs in impacts.items():
@@ -160,16 +173,33 @@ def _classify_impacts(
         if ik.hazard_type.kind != HazardKind.ACUTE:
             chronic_hazards_in_scope.add(ik.hazard_type)
             continue
-        if len(airs) > 1:
-            raise NotImplementedError(
-                f"Multiple impacts for asset {ik.asset} and hazard type {ik.hazard_type}: not permitted for acute hazards."
-            )
-        air = airs[0]
-        if isinstance(air.impact, EmptyImpactDistrib):
+        non_empty_airs = [
+            air for air in airs if not isinstance(air.impact, EmptyImpactDistrib)
+        ]
+        if not non_empty_airs:
             continue
-        exceed_curve = air.impact.to_exceedance_curve()
-        if exceed_curve.get_value(1.0 / 1500.0) > 1e-6:
-            impacts_exceed_curves[ik] = (air.impact, exceed_curve)
+        airs_by_type: dict[ImpactType, AssetImpactResult] = {}
+        for air in non_empty_airs:
+            impact_type = air.impact.impact_type
+            if impact_type in airs_by_type:
+                raise NotImplementedError(
+                    f"Multiple {impact_type.name} impacts for asset {ik.asset} and hazard type "
+                    f"{ik.hazard_type}: at most one damage and one disruption impact are "
+                    "permitted per acute hazard."
+                )
+            airs_by_type[impact_type] = air
+
+        curves: dict[ImpactType, tuple[ImpactDistrib, ExceedanceCurve]] = {}
+        for impact_type, air in airs_by_type.items():
+            exceed_curve = air.impact.to_exceedance_curve()
+            if exceed_curve.get_value(1.0 / 1500.0) > 1e-6:
+                curves[impact_type] = (air.impact, exceed_curve)
+
+        if curves:
+            impacts_exceed_curves[ik] = AcuteImpactCurves(
+                damage=curves.get(ImpactType.damage),
+                disruption=curves.get(ImpactType.disruption),
+            )
             acute_impacted_assets[ik.hazard_type].add(ik.asset)
 
     return (
@@ -182,10 +212,10 @@ def _classify_impacts(
 
 def _build_acute_structures(
     acute_impacted_assets: dict[type[Hazard], set[Asset]],
-    impacts_exceed_curves: dict[ImpactKey, tuple[ImpactDistrib, ExceedanceCurve]],
+    impacts_exceed_curves: dict[ImpactKey, AcuteImpactCurves],
 ) -> tuple[
     list[Asset],
-    dict[type[Hazard], list[tuple[ImpactDistrib, ExceedanceCurve]]],
+    dict[type[Hazard], list[AcuteImpactCurves]],
     dict[type[Hazard], list[int]],
 ]:
     """Build the sorted asset list, exceedance-curve lookups, and index maps for acute hazards."""
@@ -202,9 +232,9 @@ def _build_acute_structures(
     )
 
     idx_lookup = {val: i for i, val in enumerate(all_acute_impacted_assets)}
-    impacts_exceed_curves_sorted: dict[
-        type[Hazard], list[tuple[ImpactDistrib, ExceedanceCurve]]
-    ] = defaultdict(list)
+    impacts_exceed_curves_sorted: dict[type[Hazard], list[AcuteImpactCurves]] = (
+        defaultdict(list)
+    )
     idx_in_all_acute_impacted_assets: dict[type[Hazard], list[int]] = defaultdict(list)
 
     for hazard_type, assets in acute_impacted_assets.items():
@@ -350,20 +380,35 @@ def _run_simulation(
             sz_to_assets = severity_provider.severity_zone_to_asset_indices(hazard_type)
             for sz_idx in range(inv_severities.shape[0]):
                 for asset_idx in sz_to_assets[sz_idx]:
-                    _, exceed_curve = impacts_ec[asset_idx]
-                    impact_samples = exceed_curve.get_samples(
-                        1.0 - inv_severities[sz_idx, :]
-                    )
+                    curves = impacts_ec[asset_idx]
+                    # same event -> same quantiles are applied to both the damage and
+                    # disruption curves, so the two stay correlated to the one event.
+                    quantiles = 1.0 - inv_severities[sz_idx, :]
                     idx_in_all_acute_impacted_assets = non_zero_indices[asset_idx]
                     asset = inputs.all_acute_impacted_assets[
                         idx_in_all_acute_impacted_assets
                     ]
-                    damage, revenue_loss = (
-                        financial_model.frac_damage_to_restoration_cost_and_revenue_loss(
-                            asset, impact_samples, "EUR"
+                    damage = np.zeros_like(quantiles)
+                    revenue_loss = np.zeros_like(quantiles)
+                    if curves.damage is not None:
+                        _, damage_curve = curves.damage
+                        damage_samples = damage_curve.get_samples(quantiles)
+                        damage, downtime_revenue_loss = (
+                            financial_model.frac_damage_to_restoration_cost_and_revenue_loss(
+                                asset, damage_samples, "EUR"
+                            )
                         )
-                    )
-                    # mitigation of losses through insurance claims:
+                        revenue_loss = revenue_loss + downtime_revenue_loss
+                    if curves.disruption is not None:
+                        _, disruption_curve = curves.disruption
+                        disruption_samples = disruption_curve.get_samples(quantiles)
+                        revenue_loss = revenue_loss + (
+                            financial_model.frac_disruption_to_revenue_loss(
+                                asset, disruption_samples, inputs.year, "EUR"
+                            )
+                        )
+                    # mitigation of losses through insurance claims (applied once to the
+                    # combined pre-insurance value, i.e. one policy per quantity type):
                     damage = damage - claim_payment(
                         damage,
                         idx_in_all_acute_impacted_assets,
@@ -466,32 +511,41 @@ def _asset_level_drilldown(
     # --- Acute hazards -----------------------------------------------------------
     for hazard_type, impacts_ec in inputs.impacts_exceed_curves_sorted.items():
         non_zero_indices = inputs.idx_in_all_acute_impacted_assets[hazard_type]
-        for asset_idx, (distrib, ec) in enumerate(impacts_ec):
+        for asset_idx, curves in enumerate(impacts_ec):
             asset = inputs.all_acute_impacted_assets[non_zero_indices[asset_idx]]
-
-            # Fractional impact at each return period; ensure non-decreasing after interp
-            frac_at_rp = ec.get_value(_DRILLDOWN_EXCEEDANCE_PROBS)
-            frac_at_rp = np.maximum.accumulate(frac_at_rp)
-
-            damage_at_rp, rev_loss_at_rp = (
-                financial_model.frac_damage_to_restoration_cost_and_revenue_loss(
-                    asset, frac_at_rp, "EUR"
-                )
-            )
-            mean_damage_arr, mean_rev_loss_arr = (
-                financial_model.frac_damage_to_restoration_cost_and_revenue_loss(
-                    asset, np.array([distrib.mean_impact()]), "EUR"
-                )
-            )
-
             tiv = asset_tiv[asset]
             revenue = asset_revenue[asset]
-            semi_std_damage = (
-                distrib.semi_standard_deviation()
-            )  # already fractional (per unit TIV)
 
-            results[RiskQuantityKey(QuantityType.DAMAGE, asset, None, hazard_type)] = (
-                Quantity(
+            # revenue loss is the sum of any downtime-driven loss (from damage) and any
+            # direct disruption loss, both at the same return periods / same event.
+            rev_loss_at_rp = np.zeros(len(_DRILLDOWN_EXCEEDANCE_PROBS))
+            mean_rev_loss = 0.0
+
+            if curves.damage is not None:
+                distrib, ec = curves.damage
+                # Fractional impact at each return period; ensure non-decreasing after interp
+                frac_at_rp = np.maximum.accumulate(
+                    ec.get_value(_DRILLDOWN_EXCEEDANCE_PROBS)
+                )
+
+                damage_at_rp, downtime_rev_loss_at_rp = (
+                    financial_model.frac_damage_to_restoration_cost_and_revenue_loss(
+                        asset, frac_at_rp, "EUR"
+                    )
+                )
+                mean_damage_arr, mean_downtime_rev_loss_arr = (
+                    financial_model.frac_damage_to_restoration_cost_and_revenue_loss(
+                        asset, np.array([distrib.mean_impact()]), "EUR"
+                    )
+                )
+
+                semi_std_damage = (
+                    distrib.semi_standard_deviation()
+                )  # already fractional (per unit TIV)
+
+                results[
+                    RiskQuantityKey(QuantityType.DAMAGE, asset, None, hazard_type)
+                ] = Quantity(
                     values=None,
                     exceedance_curve=ExceedanceCurve(
                         _DRILLDOWN_EXCEEDANCE_PROBS,
@@ -502,11 +556,35 @@ def _asset_level_drilldown(
                     else float(mean_damage_arr[0]),
                     semi_standard_deviation=semi_std_damage,
                 )
-            )
 
-            # REVENUE_LOSS from acute downtime (often zero when no downtime model is configured)
-            rev_loss_at_rp = np.maximum.accumulate(rev_loss_at_rp)
-            mean_rev_loss = float(mean_rev_loss_arr[0])
+                # REVENUE_LOSS from acute downtime (often zero when no downtime model is configured)
+                rev_loss_at_rp = rev_loss_at_rp + np.maximum.accumulate(
+                    downtime_rev_loss_at_rp
+                )
+                mean_rev_loss += float(mean_downtime_rev_loss_arr[0])
+
+            if curves.disruption is not None:
+                distrib, ec = curves.disruption
+                frac_at_rp = np.maximum.accumulate(
+                    ec.get_value(_DRILLDOWN_EXCEEDANCE_PROBS)
+                )
+
+                disruption_rev_loss_at_rp = (
+                    financial_model.frac_disruption_to_revenue_loss(
+                        asset, frac_at_rp, inputs.year, "EUR"
+                    )
+                )
+                mean_disruption_rev_loss_arr = (
+                    financial_model.frac_disruption_to_revenue_loss(
+                        asset, np.array([distrib.mean_impact()]), inputs.year, "EUR"
+                    )
+                )
+
+                rev_loss_at_rp = rev_loss_at_rp + np.maximum.accumulate(
+                    disruption_rev_loss_at_rp
+                )
+                mean_rev_loss += float(mean_disruption_rev_loss_arr[0])
+
             if mean_rev_loss > 0.0 or np.any(rev_loss_at_rp > 0.0):
                 results[
                     RiskQuantityKey(QuantityType.REVENUE_LOSS, asset, None, hazard_type)
@@ -688,6 +766,7 @@ def aggregate_impacts(
         idx_in_all_acute_impacted_assets=idx_in_all_acute_impacted_assets,  # indices of assets with acute impact for hazard
         chronic_impacts_sorted=chronic_impacts_sorted,
         chronic_hazards_in_scope=chronic_hazards_in_scope,
+        year=key_year if key_year is not None else 0,
     )
     asset_tiv = {
         asset: financial_model.financial_data_provider.total_insurable_value(

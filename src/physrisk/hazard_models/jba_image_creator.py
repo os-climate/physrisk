@@ -286,23 +286,20 @@ class JBAImageCreator(HazardImageCreator):
         self, resource_id: str, return_period: int, tile_specs: List[TileSpec]
     ):
         """Download all tiles concurrently and return them in the same order."""
-        try:
-            async with aiohttp.ClientSession(
-                proxy=self.credentials.proxies()["https"],
-                auth=aiohttp.BasicAuth(
-                    self.credentials.jba_vision_username(),
-                    self.credentials.jba_vision_password(),
-                ),
-            ) as session:
-                tasks = []
-                for z, x, y in tile_specs:
-                    url = self.templates_tiles[
-                        self._identifier(self.tileset, resource_id, return_period)
-                    ].format(TileMatrix=z, TileCol=x, TileRow=y)
-                    tasks.append(self._fetch_tile(session, url))
-                return await asyncio.gather(*tasks)
-        except Exception as e:
-            logger.exception(e)
+        async with aiohttp.ClientSession(
+            proxy=self.credentials.proxies()["https"],
+            auth=aiohttp.BasicAuth(
+                self.credentials.jba_vision_username(),
+                self.credentials.jba_vision_password(),
+            ),
+        ) as session:
+            tasks = []
+            for z, x, y in tile_specs:
+                url = self.templates_tiles[
+                    self._identifier(self.tileset, resource_id, return_period)
+                ].format(TileMatrix=z, TileCol=x, TileRow=y)
+                tasks.append(self._fetch_tile(session, url))
+            return await asyncio.gather(*tasks)
 
     def _stitch_tiles(self, tiles, grid=(2, 2)):
         """

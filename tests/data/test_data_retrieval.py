@@ -1,14 +1,14 @@
 import asyncio
-from collections import defaultdict
 import logging
 import os
 import time
-import pytest
-from typing import List, Optional, Sequence, Type
+from collections import defaultdict
+from typing import Sequence
 
 # import fsspec.implementations.local as local  # type: ignore
 import numpy as np
 import numpy.testing
+import pytest
 import scipy.interpolate
 import zarr
 from fsspec.implementations.memory import MemoryFileSystem
@@ -20,12 +20,13 @@ from physrisk.api.v1.hazard_data import (
     Scenario,
 )
 from physrisk.data.hazard_data_provider import (
-    CascadingHazardDataProvider,
-    HazardDataHint,
-    ResourcePaths,
-    ScenarioPaths,
+    HazardResourceSelector,
+)
+from physrisk.data.scenario_year_resolution import (
     ScenarioYear,
-    SourcePaths,
+    InterpolatedYearResolver,
+    interpolate_year,
+    resolve_exact_year,
 )
 from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.data.inventory_reader import InventoryReader
@@ -35,7 +36,7 @@ from physrisk.data.pregenerated_hazard_model import (
 )
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.kernel.hazard_model import HazardDataFailedResponse, HazardDataRequest
-from physrisk.kernel.hazards import Hazard, RiverineInundation, Wind
+from physrisk.kernel.hazards import RiverineInundation, Wind
 from physrisk.requests import _get_hazard_data_availability
 
 # from pathlib import PurePosixPath
@@ -344,9 +345,14 @@ def test_reproject():
 
 
 def test_years_interpolation():
-    weights = CascadingHazardDataProvider._weights(
-        "ssp585", [2050, 2060, 2080], [2040, 2050, 2065, 2090], 2025
-    )
+    available = Scenario(id="ssp585", years=[2050, 2060, 2080])
+    historical = ScenarioYear("historical", -1)
+    weights = {
+        ScenarioYear("ssp585", year): interpolate_year(
+            ScenarioYear("ssp585", year), available, historical, 2025
+        )
+        for year in [2040, 2050, 2065, 2090]
+    }
     assert weights[ScenarioYear("ssp585", 2040)].weights[0][0].scenario == "historical"
     assert weights[ScenarioYear("ssp585", 2040)].weights[0][1] == (2050.0 - 2040.0) / (
         2050.0 - 2025.0
@@ -362,7 +368,15 @@ def test_years_interpolation():
     # v_e = v_2 + (y_e - y_2) * (v_2 - v_1) / (y_2 - y_1)
     # w1 = - (y_e - y_2) / (y_2 - y_1)
     # w2 = 1 + (y_e - y_2) / (y_2 - y_1)
-    weights = CascadingHazardDataProvider._weights("ssp585", [2050], [2040, 2090], 2025)
+    weights = {
+        ScenarioYear("ssp585", year): interpolate_year(
+            ScenarioYear("ssp585", year),
+            Scenario(id="ssp585", years=[2050]),
+            historical,
+            2025,
+        )
+        for year in [2040, 2090]
+    }
     assert weights[ScenarioYear("ssp585", 2090)].weights[0][0].year == -1
 
 
@@ -415,52 +429,33 @@ def test_cascading_sources_and_interpolation():
     assert value is not None
 
 
-class SourcePathsTest(SourcePaths):
+class HazardResourceSelectorTest(HazardResourceSelector):
     def __init__(self, cascade: bool = True):
         self.cascade = cascade
 
-    def hazard_types(self):
-        return [RiverineInundation]
+    def hazard_indicators(self):
+        return {RiverineInundation: ["flood_depth"]}
 
-    def resource_paths(
-        self,
-        hazard_type: Type[Hazard],
-        indicator_id: str,
-        scenarios: Sequence[str],
-        hint: Optional[HazardDataHint] = None,
-    ) -> List[ResourcePaths]:
-        # try Europe-specific first and then the whole-world
-        result = [
-            ResourcePaths(
-                resource_path="",
-                scenarios={
-                    "ssp585": ScenarioPaths(
-                        years=[2030, 2050, 2080],
-                        path=lambda f: "test_set_europe_only",
-                    ),
-                    "historical": ScenarioPaths(
-                        years=[-1], path=lambda f: "test_set_europe_only"
-                    ),
-                },
-                units="m",
-            )
-        ]
+    def get_resources(self, hazard_type, indicator_id, hint=None):
+        paths = ["test_set_europe_only"]
         if self.cascade:
-            result.append(
-                ResourcePaths(
-                    resource_path="",
-                    scenarios={
-                        "ssp585": ScenarioPaths(
-                            years=[2030, 2050, 2080], path=lambda f: "test_set_world"
-                        ),
-                        "historical": ScenarioPaths(
-                            years=[-1], path=lambda f: "test_set_world"
-                        ),
-                    },
-                    units="m",
-                )
+            paths.append("test_set_world")
+        return [
+            HazardResource(
+                hazard_type=hazard_type.__name__,
+                indicator_id=indicator_id,
+                path=path,
+                scenarios=[
+                    Scenario(id="ssp585", years=[2030, 2050, 2080]),
+                    Scenario(id="historical", years=[-1]),
+                ],
+                units="m",
+                indicator_model_gcm="",
+                display_name="",
+                description="",
             )
-        return result
+            for path in paths
+        ]
 
 
 def test_cascade():
@@ -532,8 +527,12 @@ def test_cascade():
         ]
     )
 
-    source_paths = SourcePathsTest(cascade=True)
-    hazard_model = ZarrHazardModel(source_paths=source_paths, store=mocker.store)
+    resource_selector = HazardResourceSelectorTest(cascade=True)
+    hazard_model = ZarrHazardModel(
+        scenario_year_resolver=resolve_exact_year,
+        resource_selector=resource_selector,
+        store=mocker.store,
+    )
     response = hazard_model.get_hazard_data(requests)
     np.testing.assert_almost_equal(
         response[requests[0]].intensities,
@@ -601,8 +600,12 @@ def test_error_cases():
         for lat, lon in zip(lats[0:1], lons[0:1])
     ]
 
-    source_paths = SourcePathsTest(cascade=False)
-    hazard_model = ZarrHazardModel(source_paths=source_paths, store=mocker.store)
+    resource_selector = HazardResourceSelectorTest(cascade=False)
+    hazard_model = ZarrHazardModel(
+        scenario_year_resolver=resolve_exact_year,
+        resource_selector=resource_selector,
+        store=mocker.store,
+    )
     response = hazard_model.get_hazard_data(requests)
     np.testing.assert_almost_equal(
         response[requests[0]].intensities,
@@ -642,36 +645,29 @@ def test_provider_error_propagates_inside_running_event_loop():
         asyncio.run(get_hazard_data())
 
 
-class SourcePathsYearsInterpolationTest(SourcePaths):
+class YearInterpolationResourceSelectorTest(HazardResourceSelector):
     def __init__(self, years: Sequence[int] = [2030, 2050, 2080]):
         self.years = years
 
-    def hazard_types(self):
-        return [RiverineInundation, Wind]
+    def hazard_indicators(self):
+        return {RiverineInundation: ["flood_depth"], Wind: ["max_speed"]}
 
-    def resource_paths(
-        self,
-        hazard_type: Type[Hazard],
-        indicator_id: str,
-        scenarios: Sequence[str],
-        hint: Optional[HazardDataHint] = None,
-    ) -> List[ResourcePaths]:
-        result = [
-            ResourcePaths(
-                resource_path="",
-                scenarios={
-                    "ssp585": ScenarioPaths(
-                        years=self.years,
-                        path=lambda f: f"test_set_europe_only_{f}",
-                    ),
-                    "historical": ScenarioPaths(
-                        years=[-1], path=lambda f: "test_set_europe_only_historical"
-                    ),
-                },
+    def get_resources(self, hazard_type, indicator_id, hint=None):
+        return [
+            HazardResource(
+                hazard_type=hazard_type.__name__,
+                indicator_id=indicator_id,
+                path="test_set_europe_only_{year}",
+                scenarios=[
+                    Scenario(id="ssp585", years=list(self.years)),
+                    Scenario(id="historical", years=[-1]),
+                ],
                 units="m",
+                indicator_model_gcm="",
+                display_name="",
+                description="",
             )
         ]
-        return result
 
 
 def test_end_to_end_interpolation_years():
@@ -686,7 +682,7 @@ def test_end_to_end_interpolation_years():
         [1.3, 1.8, 2.3],
     ]  # 2050
 
-    filenames = ["test_set_europe_only_historical"] + [
+    filenames = ["test_set_europe_only_-1"] + [
         f"test_set_europe_only_{year}" for year in [2030, 2050, 2080]
     ]
     for i, filename in enumerate(filenames):
@@ -741,9 +737,11 @@ def test_end_to_end_interpolation_years():
         ]
     )
 
-    source_paths = SourcePathsYearsInterpolationTest()
+    resource_selector = YearInterpolationResourceSelectorTest()
     hazard_model = ZarrHazardModel(
-        source_paths=source_paths, store=mocker.store, interpolate_years=True
+        resource_selector=resource_selector,
+        store=mocker.store,
+        scenario_year_resolver=InterpolatedYearResolver(),
     )
     response = hazard_model.get_hazard_data(requests)
     expected_2027 = (3.0 / 5.0) * np.array([1.0, 1.5, 2.0]) + (2.0 / 5.0) * np.array(
@@ -764,7 +762,7 @@ def test_interpolation_monotonic():
     lons = [1.1, -0.31]
     lats = [47.0, 52.0]
 
-    filenames = ["test_set_europe_only_historical", "test_set_europe_only_2050"]
+    filenames = ["test_set_europe_only_-1", "test_set_europe_only_2050"]
     returns = np.array(
         [
             10.000000,
@@ -867,9 +865,11 @@ def test_interpolation_monotonic():
         for lat, lon in zip(lats[0:2], lons[0:2])
     ]
 
-    source_paths = SourcePathsYearsInterpolationTest(years=[2050])
+    resource_selector = YearInterpolationResourceSelectorTest(years=[2050])
     hazard_model = ZarrHazardModel(
-        source_paths=source_paths, store=mocker.store, interpolate_years=True
+        resource_selector=resource_selector,
+        store=mocker.store,
+        scenario_year_resolver=InterpolatedYearResolver(),
     )
     response = hazard_model.get_hazard_data(requests)
     np.testing.assert_almost_equal(
@@ -920,8 +920,12 @@ def test_buffer_integration():
         for lat, lon in zip(lats, lons)
     ]
 
-    source_paths = SourcePathsTest(cascade=False)
-    hazard_model = ZarrHazardModel(source_paths=source_paths, store=mocker.store)
+    resource_selector = HazardResourceSelectorTest(cascade=False)
+    hazard_model = ZarrHazardModel(
+        scenario_year_resolver=resolve_exact_year,
+        resource_selector=resource_selector,
+        store=mocker.store,
+    )
     response = hazard_model.get_hazard_data(requests)
     np.testing.assert_almost_equal(
         response[requests[0]].intensities,

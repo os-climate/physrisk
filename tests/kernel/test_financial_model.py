@@ -1,7 +1,8 @@
 import numpy as np
 
+from physrisk.data.scenario_year_resolution import resolve_exact_year
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
-from physrisk.hazard_models.core_hazards import get_default_source_paths
+from physrisk.hazard_models.core_hazards import get_default_hazard_resource_selector
 from physrisk.kernel.assets import Asset, PowerGeneratingAsset
 from physrisk.kernel.financial_model import (
     DefaultFinancialModel,
@@ -42,7 +43,11 @@ def test_financial_model():
     # 1) The hazard models
     # 2) The vulnerability models
     # 3) The financial models
-    hazard_model = ZarrHazardModel(source_paths=get_default_source_paths(), store=store)
+    hazard_model = ZarrHazardModel(
+        scenario_year_resolver=resolve_exact_year,
+        resource_selector=get_default_hazard_resource_selector(),
+        store=store,
+    )
     model = LossModel(hazard_model=hazard_model)
     data_provider = MockFinancialDataProvider()
     financial_model = DefaultFinancialModel(data_provider, [])

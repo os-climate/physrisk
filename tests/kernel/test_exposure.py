@@ -13,7 +13,7 @@ from physrisk.container import DefaultHazardModelFactory
 from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.zarr_reader import ZarrReader
-from physrisk.hazard_models.core_hazards import get_default_source_paths
+from physrisk.hazard_models.core_hazards import get_default_hazard_resource_selector
 from physrisk.hazard_models.credentials_provider import EnvCredentialsProvider
 from physrisk.hazard_models.hazard_cache import GeometryH3BasedCache, MemoryStore
 from physrisk.kernel.assets import Asset
@@ -50,7 +50,7 @@ def test_jupiter_exposure_service(get_components):
         hazard_model_factory=hazard_model_factory,
         vulnerability_models_factory=vulnerability_models_factory,
         inventory=inventory,
-        source_paths=get_default_source_paths(inventory),
+        resource_selector=get_default_hazard_resource_selector(inventory),
         inventory_reader=InventoryReader(fs=local.LocalFileSystem(), base_path=""),
         reader=ZarrReader(store=store),
         colormaps=inventory.colormaps(),
@@ -138,7 +138,7 @@ def get_components():
         cache_store=GeometryH3BasedCache(MemoryStore()),
         credentials=EnvCredentialsProvider(),
         inventory=inventory,
-        source_paths=get_default_source_paths(EmbeddedInventory()),
+        resource_selector=get_default_hazard_resource_selector(EmbeddedInventory()),
         store=store,
     )
 

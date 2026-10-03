@@ -182,7 +182,7 @@ def test_interpolation(mock_inventory, zarr_store):
     )
 
     rgba = np.array(
-        [[3359392974, 3361568744], [3363412211, 3364135926]], dtype=np.uint32
+        [[3359327438, 3361634792], [3363478004, 3364201462]], dtype=np.uint32
     )
     image_bytes = io.BytesIO()
     Image.fromarray(rgba, mode="RGBA").save(image_bytes, format="PNG")
@@ -204,7 +204,7 @@ _TEST_REQUEST_DICT = {
 
 def _expected_test_image_bytes():
     rgba = np.array(
-        [[3359392974, 3361568744], [3363412211, 3364135926]], dtype=np.uint32
+        [[3359327438, 3361634792], [3363478004, 3364201462]], dtype=np.uint32
     )
     image_bytes = io.BytesIO()
     Image.fromarray(rgba, mode="RGBA").save(image_bytes, format="PNG")

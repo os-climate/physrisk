@@ -1,6 +1,5 @@
 import sys
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
 from typing import (
     Any,
     Dict,
@@ -324,9 +323,9 @@ class HazardModelFactory(Protocol):
         """
         ...
 
-    def image_creator(
-        self,
-    ) -> HazardImageCreator: ...
+    def image_creator(self, interpolate_years: bool = True) -> HazardImageCreator:
+        """Create images using the same year policy selected for hazard data."""
+        ...
 
 
 class DataSource(Protocol):

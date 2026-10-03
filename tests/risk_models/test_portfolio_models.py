@@ -1,27 +1,29 @@
 import logging
 from typing import Dict, Optional, cast
 
-from dependency_injector import providers
 import numpy as np
+from dependency_injector import providers
 import pytest
 
-from physrisk.api.v1.common import Asset as APIAsset, Assets
+from physrisk.api.v1.common import Asset as APIAsset
+from physrisk.api.v1.common import Assets
 from physrisk.api.v1.impact_req_resp import (
-    AssetMeasuresSpecification,
     AssetImpactRequest,
+    AssetMeasuresSpecification,
     CalcSettings,
     RiskMeasuresForAssets,
     ScoreBasedRiskMeasuresForAssets,
 )
 from physrisk.container import Container
+from physrisk.data.scenario_year_resolution import resolve_exact_year
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
-from physrisk.hazard_models.core_hazards import get_default_source_paths
+from physrisk.hazard_models.core_hazards import get_default_hazard_resource_selector
 from physrisk.kernel.assets import Asset, ManufacturingAsset, OEDAsset
+from physrisk.kernel.calculation import DefaultMeasuresFactory
 from physrisk.kernel.financial_model import (
     DefaultFinancialModel,
     FinancialDataProvider,
 )
-from physrisk.kernel.calculation import DefaultMeasuresFactory
 from physrisk.kernel.hazard_model import HazardModelFactory
 from physrisk.kernel.hazards import (
     ChronicHeat,
@@ -38,14 +40,13 @@ from physrisk.kernel.impact_aggregator import (
     SimpleEventInsuranceProvider,
     aggregate_impacts,
 )
-from physrisk.kernel.insurance_model import SectoralInsuranceData
 from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
+from physrisk.kernel.insurance_model import SectoralInsuranceData
 from physrisk.kernel.risk import QuantityType, RiskQuantityKey
 from physrisk.risk_models.portfolio_risk_model import CompanyRiskMeasureCalculator
 from physrisk.vulnerability_models.vulnerability import VulnerabilityModelsFactory
-from tests.data.test_hazard_model_store import ZarrStoreMocker
+from tests.data.test_hazard_model_store import ZarrStoreMocker, get_hazard_path
 from tests.vulnerability_models.test_config_based_vulnerability import create_store
-
 
 logger = logging.getLogger(__name__)
 
@@ -596,7 +597,11 @@ def test_impact_aggregation_end_to_end() -> None:
     latitudes = [22.30224, 22.31150, 22.45022, 22.27034]
     longitudes = [114.18670, 114.17774, 114.02882, 114.19268]
     store = create_store(latitudes, longitudes)
-    hazard_model = ZarrHazardModel(source_paths=get_default_source_paths(), store=store)
+    hazard_model = ZarrHazardModel(
+        scenario_year_resolver=resolve_exact_year,
+        resource_selector=get_default_hazard_resource_selector(),
+        store=store,
+    )
 
     class TestHazardModelFactory(HazardModelFactory):
         def hazard_model(
@@ -678,16 +683,16 @@ def test_impact_aggregation_end_to_end_multi_hazard() -> None:
     years = [2050]
     latitudes = [22.30224, 22.31150, 22.45022, 22.27034, 22.35000, 22.40000]
     longitudes = [114.18670, 114.17774, 114.02882, 114.19268, 114.10000, 114.15000]
-    source_paths = get_default_source_paths()
+    resource_selector = get_default_hazard_resource_selector()
 
     def hp(hazard_type, indicator_id, scenario):
         y = -1 if scenario == "historical" else 2050
-        return (
-            source_paths.resource_paths(
-                hazard_type, indicator_id=indicator_id, scenarios=[scenario]
-            )[0]
-            .scenarios[scenario]
-            .path(y)
+        return get_hazard_path(
+            resource_selector,
+            hazard_type,
+            indicator_id=indicator_id,
+            scenario=scenario,
+            year=y,
         )
 
     mocker = ZarrStoreMocker()
@@ -843,7 +848,11 @@ def test_impact_aggregation_end_to_end_multi_hazard() -> None:
             np.array([0.0]),
         )
 
-    hazard_model = ZarrHazardModel(source_paths=source_paths, store=mocker.store)
+    hazard_model = ZarrHazardModel(
+        scenario_year_resolver=resolve_exact_year,
+        resource_selector=resource_selector,
+        store=mocker.store,
+    )
 
     class TestHazardModelFactory(HazardModelFactory):
         def hazard_model(

@@ -2,11 +2,16 @@ from typing import Dict, MutableMapping, Optional
 
 from dependency_injector import containers, providers
 
-from physrisk.data.hazard_data_provider import SourcePaths
+from physrisk.data.hazard_data_provider import HazardResourceSelector
+from physrisk.data.scenario_year_resolution import (
+    InterpolatedYearResolver,
+    resolve_exact_year,
+)
 from physrisk.data.image_creator import ImageCreator
 from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.zarr_reader import ZarrReader
+from physrisk.hazard_models.core_hazards import get_default_hazard_resource_selector
 from physrisk.hazard_models.credentials_provider import (
     CredentialsProvider,
     EnvCredentialsProvider,
@@ -22,14 +27,17 @@ from physrisk.kernel.hazard_model import HazardModelFactory
 from physrisk.kernel.hazards import Hazard
 from physrisk.kernel.vulnerability_model import (
     DictBasedVulnerabilityModels,
+)
+from physrisk.kernel.vulnerability_model import (
     VulnerabilityModels as PVulnerabilityModels,
+)
+from physrisk.kernel.vulnerability_model import (
     VulnerabilityModelsFactory as PVulnerabilityModelsFactory,
 )
 from physrisk.requests import (
     PhysriskDefaultEncoder,
     Requester,
     _create_inventory,
-    create_source_paths,
 )
 from physrisk.vulnerability_models.config_based_vuln_model_acute import (
     StandardOfProtection,
@@ -46,7 +54,7 @@ class DefaultHazardModelFactory(HazardModelFactory):
         cache_store: GeometryH3BasedCache,
         credentials: CredentialsProvider,
         inventory: Inventory,
-        source_paths: SourcePaths,
+        resource_selector: HazardResourceSelector,
         store: Optional[MutableMapping] = None,
         reader: Optional[ZarrReader] = None,
         default_interpolation: str = "floor",
@@ -54,17 +62,12 @@ class DefaultHazardModelFactory(HazardModelFactory):
     ):
         self.cache_store = cache_store
         self.inventory = inventory
-        self.source_paths = source_paths
+        self.resource_selector = resource_selector
         self.store = store
         self.reader = reader
         self.default_interpolation = default_interpolation
         self.credentials = credentials
         self.zarr_max_workers = zarr_max_workers
-        self.zarr_image_creator = (
-            ImageCreator(inventory, source_paths, reader)
-            if reader is not None
-            else None
-        )
         self.jba_image_creator = (
             JBAImageCreator(credentials)
             if credentials.jba_vision_password() != ""
@@ -82,7 +85,7 @@ class DefaultHazardModelFactory(HazardModelFactory):
         return CompositeHazardModel(
             cache_store=self.cache_store,
             credentials=self.credentials,
-            source_paths=self.source_paths,
+            resource_selector=self.resource_selector,
             store=self.store,
             reader=self.reader,
             interpolation=interpolation
@@ -90,13 +93,28 @@ class DefaultHazardModelFactory(HazardModelFactory):
             else self.default_interpolation,
             provider_max_requests=provider_max_requests,
             restrict_coverage=False,
-            interpolate_years=interpolate_years,
+            scenario_year_resolver=(
+                InterpolatedYearResolver() if interpolate_years else resolve_exact_year
+            ),
             use_jba_coastal=False,
             zarr_max_workers=self.zarr_max_workers,
         )
 
-    def image_creator(self):
-        return CombinedImageCreator(self.zarr_image_creator, self.jba_image_creator)
+    def image_creator(self, interpolate_years: bool = True):
+        image_creator = (
+            ImageCreator(
+                self.inventory,
+                self.reader,
+                (
+                    InterpolatedYearResolver()
+                    if interpolate_years
+                    else resolve_exact_year
+                ),
+            )
+            if self.reader is not None
+            else None
+        )
+        return CombinedImageCreator(image_creator, self.jba_image_creator)
 
 
 class DictBasedVulnerabilityModelsFactory(PVulnerabilityModelsFactory):
@@ -153,7 +171,9 @@ class Container(containers.DeclarativeContainer):
 
     sig_figures = providers.Object(4)  # -1 indicates no rounding
 
-    source_paths = providers.Factory(create_source_paths, inventory=inventory)
+    resource_selector = providers.Factory(
+        get_default_hazard_resource_selector, inventory=inventory
+    )
 
     zarr_store = providers.Singleton(ZarrReader.create_s3_zarr_store)
 
@@ -168,7 +188,7 @@ class Container(containers.DeclarativeContainer):
         credentials=credentials,
         inventory=inventory,
         reader=zarr_reader,
-        source_paths=source_paths,
+        resource_selector=resource_selector,
         zarr_max_workers=config.zarr_max_workers,
     )
 
@@ -182,7 +202,7 @@ class Container(containers.DeclarativeContainer):
         hazard_model_factory=hazard_model_factory,
         vulnerability_models_factory=vulnerability_models_factory,
         inventory=inventory,
-        source_paths=source_paths,
+        resource_selector=resource_selector,
         inventory_reader=inventory_reader,
         reader=zarr_reader,
         colormaps=colormaps,

@@ -1,24 +1,27 @@
-import pytest
 import json
+
 import numpy as np
+import pytest
 from pydantic import ValidationError
 
+from physrisk import requests
+from physrisk.api.v1.hazard_data import HazardDataRequestItem
+from physrisk.container import Container
 from physrisk.data.hazard_data_provider import HazardDataHint
+from physrisk.data.scenario_year_resolution import resolve_exact_year
 from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
-from physrisk.hazard_models.core_hazards import get_default_source_paths
-from physrisk.api.v1.hazard_data import HazardDataRequestItem
+from physrisk.hazard_models.core_hazards import get_default_hazard_resource_selector
 from physrisk.kernel.hazards import ChronicHeat, RiverineInundation
-from physrisk.container import Container
-from physrisk import requests
 
-from .test_container import TestContainer
 from ..data.test_hazard_model_store import (
     TestData,
+    get_hazard_path,
     get_mock_hazard_model_store_single_curve,
     mock_hazard_model_store_heat,
 )
+from .test_container import TestContainer
 
 
 def test_hazard_data_availability():
@@ -65,43 +68,39 @@ def test_available_sources(clear_credentials):
     assert resp != "[]"
 
 
-def test_generic_source_path():
+def test_default_resource_selector_paths():
     inventory = EmbeddedInventory()
-    source_paths = get_default_source_paths(inventory)
-    result_heat = (
-        source_paths.resource_paths(
-            ChronicHeat,
-            indicator_id="mean_degree_days/above/32c",
-            scenarios=["ssp585"],
-        )[0]
-        .scenarios["ssp585"]
-        .path(2050)
+    resource_selector = get_default_hazard_resource_selector(inventory)
+    result_heat = get_hazard_path(
+        resource_selector,
+        ChronicHeat,
+        indicator_id="mean_degree_days/above/32c",
+        scenario="ssp585",
+        year=2050,
     )
-    result_flood = (
-        source_paths.resource_paths(
-            RiverineInundation, indicator_id="flood_depth", scenarios=["ssp585"]
-        )[0]
-        .scenarios["ssp585"]
-        .path(2050)
+    result_flood = get_hazard_path(
+        resource_selector,
+        RiverineInundation,
+        indicator_id="flood_depth",
+        scenario="ssp585",
+        year=2050,
     )
-    result_flood_hist = (
-        source_paths.resource_paths(
-            RiverineInundation, indicator_id="flood_depth", scenarios=["historical"]
-        )[0]
-        .scenarios["historical"]
-        .path(2080)
+    result_flood_hist = get_hazard_path(
+        resource_selector,
+        RiverineInundation,
+        indicator_id="flood_depth",
+        scenario="historical",
+        year=2080,
     )
-    result_heat_hint = (
-        source_paths.resource_paths(
-            ChronicHeat,
-            indicator_id="mean_degree_days/above/32c",
-            scenarios=["ssp585"],
-            hint=HazardDataHint(
-                path="chronic_heat/osc/v2/mean_degree_days_v2_above_32c_CMCC-ESM2_{scenario}_{year}"
-            ),
-        )[0]
-        .scenarios["ssp585"]
-        .path(2050)
+    result_heat_hint = get_hazard_path(
+        resource_selector,
+        ChronicHeat,
+        indicator_id="mean_degree_days/above/32c",
+        scenario="ssp585",
+        year=2050,
+        hint=HazardDataHint(
+            path="chronic_heat/osc/v2/mean_degree_days_v2_above_32c_CMCC-ESM2_{scenario}_{year}"
+        ),
     )
 
     assert (
@@ -139,7 +138,8 @@ def test_zarr_reading():
     result = requests._get_hazard_data(
         request,
         ZarrHazardModel(
-            source_paths=get_default_source_paths(EmbeddedInventory()),
+            scenario_year_resolver=resolve_exact_year,
+            resource_selector=get_default_hazard_resource_selector(EmbeddedInventory()),
             reader=ZarrReader(store=store),
         ),
     )
@@ -176,10 +176,14 @@ def test_zarr_reading_chronic():
 
     store = mock_hazard_model_store_heat(TestData.longitudes, TestData.latitudes)
 
-    source_paths = get_default_source_paths(EmbeddedInventory())
+    resource_selector = get_default_hazard_resource_selector(EmbeddedInventory())
     result = requests._get_hazard_data(
         request,
-        ZarrHazardModel(source_paths=source_paths, reader=ZarrReader(store)),
+        ZarrHazardModel(
+            scenario_year_resolver=resolve_exact_year,
+            resource_selector=resource_selector,
+            reader=ZarrReader(store),
+        ),
     )
     np.testing.assert_array_almost_equal_nulp(
         result.items[0].intensity_curve_set[0].intensities[0], 600.0

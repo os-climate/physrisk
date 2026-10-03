@@ -21,10 +21,14 @@ import aiohttp
 import numpy as np
 from shapely.geometry.base import BaseGeometry
 
-from physrisk.data.hazard_data_provider import (
-    CascadingHazardDataProvider,
-    ScenarioYear,
+from physrisk.api.v1.hazard_data import Scenario
+from physrisk.data.geocode import Geocoder
+from physrisk.data.scenario_year_resolution import ScenarioYear, interpolate_year
+from physrisk.hazard_models.credentials_provider import (
+    CredentialsProvider,
+    EnvCredentialsProvider,
 )
+from physrisk.hazard_models.hazard_cache import GeometryH3BasedCache
 from physrisk.kernel.hazard_model import (
     HazardDataFailedResponse,
     HazardDataRequest,
@@ -38,13 +42,7 @@ from physrisk.kernel.hazards import (
     PluvialInundation,
     RiverineInundation,
 )
-from physrisk.data.geocode import Geocoder
 from physrisk.utils.event_loop import get_loop, run
-from physrisk.hazard_models.credentials_provider import (
-    CredentialsProvider,
-    EnvCredentialsProvider,
-)
-from physrisk.hazard_models.hazard_cache import GeometryH3BasedCache
 
 logger = logging.getLogger(__name__)
 
@@ -239,14 +237,17 @@ class JBAHazardModel(HazardModel):
             # for interpolation, the list of pillar years for different requested years is calculated
             # ahead of time: e.g. 2036 needs 2030 and 2050 pillars.
             requested_years = sorted(list(all_years))
-            weights = CascadingHazardDataProvider._weights(
-                "ssp", self.pillar_years, requested_years, self.historical_year
+            pillars = Scenario(id="ssp", years=list(self.pillar_years))
+            historical = ScenarioYear("historical", -1)
+            pillar_years_lookup = {
+                year: interpolate_year(
+                    ScenarioYear("ssp", year), pillars, historical, self.historical_year
+                )
+                for year in requested_years
+            }
+            pillar_years_lookup[-1] = interpolate_year(
+                historical, pillars, historical, self.historical_year
             )
-            weights_histo = CascadingHazardDataProvider._weights(
-                "historical", self.pillar_years, requested_years, self.historical_year
-            )
-            pillar_years_lookup = {k.year: v for k, v in weights.items()}
-            pillar_years_lookup[-1] = weights_histo[ScenarioYear("historical", -1)]
             cache_keys: set[JBACacheKey] = (
                 set()
             )  # the set of cache keys to be requested (spatial key, year and scenario)

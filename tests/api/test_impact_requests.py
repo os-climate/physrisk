@@ -1,20 +1,25 @@
-import os
 import json
-from dependency_injector import providers
+import logging
+import os
+
 import numpy as np
 import pyproj
 import pytest
-from pydantic import TypeAdapter
 import shapely
-import logging
+from dependency_injector import providers
+from pydantic import TypeAdapter
+
+import physrisk.kernel.assets
 from physrisk import requests
 from physrisk.api.v1.common import Asset, Assets
+from physrisk.api.v1.impact_req_resp import RiskMeasures, RiskMeasuresHelper
+from physrisk.container import Container
+from physrisk.data.scenario_year_resolution import resolve_exact_year
 from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
-from physrisk.hazard_models.core_hazards import get_default_source_paths
+from physrisk.hazard_models.core_hazards import get_default_hazard_resource_selector
 from physrisk.hazard_models.hazard_cache import GeometryH3BasedCache, LMDBStore
-import physrisk.kernel.assets
 from physrisk.kernel.assets import (
     PowerGeneratingAsset,
     RealEstateAsset,
@@ -33,8 +38,6 @@ from physrisk.vulnerability_models.thermal_power_generation_models import (
     ThermalPowerGenerationWaterStressModel,
     ThermalPowerGenerationWaterTemperatureModel,
 )
-from physrisk.api.v1.impact_req_resp import RiskMeasures, RiskMeasuresHelper
-from physrisk.container import Container
 
 from ..data.test_hazard_model_store import (
     TestData,
@@ -127,7 +130,7 @@ def test_impact_request():
         TestData.longitudes, TestData.latitudes, curve
     )
 
-    source_paths = get_default_source_paths(EmbeddedInventory())
+    resource_selector = get_default_hazard_resource_selector(EmbeddedInventory())
     vulnerability_models = DictBasedVulnerabilityModels(
         {
             PowerGeneratingAsset: [InundationModel()],
@@ -140,7 +143,11 @@ def test_impact_request():
 
     response = requests._get_asset_impacts(
         request,
-        ZarrHazardModel(source_paths=source_paths, reader=ZarrReader(store)),
+        ZarrHazardModel(
+            scenario_year_resolver=resolve_exact_year,
+            resource_selector=resource_selector,
+            reader=ZarrReader(store),
+        ),
         vulnerability_models=vulnerability_models,
     )
 
@@ -185,7 +192,7 @@ def test_risk_model_impact_request():
         TestData.longitudes, TestData.latitudes, curve
     )
 
-    source_paths = get_default_source_paths(EmbeddedInventory())
+    resource_selector = get_default_hazard_resource_selector(EmbeddedInventory())
     vulnerability_models = DictBasedVulnerabilityModels(
         {
             PowerGeneratingAsset: [InundationModel()],
@@ -197,7 +204,11 @@ def test_risk_model_impact_request():
     )
     response = requests._get_asset_impacts(
         request,
-        ZarrHazardModel(source_paths=source_paths, reader=ZarrReader(store)),
+        ZarrHazardModel(
+            scenario_year_resolver=resolve_exact_year,
+            resource_selector=resource_selector,
+            reader=ZarrReader(store),
+        ),
         vulnerability_models=vulnerability_models,
     )
 
@@ -254,7 +265,7 @@ def test_thermal_power_generation(mocker_store):
 
     request = requests.AssetImpactRequest(**request_dict)  # type: ignore
 
-    source_paths = get_default_source_paths(EmbeddedInventory())
+    resource_selector = get_default_hazard_resource_selector(EmbeddedInventory())
     vulnerability_models = DictBasedVulnerabilityModels(
         {
             ThermalPowerGeneratingAsset: [
@@ -269,7 +280,11 @@ def test_thermal_power_generation(mocker_store):
 
     response = requests._get_asset_impacts(
         request,
-        ZarrHazardModel(source_paths=source_paths, reader=ZarrReader(mocker_store)),
+        ZarrHazardModel(
+            scenario_year_resolver=resolve_exact_year,
+            resource_selector=resource_selector,
+            reader=ZarrReader(mocker_store),
+        ),
         vulnerability_models=vulnerability_models,
         assets=None if assets_provided_in_the_request else assets,
     )
@@ -366,7 +381,11 @@ def test_thermal_power_generation(mocker_store):
     )
     response = requests._get_asset_impacts(
         request,
-        ZarrHazardModel(source_paths=source_paths, reader=ZarrReader(mocker_store)),
+        ZarrHazardModel(
+            scenario_year_resolver=resolve_exact_year,
+            resource_selector=resource_selector,
+            reader=ZarrReader(mocker_store),
+        ),
         vulnerability_models=vulnerability_models,
         assets=None if assets_provided_in_the_request else assets,
     )

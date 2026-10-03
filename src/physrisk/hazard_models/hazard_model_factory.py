@@ -1,11 +1,19 @@
 from collections import defaultdict
 from typing import Dict, List, Mapping, MutableMapping, Optional, Sequence
 
-from physrisk.data.inventory import Inventory
-from physrisk.data.hazard_data_provider import SourcePaths
+from physrisk.data.hazard_data_provider import HazardResourceSelector
+from physrisk.data.scenario_year_resolution import (
+    InterpolatedYearResolver,
+    ScenarioYearResolver,
+    resolve_exact_year,
+)
 from physrisk.data.image_creator import ImageCreator
+from physrisk.data.inventory import Inventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
+from physrisk.hazard_models.credentials_provider import CredentialsProvider
+from physrisk.hazard_models.hazard_cache import GeometryH3BasedCache
+from physrisk.hazard_models.jba_hazard_model import JBAHazardModel
 from physrisk.kernel.hazard_model import (
     HazardDataRequest,
     HazardDataResponse,
@@ -20,10 +28,6 @@ from physrisk.kernel.hazards import (
     RiverineInundation,
 )
 
-from physrisk.hazard_models.credentials_provider import CredentialsProvider
-from physrisk.hazard_models.hazard_cache import GeometryH3BasedCache
-from physrisk.hazard_models.jba_hazard_model import JBAHazardModel
-
 
 class HazardModelFactory(HazardModelFactoryPhysrisk):
     def __init__(
@@ -31,13 +35,13 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
         cache_store: GeometryH3BasedCache,
         credentials: CredentialsProvider,
         inventory: Inventory,
-        source_paths: SourcePaths,
+        resource_selector: HazardResourceSelector,
         store: Optional[MutableMapping] = None,
         reader: Optional[ZarrReader] = None,
         default_interpolation: str = "floor",
         zarr_max_workers: int = 32,
     ):
-        self.source_paths = source_paths
+        self.resource_selector = resource_selector
         self.cache_store = cache_store
         self.credentials = credentials
         self.inventory = inventory
@@ -55,19 +59,25 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
         return CompositeHazardModel(
             self.cache_store,
             self.credentials,
-            self.source_paths,
+            self.resource_selector,
             store=self.store,
             reader=self.reader,
             interpolation=interpolation
             if interpolation is not None
             else self.default_interpolation,
             provider_max_requests=provider_max_requests,
-            interpolate_years=interpolate_years,
+            scenario_year_resolver=(
+                InterpolatedYearResolver() if interpolate_years else resolve_exact_year
+            ),
             zarr_max_workers=self.zarr_max_workers,
         )
 
-    def image_creator(self):
-        return ImageCreator(self.inventory, self.source_paths, self.reader)
+    def image_creator(self, interpolate_years: bool = True):
+        return ImageCreator(
+            self.inventory,
+            self.reader,
+            (InterpolatedYearResolver() if interpolate_years else resolve_exact_year),
+        )
 
 
 class CompositeHazardModel(HazardModel):
@@ -79,13 +89,13 @@ class CompositeHazardModel(HazardModel):
         self,
         cache_store: GeometryH3BasedCache,
         credentials: CredentialsProvider,
-        source_paths: SourcePaths,
+        resource_selector: HazardResourceSelector,
+        scenario_year_resolver: ScenarioYearResolver,
         store: Optional[MutableMapping] = None,
         reader: Optional[ZarrReader] = None,
         interpolation: str = "floor",
         provider_max_requests: Dict[str, int] = {},
         restrict_coverage: bool = False,
-        interpolate_years: bool = False,
         use_jba_coastal: bool = False,
         zarr_max_workers: int = 32,
     ):
@@ -102,11 +112,11 @@ class CompositeHazardModel(HazardModel):
             else None
         )
         self.zarr_hazard_model = ZarrHazardModel(
-            source_paths=source_paths,
+            resource_selector=resource_selector,
             reader=reader,
             store=store,
             interpolation=interpolation,
-            interpolate_years=interpolate_years,
+            scenario_year_resolver=scenario_year_resolver,
             zarr_max_workers=zarr_max_workers,
         )
         self.use_jba_coastal = use_jba_coastal

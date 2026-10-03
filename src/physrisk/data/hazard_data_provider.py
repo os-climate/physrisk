@@ -18,7 +18,7 @@ from shapely import Point
 from typing_extensions import Protocol
 
 from physrisk.kernel.hazards import Hazard
-
+from physrisk.api.v1.hazard_data import HazardResource
 from .zarr_reader import ZarrReader
 
 
@@ -105,6 +105,36 @@ class SourcePaths(Protocol):
         map_zoom: Optional[int] = None,
     ) -> Dict[str, ScenarioPaths]:
         """Returns the ScenarioPaths when a unique ID is specified."""
+        ...
+
+
+class HazardResourceProvider(Protocol):
+    """Provides hazard resources and the hazard types represented by them."""
+
+    def hazard_types(self) -> list[type[Hazard]]:
+        """Return the hazard types with available resources.
+
+        Returns:
+            Hazard classes represented by the provider's resources.
+        """
+        ...
+
+    def get_resources(
+        self,
+        hazard_type: type[Hazard],
+        indicator_id: str,
+        hint: HazardDataHint | None = None,
+    ) -> list[HazardResource]:
+        """Return matching resources in cascade order.
+
+        Args:
+            hazard_type: Hazard class requested by the caller.
+            indicator_id: Identifier of the requested hazard indicator.
+            hint: Optional resource-selection hint.
+
+        Returns:
+            Matching resources ordered from most to least preferred.
+        """
         ...
 
 

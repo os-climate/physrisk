@@ -106,6 +106,33 @@ class EmbeddedInventory(Inventory):
                     source="map_array_pyramid",
                 ),
             )
+        yield HazardResource(
+            path="jba_sop_riverine",
+            hazard_type=RiverineInundation.__name__,
+            indicator_id="flood_sop",
+            indicator_model_gcm="",
+            display_name="JBA Risk Management riverine standard of protection",
+            description="Riverine standard of protection (defended return period), commercial flood model from JBA Risk Management (https://www.jbarisk.com/)",  # noqa: E501
+            scenarios=[
+                Scenario(id="historical", years=[2020]),
+            ],
+            units="years",
+            map=MapInfo(
+                path="jba_map",
+                bounds=[],
+                colormap=Colormap(
+                    min_index=1,
+                    min_value=0.0,
+                    max_index=255,
+                    max_value=2000.0,
+                    name="flare",
+                    nodata_index=0,
+                    units="years",
+                ),
+                index_values=None,
+                source="map_array_pyramid",
+            ),
+        )
 
 
 def alphanumeric(text):

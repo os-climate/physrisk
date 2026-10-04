@@ -23,6 +23,11 @@ class HazardImageInfoRequest(BaseHazardRequest):
     resource: str = Field(description="Hazard resource path (unique identifier).")
     scenario_id: str
     year: int
+    tile_size: Optional[Literal[256, 512]] = Field(
+        None,
+        description="Tile size in pixels that max_zoom should be reported for. "
+        "Defaults to 512. Only resources backed by JBA currently support 256.",
+    )
 
 
 class HazardImageInfoResponse(BaseHazardRequest):
@@ -40,6 +45,9 @@ class HazardImageInfoResponse(BaseHazardRequest):
     max_zoom: Optional[int] = Field(
         default=None,
         description="The maximum zoom level for which tiles are available.",
+    )
+    tile_size: int = Field(
+        512, description="The tile size (pixels) that max_zoom is reported for."
     )
 
 
@@ -59,6 +67,11 @@ class HazardImageRequest(BaseHazardRequest):
         None,
         description="Value-to-colour scaling: 'linear' or 'log'. "
         "'log' requires min_value > 0.",
+    )
+    tile_size: Optional[Literal[256, 512]] = Field(
+        None,
+        description="Output tile size in pixels. Defaults to 512. Only resources "
+        "backed by JBA currently support 256 (fewer upstream tile fetches, faster).",
     )
 
 

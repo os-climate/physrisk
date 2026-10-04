@@ -249,6 +249,7 @@ class HazardImageCreator(Protocol):
         max_value: Optional[float] = None,
         index_value: Optional[Union[str, float]] = None,
         scaling: str = "linear",
+        tile_size: Optional[int] = None,
     ):
         """Creates an image Tile for display on maps.
 
@@ -264,25 +265,31 @@ class HazardImageCreator(Protocol):
             index_value (Optional[str | float], optional): Value of the non-spatial 'index' dimension. Defaults to None.
             scaling (str): Value-to-colour scaling, 'linear' or 'log'.
                 'log' requires min_value > 0. Defaults to 'linear'.
+            tile_size (Optional[int], optional): Output tile size in pixels, 256 or 512.
+                Defaults to None, which resolves to 512. Implementations that only support
+                one size (currently everything other than JBA) should reject any other value.
         """
         ...
 
     def get_info(
-        self, resource_id: str, scenario: str, year: int
-    ) -> Tuple[Sequence[Any], Sequence[Any], str, str, Optional[int]]:
+        self, resource_id: str, scenario: str, year: int, tile_size: Optional[int] = None
+    ) -> Tuple[Sequence[Any], Sequence[Any], str, str, Optional[int], int]:
         """Provides additional image information required to create an image.
 
         Args:
             resource_id (str): Unique identifier of the resource.
             scenario (str): Scenario ID.
             year (int): Year for future scenarios.
+            tile_size (Optional[int], optional): Tile size in pixels, 256 or 512, that
+                max_zoom should be reported for. Defaults to None, which resolves to 512.
 
         Returns:
-            Tuple[Sequence[Any], Sequence[Any], str, str, Optional[int]]: All non-spatial ('index') coordinate values,
+            Tuple[Sequence[Any], Sequence[Any], str, str, Optional[int], int]: All non-spatial ('index') coordinate values,
             non-spatial ('index') coordinate values for which map data exists,
             display name,
             units,
-            maximum zoom level.
+            maximum zoom level (for the requested tile_size),
+            the resolved tile_size.
         """
         ...
 

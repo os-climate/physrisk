@@ -197,6 +197,26 @@ class TileSet:
 
 TileSpec = Tuple[int, int, int]  # (z, x, y)
 
+_SUPPORTED_TILE_SIZES = (256, 512)
+_DEFAULT_TILE_SIZE = 512
+
+# JBA's WMTS natively serves 256px tiles up to this zoom. Requesting a larger output
+# tile_size composites 256px tiles from one zoom level deeper, so the usable max zoom
+# is correspondingly coarser (one level per doubling of tile_size).
+_JBA_NATIVE_MAX_ZOOM = 16
+
+
+def _resolve_tile_size(tile_size: Optional[int]) -> int:
+    size = tile_size if tile_size is not None else _DEFAULT_TILE_SIZE
+    if size not in _SUPPORTED_TILE_SIZES:
+        raise ValueError(f"tile_size={size} is not supported; use one of {_SUPPORTED_TILE_SIZES}.")
+    return size
+
+
+def _jba_max_zoom(tile_size: int) -> int:
+    f = tile_size // 256
+    return _JBA_NATIVE_MAX_ZOOM - (f.bit_length() - 1)
+
 
 class JBAImageCreator(HazardImageCreator):
     """Create images by calling out to JBA WMTS."""
@@ -229,11 +249,13 @@ class JBAImageCreator(HazardImageCreator):
         max_value: Optional[float] = None,
         index_value: Optional[Union[str, float]] = None,
         scaling: str = "linear",
+        tile_size: Optional[int] = None,
     ):
         assert tile is not None
+        size = _resolve_tile_size(tile_size)
+        f = size // 256
 
-        def expand(tile: Tile, size=512):
-            f = size // 256
+        def expand(tile: Tile, f: int):
             return [
                 Tile(tile.z + (f.bit_length() - 1), tile.x * f + dx, tile.y * f + dy)
                 for dy in range(f)
@@ -245,10 +267,10 @@ class JBAImageCreator(HazardImageCreator):
             if index_value is None:
                 index_value = 1500
             tiles = run(
-                self._fetch_all_tiles(resource_id, int(index_value), expand(tile)),
+                self._fetch_all_tiles(resource_id, int(index_value), expand(tile, f)),
                 loop=loop,
             )
-            stitched = self._stitch_tiles(tiles)
+            stitched = self._stitch_tiles(tiles, grid=(f, f))
         except Exception as e:
             # we are creating a tile we let the error propagate
             # because many map controls expect an HTTPException in such cases.
@@ -301,10 +323,11 @@ class JBAImageCreator(HazardImageCreator):
         return run(_fetch(), loop=loop)
 
     def get_info(
-        self, resource_id: str, scenario: str, year: int
-    ) -> Tuple[Sequence[Any], Sequence[Any], str, str, Optional[int]]:
+        self, resource_id: str, scenario: str, year: int, tile_size: Optional[int] = None
+    ) -> Tuple[Sequence[Any], Sequence[Any], str, str, Optional[int], int]:
+        size = _resolve_tile_size(tile_size)
         index_values = [20, 50, 100, 200, 500, 1500]
-        return (index_values, index_values, "return period", "years", 15)
+        return (index_values, index_values, "return period", "years", _jba_max_zoom(size), size)
 
     def _get_urls_from_capability(self):
         # async is not necessary, but we follow the same pattern
@@ -460,6 +483,7 @@ class CombinedImageCreator(HazardImageCreator):
         max_value: Optional[float] = None,
         index_value: Optional[Union[str, float]] = None,
         scaling: str = "linear",
+        tile_size: Optional[int] = None,
     ):
         return self._creator(resource_id).create_image(
             resource_id,
@@ -472,7 +496,12 @@ class CombinedImageCreator(HazardImageCreator):
             max_value=max_value,
             index_value=index_value,
             scaling=scaling,
+            tile_size=tile_size,
         )
 
-    def get_info(self, resource_id: str, scenario: str, year: int):
-        return self._creator(resource_id).get_info(resource_id, scenario, year)
+    def get_info(
+        self, resource_id: str, scenario: str, year: int, tile_size: Optional[int] = None
+    ):
+        return self._creator(resource_id).get_info(
+            resource_id, scenario, year, tile_size=tile_size
+        )

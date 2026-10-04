@@ -49,7 +49,12 @@ class ImageCreator(HazardImageCreator):
         max_value: Optional[float] = None,
         index_value: Optional[Union[str, float]] = None,
         scaling: str = "linear",
+        tile_size: Optional[int] = None,
     ):
+        if tile_size is not None and tile_size != 512:
+            raise ValueError(
+                f"tile_size={tile_size} is not supported; only 512 is available for this resource."
+            )
         try:
             scenario_paths = self.source_paths.scenario_paths_for_id(
                 resource_id,
@@ -96,8 +101,12 @@ class ImageCreator(HazardImageCreator):
         return image_bytes.getvalue()
 
     def get_info(
-        self, resource_id: str, scenario: str, year: int
-    ) -> Tuple[Sequence[Any], Sequence[Any], str, str, Optional[int]]:
+        self, resource_id: str, scenario: str, year: int, tile_size: Optional[int] = None
+    ) -> Tuple[Sequence[Any], Sequence[Any], str, str, Optional[int], int]:
+        if tile_size is not None and tile_size != 512:
+            raise ValueError(
+                f"tile_size={tile_size} is not supported; only 512 is available for this resource."
+            )
         resource = self.inventory.resources[resource_id]
         # in principle, depends on the scenario and year, although we assume here that
         # all years have the same index values available.
@@ -149,6 +158,7 @@ class ImageCreator(HazardImageCreator):
             index_display_name,
             index_units,
             max_zoom,
+            512,
         )
 
     def _default_index_display_name(

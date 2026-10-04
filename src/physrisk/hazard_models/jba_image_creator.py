@@ -475,17 +475,22 @@ class JBAImageCreator(HazardImageCreator):
 
 class CombinedImageCreator(HazardImageCreator):
     def __init__(
-        self, image_creator: "ImageCreator", jba_image_creator: "JBAImageCreator"
+        self,
+        image_creator: Optional[ImageCreator],
+        jba_image_creator: Optional[JBAImageCreator],
     ):
         self._image_creator = image_creator
         self._jba_image_creator = jba_image_creator
 
     def _creator(self, resource_id: str) -> HazardImageCreator:
-        return (
+        creator = (
             self._jba_image_creator
-            if self._jba_image_creator and resource_id.startswith("jba_")
+            if self._jba_image_creator is not None and resource_id.startswith("jba_")
             else self._image_creator
         )
+        if creator is None:
+            raise ValueError(f"No image creator configured for resource {resource_id}")
+        return creator
 
     def create_image(
         self,

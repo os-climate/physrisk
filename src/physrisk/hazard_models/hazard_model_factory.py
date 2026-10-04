@@ -73,9 +73,12 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
         )
 
     def image_creator(self, interpolate_years: bool = True):
+        reader = (
+            self.reader if self.reader is not None else ZarrReader(store=self.store)
+        )
         return ImageCreator(
             self.inventory,
-            self.reader,
+            reader,
             (InterpolatedYearResolver() if interpolate_years else resolve_exact_year),
         )
 

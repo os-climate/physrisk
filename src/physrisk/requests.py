@@ -371,6 +371,7 @@ class Requester:
             max_value=request.max_value,
             index_value=request.index_value,
             scaling=scaling,
+            tile_size=request.tile_size,
         )
 
     def get_image_info(self, request: HazardImageInfoRequest):
@@ -381,13 +382,20 @@ class Requester:
             index_display_name,
             index_units,
             max_zoom,
-        ) = creator.get_info(request.resource, request.scenario_id, request.year)
+            tile_size,
+        ) = creator.get_info(
+            request.resource,
+            request.scenario_id,
+            request.year,
+            tile_size=request.tile_size,
+        )
         return HazardImageInfoResponse(
             all_index_values=all_index_values,
             available_index_values=available_index_values,
             index_display_name=index_display_name,
             index_units=index_units,
             max_zoom=max_zoom,
+            tile_size=tile_size,
         )
 
     def dumps(self, dict):

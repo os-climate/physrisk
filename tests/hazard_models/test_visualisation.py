@@ -145,9 +145,11 @@ def _extract_swatch_colours(
     return colours
 
 
-@pytest.mark.skip("One-off: infers FLOOD_DEPTH_COLOURS/STANDARD_OF_PROTECTION_RIVERINE_COLOURS "
-                   "constants in jba_image_creator.py from the live JBA legends; rerun "
-                   "and transcribe by hand if JBA changes its legend colours.")
+@pytest.mark.skip(
+    "One-off: infers FLOOD_DEPTH_COLOURS/STANDARD_OF_PROTECTION_RIVERINE_COLOURS "
+    "constants in jba_image_creator.py from the live JBA legends; rerun "
+    "and transcribe by hand if JBA changes its legend colours."
+)
 def test_infer_hazard_legend_colours(load_credentials):
     from physrisk.hazard_models.jba_image_creator import TileSet
 
@@ -157,7 +159,12 @@ def test_infer_hazard_legend_colours(load_credentials):
     riverine_image = Image.open(io.BytesIO(riverine_bytes))
     x_min, _, x_max, _ = _locate_colorbar(riverine_image)
 
-    for resource_id in ["jba_riverine", "jba_coastal", "jba_pluvial", "jba_sop_riverine"]:
+    for resource_id in [
+        "jba_riverine",
+        "jba_coastal",
+        "jba_pluvial",
+        "jba_sop_riverine",
+    ]:
         legend_bytes = creator.get_legend(resource_id, return_period=1500)
         image = Image.open(io.BytesIO(legend_bytes))
         colours = _extract_swatch_colours(image, x_min, x_max)

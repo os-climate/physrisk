@@ -384,7 +384,10 @@ class Requester:
             max_zoom,
             tile_size,
         ) = creator.get_info(
-            request.resource, request.scenario_id, request.year, tile_size=request.tile_size
+            request.resource,
+            request.scenario_id,
+            request.year,
+            tile_size=request.tile_size,
         )
         return HazardImageInfoResponse(
             all_index_values=all_index_values,

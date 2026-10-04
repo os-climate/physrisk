@@ -86,7 +86,9 @@ FLOOD_DEPTH_COLOURS_PLUVIAL = np.array(
 # Riverine standard-of-protection (years defended), sampled from the 'jba_sop_riverine' legend
 # (grey scale, 9 bins). Index 0 = least protected (0-20 yr), index 8 = most protected (>1500 yr).
 # Coastal SoP will need its own STANDARD_OF_PROTECTION_COASTAL_* table once that layer exists.
+# fmt: off
 STANDARD_OF_PROTECTION_RIVERINE_UPPER = [20.0, 50.0, 75.0, 100.0, 200.0, 500.0, 1000.0, 1500.0, np.inf]
+# fmt: on
 
 # Representative mid-point return period (years) for each level; last bin uses 1800 yr.
 STANDARD_OF_PROTECTION_RIVERINE_MID = np.array(
@@ -133,7 +135,8 @@ _LEGEND_BY_RESOURCE = {
         _rgb_to_lightness(FLOOD_DEPTH_COLOURS_PLUVIAL / 255.0), FLOOD_DEPTH_MID
     ),
     "jba_sop_riverine": _ResourceLegend(
-        _rgb_to_lightness(STANDARD_OF_PROTECTION_RIVERINE_COLOURS / 255.0), STANDARD_OF_PROTECTION_RIVERINE_MID
+        _rgb_to_lightness(STANDARD_OF_PROTECTION_RIVERINE_COLOURS / 255.0),
+        STANDARD_OF_PROTECTION_RIVERINE_MID,
     ),
 }
 
@@ -209,7 +212,9 @@ _JBA_NATIVE_MAX_ZOOM = 16
 def _resolve_tile_size(tile_size: Optional[int]) -> int:
     size = tile_size if tile_size is not None else _DEFAULT_TILE_SIZE
     if size not in _SUPPORTED_TILE_SIZES:
-        raise ValueError(f"tile_size={size} is not supported; use one of {_SUPPORTED_TILE_SIZES}.")
+        raise ValueError(
+            f"tile_size={size} is not supported; use one of {_SUPPORTED_TILE_SIZES}."
+        )
     return size
 
 
@@ -323,11 +328,22 @@ class JBAImageCreator(HazardImageCreator):
         return run(_fetch(), loop=loop)
 
     def get_info(
-        self, resource_id: str, scenario: str, year: int, tile_size: Optional[int] = None
+        self,
+        resource_id: str,
+        scenario: str,
+        year: int,
+        tile_size: Optional[int] = None,
     ) -> Tuple[Sequence[Any], Sequence[Any], str, str, Optional[int], int]:
         size = _resolve_tile_size(tile_size)
         index_values = [20, 50, 100, 200, 500, 1500]
-        return (index_values, index_values, "return period", "years", _jba_max_zoom(size), size)
+        return (
+            index_values,
+            index_values,
+            "return period",
+            "years",
+            _jba_max_zoom(size),
+            size,
+        )
 
     def _get_urls_from_capability(self):
         # async is not necessary, but we follow the same pattern
@@ -500,7 +516,11 @@ class CombinedImageCreator(HazardImageCreator):
         )
 
     def get_info(
-        self, resource_id: str, scenario: str, year: int, tile_size: Optional[int] = None
+        self,
+        resource_id: str,
+        scenario: str,
+        year: int,
+        tile_size: Optional[int] = None,
     ):
         return self._creator(resource_id).get_info(
             resource_id, scenario, year, tile_size=tile_size

@@ -272,7 +272,11 @@ class HazardImageCreator(Protocol):
         ...
 
     def get_info(
-        self, resource_id: str, scenario: str, year: int, tile_size: Optional[int] = None
+        self,
+        resource_id: str,
+        scenario: str,
+        year: int,
+        tile_size: Optional[int] = None,
     ) -> Tuple[Sequence[Any], Sequence[Any], str, str, Optional[int], int]:
         """Provides additional image information required to create an image.
 

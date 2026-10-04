@@ -101,7 +101,11 @@ class ImageCreator(HazardImageCreator):
         return image_bytes.getvalue()
 
     def get_info(
-        self, resource_id: str, scenario: str, year: int, tile_size: Optional[int] = None
+        self,
+        resource_id: str,
+        scenario: str,
+        year: int,
+        tile_size: Optional[int] = None,
     ) -> Tuple[Sequence[Any], Sequence[Any], str, str, Optional[int], int]:
         if tile_size is not None and tile_size != 512:
             raise ValueError(

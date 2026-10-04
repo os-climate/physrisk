@@ -22,29 +22,90 @@ from physrisk.hazard_models.credentials_provider import (
 
 logger = logging.getLogger(__name__)
 
-# RGB fill colours for each flood-depth level, sampled from the JBA legend
-# (WR30_202512 tileset).  Index 0 = shallowest, index 9 = deepest.
-FLOOD_DEPTH_COLOURS = np.array(
-    [
-        [191, 232, 242],  # 0: 0 – 0.01 m
-        [178, 222, 232],  # 1: 0.01 – 0.5 m
-        [124, 195, 212],  # 2: 0.5 – 1 m
-        [106, 183, 202],  # 3: 1 – 2 m
-        [89, 172, 193],  # 4: 2 – 3 m
-        [71, 160, 183],  # 5: 3 – 4 m
-        [53, 149, 173],  # 6: 4 – 5 m
-        [36, 138, 163],  # 7: 5 – 6 m
-        [18, 126, 154],  # 8: 6 – 10 m
-        [1, 115, 144],  # 9: > 10 m
-    ],
-    dtype=np.float32,
-)
-
+# Depth bins (and so FLOOD_DEPTH_UPPER/FLOOD_DEPTH_MID) are shared across the three flood
+# hazard types; only the colour ramp (hue) differs between their legends.
 FLOOD_DEPTH_UPPER = [0.01, 0.5, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 10.0, np.inf]
 
 # Representative mid-point depth (metres) for each level; last bin uses 12 m.
 FLOOD_DEPTH_MID = np.array(
     [0.005, 0.255, 0.75, 1.5, 2.5, 3.5, 4.5, 5.5, 8.0, 12.0],
+    dtype=np.float32,
+)
+
+# RGB fill colours for each flood-depth level, sampled from the JBA legends (WR_202603_5m_4326
+# tileset) for each undefended flood hazard type. Index 0 = shallowest (0-0.01m), index 9 =
+# deepest (>10m) -- see FLOOD_DEPTH_UPPER.
+FLOOD_DEPTH_COLOURS_RIVERINE = np.array(
+    [
+        [191, 232, 242],
+        [178, 222, 232],
+        [124, 195, 212],
+        [106, 183, 202],
+        [89, 172, 193],
+        [71, 160, 183],
+        [53, 149, 173],
+        [36, 138, 163],
+        [18, 126, 154],
+        [1, 115, 144],
+    ],
+    dtype=np.float32,
+)
+
+FLOOD_DEPTH_COLOURS_COASTAL = np.array(
+    [
+        [224, 222, 200],
+        [220, 218, 186],
+        [215, 213, 171],
+        [211, 208, 156],
+        [207, 202, 139],
+        [201, 196, 120],
+        [196, 191, 103],
+        [191, 185, 84],
+        [186, 178, 65],
+        [181, 172, 45],
+    ],
+    dtype=np.float32,
+)
+
+FLOOD_DEPTH_COLOURS_PLUVIAL = np.array(
+    [
+        [222, 194, 248],
+        [214, 186, 239],
+        [206, 177, 230],
+        [197, 168, 220],
+        [187, 158, 210],
+        [178, 149, 200],
+        [168, 138, 188],
+        [158, 129, 178],
+        [148, 118, 166],
+        [137, 107, 154],
+    ],
+    dtype=np.float32,
+)
+
+# Riverine standard-of-protection (years defended), sampled from the 'jba_sop_riverine' legend
+# (grey scale, 9 bins). Index 0 = least protected (0-20 yr), index 8 = most protected (>1500 yr).
+# Coastal SoP will need its own STANDARD_OF_PROTECTION_COASTAL_* table once that layer exists.
+STANDARD_OF_PROTECTION_RIVERINE_UPPER = [20.0, 50.0, 75.0, 100.0, 200.0, 500.0, 1000.0, 1500.0, np.inf]
+
+# Representative mid-point return period (years) for each level; last bin uses 1800 yr.
+STANDARD_OF_PROTECTION_RIVERINE_MID = np.array(
+    [10.0, 35.0, 62.5, 87.5, 150.0, 350.0, 750.0, 1250.0, 1800.0],
+    dtype=np.float32,
+)
+
+STANDARD_OF_PROTECTION_RIVERINE_COLOURS = np.array(
+    [
+        [216, 216, 216],
+        [188, 188, 188],
+        [174, 174, 174],
+        [160, 160, 160],
+        [146, 146, 146],
+        [132, 132, 132],
+        [118, 118, 118],
+        [104, 104, 104],
+        [90, 90, 90],
+    ],
     dtype=np.float32,
 )
 
@@ -54,30 +115,54 @@ def _rgb_to_lightness(rgb_norm: np.ndarray) -> np.ndarray:
     return (rgb_norm.max(axis=-1) + rgb_norm.min(axis=-1)) * 0.5
 
 
-# Precomputed lightness for each FLOOD_DEPTH_COLOURS entry.
-_FLOOD_DEPTH_LIGHTNESS = _rgb_to_lightness(FLOOD_DEPTH_COLOURS / 255.0)
+@dataclass(frozen=True)
+class _ResourceLegend:
+    lightness: np.ndarray
+    mid: np.ndarray
+
+
+# Precomputed lightness for each resource's colour table, keyed by physrisk resource id.
+_LEGEND_BY_RESOURCE = {
+    "jba_riverine": _ResourceLegend(
+        _rgb_to_lightness(FLOOD_DEPTH_COLOURS_RIVERINE / 255.0), FLOOD_DEPTH_MID
+    ),
+    "jba_coastal": _ResourceLegend(
+        _rgb_to_lightness(FLOOD_DEPTH_COLOURS_COASTAL / 255.0), FLOOD_DEPTH_MID
+    ),
+    "jba_pluvial": _ResourceLegend(
+        _rgb_to_lightness(FLOOD_DEPTH_COLOURS_PLUVIAL / 255.0), FLOOD_DEPTH_MID
+    ),
+    "jba_sop_riverine": _ResourceLegend(
+        _rgb_to_lightness(STANDARD_OF_PROTECTION_RIVERINE_COLOURS / 255.0), STANDARD_OF_PROTECTION_RIVERINE_MID
+    ),
+}
 
 
 def image_to_flood_depth(
     img: Image.Image,
+    resource_id: str,
     max_lightness_dist: float = 0.05,
 ) -> np.ndarray:
-    """Convert an RGB(A) tile image to approximate flood depth in metres for
-    purpose of changing colour map.
+    """Convert an RGB(A) tile image to its approximate legend value, for purpose of
+    changing colour map.
 
-    Each pixel is matched to the nearest entry in ``FLOOD_DEPTH_COLOURS`` by
-    its HLS lightness value. Transparent pixels or pixels whose lightness
-    differs from every reference by more than ``max_lightness_dist`` are
+    Each pixel is matched to the nearest legend entry for *resource_id* by its HLS
+    lightness value (the three flood hazard types and 'jba_sop_riverine' each have their own
+    colour ramp -- see _LEGEND_BY_RESOURCE). Transparent pixels or pixels whose
+    lightness differs from every reference by more than ``max_lightness_dist`` are
     assigned ``NaN``.
 
     Args:
         img: PIL image (RGB or RGBA).
+        resource_id: physrisk resource identifier (e.g. ``"jba_riverine"``).
         max_lightness_dist: lightness threshold above which a pixel is treated
             as no-data.
 
     Returns:
-        float32 array of shape (H, W) with depth in metres, NaN for no-data.
+        float32 array of shape (H, W): depth in metres for the flood hazard types,
+        or return period in years for 'jba_sop_riverine'; NaN for no-data.
     """
+    legend = _LEGEND_BY_RESOURCE[resource_id]
     arr = np.array(img.convert("RGBA"), dtype=np.uint8)
     alpha = arr[:, :, 3]
     rgb = arr[:, :, :3]
@@ -87,13 +172,13 @@ def image_to_flood_depth(
 
     best_idx = np.zeros(pixel_l.shape, dtype=np.uint8)
     best_dist = np.full(pixel_l.shape, np.inf, dtype=np.float32)
-    for i, ref_l in enumerate(_FLOOD_DEPTH_LIGHTNESS):
+    for i, ref_l in enumerate(legend.lightness):
         d = np.abs(pixel_l - ref_l)
         closer = d < best_dist
         best_dist[closer] = d[closer]
         best_idx[closer] = i
 
-    depth = FLOOD_DEPTH_MID[best_idx].copy()
+    depth = legend.mid[best_idx].copy()
     depth[alpha < 128] = np.nan
     depth[best_dist > max_lightness_dist] = np.nan
     return depth
@@ -119,14 +204,15 @@ class JBAImageCreator(HazardImageCreator):
     def __init__(
         self,
         credentials: Optional[CredentialsProvider] = None,
-        tileset: TileSet = TileSet("WR30", "202512", "30m", "4326"),
+        tileset: TileSet = TileSet("WR", "202603", "5m", "4326"),
     ):
         self.credentials = (
             credentials if credentials is not None else EnvCredentialsProvider()
         )
         self.tileset = tileset
-        # self.tileset = TileSet("WR30C", "202603", "30m", "4326")
-        # self.tileset = TileSet("WR", "202603", "5m", "4326")
+        # TileSet("WR30", "202512", "30m", "4326")
+        # TileSet("WR30C", "202603", "30m", "4326")
+        # TileSet("WR", "202603", "5m", "4326")
         templates_tiles, templates_legends = self._get_urls_from_capability()
         self.templates_tiles: dict[str, str] = templates_tiles
         self.templates_legends: dict[str, str] = templates_legends
@@ -171,7 +257,7 @@ class JBAImageCreator(HazardImageCreator):
             else:
                 raise
 
-        depth = image_to_flood_depth(stitched)
+        depth = image_to_flood_depth(stitched, resource_id)
         map_defn = colormap_provider.colormap(colormap)
 
         def get_colors(index: int):
@@ -218,7 +304,7 @@ class JBAImageCreator(HazardImageCreator):
         self, resource_id: str, scenario: str, year: int
     ) -> Tuple[Sequence[Any], Sequence[Any], str, str, Optional[int]]:
         index_values = [20, 50, 100, 200, 500, 1500]
-        return (index_values, index_values, "return period", "years", 12)
+        return (index_values, index_values, "return period", "years", 15)
 
     def _get_urls_from_capability(self):
         # async is not necessary, but we follow the same pattern
@@ -339,8 +425,13 @@ class JBAImageCreator(HazardImageCreator):
             return f"{tile_set.name}_{tile_set.release_date}_FLRF_U_RP{return_period}_RD_{tile_set.resolution}_{tile_set.projection}"
         elif resource_id == "jba_pluvial":  # undefended pluvial
             return f"{tile_set.name}_{tile_set.release_date}_FLSW_U_RP{return_period}_RD_{tile_set.resolution}_{tile_set.projection}"
-        elif resource_id == "jba_sop":
-            return f"{tile_set.name}_{tile_set.release_date}_DRAS_D_VE_{tile_set.resolution}_{tile_set.projection}"
+        elif resource_id == "jba_sop_riverine":  # riverine standard of protection
+            # the DRAS layer is suffixed "_VE_" in some tilesets (e.g. WR30) but not
+            # others (e.g. WR); try both rather than hard-coding one.
+            with_ve = f"{tile_set.name}_{tile_set.release_date}_DRAS_D_VE_{tile_set.resolution}_{tile_set.projection}"
+            if with_ve in self.templates_tiles or with_ve in self.templates_legends:
+                return with_ve
+            return f"{tile_set.name}_{tile_set.release_date}_DRAS_D_{tile_set.resolution}_{tile_set.projection}"
 
 
 class CombinedImageCreator(HazardImageCreator):

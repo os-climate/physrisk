@@ -1,4 +1,5 @@
 import io
+from collections import Counter
 from typing import Tuple
 
 import numpy as np
@@ -101,3 +102,74 @@ def test_locate_colorbar_in_jba_legend(load_credentials):
     assert y_max > y_min
     # Sanity: bar must be at least 10 px in its long dimension
     assert max(x_max - x_min, y_max - y_min) >= 10
+
+
+def _extract_swatch_colours(
+    image: Image.Image, x_min: int, x_max: int, min_run: int = 5
+) -> list:
+    """Return the fill colour of each legend swatch, reading down the centre column.
+
+    Swatches are detected as runs of pixels that differ from the (near-)white
+    background; each swatch's colour is the most common pixel value within its
+    run, which is robust to the 1-2px anti-aliased bevel JBA renders at the top
+    and bottom of every swatch. ``min_run`` filters out the legend's outer
+    border, which is a few shades off white but only 1px thick.
+
+    Uses a fixed x-column (shared across all JBA legend images, found once via
+    ``_locate_colorbar`` on a colour legend) rather than re-detecting it per
+    image, since chroma-based detection can't locate grey-on-white swatches
+    (e.g. the 'jba_sop_riverine' legend).
+    """
+    arr = np.array(image.convert("RGB")).astype(int)
+    xc = (x_min + x_max) // 2
+    col = arr[:, xc, :]
+    is_swatch = (255 - col.min(axis=1)) > 4
+
+    runs = []
+    start = None
+    for i, v in enumerate(is_swatch):
+        if v and start is None:
+            start = i
+        elif not v and start is not None:
+            runs.append((start, i))
+            start = None
+    if start is not None:
+        runs.append((start, len(is_swatch)))
+    runs = [(s, e) for s, e in runs if e - s >= min_run]
+
+    colours = []
+    for s, e in runs:
+        rows = [tuple(col[i]) for i in range(s, e)]
+        mode_colour, _ = Counter(rows).most_common(1)[0]
+        colours.append(tuple(int(v) for v in mode_colour))
+    return colours
+
+
+@pytest.mark.skip("One-off: infers FLOOD_DEPTH_COLOURS/STANDARD_OF_PROTECTION_RIVERINE_COLOURS "
+                   "constants in jba_image_creator.py from the live JBA legends; rerun "
+                   "and transcribe by hand if JBA changes its legend colours.")
+def test_infer_hazard_legend_colours(load_credentials):
+    from physrisk.hazard_models.jba_image_creator import TileSet
+
+    creator = JBAImageCreator(tileset=TileSet("WR", "202603", "5m", "4326"))
+
+    riverine_bytes = creator.get_legend("jba_riverine", return_period=1500)
+    riverine_image = Image.open(io.BytesIO(riverine_bytes))
+    x_min, _, x_max, _ = _locate_colorbar(riverine_image)
+
+    for resource_id in ["jba_riverine", "jba_coastal", "jba_pluvial", "jba_sop_riverine"]:
+        legend_bytes = creator.get_legend(resource_id, return_period=1500)
+        image = Image.open(io.BytesIO(legend_bytes))
+        colours = _extract_swatch_colours(image, x_min, x_max)
+        print(f"\n{resource_id} ({len(colours)} swatches):")
+        for colour in colours:
+            print(f"    {list(colour)},")
+
+    # riverine is already hard-coded in jba_image_creator.FLOOD_DEPTH_COLOURS_RIVERINE; use
+    # it to check the extraction method against a known-good reference.
+    from physrisk.hazard_models.jba_image_creator import FLOOD_DEPTH_COLOURS_RIVERINE
+
+    riverine_colours = _extract_swatch_colours(riverine_image, x_min, x_max)
+    assert riverine_colours == [
+        tuple(int(v) for v in row) for row in FLOOD_DEPTH_COLOURS_RIVERINE
+    ]

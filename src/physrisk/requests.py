@@ -80,7 +80,7 @@ from .api.v1.hazard_data import (
     HazardDescriptionResponse,
     HazardResource,
     IntensityCurve,
-    Scenario,
+    ScenarioYears,
     StaticInformationResponse,
 )
 from .api.v1.impact_req_resp import (
@@ -1163,7 +1163,9 @@ def _create_risk_measures(
         measures_for_portfolio=measures_for_portfolio,
         score_based_measure_set_defn=score_based_measure_set_defn,
         measures_definitions=None,
-        scenarios=[Scenario(id=scenario, years=list(years)) for scenario in scenarios],
+        scenarios=[
+            ScenarioYears(id=scenario, years=list(years)) for scenario in scenarios
+        ],
         asset_ids=[
             f"asset_{i}" if a.id is None else a.id for i, a in enumerate(assets)
         ],

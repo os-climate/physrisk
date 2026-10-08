@@ -5,7 +5,7 @@ from unittest.mock import Mock
 import numpy as np
 import pytest
 
-from physrisk.api.v1.hazard_data import HazardResource, Scenario
+from physrisk.api.v1.hazard_data import HazardResource, ScenarioYears
 from physrisk.data.hazard_data_provider import (
     CascadingHazardDataProvider,
 )
@@ -27,8 +27,8 @@ def resource(name):
         description="",
         units="m",
         scenarios=[
-            Scenario(id="historical", years=[1980]),
-            Scenario(id="ssp585", years=[2050, 2080]),
+            ScenarioYears(id="historical", years=[1980]),
+            ScenarioYears(id="ssp585", years=[2050, 2080]),
         ],
     )
 

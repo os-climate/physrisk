@@ -17,7 +17,7 @@ from shapely import Polygon
 from physrisk.api.v1.hazard_data import (
     HazardAvailabilityRequest,
     HazardResource,
-    Scenario,
+    ScenarioYears,
 )
 from physrisk.data.hazard_data_provider import (
     HazardResourceSelector,
@@ -93,7 +93,7 @@ def _test_hazard_model():
         path="test_array_path",
         display_name="Test hazard indicator",
         description="Description of test hazard indicator",
-        scenarios=[Scenario(id="historical", years=[2010])],
+        scenarios=[ScenarioYears(id="historical", years=[2010])],
         units="K",
     )
 
@@ -345,7 +345,7 @@ def test_reproject():
 
 
 def test_years_interpolation():
-    available = Scenario(id="ssp585", years=[2050, 2060, 2080])
+    available = ScenarioYears(id="ssp585", years=[2050, 2060, 2080])
     historical = ScenarioYear("historical", -1)
     weights = {
         ScenarioYear("ssp585", year): interpolate_year(
@@ -371,7 +371,7 @@ def test_years_interpolation():
     weights = {
         ScenarioYear("ssp585", year): interpolate_year(
             ScenarioYear("ssp585", year),
-            Scenario(id="ssp585", years=[2050]),
+            ScenarioYears(id="ssp585", years=[2050]),
             historical,
             2025,
         )
@@ -446,8 +446,8 @@ class HazardResourceSelectorTest(HazardResourceSelector):
                 indicator_id=indicator_id,
                 path=path,
                 scenarios=[
-                    Scenario(id="ssp585", years=[2030, 2050, 2080]),
-                    Scenario(id="historical", years=[-1]),
+                    ScenarioYears(id="ssp585", years=[2030, 2050, 2080]),
+                    ScenarioYears(id="historical", years=[-1]),
                 ],
                 units="m",
                 indicator_model_gcm="",
@@ -659,8 +659,8 @@ class YearInterpolationResourceSelectorTest(HazardResourceSelector):
                 indicator_id=indicator_id,
                 path="test_set_europe_only_{year}",
                 scenarios=[
-                    Scenario(id="ssp585", years=list(self.years)),
-                    Scenario(id="historical", years=[-1]),
+                    ScenarioYears(id="ssp585", years=list(self.years)),
+                    ScenarioYears(id="historical", years=[-1]),
                 ],
                 units="m",
                 indicator_model_gcm="",

@@ -70,11 +70,11 @@ class Period(BaseModel):
     )
 
 
-class Scenario(BaseModel):
+class ScenarioYears(BaseModel):
     """Scenario ID and the list of available years for that scenario e.g. RCP8.5 = 'rcp8.5'"""
 
     id: str
-    years: List[int]
+    years: list[int]
     # periods: Optional[List[Period]]
 
 
@@ -116,7 +116,7 @@ class HazardResource(BaseModel):
         None,
         description="Optional information used for display of the indicator in a map.",
     )
-    scenarios: List[Scenario] = Field(
+    scenarios: List[ScenarioYears] = Field(
         description="Climate change scenarios for which the indicator is available."
     )
     store_netcdf_coords: bool = Field(

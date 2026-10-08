@@ -21,7 +21,10 @@ import aiohttp
 import numpy as np
 from shapely.geometry.base import BaseGeometry
 
-from physrisk.data.hazard_data_provider import HazardDataProvider, ScenarioYear
+from physrisk.data.hazard_data_provider import (
+    CascadingHazardDataProvider,
+    ScenarioYear,
+)
 from physrisk.kernel.hazard_model import (
     HazardDataFailedResponse,
     HazardDataRequest,
@@ -236,10 +239,10 @@ class JBAHazardModel(HazardModel):
             # for interpolation, the list of pillar years for different requested years is calculated
             # ahead of time: e.g. 2036 needs 2030 and 2050 pillars.
             requested_years = sorted(list(all_years))
-            weights = HazardDataProvider._weights(
+            weights = CascadingHazardDataProvider._weights(
                 "ssp", self.pillar_years, requested_years, self.historical_year
             )
-            weights_histo = HazardDataProvider._weights(
+            weights_histo = CascadingHazardDataProvider._weights(
                 "historical", self.pillar_years, requested_years, self.historical_year
             )
             pillar_years_lookup = {k.year: v for k, v in weights.items()}

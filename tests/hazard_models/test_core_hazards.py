@@ -1,4 +1,4 @@
-from physrisk.api.v1.hazard_data import HazardResource, Scenario
+from physrisk.api.v1.hazard_data import HazardResource, ScenarioYears
 from physrisk.data.inventory import Inventory
 from physrisk.hazard_models.core_hazards import (
     InventoryHazardResourceSelector,
@@ -14,7 +14,7 @@ def _hazard_resource(hazard_type: str, indicator_id: str) -> HazardResource:
         indicator_model_gcm="test_gcm",
         display_name=f"{hazard_type} {indicator_id}",
         description="Test hazard resource",
-        scenarios=[Scenario(id="ssp585", years=[2030])],
+        scenarios=[ScenarioYears(id="ssp585", years=[2030])],
         units="test_units",
     )
 

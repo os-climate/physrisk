@@ -7,7 +7,7 @@ from typing import Sequence
 
 from typing_extensions import Protocol
 
-from physrisk.api.v1.hazard_data import Scenario
+from physrisk.api.v1.hazard_data import ScenarioYears
 
 
 @dataclass(frozen=True)
@@ -35,7 +35,7 @@ class ScenarioYearResolver(Protocol):
 
     def __call__(
         self,
-        available: Sequence[Scenario],
+        available: Sequence[ScenarioYears],
         requested: ScenarioYear,
     ) -> WeightedSum | None:
         """Return available weighted inputs, or None if unsupported.
@@ -46,7 +46,7 @@ class ScenarioYearResolver(Protocol):
         ...
 
 
-def _historical_or_proxy(available: Sequence[Scenario]) -> Scenario | None:
+def _historical_or_proxy(available: Sequence[ScenarioYears]) -> ScenarioYears | None:
     populated = [scenario for scenario in available if scenario.years]
     historical = next(
         (scenario for scenario in populated if scenario.id == "historical"), None
@@ -61,8 +61,8 @@ def _historical_or_proxy(available: Sequence[Scenario]) -> Scenario | None:
 
 
 def _requested_or_proxy(
-    requested: str, available: Sequence[Scenario]
-) -> Scenario | None:
+    requested: str, available: Sequence[ScenarioYears]
+) -> ScenarioYears | None:
     if not available:
         return None
     if requested == "historical":
@@ -78,7 +78,7 @@ def _requested_or_proxy(
 
 
 def resolve_exact_year(
-    available: Sequence[Scenario],
+    available: Sequence[ScenarioYears],
     requested: ScenarioYear,
 ) -> WeightedSum | None:
     """Apply scenario proxies and read exact years."""
@@ -105,7 +105,7 @@ class InterpolatedYearResolver(ScenarioYearResolver):
 
     def __call__(
         self,
-        available: Sequence[Scenario],
+        available: Sequence[ScenarioYears],
         requested: ScenarioYear,
     ) -> WeightedSum | None:
         selected = _requested_or_proxy(requested.scenario, available)
@@ -124,7 +124,7 @@ class InterpolatedYearResolver(ScenarioYearResolver):
 
 def interpolate_year(
     requested: ScenarioYear,
-    available: Scenario,
+    available: ScenarioYears,
     historical: ScenarioYear,
     historical_year: int,
 ) -> WeightedSum:

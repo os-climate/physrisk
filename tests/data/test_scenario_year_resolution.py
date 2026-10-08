@@ -5,7 +5,7 @@ from unittest.mock import Mock
 import numpy as np
 import pytest
 
-from physrisk.api.v1.hazard_data import HazardResource, Scenario
+from physrisk.api.v1.hazard_data import HazardResource, ScenarioYears
 from physrisk.data.hazard_data_provider import (
     CascadingHazardDataProvider,
 )
@@ -24,7 +24,7 @@ def resource(scenarios):
         hazard_type="RiverineInundation",
         indicator_id="flood_depth",
         path="{id}_{scenario}_{year}",
-        scenarios=[Scenario(id=name, years=years) for name, years in scenarios],
+        scenarios=[ScenarioYears(id=name, years=years) for name, years in scenarios],
         units="m",
         indicator_model_gcm="",
         display_name="",

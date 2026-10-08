@@ -10,7 +10,7 @@ import zarr
 import zarr.storage
 from dependency_injector import providers
 
-from physrisk.api.v1.hazard_data import HazardResource, MapInfo, Scenario
+from physrisk.api.v1.hazard_data import HazardResource, MapInfo, ScenarioYears
 from physrisk.container import Container
 from physrisk.data import colormap_provider
 from physrisk.data.scenario_year_resolution import (
@@ -132,7 +132,7 @@ def _make_inventory(group_id: str = "public"):
                 indicator_model_gcm="",
                 display_name="",
                 description="",
-                scenarios=[Scenario(id="ssp585", years=[2030, 2050])],
+                scenarios=[ScenarioYears(id="ssp585", years=[2030, 2050])],
                 units="",
                 map=MapInfo(
                     path="test_array_{scenario}_{year}",

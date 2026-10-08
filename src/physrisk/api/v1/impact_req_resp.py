@@ -8,7 +8,7 @@ from physrisk.api.v1.common import (
     ExceedanceCurve,
     VulnerabilityDistrib,
 )
-from physrisk.api.v1.hazard_data import Scenario
+from physrisk.api.v1.hazard_data import ScenarioYears
 
 
 class CalcSettings(BaseModel):
@@ -267,7 +267,7 @@ class RiskMeasures(BaseModel):
     measures_definitions: Optional[List[RiskMeasureDefinition]] = Field(
         [], description="Definitions of the risk measures."
     )
-    scenarios: List[Scenario]
+    scenarios: List[ScenarioYears]
     asset_ids: List[str]
 
 

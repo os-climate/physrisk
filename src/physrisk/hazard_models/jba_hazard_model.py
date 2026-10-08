@@ -21,7 +21,7 @@ import aiohttp
 import numpy as np
 from shapely.geometry.base import BaseGeometry
 
-from physrisk.api.v1.hazard_data import Scenario
+from physrisk.api.v1.hazard_data import ScenarioYears
 from physrisk.data.geocode import Geocoder
 from physrisk.data.scenario_year_resolution import ScenarioYear, interpolate_year
 from physrisk.hazard_models.credentials_provider import (
@@ -237,7 +237,7 @@ class JBAHazardModel(HazardModel):
             # for interpolation, the list of pillar years for different requested years is calculated
             # ahead of time: e.g. 2036 needs 2030 and 2050 pillars.
             requested_years = sorted(list(all_years))
-            pillars = Scenario(id="ssp", years=list(self.pillar_years))
+            pillars = ScenarioYears(id="ssp", years=list(self.pillar_years))
             historical = ScenarioYear("historical", -1)
             pillar_years_lookup = {
                 year: interpolate_year(

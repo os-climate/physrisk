@@ -1,6 +1,6 @@
 import pytest
 
-from physrisk.api.v1.hazard_data import HazardResource, MapInfo, Scenario
+from physrisk.api.v1.hazard_data import HazardResource, MapInfo, ScenarioYears
 
 
 def hazard_resource(*, map: MapInfo | None = None) -> HazardResource:
@@ -11,7 +11,7 @@ def hazard_resource(*, map: MapInfo | None = None) -> HazardResource:
         path="resource/{id}/{scenario}/{year}",
         display_name="Test resource",
         description="Test resource",
-        scenarios=[Scenario(id="ssp245", years=[2050])],
+        scenarios=[ScenarioYears(id="ssp245", years=[2050])],
         store_netcdf_coords=True,
         units="test",
         map=map,

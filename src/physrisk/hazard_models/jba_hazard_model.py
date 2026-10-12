@@ -2,26 +2,25 @@ import asyncio
 import json
 import logging
 from collections import defaultdict
+from collections.abc import Iterable, Mapping, MutableMapping, Sequence
 from dataclasses import dataclass
 from enum import Enum
 from threading import Lock
 from typing import (
-    Dict,
-    Iterable,
-    List,
-    Mapping,
-    MutableMapping,
     NamedTuple,
-    Optional,
-    Sequence,
-    Tuple,
 )
 
 import aiohttp
 import numpy as np
 from shapely.geometry.base import BaseGeometry
 
+from physrisk.data.geocode import Geocoder
 from physrisk.data.hazard_data_provider import HazardDataProvider, ScenarioYear
+from physrisk.hazard_models.credentials_provider import (
+    CredentialsProvider,
+    EnvCredentialsProvider,
+)
+from physrisk.hazard_models.hazard_cache import GeometryH3BasedCache
 from physrisk.kernel.hazard_model import (
     HazardDataFailedResponse,
     HazardDataRequest,
@@ -35,13 +34,7 @@ from physrisk.kernel.hazards import (
     PluvialInundation,
     RiverineInundation,
 )
-from physrisk.data.geocode import Geocoder
 from physrisk.utils.event_loop import get_loop, run
-from physrisk.hazard_models.credentials_provider import (
-    CredentialsProvider,
-    EnvCredentialsProvider,
-)
-from physrisk.hazard_models.hazard_cache import GeometryH3BasedCache
 
 logger = logging.getLogger(__name__)
 
@@ -72,10 +65,10 @@ class APIRequest:
     spatial_keys: Sequence[str]  # spatial keys for latitudes and longitudes in order
     latitudes: Sequence[float]
     longitudes: Sequence[float]
-    geometries: Sequence[Optional[BaseGeometry]]
+    geometries: Sequence[BaseGeometry | None]
     country_code: str
-    location_cache_keys: Dict[
-        str, List[JBACacheKey]
+    location_cache_keys: dict[
+        str, list[JBACacheKey]
     ]  # for each spatial_keys list of cache keys that is requested
 
     # this is requested for all jba_scenarios systematically
@@ -86,15 +79,15 @@ class APIRequest:
 @dataclass
 class RequestWeights:
     request: HazardDataRequest
-    weights: List[Tuple[JBACacheKey, float]]
+    weights: list[tuple[JBACacheKey, float]]
 
 
 class JBAHazardModel(HazardModel):
     def __init__(
         self,
         cache_store: GeometryH3BasedCache,
-        credentials: Optional[CredentialsProvider] = None,
-        geocoder: Optional[Geocoder] = None,
+        credentials: CredentialsProvider | None = None,
+        geocoder: Geocoder | None = None,
         max_requests: int = 5,
         cmip: int = 6,
         batch_size: int = 100,
@@ -192,8 +185,8 @@ class JBAHazardModel(HazardModel):
             # 2) We are already maxing out the number of requests to JBA using async for a single thread.
             if not self.geocoder:
                 self.geocoder = Geocoder()
-            cache_key_country: Dict[JBACacheKey, str] = {}  # cache item to requests
-            request_groups: Dict[RequestKey, List[JBACacheKey]] = defaultdict(
+            cache_key_country: dict[JBACacheKey, str] = {}  # cache item to requests
+            request_groups: dict[RequestKey, list[JBACacheKey]] = defaultdict(
                 list
             )  # request to cache items
             self.check_requests(requests)
@@ -212,7 +205,7 @@ class JBAHazardModel(HazardModel):
             }
             result: MutableMapping[HazardDataRequest, HazardDataResponse] = {}
             # group requests by common location
-            requests_by_location: Dict[str, List[HazardDataRequest]] = defaultdict(list)
+            requests_by_location: dict[str, list[HazardDataRequest]] = defaultdict(list)
             all_years: set[int] = set()
             for item in requests:
                 spatial_key = self.cache_store.spatial_key(
@@ -247,12 +240,12 @@ class JBAHazardModel(HazardModel):
             cache_keys: set[JBACacheKey] = (
                 set()
             )  # the set of cache keys to be requested (spatial key, year and scenario)
-            req_weights_set: List[
+            req_weights_set: list[
                 RequestWeights
             ] = []  # for each request the linear combination of cache keys required (interpolating)
             for reqs, country in zip(requests_by_location.values(), countries):
                 for req in reqs:
-                    req_weights: List[Tuple[JBACacheKey, float]] = []
+                    req_weights: list[tuple[JBACacheKey, float]] = []
                     for weight in pillar_years_lookup[
                         -1 if req.scenario == "historical" else req.year
                     ].weights:
@@ -273,10 +266,10 @@ class JBAHazardModel(HazardModel):
                 country_code = cache_key_country[cache_key]
                 request_groups[RequestKey(country_code=country_code)].append(cache_key)
             access_token = self.credentials.jba_access_key()
-            api_requests: List[APIRequest] = []
+            api_requests: list[APIRequest] = []
             # contains the raw results for all cache keys, first populated by looking in cache
             # and then by making API calls if needed.
-            cached_responses: Dict[JBACacheKey, Dict] = {}
+            cached_responses: dict[JBACacheKey, dict] = {}
             for request_key, group_cache_keys in request_groups.items():
                 # process anything that can be sourced from the cache and identify extra API requests needed
                 group_cached_responses, api_requests_batch = (
@@ -396,7 +389,7 @@ class JBAHazardModel(HazardModel):
         if self.credentials.jba_api_disabled():
             logger.error("JBA requests made but API calls disabled")
             raise ValueError("JBA requests made but API calls disabled")
-        req_id_to_keys: Dict[str, List[JBACacheKey]] = defaultdict(list)
+        req_id_to_keys: dict[str, list[JBACacheKey]] = defaultdict(list)
         for k in api_request.spatial_keys:
             req_id_to_keys[self.jba_request_id(k)] = [
                 JBACacheKey(s, k) for s in (["historical"] + self.jba_scenarios)
@@ -491,14 +484,14 @@ class JBAHazardModel(HazardModel):
         self,
         request_key: RequestKey,
         cache_keys: Iterable[JBACacheKey],
-        requests_by_location: Dict[str, List[HazardDataRequest]],
+        requests_by_location: dict[str, list[HazardDataRequest]],
     ):
         """Process any results that can be sourced from the cache and identify the
         requests to the API that are needed."""
-        batches: List[APIRequest] = []
+        batches: list[APIRequest] = []
         cache_ids = [self.jba_cache_id(k) for k in cache_keys]
         # first checks cache
-        cached_responses: Dict[JBACacheKey, Dict] = {}
+        cached_responses: dict[JBACacheKey, dict] = {}
         for cache_key, item in zip(cache_keys, self.cache_store.getitems(cache_ids)):
             if item is not None:
                 value = json.loads(item)
@@ -506,7 +499,7 @@ class JBAHazardModel(HazardModel):
                     cached_responses[cache_key] = value
         # we need to create requests for anything not in cache
         # req_keys_all = [k for k in cache_keys if k not in cached_responses]
-        location_cache_keys: Dict[str, List[JBACacheKey]] = defaultdict(list)
+        location_cache_keys: dict[str, list[JBACacheKey]] = defaultdict(list)
         missing_cache_keys = [k for k in cache_keys if k not in cached_responses]
         for k in missing_cache_keys:
             location_cache_keys[k.spatial_key].append(k)
@@ -554,7 +547,7 @@ class JBAHazardModel(HazardModel):
         with aiohttp.TCPConnector(
             limit_per_host=concurrent_requests, loop=loop
         ) as conn:
-            reruns: List[APIRequest] = []
+            reruns: list[APIRequest] = []
 
             async def gather_requests(api_requests: Sequence[APIRequest]):
                 semaphore = asyncio.Semaphore(concurrent_requests)
@@ -614,7 +607,7 @@ class JBAHazardModel(HazardModel):
             logger.info(f"Check: {len(single_api_requests)} reruns")
         return cached_responses
 
-    def _process_response(self, request: HazardDataRequest, response: Dict):
+    def _process_response(self, request: HazardDataRequest, response: dict):
         if request.hazard_type == RiverineInundation:
             tag = "FLRF_U"
             path = "jba_riverine"
@@ -634,8 +627,8 @@ class JBAHazardModel(HazardModel):
                 [sop, sop], units="years", path=path
             )  # min and max: in this case just a single value
         elif request.indicator_id == "flood_depth":
-            return_periods: List[float] = []
-            intens: List[float] = []
+            return_periods: list[float] = []
+            intens: list[float] = []
             for key, value in response["stats"].get(tag, {}).items():
                 assert isinstance(key, str)
                 if key.startswith("rp_"):

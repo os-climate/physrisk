@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List, Optional, Sequence
+from collections.abc import Sequence
 
 import numpy as np
 
@@ -7,8 +7,8 @@ from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
 
 from ..kernel.assets import Asset
 from ..kernel.calculation import (
-    get_default_hazard_model,
     alternate_default_vulnerability_models_scores,
+    get_default_hazard_model,
 )
 from ..kernel.financial_model import DefaultFinancialModel
 from ..kernel.hazard_model import HazardModel
@@ -21,19 +21,19 @@ from ..kernel.vulnerability_model import (
 
 class Aggregator(ABC):
     @abstractmethod
-    def get_aggregation_keys(self, asset: Asset, impact: ImpactDistrib) -> List: ...
+    def get_aggregation_keys(self, asset: Asset, impact: ImpactDistrib) -> list: ...
 
 
 class DefaultAggregator(Aggregator):
-    def get_aggregation_keys(self, asset: Asset, impact: ImpactDistrib) -> List:
+    def get_aggregation_keys(self, asset: Asset, impact: ImpactDistrib) -> list:
         return [(impact.hazard_type.__name__), ("root")]
 
 
 class LossModel:
     def __init__(
         self,
-        hazard_model: Optional[HazardModel] = None,
-        vulnerability_models: Optional[VulnerabilityModels] = None,
+        hazard_model: HazardModel | None = None,
+        vulnerability_models: VulnerabilityModels | None = None,
     ):
         self.hazard_model = (
             get_default_hazard_model() if hazard_model is None else hazard_model
@@ -55,14 +55,14 @@ class LossModel:
         financial_model: DefaultFinancialModel,
         scenario: str,
         year: int,
-        aggregator: Optional[Aggregator] = None,
+        aggregator: Aggregator | None = None,
         currency: str = "EUR",
         sims: int = 100000,
     ):
         if aggregator is None:
             aggregator = DefaultAggregator()
 
-        aggregation_pools: Dict[str, np.ndarray] = {}
+        aggregation_pools: dict[str, np.ndarray] = {}
 
         results = calculate_impacts(
             assets,

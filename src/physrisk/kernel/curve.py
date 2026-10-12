@@ -1,5 +1,3 @@
-from typing import List, Union
-
 import numpy as np
 
 
@@ -125,8 +123,8 @@ class ExceedanceCurve:
 
     def __init__(
         self,
-        probs: Union[List[float], np.ndarray],
-        values: Union[List[float], np.ndarray],
+        probs: list[float] | np.ndarray,
+        values: list[float] | np.ndarray,
     ):
         """Create a new asset event distribution.
         Args:

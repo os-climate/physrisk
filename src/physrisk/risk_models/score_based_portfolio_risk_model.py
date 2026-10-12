@@ -1,6 +1,5 @@
-from collections import defaultdict
 import statistics
-from typing import Optional
+from collections import defaultdict
 
 from physrisk.api.v1.impact_req_resp import (
     RiskMeasureDefinition,
@@ -38,7 +37,7 @@ class AveragingAssetBasedPortfolioRiskMeasureCalculator(PortfolioRiskMeasureCalc
             ],
         )
 
-    def get_definition(self, hazard_type: Optional[type[Hazard]] = None):
+    def get_definition(self, hazard_type: type[Hazard] | None = None):
         return self._definition
 
     def calculate_risk_measures(
@@ -54,7 +53,7 @@ class AveragingAssetBasedPortfolioRiskMeasureCalculator(PortfolioRiskMeasureCalc
         measure_by_year_scen: dict[tuple[str, int | None], list[MeasureKey]] = (
             defaultdict(list)
         )
-        for mk in asset_level_measures.keys():
+        for mk in asset_level_measures:
             measure_by_year_scen[(mk.scenario, mk.year)].append(mk)
         for k, v in measure_by_year_scen.items():
             scores = [float(asset_level_measures[m].score) for m in v]

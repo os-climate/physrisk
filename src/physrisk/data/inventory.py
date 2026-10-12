@@ -1,15 +1,14 @@
-# flake8: noqa: E501
 import hashlib
 import importlib.resources
 import json
-from collections import defaultdict
 import re
-from typing import DefaultDict, Dict, Iterable, List, Tuple
+from collections import defaultdict
+from collections.abc import Iterable
 
 from pydantic import TypeAdapter
 
-import physrisk.data.colormap_provider as colormap_provider
 import physrisk.data.static.hazard
+from physrisk.data import colormap_provider
 from physrisk.data.inventory_reader import HazardModels
 from physrisk.kernel.hazards import (
     CoastalInundation,
@@ -31,9 +30,9 @@ class Inventory:
         Args:
             hazard_resources (Iterable[HazardResource]): list of resources
         """
-        self.resources: Dict[str, HazardResource] = {}
-        self.resources_by_type_id: DefaultDict[
-            Tuple[str, str], List[HazardResource]
+        self.resources: dict[str, HazardResource] = {}
+        self.resources_by_type_id: defaultdict[
+            tuple[str, str], list[HazardResource]
         ] = defaultdict(list)
         for resource in hazard_resources:
             self.resources[resource.key()] = resource
@@ -112,7 +111,7 @@ class EmbeddedInventory(Inventory):
             indicator_id="flood_sop",
             indicator_model_gcm="",
             display_name="JBA Risk Management riverine standard of protection",
-            description="Riverine standard of protection (defended return period), commercial flood model from JBA Risk Management (https://www.jbarisk.com/)",  # noqa: E501
+            description="Riverine standard of protection (defended return period), commercial flood model from JBA Risk Management (https://www.jbarisk.com/)",
             scenarios=[
                 Scenario(id="historical", years=[2020]),
             ],
@@ -161,7 +160,7 @@ def base36encode(number, alphabet="0123456789abcdefghijklmnopqrstuvwxyz"):
     return base36
 
 
-def expand(resources: List[HazardResource]) -> List[HazardResource]:
+def expand(resources: list[HazardResource]) -> list[HazardResource]:
     expanded_models = [e for model in resources for e in model.expand()]
     # we populate map_id hashes programmatically
     for model in expanded_models:
@@ -181,6 +180,6 @@ def expand(resources: List[HazardResource]) -> List[HazardResource]:
                     for period, test_period in zip(scenario.periods, test_periods):
                         if period.map_id != test_period.map_id:
                             raise Exception(
-                                f"validation error: hash {period.map_id} different to specified hash {test_period.map_id}"  # noqa: E501
+                                f"validation error: hash {period.map_id} different to specified hash {test_period.map_id}"
                             )
     return expanded_models

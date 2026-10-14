@@ -58,7 +58,7 @@ class QuantityType(str, Enum):
 class RiskQuantityKey(NamedTuple):
     quantity: Optional[QuantityType] = None
     asset: Optional[Asset] = None
-    agg_id: Optional[str] = None
+    aggregation_id: Optional[str] = None
     hazard_type: Optional[type[Hazard]] = None
 
 
@@ -79,6 +79,8 @@ class MeasureKey(NamedTuple):
     scenario is required; year should be None for the historical scenario;
     hazard_indicator_id can be used to distinguish between different hazard indicators for the same hazard type,
     e.g. for ChronicHeat, multiple hazard indicators may be used to capture different mechanisms of impact.
+    aggregation_id identifies the sub-portfolio (asset 'aggregation_id') a portfolio-level measure belongs to;
+    None for asset-level measures and for the pooled portfolio total.
     """
 
     asset: Optional[Asset]
@@ -86,6 +88,7 @@ class MeasureKey(NamedTuple):
     year: Optional[int]
     hazard_type: Optional[Type[Hazard]]
     hazard_indicator_id: Optional[str] = None
+    aggregation_id: Optional[str] = None
 
 
 @dataclass

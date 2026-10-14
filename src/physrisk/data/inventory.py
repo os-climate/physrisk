@@ -71,7 +71,7 @@ class EmbeddedInventory(Inventory):
         """Color maps. Key can be identical to a model identifier or more descriptive (if shared by many models)."""
         return colormap_provider.colormaps
 
-    def api_based_resources(self):
+    def api_based_resources(self) -> Iterable[HazardResource]:
         for hazard_type in [CoastalInundation, PluvialInundation, RiverineInundation]:
             hazard_words: list[str] = re.findall(
                 r"[A-Z]+(?=[A-Z])|[A-Z][a-z]+", hazard_type.__name__

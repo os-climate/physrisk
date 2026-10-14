@@ -1,4 +1,3 @@
-from abc import ABC
 import asyncio
 from dataclasses import dataclass
 import logging
@@ -8,7 +7,6 @@ from typing import (
     Dict,
     List,
     MutableMapping,
-    NamedTuple,
     Optional,
     Sequence,
     Tuple,
@@ -114,15 +112,24 @@ class DataSourcingError(Exception):
     pass
 
 
-class ScenarioYear(NamedTuple):
+@dataclass(frozen=True)
+class ScenarioYear:
+    """Scenario identifier and year used as a request or result key.
+
+    Attributes:
+        scenario: Climate scenario identifier.
+        year: Projection year, or ``-1`` for a historical request.
+    """
+
     scenario: str
     year: int
 
 
-class ScenarioYearRes(NamedTuple):
+@dataclass(frozen=True)
+class ScenarioYearRes:
     scenario: str
     year: int
-    resource_index: Optional[int]
+    resource_index: int | None
 
 
 @dataclass
@@ -140,7 +147,42 @@ class WeightedSum:
     weights: List[Tuple[ScenarioYear, float]]
 
 
-class HazardDataProvider(ABC):
+class HazardDataProvider(Protocol):
+    """Provides hazard data for coordinates, scenarios, and years."""
+
+    async def get_data(
+        self,
+        longitudes: np.ndarray,
+        latitudes: np.ndarray,
+        *,
+        indicator_id: str,
+        scenarios: Sequence[str],
+        years: Sequence[int],
+        hint: HazardDataHint | None = None,
+        buffer: int | None = None,
+    ) -> dict[ScenarioYear, ScenarioYearResult]:
+        """Read hazard data for coordinates, scenarios, and years.
+
+        Args:
+            longitudes: Longitude of each requested coordinate.
+            latitudes: Latitude of each requested coordinate.
+            indicator_id: Identifier of the requested hazard indicator.
+            scenarios: Requested scenario identifiers.
+            years: Requested projection years.
+            hint: Optional resource-selection hint.
+            buffer: Radius in metres over which to take the maximum value. ``None``
+                performs point reads.
+
+        Returns:
+            Results keyed by requested scenario and year and aligned with the input
+            coordinates.
+        """
+        ...
+
+
+class CascadingHazardDataProvider:
+    """Reads hazard data by cascading through sorted sources."""
+
     def __init__(
         self,
         hazard_type: Type[Hazard],
@@ -149,6 +191,7 @@ class HazardDataProvider(ABC):
         store: Optional[MutableMapping] = None,
         zarr_reader: Optional[ZarrReader] = None,
         interpolation: Optional[str] = "floor",
+        interpolate_years: bool = False,
         historical_year: int = 2025,
     ):
         """Provides hazard data.
@@ -159,6 +202,7 @@ class HazardDataProvider(ABC):
             store (Optional[MutableMapping], optional): Zarr store instance. Defaults to None.
             zarr_reader (Optional[ZarrReader], optional): ZarrReader instance. Defaults to None.
             interpolation (Optional[str], optional): Interpolation type. Defaults to "floor".
+            interpolate_years: Whether to interpolate between available years.
             historical_year (int): The year to be considered as 'historical' for purposes of interpolation over years.
 
         Raises:
@@ -173,8 +217,9 @@ class HazardDataProvider(ABC):
         if interpolation not in ["floor", "linear", "max", "min"]:
             raise ValueError("interpolation must be 'floor', 'linear', 'max' or 'min'")
         self._interpolation = interpolation
+        self._interpolate_years = interpolate_years
 
-    async def get_data_cascading(
+    async def get_data(
         self,
         longitudes: np.ndarray,
         latitudes: np.ndarray,
@@ -184,8 +229,7 @@ class HazardDataProvider(ABC):
         years: Sequence[int],
         hint: Optional[HazardDataHint] = None,
         buffer: Optional[int] = None,
-        interpolate_years: bool = False,
-    ):
+    ) -> Dict[ScenarioYear, ScenarioYearResult]:
         """Returns data for set of latitude and longitudes.
 
         Args:
@@ -196,7 +240,6 @@ class HazardDataProvider(ABC):
             years (Sequence[int]): Projection years, e.g. [2050, 2080].
             hint (Optional[HazardDataHint], optional): Hint. Defaults to None.
             buffer (Optional[int], optional): _description_. Buffer around each point.
-            interpolate_years (bool, optional): If True, interpolate between years. Defaults to False.
 
         Returns:
             Dict[ScenarioYear, ScenarioYearResult]: Results.
@@ -246,6 +289,7 @@ class HazardDataProvider(ABC):
                 set_id,
                 longitudes[mask_unprocessed],
                 latitudes[mask_unprocessed],
+                self._interpolation,
             )
             coverage = mask_unprocessed.copy()
             coverage[mask_unprocessed] = coverage[mask_unprocessed] & mask_in_bounds
@@ -262,7 +306,6 @@ class HazardDataProvider(ABC):
                 resource_paths,
                 years,
                 buffer,
-                interpolate_years,
             )
             if len(resource_result) > 0:
                 results.update(resource_result)
@@ -308,7 +351,6 @@ class HazardDataProvider(ABC):
         resource_paths: ResourcePaths,
         years: Sequence[int],
         buffer: Optional[int],
-        interpolate_years: bool,
     ):
         """Get data for all scenarios and years using just a single HazardResource as the source.
         The importance of this is that interpolation of years is assumed to be feasible within the same resource as this
@@ -322,8 +364,8 @@ class HazardDataProvider(ABC):
             if len(paths.years) == 0:
                 continue
             requested_years = [-1] if scenario == "historical" else years
-            if interpolate_years:
-                year_weights = HazardDataProvider._weights(
+            if self._interpolate_years:
+                year_weights = CascadingHazardDataProvider._weights(
                     scenario, paths.years, requested_years, self.historical_year
                 )
             else:

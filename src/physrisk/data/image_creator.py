@@ -1,18 +1,16 @@
-from importlib import import_module
 import io
 import logging
 from functools import lru_cache
 from pathlib import PurePosixPath
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
 import numpy as np
 import PIL.Image as Image
-import zarr.storage
 
 from physrisk.api.v1.hazard_image import TileNotAvailableError
-from physrisk.kernel.hazards import Hazard, HazardKind
+from physrisk.kernel.hazards import HazardKind, hazard_class
 from physrisk.data import colormap_provider
-from physrisk.data.hazard_data_provider import HazardDataProvider, SourcePaths
+from physrisk.data.hazard_data_provider import CascadingHazardDataProvider, SourcePaths
 from physrisk.data.inventory import Inventory
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.kernel.hazard_model import HazardImageCreator, Tile
@@ -64,7 +62,7 @@ class ImageCreator(HazardImageCreator):
             )
             weighted_sum = next(
                 iter(
-                    HazardDataProvider._weights(
+                    CascadingHazardDataProvider._weights(
                         scenario,
                         scenario_paths[scenario].years,
                         [year],
@@ -120,40 +118,41 @@ class ImageCreator(HazardImageCreator):
         path = scenario_paths.path(scenario_paths.years[0])
         z = self.reader.all_data(path)
         all_index_values, index_units = self.reader.get_index_values(z)
-        index_dim_name = z.attrs.get("dimensions", ["index"])[0]
-        assert isinstance(index_dim_name, str)
-        if resource.map and resource.map.index_values:
-            available_index_values = resource.map.index_values
-        else:
-            available_index_values = all_index_values
-        physrisk_hazards = import_module("physrisk.kernel.hazards")
-        hazard_class = getattr(physrisk_hazards, resource.hazard_type)
-
-        # the attribute requires cleaning before use: do not use for now
-        # index_display_name = z.attrs.get(index_dim_name + "_name", index_dim_name.replace("_", " "))
-        index_display_name = self._default_index_display_name(
-            hazard_class, resource.indicator_id
+        available_index_values = (
+            resource.map.index_values
+            if resource.map is not None and resource.map.index_values
+            else all_index_values
         )
-
+        hazard_type = hazard_class(resource.hazard_type)
+        index_display_name = (
+            "return period" if hazard_type.kind == HazardKind.ACUTE else "threshold"
+        )
         if index_units == "default":
-            index_units = self._default_index_units(hazard_class, resource.indicator_id)
+            if hazard_type.kind == HazardKind.ACUTE:
+                index_units = "years"
+            elif resource.indicator_id in [
+                "days_wbgt_above",
+                "mean_degree_days/above/index",
+                "weeks_water_temp_above",
+            ]:
+                index_units = "°C"
+            else:
+                index_units = ""
 
         max_zoom = None
         is_pyramid = resource.map and resource.map.source != "map_array"
         if is_pyramid:
             try:
-                # strip off last part of path, which gives the zoom level
                 path_stripped = str(PurePosixPath(path).parent) + "/"
-                array_list = self.reader.ls(path_stripped)
                 zoom_levels = [
-                    int(PurePosixPath(p).name)
-                    for p in array_list
-                    if PurePosixPath(p).name.isnumeric()
+                    int(PurePosixPath(item).name)
+                    for item in self.reader.ls(path_stripped)
+                    if PurePosixPath(item).name.isnumeric()
                 ]
                 max_zoom = max(zoom_levels)
-            except Exception as e:
+            except Exception as error:
                 logger.warning(
-                    f"Could not obtain max zoom for resource {resource_id}: {e}"
+                    "Could not obtain max zoom for resource %s: %s", resource_id, error
                 )
 
         return (
@@ -164,26 +163,6 @@ class ImageCreator(HazardImageCreator):
             max_zoom,
             512,
         )
-
-    def _default_index_display_name(
-        self, hazard_class: Type[Hazard], indicator_id: str
-    ):
-        if hazard_class.kind == HazardKind.ACUTE:
-            return "return period"
-        else:
-            return "threshold"
-
-    def _default_index_units(self, hazard_class: Type[Hazard], indicator_id: str):
-        if hazard_class.kind == HazardKind.ACUTE:
-            return "years"
-        if indicator_id in [
-            "days_wbgt_above",
-            "mean_degree_days/above/index",
-            "weeks_water_temp_above",
-        ]:
-            return "°C"
-        else:
-            return ""
 
     def to_file(
         self,
@@ -221,163 +200,179 @@ class ImageCreator(HazardImageCreator):
     ) -> Image.Image:
         """Get image for path specified as array of bytes."""
 
-        tile_size = 512
-        index = None
-
-        def get_array(data: zarr.Array, index: Optional[int]):
-            if len(data.shape) == 3:
-                index_values, _ = self.reader.get_index_values(data)
-                if index_value is not None:
-                    if isinstance(index_values[0], float):
-                        _index_value = float(index_value)
-                    elif isinstance(index_values[0], int):
-                        _index_value = int(index_value)
-                    elif isinstance(index_values[0], str):
-                        _index_value = str(index_value)  # type:ignore
-                index = (
-                    len(index_values) - 1
-                    if index_value is None
-                    else index_values.index(_index_value)
+        def get_array(path: str) -> np.ndarray:
+            array = get_data(self.reader, path)
+            if len(array.shape) != 3:
+                raise ValueError(
+                    f"map array at {path!r} must have dimensions (index, y, x); "
+                    f"got shape {array.shape}"
                 )
-                if tile is None:
-                    # return whole array
-                    return data[index, :, :]  # .squeeze(axis=0)
+
+            index_values, _ = self.reader.get_index_values(array)
+            if index_value is None:
+                index = len(index_values) - 1
+            else:
+                selected_index_value: str | float | int
+                if isinstance(index_values[0], float):
+                    selected_index_value = float(index_value)
+                elif isinstance(index_values[0], int):
+                    selected_index_value = int(index_value)
                 else:
-                    # (from zarr 2.16.0 we can also use block indexing)
-                    return data[
-                        index,
-                        tile_size * tile.y : tile_size * (tile.y + 1),
-                        tile_size * tile.x : tile_size * (tile.x + 1),
-                    ]
+                    selected_index_value = str(index_value)
+                index = index_values.index(selected_index_value)
+            if tile is None:
+                return array[index, :, :]
 
-        data = sum(
-            weight
-            * get_array(
-                get_data(
-                    self.reader,
-                    path,
-                ),
+            tile_size = 512
+            return array[
                 index,
-            )
-            for path, weight in path_weights.items()
-        )
+                tile_size * tile.y : tile_size * (tile.y + 1),
+                tile_size * tile.x : tile_size * (tile.x + 1),
+            ]
 
-        if any(dim > 4000 for dim in data.shape):
-            raise Exception("dimension too large (over 1500).")
-        map_defn = colormap_provider.colormap(colormap)
+        weighted_arrays = (
+            weight * get_array(path) for path, weight in path_weights.items()
+        )
+        data = next(weighted_arrays)
+        for weighted_array in weighted_arrays:
+            data += weighted_array
+
+        if any(dimension > 4000 for dimension in data.shape):
+            raise ValueError("dimension too large (over 4000).")
+        map_definition = colormap_provider.colormap(colormap)
 
         def get_colors(index: int):
-            return map_defn[str(index)]
+            return map_definition[str(index)]
 
-        rgba = self.to_rgba(
-            data, get_colors, min_value=min_value, max_value=max_value, scaling=scaling
+        rgba = to_rgba(
+            data,
+            get_colors,
+            min_value=min_value,
+            max_value=max_value,
+            scaling=scaling,
         )
-        image = Image.fromarray(rgba, mode="RGBA")
-        return image
+        return Image.fromarray(rgba, mode="RGBA")
 
-    @staticmethod
-    def to_rgba(  # noqa: C901
-        data: np.ndarray,
-        get_colors: Callable[[int], List[int]],
-        min_value: Optional[float] = None,
-        max_value: Optional[float] = None,
-        nodata_lower: Optional[float] = None,
-        nodata_upper: Optional[float] = None,
-        nodata_bin_transparent: bool = False,
-        min_bin_transparent: bool = False,
-        scaling: str = "linear",
-    ) -> np.ndarray:
-        """Convert the data to an RGBA image using values provided by get_colors.
-        We are particular about min and max values, ensuring that these get their own indices
-        from the colormap. Thee rules are:
-        0: value is nodata
-        1: value <= min_value
-        2: min_value < value < (max_value - min_value) / 253
-        254: (max_value - min_value) / 253 <= value < max_value
-        255 is >= max_value
-        With scaling='log' the in-between indices are assigned logarithmically
-        between min_value (which must be > 0) and max_value; the bin rules above
-        are unchanged.
 
-        Args:
-            data (np.ndarray): Two dimensional array.
-            get_colors (Callable[[int], Tuple[int, int, int]]): When passed an integer index in range 0:256, returns RGB components as integers in range 0:256.
-            min_value (Optional[float]): Minimum value. Defaults to None.
-            max_value (Optional[float]): Maximum value. Defaults to None.
-            nodata_lower (Optional[float], optional): If supplied, values smaller than or equal to nodata_lower threshold are considered nodata. Defaults to None.
-            nodata_upper (Optional[float], optional): If supplied, values larger than or equal to nodata_upper threshold are considered nodata. Defaults to None.
-            nodata_bin_transparent (bool, optional): If True make no_data bin transparent. Defaults to False.
-            min_bin_transparent (bool, optional): If True make min_bin transparent. Defaults to False.
-            scaling (str): Value-to-colour scaling, 'linear' or 'log'.
-                'log' requires min_value > 0. Defaults to 'linear'.
+def to_rgba(
+    data: np.ndarray,
+    get_colors: Callable[[int], List[int]],
+    min_value: Optional[float] = None,
+    max_value: Optional[float] = None,
+    nodata_lower: Optional[float] = None,
+    nodata_upper: Optional[float] = None,
+    nodata_bin_transparent: bool = False,
+    min_bin_transparent: bool = False,
+    scaling: str = "linear",
+) -> np.ndarray:
+    """Convert data to an RGBA image using colours provided by get_colors.
 
-        Returns:
-            np.ndarray: RGBA array.
-        """  # noqa
+    Minimum and maximum values have dedicated colormap indices:
+        0: nodata (NaN or a value matching a nodata threshold).
+        1: value <= min_value.
+        2 through 254: min_value < value < max_value, divided into 253 bins.
+        255: value >= max_value.
+    Nodata takes precedence over the minimum and maximum bins. With
+    scaling='log', the intermediate bins are spaced logarithmically between
+    min_value (which must be > 0) and max_value.
 
-        red = np.zeros(256, dtype=np.uint32)
-        green = np.zeros(256, dtype=np.uint32)
-        blue = np.zeros(256, dtype=np.uint32)
-        a = np.zeros(256, dtype=np.uint32)
-        for i in range(256):
-            (red[i], green[i], blue[i], a[i]) = get_colors(i)
-        if nodata_bin_transparent:
-            a[0] = 0
-        if min_bin_transparent:
-            a[1] = 0
-        mask_nodata = np.isnan(data)
-        if nodata_lower:
-            mask_nodata = data <= nodata_lower
-        if nodata_upper:
-            mask_nodata = (
-                (mask_nodata | (data >= nodata_upper))
-                if mask_nodata is not None
-                else (data >= nodata_upper)
-            )
+    When min_value equals max_value, values at or below that value use index 1
+    and values above it use index 255. Arrays containing only nodata use index 0
+    throughout.
 
-        if min_value is None:
-            min_value = np.nanmin(data)
-        if max_value is None:
-            max_value = np.nanmax(data)
+    Args:
+        data (np.ndarray): Two-dimensional floating-point array. Scaling may
+            modify this array in place; pass a copy to preserve the input.
+        get_colors (Callable[[int], List[int]]): Given a colormap index from
+            0 through 255, return red, green, blue and alpha components, each
+            an integer from 0 through 255.
+        min_value (Optional[float]): Minimum value. If None, use the minimum
+            of the data excluding nodata. Defaults to None.
+        max_value (Optional[float]): Maximum value. If None, use the maximum
+            of the data excluding nodata. Must be >= min_value. Defaults to None.
+        nodata_lower (Optional[float]): Values smaller than or equal to this
+            threshold are nodata. Defaults to None.
+        nodata_upper (Optional[float]): Values larger than or equal to this
+            threshold are nodata. Defaults to None.
+        nodata_bin_transparent (bool): Make index 0 transparent. Defaults to False.
+        min_bin_transparent (bool): Make index 1 transparent. Defaults to False.
+        scaling (str): Value-to-colour scaling, 'linear' or 'log'. Logarithmic
+            scaling requires min_value > 0. Defaults to 'linear'.
 
-        mask_ge_max = data >= max_value
-        mask_le_min = data <= min_value
+    Returns:
+        np.ndarray: Two-dimensional uint32 array with RGBA components packed
+            into each value, with red in the least significant byte.
+    """
+    if scaling not in ["linear", "log"]:
+        raise ValueError(f"unsupported scaling: {scaling}")
 
-        if scaling == "log":
-            if min_value <= 0.0:
-                raise ValueError("scaling='log' requires a min_value greater than 0.")
-            # values <= min_value produce nan/-inf here; they are overwritten
-            # below via mask_le_min (and mask_nodata), as in the linear case
-            with np.errstate(divide="ignore", invalid="ignore"):
-                np.log(data, out=data)
-            np.add(data, -np.log(min_value), out=data)
-            np.multiply(data, 253.0 / (np.log(max_value) - np.log(min_value)), out=data)
-            np.add(data, 2.0, out=data)
-        elif scaling == "linear":
-            np.add(data, -min_value, out=data)
-            np.multiply(data, 253.0 / (max_value - min_value), out=data)
-            np.add(data, 2.0, out=data)  # np.clip seems a bit slow so we do not use
-        else:
-            raise ValueError(f"unsupported scaling: {scaling}")
+    red = np.zeros(256, dtype=np.uint32)
+    green = np.zeros(256, dtype=np.uint32)
+    blue = np.zeros(256, dtype=np.uint32)
+    alpha = np.zeros(256, dtype=np.uint32)
+    for index in range(256):
+        red[index], green[index], blue[index], alpha[index] = get_colors(index)
+    if nodata_bin_transparent:
+        alpha[0] = 0
+    if min_bin_transparent:
+        alpha[1] = 0
 
-        result = data.astype(np.uint8, casting="unsafe", copy=False)
-        del data
-
-        if mask_nodata is not None:
-            result[mask_nodata] = 0
-            del mask_nodata
-
-        result[mask_ge_max] = 255
-        result[mask_le_min] = 1
-        del mask_ge_max, mask_le_min
-
-        final = (
-            red[result]
-            + (green[result] << 8)
-            + (blue[result] << 16)
-            + (a[result] << 24)
+    def apply_palette(indices: np.ndarray) -> np.ndarray:
+        return (
+            red[indices]
+            + (green[indices] << 8)
+            + (blue[indices] << 16)
+            + (alpha[indices] << 24)
         )
-        return final
+
+    mask_nodata = np.isnan(data)
+    if nodata_lower is not None:
+        mask_nodata |= data <= nodata_lower
+    if nodata_upper is not None:
+        mask_nodata |= data >= nodata_upper
+
+    valid_data = data[~mask_nodata]
+    if len(valid_data) == 0:
+        return apply_palette(np.zeros(data.shape, dtype=np.uint8))
+
+    if min_value is None:
+        min_value = np.min(valid_data)
+    if max_value is None:
+        max_value = np.max(valid_data)
+
+    if scaling == "log" and min_value <= 0.0:
+        raise ValueError("scaling='log' requires a min_value greater than 0.")
+    if max_value < min_value:
+        raise ValueError("max_value must be greater than or equal to min_value.")
+
+    mask_ge_max = data >= max_value
+    mask_le_min = data <= min_value
+
+    if max_value == min_value:
+        result = np.where(mask_le_min, 1, 255).astype(np.uint8)
+        result[mask_nodata] = 0
+        return apply_palette(result)
+
+    if scaling == "log":
+        with np.errstate(divide="ignore", invalid="ignore"):
+            np.log(data, out=data)
+        np.add(data, -np.log(min_value), out=data)
+        np.multiply(
+            data,
+            253.0 / (np.log(max_value) - np.log(min_value)),
+            out=data,
+        )
+        np.add(data, 2.0, out=data)
+    else:
+        np.add(data, -min_value, out=data)
+        np.multiply(data, 253.0 / (max_value - min_value), out=data)
+        np.add(data, 2.0, out=data)
+
+    result = data.astype(np.uint8, casting="unsafe", copy=False)
+    result[mask_ge_max] = 255
+    result[mask_le_min] = 1
+    result[mask_nodata] = 0
+    return apply_palette(result)
 
 
 @lru_cache(maxsize=32)

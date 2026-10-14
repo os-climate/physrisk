@@ -21,7 +21,7 @@ class Geocoder:
                     cls._instance = cls()
         return cls._instance
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Geocoder uses Natural Earth data to map lat/lon to country codes.
         High-resolution 'sub-unit' data is used, mainly to satisfy the needs
         of third-party APIs which require accurate country codes."""

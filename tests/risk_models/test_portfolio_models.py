@@ -29,6 +29,7 @@ from physrisk.kernel.hazards import (
     Drought,
     Fire,
     Hail,
+    Hazard,
     RiverineInundation,
     Wind,
 )
@@ -57,7 +58,7 @@ class TestFinancialDataProvider(FinancialDataProvider):
         return 100.0
 
 
-def test_impact_aggregation():
+def test_impact_aggregation() -> None:
     # Test case where assets are uncorrelated. Each asset has its own unique severity zone (SZ)
     # The samples are from the following distribution:
     impact_bin_edges = np.array([0.1, 0.2, 0.4, 0.8])
@@ -134,9 +135,9 @@ def test_impact_aggregation():
     np.testing.assert_allclose(mean_damage_mc, mean_damage_exact, rtol=0.02)
 
 
-def test_impact_aggregation_multiple_portfolios():
+def test_impact_aggregation_multiple_portfolios() -> None:
     """Assets tagged with different 'aggregation_id' values should produce separate,
-    independently-normalised portfolio-level results (keyed by RiskQuantityKey.agg_id),
+    independently-normalised portfolio-level results (keyed by RiskQuantityKey.aggregation_id),
     rather than being pooled into a single portfolio total.
     """
     impact_bin_edges = np.array([0.1, 0.2, 0.4, 0.8])
@@ -208,7 +209,7 @@ def test_impact_aggregation_multiple_portfolios():
     np.testing.assert_allclose(damage_a.mean / damage_b.mean, 10.0, rtol=0.05)
 
 
-def test_impact_aggregation_multi_hazard():
+def test_impact_aggregation_multi_hazard() -> None:
     """Aggregate Wind, RiverineInundation, Fire (all acute) and ChronicHeat (chronic)
     over a portfolio of manufacturing assets.
 
@@ -387,7 +388,7 @@ def test_impact_aggregation_multi_hazard():
     )
 
 
-def test_impact_aggregation_acute_damage_and_disruption():
+def test_impact_aggregation_acute_damage_and_disruption() -> None:
     """A single acute hazard can carry one damage impact and one disruption impact for
     the same asset; both are driven by the same event severity and their financial
     consequences should combine rather than conflict.
@@ -463,7 +464,7 @@ def test_impact_aggregation_acute_damage_and_disruption():
     )
 
 
-def test_impact_aggregation_acute_duplicate_impact_type_raises():
+def test_impact_aggregation_acute_duplicate_impact_type_raises() -> None:
     """Two acute impacts of the same ImpactType (e.g. two 'damage' impacts) for the same
     asset/hazard are ambiguous and remain unsupported."""
     scenario, key_year = "ssp585", 2050
@@ -495,7 +496,7 @@ def test_impact_aggregation_acute_duplicate_impact_type_raises():
         aggregate_impacts(impacts, financial_model, scenario, key_year)
 
 
-def test_simple_event_insurance_provider():
+def test_simple_event_insurance_provider() -> None:
     """SimpleEventInsuranceProvider returns claim payments consistent with uptake by hazard and occupancy code.
 
     Deductable is set to 0 and limit far above the unit loss used in this test, so that the claim payment for
@@ -508,7 +509,7 @@ def test_simple_event_insurance_provider():
       asset_1 (occ=2000): flood uptake=1.0 → never insured; fire uptake=0.0 → always insured
       asset_2 (occ=3000): flood uptake=0.5, fire uptake=0.5 → ~50% insured for each
     """
-    assets = [
+    assets: list[Asset] = [
         OEDAsset(id="asset_0", occupancy_code=1000, latitude=0.0, longitude=0.0),
         OEDAsset(id="asset_1", occupancy_code=2000, latitude=0.0, longitude=0.0),
         OEDAsset(id="asset_2", occupancy_code=3000, latitude=0.0, longitude=0.0),
@@ -524,7 +525,7 @@ def test_simple_event_insurance_provider():
     }
 
     def mock_insurance(
-        asset: Asset, hazard_type: type, impact_type: QuantityType
+        asset: Asset, hazard_type: type[Hazard], impact_type: QuantityType
     ) -> SectoralInsuranceData:
         uptake = uptake_table[(cast(OEDAsset, asset).occupancy_code, hazard_type)]
         return SectoralInsuranceData(uptake=uptake, deductable=0.0, limit=1.0)
@@ -586,7 +587,7 @@ def test_simple_event_insurance_provider():
     np.testing.assert_allclose(np.mean(fire_batch[0] & fire_batch[1]), 0.0, atol=0.04)
 
 
-def test_impact_aggregation_end_to_end():
+def test_impact_aggregation_end_to_end() -> None:
     """Mocked test that aggregates riverine inundation over assets and calculates
     portfolio level scores.
     """
@@ -650,7 +651,7 @@ def test_impact_aggregation_end_to_end():
     assert res is not None
 
 
-def test_impact_aggregation_end_to_end_multi_hazard():
+def test_impact_aggregation_end_to_end_multi_hazard() -> None:
     """End-to-end API test: 6 manufacturing assets exposed to flood, wind, fire and chronic heat.
 
     Uses AssetFinancialDrilldown to get analytical per-asset AALs alongside the Monte Carlo
@@ -714,7 +715,7 @@ def test_impact_aggregation_end_to_end_multi_hazard():
     )
 
     # Wind: all assets
-    wind_return_periods = [
+    wind_return_periods: list[float] = [
         20,
         30,
         40,
@@ -772,7 +773,7 @@ def test_impact_aggregation_end_to_end_multi_hazard():
             hp(Fire, "fire_probability", scenario),
             longitudes,
             latitudes,
-            [0],
+            [0.0],
             np.array([prob]),
         )
 
@@ -831,14 +832,14 @@ def test_impact_aggregation_end_to_end_multi_hazard():
             hp(Drought, "months/spei12m/below/threshold", scenario),
             longitudes,
             latitudes,
-            [0],
+            [0.0],
             np.array([0.0]),
         )
         mocker.add_curves_global(
             hp(Hail, "days/above/5cm", scenario),
             longitudes,
             latitudes,
-            [0],
+            [0.0],
             np.array([0.0]),
         )
 
@@ -944,8 +945,8 @@ def test_impact_aggregation_end_to_end_multi_hazard():
 
     # Collect analytical per-asset AALs from the drilldown (ssp585 / 2050 only)
     # FinancialDataStore default: TIV = revenue = 100 per asset (no financial data supplied)
-    # asset_ids 0-2 are in the pooled ('') portfolio, 3-5 are in 'group_b'.
-    group_of_asset = {f"asset_{i}": ("group_b" if i >= 3 else "") for i in range(6)}
+    # asset_ids 0-2 are in the pooled (None) portfolio, 3-5 are in 'group_b'.
+    group_of_asset = {f"asset_{i}": ("group_b" if i >= 3 else None) for i in range(6)}
 
     aal_by_key: dict[tuple[str, str], list[float]] = {
         (m.key.hazard_type, m.key.measure_id.split("_", 1)[1]): m.measures
@@ -956,19 +957,21 @@ def test_impact_aggregation_end_to_end_multi_hazard():
         and m.key.year == "2050"
     }
 
-    def analytical_mean(hazard: str, impact_type: str, agg_id: str) -> float:
+    def analytical_mean(
+        hazard: str, impact_type: str, aggregation_id: Optional[str]
+    ) -> float:
         vals = [
             v
             for asset_id, v in zip(
                 res.risk_measures.asset_ids, aal_by_key[(hazard, impact_type)]
             )
-            if group_of_asset[asset_id] == agg_id
+            if group_of_asset[asset_id] == aggregation_id
         ]
         return sum(vals) / len(vals)
 
     # Collect MC portfolio means from portfolio_impacts (ssp585 / 2050 only), split by
-    # aggregation_id so the two sub-portfolios ('' and 'group_b') are distinguishable.
-    mc_by_key: dict[tuple[str, str, str], float] = {
+    # aggregation_id so the two sub-portfolios (None and 'group_b') are distinguishable.
+    mc_by_key: dict[tuple[str, str, Optional[str]], float] = {
         (pi.key.hazard_type, pi.impact_type, pi.key.aggregation_id): pi.impact_mean
         for pi in res.portfolio_impacts
         if pi.key.scenario_id == "ssp585" and pi.key.year == "2050"
@@ -984,14 +987,14 @@ def test_impact_aggregation_end_to_end_multi_hazard():
         ("Fire", "damage"),
         ("ChronicHeat", "disruption/revenue"),
     ]:
-        for agg_id in ("", "group_b"):
-            k = (hazard, impact_type, agg_id)
-            if hazard == "RiverineInundation" and agg_id == "group_b":
+        for aggregation_id in (None, "group_b"):
+            k = (hazard, impact_type, aggregation_id)
+            if hazard == "RiverineInundation" and aggregation_id == "group_b":
                 # flood only affects assets 0-1, both in the pooled portfolio
                 assert k not in mc_by_key, f"unexpected flood result for {k}"
                 continue
             assert k in mc_by_key, f"MC portfolio mean missing for {k}"
-            analytical = analytical_mean(hazard, impact_type, agg_id)
+            analytical = analytical_mean(hazard, impact_type, aggregation_id)
             # sub-portfolios only have 2-3 assets each (vs. 6 for the full pool), so MC
             # noise is proportionally larger than in the single-portfolio comparison.
             np.testing.assert_allclose(
@@ -1004,17 +1007,28 @@ def test_impact_aggregation_end_to_end_multi_hazard():
 
     # Wind damage: fully insured, so the MC portfolio mean (net of claims) should be ~0 in
     # both sub-portfolios, while the (uninsured) analytical AAL remains clearly positive.
-    for agg_id in ("", "group_b"):
-        k = ("Wind", "damage", agg_id)
+    for aggregation_id in (None, "group_b"):
+        k = ("Wind", "damage", aggregation_id)
         assert k in mc_by_key, f"MC portfolio mean missing for {k}"
         np.testing.assert_allclose(mc_by_key[k], 0.0, atol=1e-6)
-        analytical = analytical_mean("Wind", "damage", agg_id)
+        analytical = analytical_mean("Wind", "damage", aggregation_id)
         assert analytical > 1e-5, (
-            f"expected positive uninsured analytical Wind AAL for group {agg_id!r}, got {analytical:.6g}"
+            f"expected positive uninsured analytical Wind AAL for group {aggregation_id!r}, got {analytical:.6g}"
         )
 
+    # CompanyRiskMeasureCalculator must produce a portfolio-level score per sub-portfolio
+    # (aggregation_id), not just a single score for the whole pool.
+    portfolio_score_aggregation_ids = {
+        m.key.aggregation_id
+        for m in res.risk_measures.measures_for_portfolio
+        if m.key.scenario_id == "ssp585" and m.key.year == "2050"
+    }
+    assert portfolio_score_aggregation_ids == {None, "group_b"}, (
+        f"expected a portfolio score for each sub-portfolio, got {portfolio_score_aggregation_ids}"
+    )
 
-def test_portfolio_semi_standard_deviation():
+
+def test_portfolio_semi_standard_deviation() -> None:
     """Portfolio upside semi-standard deviation must use the same definition as
     ImpactDistrib.semi_standard_deviation, i.e. sqrt(E[max(X - mean, 0)^2]) over all
     simulated years, and not the semi-variance conditional on exceeding the mean.

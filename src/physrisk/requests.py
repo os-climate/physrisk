@@ -750,7 +750,7 @@ def _compile_portfolio_impacts(
                         else "",
                         scenario_id=scenario,
                         year=str(year) if year is not None else "",
-                        aggregation_id=rk.agg_id or "",
+                        aggregation_id=rk.aggregation_id,
                     ),
                     impact_type=_QUANTITY_TYPE_TO_IMPACT_TYPE.get(rk.quantity, "damage")
                     if rk.quantity is not None
@@ -1062,6 +1062,10 @@ def _create_risk_measures(
     nan_value = -9999.0  # Nan not part of JSON spec
     hazard_types = set(k.hazard_type for k in measures.keys())
     # hazard_types = all_hazards()
+    portfolio_aggregation_ids = sorted(
+        {k.aggregation_id for k in measures.keys() if k.asset is None},
+        key=lambda a: a or "",
+    )
     measure_set_id = "measure_set_0"
     measures_for_assets: List[ScoreBasedRiskMeasuresForAssets] = []
     measures_for_portfolio: List[ScoreBasedRiskMeasure] = []
@@ -1113,27 +1117,30 @@ def _create_risk_measures(
                                 measures_1=None,
                             )
                         )
-                portfolio_measure_key = MeasureKey(
-                    asset=None,
-                    scenario=scenario_id,
-                    year=year,
-                    hazard_type=hazard_type,
-                )
-                if portfolio_measure_key in measures:
-                    measure = measures[portfolio_measure_key]
-                    measures_for_portfolio.append(
-                        ScoreBasedRiskMeasure(
-                            key=RiskMeasureKey(
-                                hazard_type="",
-                                scenario_id=scenario_id,
-                                year=str(year),
-                                measure_id=definitions.get(measure.definition, ""),
-                            ),
-                            score=int(measure.score),
-                            measure_0=sig_figures(measure.measure_0),
-                            measure_1=None,
-                        )
+                for aggregation_id in portfolio_aggregation_ids:
+                    portfolio_measure_key = MeasureKey(
+                        asset=None,
+                        scenario=scenario_id,
+                        year=year,
+                        hazard_type=hazard_type,
+                        aggregation_id=aggregation_id,
                     )
+                    if portfolio_measure_key in measures:
+                        measure = measures[portfolio_measure_key]
+                        measures_for_portfolio.append(
+                            ScoreBasedRiskMeasure(
+                                key=RiskMeasureKey(
+                                    hazard_type="",
+                                    scenario_id=scenario_id,
+                                    year=str(year),
+                                    measure_id=definitions.get(measure.definition, ""),
+                                    aggregation_id=aggregation_id,
+                                ),
+                                score=int(measure.score),
+                                measure_0=sig_figures(measure.measure_0),
+                                measure_1=None,
+                            )
+                        )
 
     asset_measure_ids_for_hazard_drilldown_nested: dict[str, dict[str, list[str]]] = (
         defaultdict(dict)

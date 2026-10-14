@@ -172,22 +172,35 @@ class CompanyRiskMeasureCalculator(PortfolioRiskMeasureCalculator):
                 insurance_provider=self._insurance_provider,
             )
             all_portfolio_quantities[(scenario, year)] = portfolio_quantities
-            damage, revenue_loss, costs_increase = (
-                portfolio_quantities[RiskQuantityKey(quantity=qt)]
-                for qt in [
-                    QuantityType.DAMAGE,
-                    QuantityType.REVENUE_LOSS,
-                    QuantityType.COSTS_INCREASE,
-                ]
+            aggregation_ids = sorted(
+                {
+                    k.aggregation_id
+                    for k in portfolio_quantities.keys()
+                    if k.asset is None and k.hazard_type is None
+                },
+                key=lambda a: a or "",
             )
-            score = self.calculate_scores(
-                damage.values, revenue_loss.values, costs_increase.values
-            )
-            measures[MeasureKey(None, scenario, year, None, None)] = Measure(
-                score=Category(round(score)),
-                measure_0=score,
-                definition=self._definition,
-            )
+            for aggregation_id in aggregation_ids:
+                damage, revenue_loss, costs_increase = (
+                    portfolio_quantities[
+                        RiskQuantityKey(quantity=qt, aggregation_id=aggregation_id)
+                    ]
+                    for qt in [
+                        QuantityType.DAMAGE,
+                        QuantityType.REVENUE_LOSS,
+                        QuantityType.COSTS_INCREASE,
+                    ]
+                )
+                score = self.calculate_scores(
+                    damage.values, revenue_loss.values, costs_increase.values
+                )
+                measures[
+                    MeasureKey(None, scenario, year, None, None, aggregation_id)
+                ] = Measure(
+                    score=Category(round(score)),
+                    measure_0=score,
+                    definition=self._definition,
+                )
         return measures, all_portfolio_quantities
 
     def asset_level_measures_required(self) -> bool:

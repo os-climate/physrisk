@@ -509,7 +509,7 @@ async def test_geocode_rate_limiter_acquire_is_called():
     geocoder._rate_limiter.acquire.assert_called_once()
 
 
-async def test_rate_limiter_burst_capacity_exhausted_then_delays():
+async def test_rate_limiter_burst_capacity_exhausted_then_delays() -> None:
     """After the initial burst tokens are spent, acquire() should sleep."""
     limiter = _RateLimiter(2.0)  # 2/s → burst of 2, then ~0.5 s per token
 

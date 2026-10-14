@@ -103,9 +103,9 @@ class PortfolioAggregationKeys(AggregationKeys):
     def get_aggregation_keys(
         self, asset: Asset, hazard_type: Optional[type[Hazard]], quantity: QuantityType
     ) -> list[RiskQuantityKey]:
-        agg_id = asset.aggregation_id
+        aggregation_id = asset.aggregation_id
         return [
-            RiskQuantityKey(quantity=quantity, agg_id=agg_id),
+            RiskQuantityKey(quantity=quantity, aggregation_id=aggregation_id),
         ]
 
 
@@ -116,9 +116,13 @@ class HazardQuantityAggregationKeys(AggregationKeys):
     def get_aggregation_keys(
         self, asset: Asset, hazard_type: Optional[type[Hazard]], quantity: QuantityType
     ) -> list[RiskQuantityKey]:
-        agg_id = asset.aggregation_id
+        aggregation_id = asset.aggregation_id
         return [
-            RiskQuantityKey(quantity=quantity, hazard_type=hazard_type, agg_id=agg_id),
+            RiskQuantityKey(
+                quantity=quantity,
+                hazard_type=hazard_type,
+                aggregation_id=aggregation_id,
+            ),
         ]
 
 
@@ -476,7 +480,7 @@ def _run_simulation(
         if (event_end // event_batch_sz) % 20 == 0:
             logger.info(f"Processed {event_end} events out of {n_events}.")
 
-    # return combined by-hazard and capped 'total' results (one 'total' per portfolio, i.e. per agg_id)
+    # return combined by-hazard and capped 'total' results (one 'total' per portfolio, i.e. per aggregation_id)
     all_results = by_hazard_agg.aggregation_pools
     all_results.update(portfolio_agg.aggregation_pools)
     return all_results
@@ -660,18 +664,18 @@ def _summarise_results(
     asset_revenue: dict[Asset, float],
 ) -> dict[RiskQuantityKey, Quantity]:
     """Normalise per-event arrays by portfolio totals and build exceedance-curve summaries."""
-    sum_tiv_by_agg_id: dict[Optional[str], float] = defaultdict(float)
-    sum_revenue_by_agg_id: dict[Optional[str], float] = defaultdict(float)
+    sum_tiv_by_aggregation_id: dict[Optional[str], float] = defaultdict(float)
+    sum_revenue_by_aggregation_id: dict[Optional[str], float] = defaultdict(float)
     for asset, tiv in asset_tiv.items():
-        sum_tiv_by_agg_id[asset.aggregation_id] += tiv
+        sum_tiv_by_aggregation_id[asset.aggregation_id] += tiv
     for asset, revenue in asset_revenue.items():
-        sum_revenue_by_agg_id[asset.aggregation_id] += revenue
+        sum_revenue_by_aggregation_id[asset.aggregation_id] += revenue
 
     for k, v in all_results.items():
         if k.quantity == QuantityType.DAMAGE:
-            all_results[k] = v / sum_tiv_by_agg_id[k.agg_id]
+            all_results[k] = v / sum_tiv_by_aggregation_id[k.aggregation_id]
         elif k.quantity == QuantityType.REVENUE_LOSS:
-            all_results[k] = v / sum_revenue_by_agg_id[k.agg_id]
+            all_results[k] = v / sum_revenue_by_aggregation_id[k.aggregation_id]
 
     return_periods = np.array([10.0, 20.0, 50.0, 100.0, 200.0, 500.0, 1000.0])
     quantiles = 1.0 - 1.0 / return_periods

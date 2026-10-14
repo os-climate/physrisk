@@ -51,15 +51,18 @@ class AveragingAssetBasedPortfolioRiskMeasureCalculator(PortfolioRiskMeasureCalc
         dict[tuple[str, int | None], dict[RiskQuantityKey, Quantity]],
     ]:
         portfolio_measures: dict[MeasureKey, Measure] = {}
-        measure_by_year_scen: dict[tuple[str, int | None], list[MeasureKey]] = (
-            defaultdict(list)
-        )
+        measure_by_year_scen_agg: dict[
+            tuple[str, int | None, Optional[str]], list[MeasureKey]
+        ] = defaultdict(list)
         for mk in asset_level_measures.keys():
-            measure_by_year_scen[(mk.scenario, mk.year)].append(mk)
-        for k, v in measure_by_year_scen.items():
+            aggregation_id = mk.asset.aggregation_id if mk.asset is not None else None
+            measure_by_year_scen_agg[(mk.scenario, mk.year, aggregation_id)].append(mk)
+        for (scenario, year, aggregation_id), v in measure_by_year_scen_agg.items():
             scores = [float(asset_level_measures[m].score) for m in v]
             average_score = statistics.mean(s for s in scores if s > 0)
-            portfolio_measures[MeasureKey(None, k[0], k[1], None)] = Measure(
+            portfolio_measures[
+                MeasureKey(None, scenario, year, None, None, aggregation_id)
+            ] = Measure(
                 score=Category(round(average_score)),
                 measure_0=average_score,
                 definition=self._definition,

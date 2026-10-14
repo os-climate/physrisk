@@ -191,6 +191,11 @@ class RiskMeasureKey(BaseModel):
     year: str
     measure_id: str
     hazard_indicator_id: Optional[str] = None
+    aggregation_id: Optional[str] = Field(
+        None,
+        description="Identifier of the sub-portfolio (asset 'aggregation_id') this "
+        "portfolio-level measure belongs to; omitted for the pooled portfolio total.",
+    )
 
 
 class ScoreBasedRiskMeasure(BaseModel):
@@ -292,10 +297,10 @@ class ImpactKey(BaseModel):
 
 
 class PortfolioImpactKey(ImpactKey):
-    aggregation_id: str = Field(
-        "",
+    aggregation_id: Optional[str] = Field(
+        None,
         description="Identifier of the sub-portfolio (asset 'aggregation_id') this "
-        "result belongs to; empty for the pooled portfolio total.",
+        "result belongs to; omitted for the pooled portfolio total.",
     )
 
 

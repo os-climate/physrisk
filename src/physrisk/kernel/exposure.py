@@ -7,7 +7,8 @@ from typing import Dict, List, Sequence, Tuple
 
 import numpy as np
 
-from physrisk.data.hazard_data_provider import HazardDataHint, ScenarioYear
+from physrisk.data.hazard_data_provider import HazardDataHint
+from physrisk.data.scenario_year_resolution import ScenarioYear
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.hazard_model import (
     HazardDataRequest,

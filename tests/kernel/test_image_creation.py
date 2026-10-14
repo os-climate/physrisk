@@ -2,42 +2,29 @@ import io
 import os
 import warnings
 from typing import Dict, Optional
-import pytest
 
-from dependency_injector import providers
 import numpy as np
 import PIL.Image as Image
+import pytest
 import zarr
 import zarr.storage
+from dependency_injector import providers
 
-from physrisk.api.v1.hazard_data import HazardResource, Scenario, MapInfo
+from physrisk.api.v1.hazard_data import HazardResource, MapInfo, ScenarioYears
 from physrisk.container import Container
 from physrisk.data import colormap_provider
-from physrisk.data.hazard_data_provider import ScenarioPaths, SourcePaths
+from physrisk.data.scenario_year_resolution import (
+    InterpolatedYearResolver,
+    resolve_exact_year,
+)
 from physrisk.data.image_creator import ImageCreator, to_rgba
 from physrisk.data.inventory import Inventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import (
-    InventorySourcePaths,
+    InventoryHazardResourceSelector,
 )
 from physrisk.kernel.hazard_model import HazardModelFactory, Tile
-
-
-class SourcePathsTest(SourcePaths):
-    def hazard_types(self):
-        return []
-
-    def resource_paths(self, hazard_type, indicator_id, scenarios, hint=None):
-        pass
-
-    def scenario_paths_for_id(self, resource_id, scenarios, map, map_zoom):
-        return {
-            s: ScenarioPaths(
-                years=[2030, 2050], path=lambda y, s=s: f"test_array_{s}_{y}/{map_zoom}"
-            )
-            for s in scenarios
-        }
 
 
 def test_to_rgba():
@@ -94,7 +81,9 @@ def test_to_image_rejects_unsupported_dimensions(mock_inventory):
     store = zarr.storage.MemoryStore(root="hazard.zarr")
     root = zarr.open(store=store, mode="w")
     root.create_dataset("map", shape=(2, 2), dtype="f4")  # type: ignore
-    creator = ImageCreator(mock_inventory, SourcePathsTest(), ZarrReader(store))
+    creator = ImageCreator(
+        mock_inventory, ZarrReader(store), InterpolatedYearResolver()
+    )
 
     with pytest.raises(ValueError):
         creator._to_image({"map": 1.0})
@@ -143,7 +132,7 @@ def _make_inventory(group_id: str = "public"):
                 indicator_model_gcm="",
                 display_name="",
                 description="",
-                scenarios=[Scenario(id="ssp585", years=[2030, 2050])],
+                scenarios=[ScenarioYears(id="ssp585", years=[2030, 2050])],
                 units="",
                 map=MapInfo(
                     path="test_array_{scenario}_{year}",
@@ -191,7 +180,7 @@ def zarr_store():
 def test_interpolation(mock_inventory, zarr_store):
     converter = ImageCreator(
         inventory=mock_inventory,
-        source_paths=SourcePathsTest(),
+        scenario_year_resolver=InterpolatedYearResolver(),
         reader=ZarrReader(zarr_store),
     )
 
@@ -222,7 +211,7 @@ def test_image_info_includes_tile_size(mock_inventory, zarr_store, monkeypatch):
     monkeypatch.setattr(
         reader, "ls", lambda path: [path + "1", path + "3", path + "metadata"]
     )
-    creator = ImageCreator(Inventory([resource]), SourcePathsTest(), reader)
+    creator = ImageCreator(Inventory([resource]), reader, InterpolatedYearResolver())
 
     assert creator.get_info(resource.key(), "ssp585", 2040) == (
         [0],
@@ -255,7 +244,7 @@ def _expected_test_image_bytes():
 
 
 def _build_requester(inventory, zarr_store, enforce_permissions: bool = True):
-    source_paths = InventorySourcePaths(inventory)
+    resource_selector = InventoryHazardResourceSelector(inventory)
 
     class TestHazardModelFactory(HazardModelFactory):
         def hazard_model(
@@ -264,16 +253,21 @@ def _build_requester(inventory, zarr_store, enforce_permissions: bool = True):
             provider_max_requests: Dict[str, int] = {},
             interpolate_years: bool = False,
         ):
-            return ZarrHazardModel(source_paths=source_paths, store=zarr_store)
+            return ZarrHazardModel(
+                scenario_year_resolver=resolve_exact_year,
+                resource_selector=resource_selector,
+                store=zarr_store,
+            )
 
         def image_creator(self):
-            return ImageCreator(inventory, source_paths, ZarrReader(store=zarr_store))
+            return ImageCreator(
+                inventory, ZarrReader(store=zarr_store), InterpolatedYearResolver()
+            )
 
     container = Container()
     container.override_providers(
         hazard_model_factory=providers.Factory(TestHazardModelFactory)
     )
-    container.override_providers(source_paths=providers.Factory(SourcePathsTest))
     container.override_providers(inventory=providers.Singleton(lambda: inventory))
     container.override_providers(zarr_reader=ZarrReader(store=zarr_store))
     container.config.enforce_permissions.from_value(enforce_permissions)
@@ -308,6 +302,23 @@ def test_write_file(mock_inventory):
     store = zarr.DirectoryStore(
         os.path.join(test_output_dir, "hazard_test", "hazard.zarr")
     )
-    source_paths = InventorySourcePaths(mock_inventory)
-    creator = ImageCreator(mock_inventory, source_paths, ZarrReader(store))
+    creator = ImageCreator(
+        mock_inventory, ZarrReader(store), InterpolatedYearResolver()
+    )
     creator.to_file(os.path.join(test_output_dir, "test.png"), test_path)
+
+
+def test_image_combines_weights_for_same_historical_proxy(mock_inventory, zarr_store):
+    creator = ImageCreator(
+        mock_inventory, ZarrReader(zarr_store), InterpolatedYearResolver()
+    )
+    resource_id = "test_array_{scenario}_{year}"
+    # There is no historical map: both interpolation inputs use the 2030 map.
+    # Fixed color limits make any lost weight visible in the resulting pixels.
+    image_2027 = creator.create_image(
+        resource_id, "ssp585", 2027, tile=Tile(0, 0, 0), min_value=0, max_value=2
+    )
+    image_2030 = creator.create_image(
+        resource_id, "ssp585", 2030, tile=Tile(0, 0, 0), min_value=0, max_value=2
+    )
+    assert image_2027 == image_2030

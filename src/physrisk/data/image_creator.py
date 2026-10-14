@@ -8,12 +8,12 @@ import numpy as np
 import PIL.Image as Image
 
 from physrisk.api.v1.hazard_image import TileNotAvailableError
-from physrisk.kernel.hazards import HazardKind, hazard_class
 from physrisk.data import colormap_provider
-from physrisk.data.hazard_data_provider import CascadingHazardDataProvider, SourcePaths
+from physrisk.data.scenario_year_resolution import ScenarioYear, ScenarioYearResolver
 from physrisk.data.inventory import Inventory
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.kernel.hazard_model import HazardImageCreator, Tile
+from physrisk.kernel.hazards import HazardKind, hazard_class
 
 logger = logging.getLogger(__name__)
 
@@ -26,14 +26,12 @@ class ImageCreator(HazardImageCreator):
     def __init__(
         self,
         inventory: Inventory,
-        source_paths: SourcePaths,
         reader: ZarrReader,
-        historical_year: int = 2025,
+        scenario_year_resolver: ScenarioYearResolver,
     ):
         self.inventory = inventory
-        self.source_paths = source_paths
         self.reader = reader
-        self.historical_year = historical_year  # might be needed for interpolation
+        self._scenario_year_resolver = scenario_year_resolver
 
     def create_image(
         self,
@@ -54,27 +52,22 @@ class ImageCreator(HazardImageCreator):
                 f"tile_size={tile_size} is not supported; only 512 is available for this resource."
             )
         try:
-            scenario_paths = self.source_paths.scenario_paths_for_id(
-                resource_id,
-                ["historical", scenario],
-                True,
-                map_zoom=tile.z + 1 if tile is not None else None,
+            resource = self.inventory.resources[resource_id]
+            weighted_sum = self._scenario_year_resolver(
+                resource.scenarios, ScenarioYear(scenario, year)
             )
-            weighted_sum = next(
-                iter(
-                    CascadingHazardDataProvider._weights(
-                        scenario,
-                        scenario_paths[scenario].years,
-                        [year],
-                        self.historical_year,
-                    ).values()
+            if weighted_sum is None:
+                raise KeyError(f"Unsupported scenario/year: {scenario}/{year}")
+            path_weights: Dict[str, float] = {}
+            for source, weight in weighted_sum.weights:
+                path = resource.map_path_for_scenario_year(
+                    source.scenario,
+                    source.year,
+                    zoom=tile.z + 1 if tile is not None else None,
                 )
-            )
+                path_weights[path] = path_weights.get(path, 0.0) + weight
             image = self._to_image(
-                {
-                    scenario_paths[sy.scenario].path(sy.year): w
-                    for sy, w in weighted_sum.weights
-                },
+                path_weights,
                 colormap,
                 tile=tile,
                 index_value=index_value,
@@ -110,12 +103,14 @@ class ImageCreator(HazardImageCreator):
                 f"tile_size={tile_size} is not supported; only 512 is available for this resource."
             )
         resource = self.inventory.resources[resource_id]
-        # in principle, depends on the scenario and year, although we assume here that
-        # all years have the same index values available.
-        scenario_paths = self.source_paths.scenario_paths_for_id(
-            resource_id, [scenario], True, map_zoom=1
-        )[scenario]
-        path = scenario_paths.path(scenario_paths.years[0])
+        weighted_sum = self._scenario_year_resolver(
+            resource.scenarios, ScenarioYear(scenario, year)
+        )
+        if weighted_sum is None:
+            raise KeyError(f"Unsupported scenario/year: {scenario}/{year}")
+        # All inputs are assumed to share index metadata.
+        source = weighted_sum.weights[0][0]
+        path = resource.map_path_for_scenario_year(source.scenario, source.year, zoom=1)
         z = self.reader.all_data(path)
         all_index_values, index_units = self.reader.get_index_values(z)
         available_index_values = (

@@ -17,7 +17,13 @@ from physrisk.kernel.hazards import (
     RiverineInundation,
 )
 
-from ..api.v1.hazard_data import Colormap, HazardResource, MapInfo, Period, Scenario
+from ..api.v1.hazard_data import (
+    Colormap,
+    HazardResource,
+    MapInfo,
+    Period,
+    ScenarioYears,
+)
 
 # from physrisk.kernel.hazards import ChronicHeat
 
@@ -84,10 +90,10 @@ class EmbeddedInventory(Inventory):
                 display_name="JBA Risk Management flood model",
                 description="Commercial flood model from JBA Risk Management (https://www.jbarisk.com/)",
                 scenarios=[
-                    Scenario(id="historical", years=[2020]),
-                    Scenario(id="ssp126", years=[2030, 2050, 2080]),
-                    Scenario(id="ssp245", years=[2030, 2050, 2080]),
-                    Scenario(id="ssp585", years=[2030, 2050, 2080]),
+                    ScenarioYears(id="historical", years=[2020]),
+                    ScenarioYears(id="ssp126", years=[2030, 2050, 2080]),
+                    ScenarioYears(id="ssp245", years=[2030, 2050, 2080]),
+                    ScenarioYears(id="ssp585", years=[2030, 2050, 2080]),
                 ],
                 units="m",
                 map=MapInfo(
@@ -114,7 +120,7 @@ class EmbeddedInventory(Inventory):
             display_name="JBA Risk Management riverine standard of protection",
             description="Riverine standard of protection (defended return period), commercial flood model from JBA Risk Management (https://www.jbarisk.com/)",  # noqa: E501
             scenarios=[
-                Scenario(id="historical", years=[2020]),
+                ScenarioYears(id="historical", years=[2020]),
             ],
             units="years",
             map=MapInfo(

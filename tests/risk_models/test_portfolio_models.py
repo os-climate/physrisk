@@ -42,6 +42,9 @@ from physrisk.kernel.insurance_model import SectoralInsuranceData
 from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
 from physrisk.kernel.risk import QuantityType, RiskQuantityKey
 from physrisk.risk_models.portfolio_risk_model import CompanyRiskMeasureCalculator
+from physrisk.vulnerability_models.config_based_impact_curves import (
+    DowntimeConfigItem,
+)
 from physrisk.vulnerability_models.vulnerability import VulnerabilityModelsFactory
 from tests.data.test_hazard_model_store import ZarrStoreMocker
 from tests.vulnerability_models.test_config_based_vulnerability import create_store
@@ -649,6 +652,143 @@ def test_impact_aggregation_end_to_end() -> None:
     )
     res = requester.get_asset_impacts(request=req)
     assert res is not None
+
+
+def test_impact_aggregation_downtime_analytical_matches_mc() -> None:
+    """Regression test for the _asset_level_drilldown bin-midpoint quadrature fix.
+
+    frac_damage_to_restoration_cost_and_revenue_loss applies a configurable downtime
+    curve to the damage fraction, converting it to revenue loss. That curve is generally
+    *nonlinear*, so the analytical per-asset mean revenue loss must be computed by
+    integrating the curve over the full damage distribution, not by applying it to the
+    scalar mean damage (which would silently assume linearity -- see the comment above
+    its computation in impact_aggregator.py). Here the downtime curve has a deliberately
+    sharp, strongly nonlinear kink, so an incorrect scalar-mean shortcut would produce a
+    materially different (and wrong) analytical mean than the Monte Carlo ground truth.
+
+    FinancialDataStore default (no financial data supplied): TIV = revenue = 100 for every
+    asset, so a plain average of per-asset fractional AAL equals the TIV/revenue-weighted
+    portfolio total.
+    """
+    scenarios = ["ssp585", "historical"]
+    years = [2050]
+    latitudes = [22.30224, 22.31150, 22.45022]
+    longitudes = [114.18670, 114.17774, 114.02882]
+    store = create_store(latitudes, longitudes)
+    hazard_model = ZarrHazardModel(source_paths=get_default_source_paths(), store=store)
+
+    class TestHazardModelFactory(HazardModelFactory):
+        def hazard_model(
+            self,
+            interpolation: Optional[str] = "floor",
+            provider_max_requests: dict[str, int] = {},
+            interpolate_years: bool = False,
+        ):
+            return hazard_model
+
+    # Sharply nonlinear (convex-then-flat) downtime curve: small damage barely disrupts
+    # revenue, but disruption ramps up steeply for mid-range damage. Applying this curve
+    # to the scalar mean damage (the old, buggy behaviour) gives a materially different
+    # answer than integrating it over the damage distribution.
+    downtime_curve = DowntimeConfigItem(
+        asset_class="ManufacturingAsset",
+        asset_identifier="",
+        points_x=[0.0, 0.2, 0.5, 1.0],
+        points_y=[0.0, 0.02, 0.5, 0.52],
+    )
+
+    class TestMeasuresFactory(DefaultMeasuresFactory):
+        def portfolio_calculator(self, use_case_id: str):
+            if use_case_id.upper() == "COMPANY":
+                return CompanyRiskMeasureCalculator(downtime_config=[downtime_curve])
+            return super().portfolio_calculator(use_case_id)
+
+    container = Container()
+    container.override_providers(
+        hazard_model_factory=providers.Factory(TestHazardModelFactory)
+    )
+    container.override_providers(
+        config=providers.Configuration(default={"zarr_sources": ["embedded"]})
+    )
+    container.override_providers(zarr_store=None)
+    container.override_providers(inventory_reader=None)
+    container.override_providers(zarr_reader=None)
+    container.override_providers(sig_figures=6)
+    container.override_providers(
+        vulnerability_models_factory=providers.Factory(
+            VulnerabilityModelsFactory,
+            config=VulnerabilityModelsFactory.embedded_vulnerability_config(),
+        )
+    )
+    container.override_providers(measures_factory=providers.Factory(TestMeasuresFactory))
+    requester = container.requester()
+
+    assets = Assets(
+        items=[
+            APIAsset(
+                id=f"asset_{i}",
+                occupancy_code=2000,
+                latitude=latitudes[i],
+                longitude=longitudes[i],
+            )
+            for i in range(3)
+        ]
+    )
+    req = AssetImpactRequest(
+        assets=assets,
+        scenarios=scenarios,
+        years=years,
+        include_asset_level=False,
+        include_measures=True,
+        include_calc_details=False,
+        use_case_id="company",
+        calc_settings=CalcSettings(hazard_scope="RiverineInundation"),
+        measures_specification=AssetMeasuresSpecification(
+            measure_ids=["mean"],
+            quantity_types=["disruption/revenue"],
+        ),
+    )
+    res = requester.get_asset_impacts(request=req)
+    assert res.risk_measures is not None
+    assert res.portfolio_impacts is not None
+
+    # Analytical: per-asset fractional mean revenue loss from _asset_level_drilldown,
+    # averaged across assets (valid since all assets share the same TIV/revenue).
+    analytical_means = [
+        v
+        for m in res.risk_measures.measures_for_assets
+        if isinstance(m, RiskMeasuresForAssets)
+        and m.key.measure_id == "mean_disruption/revenue"
+        and m.key.scenario_id == "ssp585"
+        and m.key.year == "2050"
+        for v in m.measures
+    ]
+    assert analytical_means, "no analytical revenue-loss drilldown found"
+    analytical_mean_total = sum(analytical_means) / len(analytical_means)
+
+    # should be materially nonzero -- otherwise the nonlinear curve wasn't exercised
+    assert analytical_mean_total > 1e-4, (
+        f"expected a nonzero downtime-driven revenue loss, got {analytical_mean_total:.6g}"
+    )
+
+    # Monte Carlo: portfolio mean revenue loss for the same hazard/scenario/year, the
+    # ground truth this analytical value must reconcile against (within MC noise).
+    mc_mean = next(
+        pi.impact_mean
+        for pi in res.portfolio_impacts
+        if pi.key.hazard_type == "RiverineInundation"
+        and pi.impact_type == "disruption/revenue"
+        and pi.key.scenario_id == "ssp585"
+        and pi.key.year == "2050"
+    )
+
+    np.testing.assert_allclose(
+        mc_mean,
+        analytical_mean_total,
+        rtol=0.1,
+        err_msg=f"MC vs analytical mismatch: mc={mc_mean:.6g}, "
+        f"analytical={analytical_mean_total:.6g}",
+    )
 
 
 def test_impact_aggregation_end_to_end_multi_hazard() -> None:

@@ -720,7 +720,9 @@ def test_impact_aggregation_downtime_analytical_matches_mc() -> None:
             config=VulnerabilityModelsFactory.embedded_vulnerability_config(),
         )
     )
-    container.override_providers(measures_factory=providers.Factory(TestMeasuresFactory))
+    container.override_providers(
+        measures_factory=providers.Factory(TestMeasuresFactory)
+    )
     requester = container.requester()
 
     assets = Assets(

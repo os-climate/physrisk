@@ -108,6 +108,7 @@ class JBAHazardModel(HazardModel):
         restrict_coverage: bool = False,
         only_request_required: bool = False,
         default_buffer: int = 10,
+        use_best_dataset: bool = True,
     ):
         """JBAHazardModel retrieves data via the JBA API.
         https://api.jbarisk.com/docs/index.html
@@ -118,8 +119,8 @@ class JBAHazardModel(HazardModel):
         Args:
             cache_store (H3BasedCache): Results caching store.
             credentials (Optional[CredentialsProvider], optional): Credentials provider. Defaults to None.
-            geocoder (Optional[Geocoder], optional): Geocoder (needed to identify country in current JBA API version).
-                Defaults to None.
+            geocoder (Optional[Geocoder], optional): Geocoder (needed to identify country when use_best_dataset
+                is False). Defaults to None, in which case one is created lazily if needed.
             max_requests (int, optional): Maximum number of requests permitted; if exceeded an exception is raised.
                 Defaults to 5.
             cmip (int, optional): Can take values 5 (CMIP5, i.e. RCPs) or 6 (CMIP6, i.e. SSPs).
@@ -129,13 +130,22 @@ class JBAHazardModel(HazardModel):
             restrict_coverage (bool, optional): If True, restrict the number of scenarios for performance reasons.
             only_request_required (bool, optional): If True, request only scenarios and years required (i.e. not extra ones to cache)
             default_buffer (int, optional): Default buffer in metres to apply around points if no geometry provided. Defaults to 10.
+            use_best_dataset (bool, optional): If True (default), skip geocoding and request JBA's 'WR'
+                (world) country code for every location; JBA resolves 'WR' to the best dataset available
+                for that location. If False, geocode each location and apply country_mapping overrides,
+                which is needed for the few countries (e.g. GB) where 'WR' does not give the best
+                available data. Defaults to True.
         """
         self.cache_store = cache_store
         self.credentials = (
             credentials if credentials is not None else EnvCredentialsProvider()
         )
         self.default_buffer = default_buffer
-        self.geocoder = geocoder if geocoder is not None else Geocoder.instance()
+        self.use_best_dataset = use_best_dataset
+        # geocoding is only needed when use_best_dataset is False; it is relatively
+        # expensive to construct (loads Natural Earth shapefile data), so it is
+        # created lazily in get_hazard_data only if actually required.
+        self.geocoder = geocoder
         self.indicators = set(
             [
                 Indicator(hazard_type="RiverineInundation", indicator_id="flood_depth"),
@@ -192,8 +202,8 @@ class JBAHazardModel(HazardModel):
             # 1) JBA API returns Riverine and Pluvial hazards at the same time. We want to make sure that
             # we get these and cache just once: otherwise a risk that we request the same data multiple times!
             # 2) We are already maxing out the number of requests to JBA using async for a single thread.
-            if not self.geocoder:
-                self.geocoder = Geocoder()
+            if not self.use_best_dataset and self.geocoder is None:
+                self.geocoder = Geocoder.instance()
             cache_key_country: Dict[JBACacheKey, str] = {}  # cache item to requests
             request_groups: Dict[RequestKey, List[JBACacheKey]] = defaultdict(
                 list
@@ -223,16 +233,22 @@ class JBAHazardModel(HazardModel):
                 requests_by_location[spatial_key].append(item)
                 if item.scenario != "historical":
                     all_years.add(item.year)
-            # JBA requires a 2-letter country code per request (at time of writing),
-            # so it is necessary to geocode.
-            lats, lons = (
-                [r[0].latitude for r in requests_by_location.values()],
-                [r[0].longitude for r in requests_by_location.values()],
-            )
-            countries = [
-                country_mapping.get(c, c)
-                for c in self.geocoder.get_countries(lats, lons)
-            ]
+            if self.use_best_dataset:
+                # 'WR' (world) resolves on the JBA side to the best dataset available
+                # for the location, so no geocoding is required.
+                countries = ["WR" for _ in requests_by_location]
+            else:
+                # JBA requires a 2-letter country code per request (at time of writing),
+                # so it is necessary to geocode.
+                lats, lons = (
+                    [r[0].latitude for r in requests_by_location.values()],
+                    [r[0].longitude for r in requests_by_location.values()],
+                )
+                assert self.geocoder is not None
+                countries = [
+                    country_mapping.get(c, c)
+                    for c in self.geocoder.get_countries(lats, lons)
+                ]
             # note a single cache entry can provide information for multiple requests, because each entry contains
             # information about different hazards, or because points are close.
             # for interpolation, the list of pillar years for different requested years is calculated
@@ -705,7 +721,3 @@ class JBAHazardModel(HazardModel):
         else:
             raise NotImplementedError()
 
-    # scenarios = self.climate_change_scenarios("CN", access_token)
-    # def climate_change_scenarios(self, country_code: str, access_token: str):
-    #     url = f"https://api.jbarisk.com/flooddepths/ccscenarios/{country_code}"
-    # ...

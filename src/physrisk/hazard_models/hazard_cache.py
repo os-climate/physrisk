@@ -8,6 +8,7 @@ from pathlib import PurePosixPath
 from typing import Any, Dict, List, Optional, Protocol, Sequence
 
 import h3
+import shapely
 from lmdbm import Lmdb
 from shapely.geometry.base import BaseGeometry
 
@@ -117,17 +118,39 @@ class H3BasedCache:
 
 
 class GeometryH3BasedCache:
-    def __init__(self, store: Store, resolution: int = 12):
+    # Degrees. Deliberately not a round number (e.g. not 1e-6): many data sources already
+    # round lat/lon to 6 decimal places, and buffers are commonly round numbers of metres;
+    # an exactly-aligned grid would make ties at the snap boundary far more likely for
+    # realistic inputs than a value offset from those common conventions.
+    DEFAULT_GRID_SIZE = 1.1e-6
+
+    def __init__(
+        self,
+        store: Store,
+        resolution: int = 12,
+        grid_size: float = DEFAULT_GRID_SIZE,
+    ):
         """A cache based on WKT geometries or latitude/longitude as keys. If
-        WKT is provided, the normalized WKT string is used as the key; this must be
-        identical for the cache to be a match. If latitude/longitude is provided, the H3
-        spatial index at a given resolution is used as the key, and immediate vicinity H3
-        neighbors will be checked for a match if required.
-        The intent is to allow some tolerance for latitude/longitudes, but typically a
-        WKT is unique.
+        WKT is provided, the geometry is snapped to a coordinate grid of size
+        `grid_size` (in the geometry's own units, e.g. degrees for EPSG:4326) before
+        hashing, so that tiny floating-point differences between shapely/GEOS/PROJ
+        versions or platforms (e.g. when re-computing a buffer around a point) do not
+        on their own cause a cache miss for what is semantically the same geometry.
+        If latitude/longitude is provided, the H3 spatial index at a given resolution
+        is used as the key, giving a similar tolerance by construction.
+
+        Args:
+            store (Store): Underlying key/value store.
+            resolution (int, optional): H3 resolution used for lat/lon keys.
+                Defaults to 12 (~20m). resolution 9 ~ 300m; 14 ~ 3m.
+            grid_size (float, optional): Coordinate precision that geometries are
+                snapped to before hashing. Set to 0 to disable snapping and hash the
+                exact geometry (legacy behavior, exact match required). Defaults to
+                DEFAULT_GRID_SIZE.
         """
         self.resolution = resolution  # resolution 9 ~ 300m; 12 ~ 20m; 14 ~ 3m
         self.store = store
+        self.grid_size = grid_size
 
     def spatial_key(
         self, latitude: float, longitude: float, geometry: Optional[BaseGeometry] = None
@@ -136,7 +159,9 @@ class GeometryH3BasedCache:
             # based on the lat/lon
             return h3.latlng_to_cell(latitude, longitude, self.resolution)
         else:
-            # create a hash of the wkt, using SHA256 but truncating to 20 characters for brevity
+            if self.grid_size:
+                geometry = shapely.set_precision(geometry, grid_size=self.grid_size)
+            # create a hash of the wkb, using SHA256 but truncating to 20 characters for brevity
             # collision probability still extremely low
             digest = hashlib.sha256(geometry.wkb).digest()
             wkb_hash = (

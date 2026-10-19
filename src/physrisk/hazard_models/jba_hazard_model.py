@@ -472,22 +472,28 @@ class JBAHazardModel(HazardModel):
         country_code = api_request.country_code  # e.g. CN or FR
         # https://api.jbarisk.com/docs/1.2/index.html
         url = "https://api.jbarisk.com/flooddepths/" + country_code
+        # the actual wkt sent for each location, so it can be stored alongside the cached
+        # response: the cache key is a hash/H3 cell derived from this, and is not reversible,
+        # so without this we could never recover the original geometry from the cache alone
+        # (e.g. if migrating to a different caching scheme in future).
+        id_to_wkt: Dict[str, str] = {
+            id: (f"POINT({lon} {lat})" if geom is None else geom.wkt)
+            for id, lat, lon, geom in zip(
+                req_ids,
+                api_request.latitudes,
+                api_request.longitudes,
+                api_request.geometries,
+            )
+        }
         request = {
             "country_code": country_code,
             "geometries": [
                 {
                     "id": id,
-                    "wkt_geometry": (
-                        f"POINT({lon} {lat})" if geom is None else geom.wkt
-                    ),
+                    "wkt_geometry": id_to_wkt[id],
                     "buffer": (self.default_buffer if geom is None else 0),
                 }
-                for id, lat, lon, geom in zip(
-                    req_ids,
-                    api_request.latitudes,
-                    api_request.longitudes,
-                    api_request.geometries,
-                )
+                for id, geom in zip(req_ids, api_request.geometries)
             ],
         }
         params = {
@@ -520,7 +526,10 @@ class JBAHazardModel(HazardModel):
                                     if cache_key.jba_scenario == "historical"
                                     else cache_key.jba_scenario
                                 )
-                                result[cache_key] = {"stats": item[key]}
+                                result[cache_key] = {
+                                    "stats": item[key],
+                                    "geometry": id_to_wkt[item["id"]],
+                                }
                         return result
                     except Exception:
                         ids = ",".join(id for id in req_ids)
@@ -720,4 +729,3 @@ class JBAHazardModel(HazardModel):
             )
         else:
             raise NotImplementedError()
-

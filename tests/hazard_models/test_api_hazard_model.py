@@ -52,13 +52,34 @@ def test_spatial_keys():
         shapely.wkt.loads(f"POINT({lon} {lat})")
         for lat, lon in zip(latitudes, longitudes)
     ]
-    store = GeometryH3BasedCache(MemoryStore())
+    # grid_size=0 pins the legacy exact-match hashing so these expected values are stable;
+    # the default (grid_size>0) snaps coordinates first, see test_spatial_key_grid_size_tolerance.
+    store = GeometryH3BasedCache(MemoryStore(), grid_size=0)
     spatial_key_lat_lon = store.spatial_key(latitudes[0], longitudes[0])
     spatial_key_geom = store.spatial_key(
         latitudes[0], longitudes[0], geometry=geometries[0]
     )
     assert spatial_key_lat_lon == "8c411c8691b0bff"
     assert spatial_key_geom == "wkbhash_C2amiZX82h4Ga8RxL7PO"
+
+
+def test_spatial_key_grid_size_tolerance():
+    """Tiny floating-point differences in a geometry (e.g. from a different shapely/GEOS
+    version recomputing a buffer) should not change the cache key once snapped to the
+    default grid, but do change it when snapping is disabled (grid_size=0)."""
+    lat, lon = 22.3022371, 114.1867006
+    geom_a = shapely.wkt.loads(f"POINT({lon} {lat})")
+    geom_b = shapely.wkt.loads(f"POINT({lon + 1e-10} {lat - 1e-10})")
+
+    snapping_store = GeometryH3BasedCache(MemoryStore())
+    assert snapping_store.spatial_key(lat, lon, geometry=geom_a) == (
+        snapping_store.spatial_key(lat, lon, geometry=geom_b)
+    )
+
+    exact_store = GeometryH3BasedCache(MemoryStore(), grid_size=0)
+    assert exact_store.spatial_key(lat, lon, geometry=geom_a) != (
+        exact_store.spatial_key(lat, lon, geometry=geom_b)
+    )
 
 
 def test_jba_hazard_model(load_credentials, hazard_dir, update_inputs):
@@ -72,8 +93,12 @@ def test_jba_hazard_model(load_credentials, hazard_dir, update_inputs):
     credentials = EnvCredentialsProvider(disable_api_calls=False)
 
     with cache_store_tests(__name__, update_inputs) as cache_store:
+        # grid_size=0: the committed hazard_cache.json fixture was generated with the
+        # legacy exact-match hashing, before coordinate snapping was introduced.
         model = JBAHazardModel(
-            GeometryH3BasedCache(cache_store), credentials, max_requests=5
+            GeometryH3BasedCache(cache_store, grid_size=0),
+            credentials,
+            max_requests=5,
         )
         requests_riv = [
             HazardDataRequest(

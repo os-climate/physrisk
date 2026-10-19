@@ -1,9 +1,9 @@
 import logging
 import math
 from abc import abstractmethod
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
-from typing import Dict, List, Sequence, Tuple
 
 import numpy as np
 
@@ -49,14 +49,14 @@ class Bounds:
 
 @dataclass
 class AssetExposureResult:
-    hazard_categories: Dict[type, Tuple[Category, float, str]]
+    hazard_categories: dict[type, tuple[Category, float, str]]
 
 
 class ExposureMeasure(DataRequester):
     @abstractmethod
     def get_exposures(
         self, asset: Asset, data_responses: Sequence[HazardDataResponse]
-    ) -> Dict[type, Tuple[Category, float, str]]: ...
+    ) -> dict[type, tuple[Category, float, str]]: ...
 
 
 class JupterExposureMeasure(ExposureMeasure):
@@ -83,7 +83,7 @@ class JupterExposureMeasure(ExposureMeasure):
         ]
 
     def get_exposures(self, asset: Asset, data_responses: Sequence[HazardDataResponse]):
-        result: Dict[type, Tuple[Category, float, str]] = {}
+        result: dict[type, tuple[Category, float, str]] = {}
         for (k, v), resp in zip(self.exposure_bins.items(), data_responses):
             if isinstance(resp, HazardParameterDataResponse):
                 param = resp.parameter
@@ -168,23 +168,21 @@ class JupterExposureMeasure(ExposureMeasure):
 
 
 def calculate_exposures(
-    assets: List[Asset],
+    assets: list[Asset],
     hazard_model: HazardModel,
     exposure_measure: ExposureMeasure,
     scenario: str,
     year: int,
-) -> Dict[Asset, AssetExposureResult]:
-    requester_assets: Dict[DataRequester, List[Asset]] = {exposure_measure: assets}
+) -> dict[Asset, AssetExposureResult]:
+    requester_assets: dict[DataRequester, list[Asset]] = {exposure_measure: assets}
     scen_year_asset_requests, responses = _download_data_consolidated(
         hazard_model, requester_assets, [scenario], [year]
     )
     asset_requests = scen_year_asset_requests[ScenarioYear(scenario, year)]
     logging.info(
-        "Applying exposure measure {0} to {1} assets of type {2}".format(
-            type(exposure_measure).__name__, len(assets), type(assets[0]).__name__
-        )
+        f"Applying exposure measure {type(exposure_measure).__name__} to {len(assets)} assets of type {type(assets[0]).__name__}"
     )
-    result: Dict[Asset, AssetExposureResult] = {}
+    result: dict[Asset, AssetExposureResult] = {}
 
     for asset in assets:
         requests = asset_requests[

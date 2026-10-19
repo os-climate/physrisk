@@ -1,21 +1,22 @@
 import logging
 import os
+from collections.abc import Callable, MutableMapping, Sequence
 from pathlib import PurePosixPath
-from typing import Any, Callable, List, MutableMapping, Optional, Sequence, Tuple, Union
+from typing import Any
 
-from fsspec import FSMap
 import numpy as np
 import s3fs
 import shapely.ops
 import zarr
 from affine import Affine
+from fsspec import FSMap
 from pyproj import Transformer
-from shapely import MultiPoint, Point, affinity, Polygon
+from shapely import MultiPoint, Point, Polygon, affinity
 
 logger = logging.getLogger(__name__)
 
 
-def get_env(key: str, default: Optional[str] = None) -> str:
+def get_env(key: str, default: str | None = None) -> str:
     value = os.environ.get(key)
     if value is None:
         if default is not None:
@@ -36,9 +37,9 @@ class ZarrReader:
 
     def __init__(
         self,
-        store: Optional[MutableMapping] = None,
-        path_provider: Optional[Callable[..., str]] = None,
-        get_env: Callable[[str, Optional[str]], str] = get_env,
+        store: MutableMapping | None = None,
+        path_provider: Callable[..., str] | None = None,
+        get_env: Callable[[str, str | None], str] = get_env,
     ):
         """Create a ZarrReader.
 
@@ -59,7 +60,6 @@ class ZarrReader:
         self._root = zarr.open(store, mode="r")
         self._store = store
         self._path_provider = path_provider
-        pass
 
     def all_data(self, set_id: str):
         return self._get_array(set_id)
@@ -87,9 +87,7 @@ class ZarrReader:
         return self._store.fs.ls(PurePosixPath(self._store.root) / path)
 
     @classmethod
-    def create_s3_zarr_store(
-        cls, get_env: Callable[[str, Optional[str]], str] = get_env
-    ):
+    def create_s3_zarr_store(cls, get_env: Callable[[str, str | None], str] = get_env):
         access_key = get_env(cls.__access_key, "")
         secret_key = get_env(cls.__secret_key, "")
         s3_bucket = get_env(cls.__S3_bucket, "os-climate-physical-risk")
@@ -111,8 +109,8 @@ class ZarrReader:
     def get_curves(
         self,
         set_id: str,
-        longitudes: Union[np.ndarray, Sequence[float]],
-        latitudes: Union[np.ndarray, Sequence[float]],
+        longitudes: np.ndarray | Sequence[float],
+        latitudes: np.ndarray | Sequence[float],
         interpolation="floor",
     ):
         """Get intensity curve for each latitude and longitude coordinate pair.
@@ -183,8 +181,8 @@ class ZarrReader:
     def in_bounds(
         self,
         set_id: str,
-        longitudes: Union[np.ndarray, Sequence[float]],
-        latitudes: Union[np.ndarray, Sequence[float]],
+        longitudes: np.ndarray | Sequence[float],
+        latitudes: np.ndarray | Sequence[float],
         interpolation: str = "floor",
     ):
         """Return whether coordinates lie within a hazard array.
@@ -229,11 +227,11 @@ class ZarrReader:
             & (image_coords[1, :] < shape[1])
         )
 
-    def get_index_values(self, z: zarr.Array) -> Tuple[List[Any], str]:
+    def get_index_values(self, z: zarr.Array) -> tuple[list[Any], str]:
         # if dimensions attribute is present, assume that the first index
         # is the non-spatial one.
         index_dim_name = z.attrs.get("dimensions", ["index"])[0]
-        index_values: List[Any] = z.attrs.get(index_dim_name + "_values", [0])
+        index_values: list[Any] = z.attrs.get(index_dim_name + "_values", [0])
         index_units = z.attrs.get(index_dim_name + "_units", "default")
         if index_values is None:
             index_values = [0]  # type: ignore
@@ -530,7 +528,7 @@ class ZarrReader:
         crs: str,
         transform: Affine,
         apply_pixel_center_offset: bool,
-        shape: Optional[Tuple[int, int, int]] = None,
+        shape: tuple[int, int, int] | None = None,
     ):
         """Transform geographic coordinates into fractional raster coordinates.
 

@@ -1,5 +1,5 @@
+from collections.abc import Callable, Sequence
 from enum import Enum
-from typing import Callable, Optional, Sequence, Set, Type
 
 from physrisk.api.v1.impact_req_resp import (
     RiskMeasureDefinition,
@@ -176,7 +176,7 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
 
     def calc_measure(
         self,
-        hazard_type: Type[Hazard],
+        hazard_type: type[Hazard],
         base_impacts: Sequence[AssetImpactResult],
         impacts: Sequence[AssetImpactResult],
     ) -> Measure:
@@ -260,9 +260,9 @@ class RealEstateToyRiskMeasures(RiskMeasureCalculator):
         )
 
     def get_definition(
-        self, hazard_type: type[Hazard], hazard_indicator_id: Optional[str] = None
+        self, hazard_type: type[Hazard], hazard_indicator_id: str | None = None
     ) -> ScoreBasedRiskMeasureDefinition:
         return self._definition_lookup.get(hazard_type, None)
 
-    def supported_hazards(self) -> Set[type]:
+    def supported_hazards(self) -> set[type]:
         return set([RiverineInundation, CoastalInundation, Wind, ChronicHeat])

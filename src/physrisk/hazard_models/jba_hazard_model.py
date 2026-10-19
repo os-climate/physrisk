@@ -49,6 +49,10 @@ from physrisk.hazard_models.hazard_cache import GeometryH3BasedCache
 logger = logging.getLogger(__name__)
 
 
+class JBAAuthenticationError(Exception):
+    """Raised when the JBA API rejects the request as unauthenticated/unauthorized."""
+
+
 class Indicator(NamedTuple):
     hazard_type: str
     indicator_id: str
@@ -160,16 +164,11 @@ class JBAHazardModel(HazardModel):
         self.max_requests = max_requests
         self.cmip = cmip
         self.batch_size = batch_size
-        self.jba_scenarios = [
-            self.jba_scenario(s, y)
-            for y in self.pillar_years
-            for s in (
-                ["ssp245", "ssp585"]
-                if restrict_coverage
-                else ["ssp126", "ssp245", "ssp585"]
-            )
-        ]
         self.restrict_coverage = restrict_coverage
+        # a country-agnostic default; cmip=5 uses country-specific year ranges for
+        # GB/NI/ROI, so callers dealing with those countries use
+        # _jba_scenarios_for_country(country) instead, see flood_depth.
+        self.jba_scenarios = self._jba_scenarios_for_country("")
         self.only_request_required = only_request_required  # here in case needed in future. If true, only scenarios that are explicitly asked for are
         # included in API request; improves performance.
 
@@ -312,20 +311,33 @@ class JBAHazardModel(HazardModel):
                 if len(resps) == 1:
                     result[req_weight.request] = resps[0]
                 elif len(resps) == 2:
-                    if not isinstance(
-                        resps[0], HazardEventDataResponse
-                    ) or not isinstance(resps[1], HazardEventDataResponse):
+                    weight0, weight1 = (
+                        req_weight.weights[0][1],
+                        req_weight.weights[1][1],
+                    )
+                    if isinstance(resps[0], HazardEventDataResponse) and isinstance(
+                        resps[1], HazardEventDataResponse
+                    ):
+                        result[req_weight.request] = HazardEventDataResponse(
+                            resps[0].return_periods,
+                            resps[0].intensities * weight0
+                            + resps[1].intensities * weight1,
+                            units="m",
+                            path="jba",
+                        )
+                    elif isinstance(
+                        resps[0], HazardParameterDataResponse
+                    ) and isinstance(resps[1], HazardParameterDataResponse):
+                        result[req_weight.request] = HazardParameterDataResponse(
+                            resps[0].parameters * weight0
+                            + resps[1].parameters * weight1,
+                            units=resps[0].units,
+                            path="jba",
+                        )
+                    else:
                         result[req_weight.request] = HazardDataFailedResponse(
                             ValueError("no data returned")
                         )
-                        continue
-                    result[req_weight.request] = HazardEventDataResponse(
-                        resps[0].return_periods,
-                        resps[0].intensities * req_weight.weights[0][1]
-                        + resps[1].intensities * req_weight.weights[1][1],
-                        units="m",
-                        path="jba",
-                    )
             failures = [
                 r for r in result.values() if isinstance(r, HazardDataFailedResponse)
             ]
@@ -356,7 +368,7 @@ class JBAHazardModel(HazardModel):
                 prefix = "rcp26"
             elif scenario == "rcp8p5" or scenario == "ssp585":
                 prefix = "rcp85"
-            elif scenario == "rcp45" or scenario == "ssp245":
+            elif scenario == "rcp45" or scenario == "rcp4p5" or scenario == "ssp245":
                 prefix = "rcp45"
             else:
                 raise ValueError(
@@ -391,6 +403,30 @@ class JBAHazardModel(HazardModel):
                 )
         return prefix + "_" + range
 
+    def _jba_scenarios_for_country(self, country: str) -> List[str]:
+        """Scenario identifiers for all pillar years. Under cmip=5, GB/NI/ROI use
+        narrower year ranges (see jba_scenario's gb_code check, which keys off the
+        "rcp" naming), so this must use rcp-style names and be recomputed per
+        country rather than cached once for all countries."""
+        scenario_names = (
+            (
+                ["ssp245", "ssp585"]
+                if self.restrict_coverage
+                else ["ssp126", "ssp245", "ssp585"]
+            )
+            if self.cmip == 6
+            else (
+                ["rcp4p5", "rcp8p5"]
+                if self.restrict_coverage
+                else ["rcp2p6", "rcp4p5", "rcp8p5"]
+            )
+        )
+        return [
+            self.jba_scenario(s, y, country)
+            for y in self.pillar_years
+            for s in scenario_names
+        ]
+
     async def flood_depth(
         self, api_request: APIRequest, access_token: str, session: aiohttp.ClientSession
     ):
@@ -399,10 +435,22 @@ class JBAHazardModel(HazardModel):
         if self.credentials.jba_api_disabled():
             logger.error("JBA requests made but API calls disabled")
             raise ValueError("JBA requests made but API calls disabled")
+        scenarios = (
+            self._jba_scenarios_for_country(api_request.country_code)
+            if not self.only_request_required
+            else list(
+                set(
+                    k.jba_scenario
+                    for v in api_request.location_cache_keys.values()
+                    for k in v
+                    if k.jba_scenario != "historical"
+                )
+            )
+        )
         req_id_to_keys: Dict[str, List[JBACacheKey]] = defaultdict(list)
         for k in api_request.spatial_keys:
             req_id_to_keys[self.jba_request_id(k)] = [
-                JBACacheKey(s, k) for s in (["historical"] + self.jba_scenarios)
+                JBACacheKey(s, k) for s in (["historical"] + scenarios)
             ]
         req_ids = list(req_id_to_keys.keys())
         country_code = api_request.country_code  # e.g. CN or FR
@@ -427,17 +475,7 @@ class JBAHazardModel(HazardModel):
             ],
         }
         params = {
-            "CSTHs": ",".join(
-                self.jba_scenarios
-                if not self.only_request_required
-                else list(
-                    set(
-                        k.jba_scenario
-                        for v in api_request.location_cache_keys.values()
-                        for k in v
-                    )
-                )
-            ),
+            "CSTHs": ",".join(scenarios),
             "baseline": "true",
         }
         logger.debug("JBA request URL: " + url)
@@ -476,10 +514,18 @@ class JBAHazardModel(HazardModel):
                         # logging.exception("") # do not include exception info
                         # as we assume useful info is in response.
                         return str(response_dict)
+                elif response.status in (401, 403):
+                    # credentials are invalid/expired: retrying per-location won't help,
+                    # so fail fast rather than masking this as missing data.
+                    raise JBAAuthenticationError(
+                        f"JBA API authentication failed with status {response.status}: {response_dict}"
+                    )
                 else:
                     # Request failed
                     logging.error(f"Response status {response.status}")
                     return str(response_dict)
+        except JBAAuthenticationError:
+            raise
         except Exception:
             # proxy or authentication errors would be expected to come here, hence
             # use of logging.exception to ensure exception info is included.
@@ -590,7 +636,11 @@ class JBAHazardModel(HazardModel):
 
                     await asyncio.gather(*(request_single(req) for req in api_requests))
 
-            run(gather_requests(api_requests), loop)
+            run_result = run(gather_requests(api_requests), loop)
+            # run() catches exceptions raised inside the coroutine and returns them
+            # rather than re-raising, so we must check and re-raise explicitly here.
+            if isinstance(run_result, BaseException):
+                raise run_result
             # for failed batches we run again, but as single requests
             # this is needed because the JBA API will fail for all locations
             # if a single one is out of bounds (e.g. off-shore wind farm)
@@ -612,7 +662,9 @@ class JBAHazardModel(HazardModel):
                 )
             ]
             if len(single_api_requests) > 0:
-                run(gather_requests(single_api_requests), loop)
+                run_result = run(gather_requests(single_api_requests), loop)
+                if isinstance(run_result, BaseException):
+                    raise run_result
             logger.info(f"Check: {check_total} requests made")
             logger.info(f"Check: {len(single_api_requests)} reruns")
         return cached_responses
@@ -632,7 +684,7 @@ class JBAHazardModel(HazardModel):
         if response["stats"] is None:
             return HazardDataFailedResponse(ValueError("no data returned"))
         elif request.indicator_id == "flood_sop":
-            sop = response["stats"].get("FLRF_U", {}).get("sop", 0)
+            sop = response["stats"].get(tag, {}).get("sop", 0)
             return HazardParameterDataResponse(
                 [sop, sop], units="years", path=path
             )  # min and max: in this case just a single value

@@ -598,7 +598,8 @@ class JBAHazardModel(HazardModel):
             geoms = [r.geometry for r in first_req]
             batches.append(
                 APIRequest(
-                    location_cache_keys=location_cache_keys,
+                    # scoped to this batch's own spatial_keys, per the field's contract
+                    location_cache_keys={k: location_cache_keys[k] for k in req_keys},
                     spatial_keys=req_keys,
                     latitudes=lats,
                     longitudes=lons,

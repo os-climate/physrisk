@@ -25,6 +25,9 @@ from physrisk.kernel.risk import (
     QuantityType,
     RiskQuantityKey,
 )
+from physrisk.vulnerability_models.config_based_impact_curves import (
+    DowntimeConfigItem,
+)
 
 
 class MissingData(str, Enum):
@@ -118,10 +121,12 @@ class CompanyRiskMeasureCalculator(PortfolioRiskMeasureCalculator):
         n_events: int = 50000,
         event_batch_sz: int = 1000,
         insurance_provider: Optional[InsuranceDataProvider] = None,
+        downtime_config: Sequence[DowntimeConfigItem] = [],
     ):
         self._n_events = n_events
         self._event_batch_sz = event_batch_sz
         self._insurance_provider = insurance_provider
+        self._downtime_config = downtime_config
         self._definition = ScoreBasedRiskMeasureDefinition(
             hazard_types=[],
             values=[],
@@ -150,7 +155,7 @@ class CompanyRiskMeasureCalculator(PortfolioRiskMeasureCalculator):
         dict[tuple[str, int | None], dict[RiskQuantityKey, Quantity]],
     ]:
         financial_model = DefaultFinancialModel(
-            financial_data_provider, downtime_config=[]
+            financial_data_provider, downtime_config=self._downtime_config
         )
         impacts_by_year_scen: dict[tuple[str, int | None], list[MeasureKey]] = (
             defaultdict(list)

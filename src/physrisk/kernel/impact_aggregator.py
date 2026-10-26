@@ -499,8 +499,11 @@ def _asset_level_drilldown(
 ) -> dict[RiskQuantityKey, Quantity]:
     """Compute per-asset AAL and return-period losses analytically from the stored ImpactDistribs.
 
-    Unlike _run_simulation (Monte Carlo), results are exact — derived directly from the
-    ImpactDistrib exceedance curves — so this is fast and noise-free.
+    Unlike _run_simulation (Monte Carlo), results are mostly exact — derived directly from
+    the ImpactDistrib exceedance curves — so this is fast and noise-free. The one exception
+    is the downtime-driven revenue-loss mean, which uses a bin-midpoint quadrature over the
+    damage distribution (see comment at its computation below) and so is only exact when the
+    downtime curve is linear within each bin.
 
     Returns one Quantity per (asset, hazard_type, quantity_type) entry with:
         mean                 — mean/AAL as a fraction of TIV (damage) or revenue (revenue loss)
@@ -537,10 +540,35 @@ def _asset_level_drilldown(
                         asset, frac_at_rp, "EUR"
                     )
                 )
-                mean_damage_arr, mean_downtime_rev_loss_arr = (
+
+                # Damage is an exact linear scaling of the impact fraction (damage = tiv *
+                # impact), so applying it to the mean impact is exact.
+                mean_damage = tiv * distrib.mean_impact()
+
+                # Downtime-driven revenue loss is a generally *nonlinear* function of the
+                # damage fraction (an interpolated curve), so E[downtime(damage)] !=
+                # downtime(E[damage]) in general. Compute it by integrating over the full
+                # damage distribution (bin midpoints, plus the implicit zero-damage mass)
+                # rather than applying the conversion to the scalar mean. Within each bin,
+                # probability density is assumed constant (uniform), i.e. E[X | bin] ==
+                # midpoint — the same assumption mean_impact() makes. But evaluating the
+                # downtime curve at that midpoint, f(midpoint), only equals E[f(X) | bin]
+                # exactly if the curve is linear *within* the bin; otherwise there is a
+                # residual Jensen's-gap error from curve curvature across the bin, which
+                # shrinks as bins narrow but isn't eliminated by this fix.
+                bin_edges = distrib.impact_bin_edges
+                bin_probs = distrib.probabilities
+                bin_midpoints = (bin_edges[:-1] + bin_edges[1:]) / 2.0
+                zero_prob = 1.0 - np.sum(bin_probs)
+                sample_fracs = np.concatenate([[0.0], bin_midpoints])
+                sample_probs = np.concatenate([[zero_prob], bin_probs])
+                _, sample_downtime_rev_loss = (
                     financial_model.frac_damage_to_restoration_cost_and_revenue_loss(
-                        asset, np.array([distrib.mean_impact()]), "EUR"
+                        asset, sample_fracs, "EUR"
                     )
+                )
+                mean_downtime_rev_loss = float(
+                    np.sum(sample_downtime_rev_loss * sample_probs)
                 )
 
                 semi_std_damage = (
@@ -555,9 +583,7 @@ def _asset_level_drilldown(
                         _DRILLDOWN_EXCEEDANCE_PROBS,
                         damage_at_rp / tiv if tiv > 0.0 else damage_at_rp,
                     ),
-                    mean=float(mean_damage_arr[0]) / tiv
-                    if tiv > 0.0
-                    else float(mean_damage_arr[0]),
+                    mean=mean_damage / tiv if tiv > 0.0 else mean_damage,
                     semi_standard_deviation=semi_std_damage,
                 )
 
@@ -565,7 +591,7 @@ def _asset_level_drilldown(
                 rev_loss_at_rp = rev_loss_at_rp + np.maximum.accumulate(
                     downtime_rev_loss_at_rp
                 )
-                mean_rev_loss += float(mean_downtime_rev_loss_arr[0])
+                mean_rev_loss += mean_downtime_rev_loss
 
             if curves.disruption is not None:
                 distrib, ec = curves.disruption

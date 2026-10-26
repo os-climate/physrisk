@@ -1,11 +1,14 @@
 from collections import defaultdict
-from typing import Dict, List, Mapping, MutableMapping, Optional, Sequence
+from collections.abc import Mapping, MutableMapping, Sequence
 
-from physrisk.data.inventory import Inventory
 from physrisk.data.hazard_data_provider import SourcePaths
 from physrisk.data.image_creator import ImageCreator
+from physrisk.data.inventory import Inventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
+from physrisk.hazard_models.credentials_provider import CredentialsProvider
+from physrisk.hazard_models.hazard_cache import GeometryH3BasedCache
+from physrisk.hazard_models.jba_hazard_model import JBAHazardModel
 from physrisk.kernel.hazard_model import (
     HazardDataRequest,
     HazardDataResponse,
@@ -20,10 +23,6 @@ from physrisk.kernel.hazards import (
     RiverineInundation,
 )
 
-from physrisk.hazard_models.credentials_provider import CredentialsProvider
-from physrisk.hazard_models.hazard_cache import GeometryH3BasedCache
-from physrisk.hazard_models.jba_hazard_model import JBAHazardModel
-
 
 class HazardModelFactory(HazardModelFactoryPhysrisk):
     def __init__(
@@ -32,8 +31,8 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
         credentials: CredentialsProvider,
         inventory: Inventory,
         source_paths: SourcePaths,
-        store: Optional[MutableMapping] = None,
-        reader: Optional[ZarrReader] = None,
+        store: MutableMapping | None = None,
+        reader: ZarrReader | None = None,
         default_interpolation: str = "floor",
         zarr_max_workers: int = 32,
     ):
@@ -48,8 +47,8 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
 
     def hazard_model(
         self,
-        interpolation: Optional[str] = None,
-        provider_max_requests: Dict[str, int] = {},
+        interpolation: str | None = None,
+        provider_max_requests: dict[str, int] = {},
         interpolate_years: bool = True,
     ):
         return CompositeHazardModel(
@@ -80,10 +79,10 @@ class CompositeHazardModel(HazardModel):
         cache_store: GeometryH3BasedCache,
         credentials: CredentialsProvider,
         source_paths: SourcePaths,
-        store: Optional[MutableMapping] = None,
-        reader: Optional[ZarrReader] = None,
+        store: MutableMapping | None = None,
+        reader: ZarrReader | None = None,
         interpolation: str = "floor",
-        provider_max_requests: Dict[str, int] = {},
+        provider_max_requests: dict[str, int] = {},
         restrict_coverage: bool = False,
         interpolate_years: bool = False,
         use_jba_coastal: bool = False,
@@ -122,7 +121,7 @@ class CompositeHazardModel(HazardModel):
     def get_hazard_data(
         self, requests: Sequence[HazardDataRequest]
     ) -> Mapping[HazardDataRequest, HazardDataResponse]:
-        requests_by_model: Dict[HazardModel, List[HazardDataRequest]] = defaultdict(
+        requests_by_model: dict[HazardModel, list[HazardDataRequest]] = defaultdict(
             list
         )
         for request in requests:
@@ -133,9 +132,7 @@ class CompositeHazardModel(HazardModel):
                     or request.hazard_type == PluvialInundation
                 )
                 and not self._zarr_hint_path(request)
-            ):
-                requests_by_model[self.jba_hazard_model].append(request)
-            elif (
+            ) or (
                 self.jba_hazard_model
                 and request.hazard_type == CoastalInundation
                 and self.use_jba_coastal
@@ -145,7 +142,7 @@ class CompositeHazardModel(HazardModel):
             else:
                 requests_by_model[self.zarr_hazard_model].append(request)
 
-        responses: Dict[HazardDataRequest, HazardDataResponse] = {}
+        responses: dict[HazardDataRequest, HazardDataResponse] = {}
 
         for model, reqs in requests_by_model.items():
             events_reponses = model.get_hazard_data(reqs)

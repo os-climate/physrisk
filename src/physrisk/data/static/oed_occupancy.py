@@ -1,8 +1,7 @@
 # Snapshot of OED occupancy codes and labels from OasisLMF/ODS_OpenExposureData OccupancyValues.csv
 # Source: https://github.com/OasisLMF/ODS_OpenExposureData/blob/main/OpenExposureData/OccupancyValues.csv
-from typing import Dict
 
-OED_OCCUPANCY_CODES: Dict[int, str] = {
+OED_OCCUPANCY_CODES: dict[int, str] = {
     1000: "Unknown",
     1050: "Residential, General residential",
     1051: "Residential, Permanent dwelling: single-family",

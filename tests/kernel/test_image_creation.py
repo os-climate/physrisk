@@ -1,16 +1,15 @@
 import io
 import os
 import warnings
-from typing import Dict, Optional
-import pytest
 
-from dependency_injector import providers
 import numpy as np
-import PIL.Image as Image
+import pytest
 import zarr
 import zarr.storage
+from dependency_injector import providers
+from PIL import Image
 
-from physrisk.api.v1.hazard_data import HazardResource, Scenario, MapInfo
+from physrisk.api.v1.hazard_data import HazardResource, MapInfo, Scenario
 from physrisk.container import Container
 from physrisk.data import colormap_provider
 from physrisk.data.hazard_data_provider import ScenarioPaths, SourcePaths
@@ -260,8 +259,8 @@ def _build_requester(inventory, zarr_store, enforce_permissions: bool = True):
     class TestHazardModelFactory(HazardModelFactory):
         def hazard_model(
             self,
-            interpolation: Optional[str] = "floor",
-            provider_max_requests: Dict[str, int] = {},
+            interpolation: str | None = "floor",
+            provider_max_requests: dict[str, int] = {},
             interpolate_years: bool = False,
         ):
             return ZarrHazardModel(source_paths=source_paths, store=zarr_store)

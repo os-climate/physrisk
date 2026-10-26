@@ -6,7 +6,7 @@ description = "OS-Climate Physical Risk Library"
 authors = [
     {name = "Joe Moorhouse",email = "5102656+joemoorhouse@users.noreply.github.com"},
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 readme = "README.md"
 license = "Apache-2.0"
 license-files = ["LICENSE"]
@@ -42,7 +42,7 @@ dependencies = [
     "numba>=0.67.0",
     "numpy>=2.2.0",
     "pint>=0.24.0",
-    "pillow>=12.3.0",
+    "pillow>=13.0.0",
     "pydantic>=2.13.5",
     "pyproj>=3.7.0",
     "python-dotenv>=1.2.2",

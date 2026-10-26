@@ -88,7 +88,7 @@ class ImageCreator(HazardImageCreator):
             # because many map controls expect an HTTPException in such cases.
             if tile is None:
                 logger.exception(e)
-                image = Image.fromarray(np.array([[0]]), mode="RGBA")
+                image = Image.new("RGBA", (1, 1))
             else:
                 if isinstance(e, KeyError):
                     raise TileNotAvailableError(e.args[0]) from e
@@ -251,7 +251,20 @@ class ImageCreator(HazardImageCreator):
             max_value=max_value,
             scaling=scaling,
         )
-        return Image.fromarray(rgba, mode="RGBA")
+        return image_from_packed_rgba(rgba)
+
+
+def image_from_packed_rgba(rgba: np.ndarray) -> Image.Image:
+    """Convert a uint32 array with RGBA components packed into each value
+    (red in the least significant byte, as returned by :func:`to_rgba`) into
+    a Pillow RGBA image.
+
+    Pillow no longer supports reinterpreting a uint32 array's bytes via the
+    ``mode`` argument to ``Image.fromarray`` (removed in Pillow 13), so the
+    packed values are unpacked into an explicit (H, W, 4) uint8 array first.
+    """
+    unpacked = rgba.view(np.uint8).reshape(rgba.shape + (4,))
+    return Image.fromarray(unpacked, mode="RGBA")
 
 
 def to_rgba(

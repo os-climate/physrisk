@@ -807,6 +807,10 @@ def test_example_portfolios(tmp_path, hazard_dir, clear_credentials):
             cache_store=providers.Singleton(
                 GeometryH3BasedCache,
                 store=LMDBStore(str(hazard_dir / "hazard_cache_examples.db")),
+                # grid_size=0: this LMDB cache is a local dev cache populated across runs
+                # under the legacy exact-match hashing; snapping (the new default) would
+                # miss those entries and force live JBA API calls instead.
+                grid_size=0,
             )
         )
         requester = container.requester()

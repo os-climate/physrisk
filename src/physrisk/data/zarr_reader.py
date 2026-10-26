@@ -80,6 +80,9 @@ class ZarrReader:
         return transform, crs
 
     def ls(self, path: str):
+        if isinstance(self._store, zarr.DirectoryStore):
+            full_path = os.path.join(self._store.path, path)
+            return [os.path.join(full_path, name) for name in os.listdir(full_path)]
         if not isinstance(self._store, FSMap):
             raise NotImplementedError(
                 f"cannot list for store of type {type(self._store)}"

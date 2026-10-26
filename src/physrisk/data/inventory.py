@@ -81,7 +81,7 @@ class EmbeddedInventory(Inventory):
                 hazard_type=hazard_type.__name__,
                 indicator_id="flood_depth",
                 indicator_model_gcm="",
-                display_name="JBA Risk Management flood model",
+                display_name="Flood depth (JBA Risk Management)",
                 description="Commercial flood model from JBA Risk Management (https://www.jbarisk.com/)",
                 scenarios=[
                     Scenario(id="historical", years=[2020]),
@@ -111,7 +111,7 @@ class EmbeddedInventory(Inventory):
             hazard_type=RiverineInundation.__name__,
             indicator_id="flood_sop",
             indicator_model_gcm="",
-            display_name="JBA Risk Management riverine standard of protection",
+            display_name="Standard of protection (JBA Risk Management)",
             description="Riverine standard of protection (defended return period), commercial flood model from JBA Risk Management (https://www.jbarisk.com/)",  # noqa: E501
             scenarios=[
                 Scenario(id="historical", years=[2020]),

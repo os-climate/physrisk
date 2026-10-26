@@ -6,7 +6,6 @@ import pytest
 
 from dependency_injector import providers
 import numpy as np
-import PIL.Image as Image
 import zarr
 import zarr.storage
 
@@ -14,7 +13,7 @@ from physrisk.api.v1.hazard_data import HazardResource, Scenario, MapInfo
 from physrisk.container import Container
 from physrisk.data import colormap_provider
 from physrisk.data.hazard_data_provider import ScenarioPaths, SourcePaths
-from physrisk.data.image_creator import ImageCreator, to_rgba
+from physrisk.data.image_creator import ImageCreator, image_from_packed_rgba, to_rgba
 from physrisk.data.inventory import Inventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
@@ -208,7 +207,7 @@ def test_interpolation(mock_inventory, zarr_store):
         [[3359327438, 3361634792], [3363478004, 3364201462]], dtype=np.uint32
     )
     image_bytes = io.BytesIO()
-    Image.fromarray(rgba, mode="RGBA").save(image_bytes, format="PNG")
+    image_from_packed_rgba(rgba).save(image_bytes, format="PNG")
     expected = image_bytes.getvalue()
 
     np.testing.assert_equal(result, expected)
@@ -250,7 +249,7 @@ def _expected_test_image_bytes():
         [[3359327438, 3361634792], [3363478004, 3364201462]], dtype=np.uint32
     )
     image_bytes = io.BytesIO()
-    Image.fromarray(rgba, mode="RGBA").save(image_bytes, format="PNG")
+    image_from_packed_rgba(rgba).save(image_bytes, format="PNG")
     return image_bytes.getvalue()
 
 

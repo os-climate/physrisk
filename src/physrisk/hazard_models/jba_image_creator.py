@@ -11,7 +11,7 @@ from lxml import etree
 
 from physrisk.api.v1.hazard_image import TileNotAvailableError
 from physrisk.data import colormap_provider
-from physrisk.data.image_creator import ImageCreator, to_rgba
+from physrisk.data.image_creator import ImageCreator, image_from_packed_rgba, to_rgba
 from physrisk.kernel.hazard_model import HazardImageCreator, Tile
 
 from physrisk.utils.event_loop import get_loop, run
@@ -293,7 +293,7 @@ class JBAImageCreator(HazardImageCreator):
         rgba = to_rgba(
             depth, get_colors, min_value=min_value, max_value=max_value, scaling=scaling
         )
-        image = Image.fromarray(rgba, mode="RGBA")
+        image = image_from_packed_rgba(rgba)
 
         image_bytes = io.BytesIO()
         image.save(image_bytes, format=format)

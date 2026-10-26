@@ -82,7 +82,7 @@ class EmbeddedInventory(Inventory):
                 indicator_id="flood_depth",
                 indicator_model_gcm="",
                 display_name="Flood depth (JBA Risk Management)",
-                description="Commercial flood model from JBA Risk Management (https://www.jbarisk.com/)",
+                description="Commercial flood model from JBA Risk Management (https://www.jbarisk.com/). An API key is needed to display data.",
                 scenarios=[
                     Scenario(id="historical", years=[2020]),
                     Scenario(id="ssp126", years=[2030, 2050, 2080]),
@@ -112,7 +112,7 @@ class EmbeddedInventory(Inventory):
             indicator_id="flood_sop",
             indicator_model_gcm="",
             display_name="Standard of protection (JBA Risk Management)",
-            description="Riverine standard of protection (defended return period), commercial flood model from JBA Risk Management (https://www.jbarisk.com/)",  # noqa: E501
+            description="Riverine standard of protection (defended return period), commercial flood model from JBA Risk Management (https://www.jbarisk.com/). An API key is needed to display data.",  # noqa: E501
             scenarios=[
                 Scenario(id="historical", years=[2020]),
             ],

@@ -8,7 +8,29 @@ import zarr.storage
 from affine import Affine
 from pyproj import Transformer
 
-from physrisk.hazard_models.core_hazards import cmip6_scenario_to_rcp
+from physrisk.data.hazard_data_provider import HazardDataHint, HazardResourceSelector
+from physrisk.data.scenario_year_resolution import (
+    ScenarioYear,
+    cmip6_scenario_to_rcp,
+    resolve_exact_year,
+)
+from physrisk.kernel.hazards import Hazard
+
+
+def get_hazard_path(
+    resource_selector: HazardResourceSelector,
+    hazard_type: type[Hazard],
+    indicator_id: str,
+    scenario: str,
+    year: int,
+    hint: HazardDataHint | None = None,
+) -> str:
+    """Find the concrete array path used to populate a test resource."""
+    resource = resource_selector.get_resources(hazard_type, indicator_id, hint)[0]
+    resolved = resolve_exact_year(resource.scenarios, ScenarioYear(scenario, year))
+    assert resolved is not None
+    source, _ = resolved.weights[0]
+    return resource.path_for_scenario_year(source.scenario, source.year)
 
 
 class TestData:
@@ -192,7 +214,7 @@ def get_mock_hazard_model_store_single_curve():
     shape = (len(return_periods), 21600, 43200)
     store = zarr.storage.MemoryStore(root="hazard.zarr")
     root = zarr.open(store=store, mode="w")
-    array_path = get_source_path_wri_riverine_inundation(
+    array_path = get_hazard_path_wri_riverine_inundation(
         model="MIROC-ESM-CHEM", scenario="rcp8p5", year=2080
     )
     z = root.create_dataset(  # type: ignore
@@ -340,7 +362,7 @@ def degree_day_heat_parameter_set():
         ("mean_degree_days/below/32c/ACCESS-CM2", "ssp585", 2050),
     ]:
         paths.append(
-            get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year)
+            get_hazard_path_osc_chronic_heat(model=model, scenario=scenario, year=year)
         )
     parameters = [300, 300, 600, -200]
     return dict(zip(paths, parameters))
@@ -356,7 +378,7 @@ def wbgt_gzn_joint_parameter_set():
         ("mean_degree_days/below/32c/ACCESS-CM2", "ssp585", 2050),
     ]:
         paths.append(
-            get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year)
+            get_hazard_path_osc_chronic_heat(model=model, scenario=scenario, year=year)
         )
     for model, scenario, year in [
         ("mean_work_loss/high/ACCESS-CM2", "historical", 2005),  # 2005
@@ -365,7 +387,7 @@ def wbgt_gzn_joint_parameter_set():
         ("mean_work_loss/medium/ACCESS-CM2", "ssp585", 2050),
     ]:
         paths.append(
-            get_source_path_osc_chronic_heat(model=model, scenario=scenario, year=year)
+            get_hazard_path_osc_chronic_heat(model=model, scenario=scenario, year=year)
         )
     parameters = [300, 300, 600, -200, 0.05, 0.003, 0.11, 0.013]
     return dict(zip(paths, parameters))
@@ -378,7 +400,7 @@ def inundation_paths():
         ("MIROC-ESM-CHEM", "rcp8p5", 2080),
     ]:
         paths.append(
-            get_source_path_wri_riverine_inundation(
+            get_hazard_path_wri_riverine_inundation(
                 model=model, scenario=scenario, year=year
             )
         )
@@ -389,7 +411,7 @@ def inundation_paths():
         ("nosub", "historical", "hist"),
     ]:
         paths.append(
-            get_source_path_wri_coastal_inundation(
+            get_hazard_path_wri_coastal_inundation(
                 model=model, scenario=scenario, year=year
             )
         )
@@ -404,7 +426,7 @@ _percentiles_map = {"95": "0", "5": "0_perc_05", "50": "0_perc_50"}
 _subsidence_set = {"wtsub", "nosub"}
 
 
-def get_source_path_wri_coastal_inundation(*, model: str, scenario: str, year: str):
+def get_hazard_path_wri_coastal_inundation(*, model: str, scenario: str, year: str):
     type = "coast"
     # model is expected to be of the form subsidence/percentile, e.g. wtsub/95
     # if percentile is omitted then 95th percentile is used
@@ -421,7 +443,7 @@ def get_source_path_wri_coastal_inundation(*, model: str, scenario: str, year: s
     )
 
 
-def get_source_path_wri_riverine_inundation(*, model: str, scenario: str, year: int):
+def get_hazard_path_wri_riverine_inundation(*, model: str, scenario: str, year: int):
     type = "river"
     return os.path.join(
         _wri_inundation_prefix(),
@@ -433,7 +455,7 @@ def _osc_chronic_heat_prefix():
     return "chronic_heat/osc/v2"
 
 
-def get_source_path_osc_chronic_heat(*, model: str, scenario: str, year: int):
+def get_hazard_path_osc_chronic_heat(*, model: str, scenario: str, year: int):
     type, *levels = model.split("/")
 
     if type == "mean_degree_days":

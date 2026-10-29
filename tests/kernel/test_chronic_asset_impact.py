@@ -3,8 +3,9 @@ from typing import List, Sequence, Union
 import numpy as np
 from scipy.stats import norm
 
+from physrisk.data.scenario_year_resolution import resolve_exact_year
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
-from physrisk.hazard_models.core_hazards import get_default_source_paths
+from physrisk.hazard_models.core_hazards import get_default_hazard_resource_selector
 from physrisk.kernel.assets import Asset, IndustrialActivity
 from physrisk.kernel.hazard_model import (
     HazardDataRequest,
@@ -196,7 +197,11 @@ def test_chronic_vulnerability_model():
     """Testing the generation of an asset when only an impact curve (e.g. damage curve is available)"""
 
     store = mock_hazard_model_store_heat(TestData.longitudes, TestData.latitudes)
-    hazard_model = ZarrHazardModel(source_paths=get_default_source_paths(), store=store)
+    hazard_model = ZarrHazardModel(
+        scenario_year_resolver=resolve_exact_year,
+        resource_selector=get_default_hazard_resource_selector(),
+        store=store,
+    )
     scenario = "ssp585"
     year = 2050
 

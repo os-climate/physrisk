@@ -5,21 +5,21 @@ from typing import Dict, Optional, Sequence, Type
 import numpy as np
 from dependency_injector import providers
 
-from physrisk.api.v1.scoring_schemes import (
-    Category,
-    OriginalCategory,
-    map_to_original_category,
-)
-from physrisk.kernel.hazards import Hazard
 from physrisk.api.v1.impact_req_resp import (
     AssetImpactResponse,
     RiskMeasureKey,
     RiskMeasuresHelper,
     ScoreBasedRiskMeasureDefinition,
 )
+from physrisk.api.v1.scoring_schemes import (
+    Category,
+    OriginalCategory,
+    map_to_original_category,
+)
 from physrisk.container import Container
+from physrisk.data.scenario_year_resolution import resolve_exact_year
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
-from physrisk.hazard_models.core_hazards import get_default_source_paths
+from physrisk.hazard_models.core_hazards import get_default_hazard_resource_selector
 from physrisk.kernel.assets import Asset, RealEstateAsset
 from physrisk.kernel.calculation import alternate_default_vulnerability_models_scores
 from physrisk.kernel.hazard_model import HazardModelFactory
@@ -29,6 +29,7 @@ from physrisk.kernel.hazards import (
     Drought,
     Fire,
     Hail,
+    Hazard,
     Precipitation,
     RiverineInundation,
     Wind,
@@ -36,24 +37,26 @@ from physrisk.kernel.hazards import (
 from physrisk.kernel.impact import AssetImpactResult
 from physrisk.kernel.impact_distrib import ImpactType
 from physrisk.kernel.risk import (
-    PortfolioRiskModel,
     Measure,
     MeasureKey,
     NullAssetBasedPortfolioRiskMeasureCalculator,
+    PortfolioRiskModel,
     RiskMeasureCalculator,
     RiskMeasuresFactory,
-)
-from physrisk.risk_models.score_based_portfolio_risk_model import (
-    AveragingAssetBasedPortfolioRiskMeasureCalculator,
 )
 from physrisk.kernel.vulnerability_model import (
     DictBasedVulnerabilityModels,
     VulnerabilityModels,
+)
+from physrisk.kernel.vulnerability_model import (
     VulnerabilityModelsFactory as PVulnerabilityModelsFactory,
 )
 from physrisk.requests import _create_risk_measures
 from physrisk.risk_models.generic_risk_model import GenericScoreBasedRiskMeasures
 from physrisk.risk_models.risk_models import RealEstateToyRiskMeasures
+from physrisk.risk_models.score_based_portfolio_risk_model import (
+    AveragingAssetBasedPortfolioRiskMeasureCalculator,
+)
 from physrisk.vulnerability_models.config_based_impact_curves import (
     VulnerabilityConfigItem,
 )
@@ -65,6 +68,7 @@ from physrisk.vulnerability_models.real_estate_models import (
     RealEstateRiverineInundationModel,
 )
 from physrisk.vulnerability_models.vulnerability import VulnerabilityModelsFactory
+from tests.data.test_hazard_model_store import get_hazard_path
 
 from ..data.test_hazard_model_store import (
     TestData,
@@ -235,111 +239,105 @@ def create_assets_json(assets: Sequence[RealEstateAsset]):
 
 
 def create_hazard_model(scenarios, years):
-    source_paths = get_default_source_paths()
+    resource_selector = get_default_hazard_resource_selector()
 
     def sp_riverine(scenario, year):
-        return (
-            source_paths.resource_paths(
-                RiverineInundation, indicator_id="flood_depth", scenarios=[scenario]
-            )[0]
-            .scenarios[scenario]
-            .path(year)
+        return get_hazard_path(
+            resource_selector,
+            RiverineInundation,
+            indicator_id="flood_depth",
+            scenario=scenario,
+            year=year,
         )
 
     def sp_riverine_sop(scenario, year):
-        return (
-            source_paths.resource_paths(
-                RiverineInundation, indicator_id="flood_sop", scenarios=[scenario]
-            )[0]
-            .scenarios[scenario]
-            .path(year)
+        return get_hazard_path(
+            resource_selector,
+            RiverineInundation,
+            indicator_id="flood_sop",
+            scenario=scenario,
+            year=year,
         )
 
     def sp_coastal(scenario, year):
-        return (
-            source_paths.resource_paths(
-                CoastalInundation, indicator_id="flood_depth", scenarios=[scenario]
-            )[0]
-            .scenarios[scenario]
-            .path(year)
+        return get_hazard_path(
+            resource_selector,
+            CoastalInundation,
+            indicator_id="flood_depth",
+            scenario=scenario,
+            year=year,
         )
 
     def sp_coastal_sop(scenario, year):
-        return (
-            source_paths.resource_paths(
-                CoastalInundation, indicator_id="flood_sop", scenarios=[scenario]
-            )[0]
-            .scenarios[scenario]
-            .path(year)
+        return get_hazard_path(
+            resource_selector,
+            CoastalInundation,
+            indicator_id="flood_sop",
+            scenario=scenario,
+            year=year,
         )
 
     def sp_wind(scenario, year):
-        return (
-            source_paths.resource_paths(
-                Wind, indicator_id="max_speed", scenarios=[scenario]
-            )[0]
-            .scenarios[scenario]
-            .path(year)
+        return get_hazard_path(
+            resource_selector,
+            Wind,
+            indicator_id="max_speed",
+            scenario=scenario,
+            year=year,
         )
 
     def sp_heat(scenario, year):
-        return (
-            source_paths.resource_paths(
-                ChronicHeat, indicator_id="days_wbgt_above", scenarios=[scenario]
-            )[0]
-            .scenarios[scenario]
-            .path(year)
+        return get_hazard_path(
+            resource_selector,
+            ChronicHeat,
+            indicator_id="days_wbgt_above",
+            scenario=scenario,
+            year=year,
         )
 
     def sp_heat2(scenario, year):
-        return (
-            source_paths.resource_paths(
-                ChronicHeat,
-                indicator_id="mean_degree_days/above/index",
-                scenarios=[scenario],
-            )[0]
-            .scenarios[scenario]
-            .path(year)
+        return get_hazard_path(
+            resource_selector,
+            ChronicHeat,
+            indicator_id="mean_degree_days/above/index",
+            scenario=scenario,
+            year=year,
         )
 
     def sp_fire(scenario, year):
-        return (
-            source_paths.resource_paths(
-                Fire, indicator_id="fire_probability", scenarios=[scenario]
-            )[0]
-            .scenarios[scenario]
-            .path(year)
+        return get_hazard_path(
+            resource_selector,
+            Fire,
+            indicator_id="fire_probability",
+            scenario=scenario,
+            year=year,
         )
 
     def sp_hail(scenario, year):
-        return (
-            source_paths.resource_paths(
-                Hail, indicator_id="days/above/5cm", scenarios=[scenario]
-            )[0]
-            .scenarios[scenario]
-            .path(year)
+        return get_hazard_path(
+            resource_selector,
+            Hail,
+            indicator_id="days/above/5cm",
+            scenario=scenario,
+            year=year,
         )
 
     def sp_drought(scenario, year):
-        return (
-            source_paths.resource_paths(
-                Drought,
-                indicator_id="months/spei12m/below/threshold",
-                scenarios=[scenario],
-            )[0]
-            .scenarios[scenario]
-            .path(year)
+        return get_hazard_path(
+            resource_selector,
+            Drought,
+            indicator_id="months/spei12m/below/threshold",
+            scenario=scenario,
+            year=year,
         )
 
     def sp_precipitation(scenario, year):
-        return (
-            source_paths.resource_paths(
-                Precipitation,
-                indicator_id="max/daily/water_equivalent",
-                scenarios=[scenario],
-            )[0]
-            .scenarios[scenario]
-            .path(year)
+        return get_hazard_path(
+            resource_selector,
+            Precipitation,
+            indicator_id="max/daily/water_equivalent",
+            scenario=scenario,
+            year=year,
         )
 
     mocker = ZarrStoreMocker()
@@ -510,14 +508,18 @@ def create_hazard_model(scenarios, years):
         [70],
     )
 
-    return ZarrHazardModel(source_paths=get_default_source_paths(), store=mocker.store)
+    return ZarrHazardModel(
+        scenario_year_resolver=resolve_exact_year,
+        resource_selector=get_default_hazard_resource_selector(),
+        store=mocker.store,
+    )
 
 
 def test_generic_model_via_requests_default_vulnerability():
     scenarios = ["ssp585", "historical"]
     years = [2050]
 
-    # hazard_model = ZarrHazardModel(source_paths=get_default_source_paths())
+    # hazard_model = ZarrHazardModel(scenario_year_resolver=resolve_exact_year, resource_selector=get_default_hazard_resource_selector())
     hazard_model = create_hazard_model(scenarios, years)
     assets = create_assets()
     request_dict = {
@@ -698,7 +700,7 @@ def test_generic_model_via_requests_custom():
     scenarios = ["ssp585", "historical"]
     years = [2050]
 
-    # hazard_model = ZarrHazardModel(source_paths=get_default_source_paths())
+    # hazard_model = ZarrHazardModel(scenario_year_resolver=resolve_exact_year, resource_selector=get_default_hazard_resource_selector())
     hazard_model = create_hazard_model(scenarios, years)
     assets = create_assets()
     request_dict = {

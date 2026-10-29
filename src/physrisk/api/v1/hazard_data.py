@@ -1,4 +1,5 @@
 from enum import Flag, auto
+from pathlib import PurePosixPath
 from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union, Literal
 
 from pydantic import AliasChoices, BaseModel, Field, computed_field, field_validator
@@ -69,11 +70,11 @@ class Period(BaseModel):
     )
 
 
-class Scenario(BaseModel):
+class ScenarioYears(BaseModel):
     """Scenario ID and the list of available years for that scenario e.g. RCP8.5 = 'rcp8.5'"""
 
     id: str
-    years: List[int]
+    years: list[int]
     # periods: Optional[List[Period]]
 
 
@@ -115,7 +116,7 @@ class HazardResource(BaseModel):
         None,
         description="Optional information used for display of the indicator in a map.",
     )
-    scenarios: List[Scenario] = Field(
+    scenarios: List[ScenarioYears] = Field(
         description="Climate change scenarios for which the indicator is available."
     )
     store_netcdf_coords: bool = Field(
@@ -135,6 +136,67 @@ class HazardResource(BaseModel):
         Vulnerability models request a hazard indicator by indicator_id from the Hazard Model. The Hazard Model
         selects based on its own logic (e.g. selects a particular General Circulation Model)."""
         return self.path
+
+    def path_for_scenario_year(self, scenario: str, year: int) -> str:
+        """Build the concrete data-array path for a scenario and year.
+
+        Args:
+            scenario: Scenario identifier used to expand the path template.
+            year: Year used to expand the path template.
+
+        Returns:
+            Expanded array path. ``/indicator`` is appended when the resource stores
+            NetCDF-style coordinates.
+        """
+        self._check_scenario_year(scenario, year)
+        path = self.path.format(
+            id=self.indicator_id,
+            scenario=scenario,
+            year=year,
+        )
+        return path + ("/indicator" if self.store_netcdf_coords else "")
+
+    def map_path_for_scenario_year(
+        self, scenario: str, year: int, zoom: int | None = None
+    ) -> str:
+        """Build the concrete map-array path for a scenario and year.
+
+        Args:
+            scenario: Scenario identifier used to expand the path template.
+            year: Year used to expand the path template.
+            zoom: Zoom level appended for map pyramids.
+
+        Returns:
+            Expanded map-array path.
+
+        Raises:
+            ValueError: If the resource has no map configuration.
+        """
+        if self.map is None:
+            raise ValueError(f"Resource '{self.key()}' has no map configuration.")
+
+        self._check_scenario_year(scenario, year)
+
+        map_path = self.map.path
+        if len(PurePosixPath(map_path).parts) == 1:
+            map_path = str(PurePosixPath(self.path).with_name(map_path))
+        if self.map.source != "map_array":
+            map_path = str(PurePosixPath(map_path, str(zoom)))
+        return map_path.format(
+            id=self.indicator_id,
+            scenario=scenario,
+            year=year,
+        )
+
+    def _check_scenario_year(self, scenario: str, year: int) -> None:
+        """Ensure a concrete scenario/year pair is declared by this resource."""
+        scenario_definition = next(
+            (item for item in self.scenarios if item.id == scenario), None
+        )
+        if scenario_definition is None or year not in scenario_definition.years:
+            raise ValueError(
+                f"Resource '{self.key()}' has no data for {scenario}/{year}."
+            )
 
 
 def expand(item: str, key: str, param: str):

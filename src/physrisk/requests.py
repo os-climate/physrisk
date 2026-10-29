@@ -34,16 +34,12 @@ from physrisk.api.v1.hazard_image import (
     HazardImageInfoResponse,
     HazardImageRequest,
 )
-from physrisk.data.hazard_data_provider import HazardDataHint
+from physrisk.data.hazard_data_provider import HazardDataHint, HazardResourceSelector
 from physrisk.data.inventory import expand
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.static.oed_occupancy import OED_OCCUPANCY_CODES
 from physrisk.data.static.scenarios import scenario_description
 from physrisk.data.zarr_reader import ZarrReader
-from physrisk.hazard_models.core_hazards import (
-    InventorySourcePaths,
-    get_default_source_paths,
-)
 from physrisk.kernel.exposure import JupterExposureMeasure, calculate_exposures
 from physrisk.kernel.hazards import Hazard, all_hazards, hazard_class
 from physrisk.kernel.impact import AssetImpactResult, ImpactKey  # , ImpactKey
@@ -84,7 +80,7 @@ from .api.v1.hazard_data import (
     HazardDescriptionResponse,
     HazardResource,
     IntensityCurve,
-    Scenario,
+    ScenarioYears,
     StaticInformationResponse,
 )
 from .api.v1.impact_req_resp import (
@@ -139,7 +135,7 @@ class Requester:
         hazard_model_factory: HazardModelFactory,
         vulnerability_models_factory: VulnerabilityModelsFactory,
         inventory: Inventory,
-        source_paths: InventorySourcePaths,
+        resource_selector: HazardResourceSelector,
         inventory_reader: InventoryReader,
         reader: ZarrReader,
         colormaps: Colormaps,
@@ -158,7 +154,7 @@ class Requester:
         self.inventory = inventory
         self.inventory_reader = inventory_reader
         self.zarr_reader = reader
-        self.source_paths = source_paths
+        self.resource_selector = resource_selector
         self.enforce_permissions = enforce_permissions
 
     def get(self, *, request_id, request_dict):
@@ -236,8 +232,9 @@ class Requester:
     ) -> AvailabilitySourcesResponse:
         resources = [
             resource
-            for resources in self.source_paths.all_selected_resources_by_type_id.values()
-            for resource in resources
+            for hazard, indicator_ids in self.resource_selector.hazard_indicators().items()
+            for indicator_id in indicator_ids
+            for resource in self.resource_selector.get_resources(hazard, indicator_id)
         ]
 
         if request.selected_hazards_list:
@@ -424,10 +421,6 @@ def _create_inventory(
                 for resource in reader.read(source):
                     resources.extend(expand([resource]))
     return Inventory(resources)
-
-
-def create_source_paths(inventory: Inventory):
-    return get_default_source_paths(inventory)
 
 
 def _read_permitted(group_ids: List[str], resource: HazardResource):
@@ -1170,7 +1163,9 @@ def _create_risk_measures(
         measures_for_portfolio=measures_for_portfolio,
         score_based_measure_set_defn=score_based_measure_set_defn,
         measures_definitions=None,
-        scenarios=[Scenario(id=scenario, years=list(years)) for scenario in scenarios],
+        scenarios=[
+            ScenarioYears(id=scenario, years=list(years)) for scenario in scenarios
+        ],
         asset_ids=[
             f"asset_{i}" if a.id is None else a.id for i, a in enumerate(assets)
         ],

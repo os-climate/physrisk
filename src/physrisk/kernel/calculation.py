@@ -1,18 +1,17 @@
 from typing import Dict, Sequence, Type
 
+from physrisk.data.scenario_year_resolution import resolve_exact_year
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
-from physrisk.hazard_models.core_hazards import get_default_source_paths
+from physrisk.hazard_models.core_hazards import get_default_hazard_resource_selector
 from physrisk.kernel.hazards import ChronicHeat, Drought, Fire, Hail, Precipitation
 from physrisk.kernel.impact_distrib import ImpactType
 from physrisk.kernel.risk import (
+    NullAssetBasedPortfolioRiskMeasureCalculator,
     PortfolioRiskMeasureCalculator,
     RiskMeasureCalculator,
     RiskMeasuresFactory,
 )
 from physrisk.risk_models.generic_risk_model import GenericScoreBasedRiskMeasures
-from physrisk.kernel.risk import (
-    NullAssetBasedPortfolioRiskMeasureCalculator,
-)
 from physrisk.risk_models.portfolio_risk_model import CompanyRiskMeasureCalculator
 from physrisk.vulnerability_models import power_generating_asset_models as pgam
 from physrisk.vulnerability_models.chronic_heat_models import ChronicHeatGZNModel
@@ -46,7 +45,10 @@ from .vulnerability_model import VulnerabilityModelBase
 
 def get_default_hazard_model() -> HazardModel:
     # Model that gets hazard event data from Zarr storage
-    return ZarrHazardModel(source_paths=get_default_source_paths())
+    return ZarrHazardModel(
+        scenario_year_resolver=resolve_exact_year,
+        resource_selector=get_default_hazard_resource_selector(),
+    )
 
 
 def placeholder_models() -> Sequence[VulnerabilityModelBase]:

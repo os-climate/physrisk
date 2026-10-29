@@ -137,6 +137,7 @@ class HazardEventDataResponse(HazardDataResponse):
         Args:
             return_periods: return periods in years.
             intensities: hazard event intensity for each return period, or set of hazard event intensities corresponding to different events. # noqa: E501
+            units: Units of the intensity values.
             path: path to the hazard indicator data source.
         """
 
@@ -176,6 +177,7 @@ class HazardParameterDataResponse(HazardDataResponse):
         Args:
             parameters (np.ndarray): Chronic hazard parameter values.
             param_defns (np.ndarray): Chronic hazard parameter definitions.
+            units: Units of the parameter values.
             path: path to the hazard indicator data source.
         """
         self.parameters = parameters
@@ -321,9 +323,9 @@ class HazardModelFactory(Protocol):
         """
         ...
 
-    def image_creator(
-        self,
-    ) -> HazardImageCreator: ...
+    def image_creator(self, interpolate_years: bool = True) -> HazardImageCreator:
+        """Create images using the same year policy selected for hazard data."""
+        ...
 
 
 class DataSource(Protocol):

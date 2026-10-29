@@ -3,7 +3,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, NamedTuple, Optional, Sequence, Tuple, Union
 
-from physrisk.data.hazard_data_provider import ScenarioYear
+from physrisk.data.scenario_year_resolution import ScenarioYear
 from physrisk.kernel.assets import Asset
 from physrisk.kernel.hazard_event_distrib import HazardEventDistrib
 from physrisk.kernel.hazard_model import (

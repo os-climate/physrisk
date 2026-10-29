@@ -1,11 +1,15 @@
 import asyncio
 import concurrent.futures
-from collections import defaultdict
 import logging
+from collections import defaultdict
 from typing import Dict, List, Mapping, Optional, Sequence, Tuple, Type
 
 import numpy as np
 
+from physrisk.data.scenario_year_resolution import (
+    ScenarioYear,
+    ScenarioYearResolver,
+)
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.kernel.hazards import (
     Drought,
@@ -30,8 +34,7 @@ from .hazard_data_provider import (
     CascadingHazardDataProvider,
     HazardDataHint,
     HazardDataProvider,
-    ScenarioYear,
-    SourcePaths,
+    HazardResourceSelector,
 )
 
 logger = logging.getLogger(__name__)
@@ -269,11 +272,11 @@ class ZarrHazardModel(PregeneratedHazardModel):
     def __init__(
         self,
         *,
-        source_paths: SourcePaths,
+        resource_selector: HazardResourceSelector,
+        scenario_year_resolver: ScenarioYearResolver,
         reader: Optional[ZarrReader] = None,
         store=None,
         interpolation="floor",
-        interpolate_years: bool = False,
         zarr_max_workers: int = 32,
         nan_is_zero: Optional[set[tuple[type[Hazard], str]]] = None,
         nan_is_no_data: Optional[set[tuple[type[Hazard], str]]] = None,
@@ -281,28 +284,27 @@ class ZarrHazardModel(PregeneratedHazardModel):
         """Hazard model backed by Zarr arrays.
 
         Args:
-            source_paths: Provides paths to Zarr arrays for each hazard type and indicator.
+            resource_selector: Selects hazard resources for each hazard type and indicator.
+            scenario_year_resolver: Scenario selection and weighting policy.
             reader: Shared ZarrReader; created from store if not provided.
             store: Zarr store (local, remote, or in-memory); used when reader is None.
             interpolation: Spatial interpolation method ("floor" or "linear").
-            interpolate_years: Whether to interpolate hazard data between available years.
             zarr_max_workers: Max threads for concurrent Zarr chunk reads.
             nan_is_zero: (hazard_type, indicator_id) pairs where NaN is treated as 0. Defaults to common indicators (fire, drought, hail, subsidence, landslide).
             nan_is_no_data: (hazard_type, indicator_id) pairs where NaN causes a failed response. Mutually exclusive with nan_is_zero.
         """
         # share ZarrReaders across hazard data providers
         zarr_reader = ZarrReader(store=store) if reader is None else reader
-        hazard_types = source_paths.hazard_types()
         super().__init__(
             {
                 t: CascadingHazardDataProvider(
                     t,
-                    source_paths,
+                    resource_selector,
+                    scenario_year_resolver=scenario_year_resolver,
                     zarr_reader=zarr_reader,
                     interpolation=interpolation,
-                    interpolate_years=interpolate_years,
                 )
-                for t in hazard_types
+                for t in resource_selector.hazard_indicators()
             },
             zarr_max_workers=zarr_max_workers,
             nan_is_zero=nan_is_zero,

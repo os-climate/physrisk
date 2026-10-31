@@ -16,7 +16,12 @@ from physrisk.data.scenario_year_resolution import (
     InterpolatedYearResolver,
     resolve_exact_year,
 )
-from physrisk.data.image_creator import ImageCreator, image_from_packed_rgba, to_rgba
+from physrisk.data.image_creator import (
+    ImageCreator,
+    image_from_packed_rgba,
+    index_display_name_and_units,
+    to_rgba,
+)
 from physrisk.data.inventory import Inventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
@@ -24,6 +29,55 @@ from physrisk.hazard_models.core_hazards import (
     InventoryHazardResourceSelector,
 )
 from physrisk.kernel.hazard_model import HazardModelFactory, Tile
+from physrisk.kernel.hazards import HazardKind
+
+
+@pytest.mark.parametrize(
+    "dim_name, units, kind, indicator_id, expected",
+    [
+        # generic 'index' dimension: name inferred from hazard kind
+        (
+            "index",
+            "default",
+            HazardKind.ACUTE,
+            "flood_depth",
+            ("return period", "years"),
+        ),
+        (
+            "index",
+            "default",
+            HazardKind.CHRONIC,
+            "days_wbgt_above",
+            ("threshold", "°C"),
+        ),
+        ("index", "", HazardKind.CHRONIC, "water_demand", ("threshold", "")),
+        # named dimensions displayed as named
+        ("min_max", "", HazardKind.ACUTE, "flood_sop", ("min/max", "")),
+        (
+            "return_period",
+            "",
+            HazardKind.ACUTE,
+            "max_speed",
+            ("return period", "years"),
+        ),
+        (
+            "return_period",
+            "years",
+            HazardKind.ACUTE,
+            "flood_depth",
+            ("return period", "years"),
+        ),
+        (
+            "threshold",
+            "",
+            HazardKind.CHRONIC,
+            "months/spei12m/below/index",
+            ("threshold", ""),
+        ),
+    ],
+)
+def test_index_display_name_and_units(dim_name, units, kind, indicator_id, expected):
+    assert index_display_name_and_units(dim_name, units, kind, indicator_id) == expected
 
 
 def test_to_rgba():

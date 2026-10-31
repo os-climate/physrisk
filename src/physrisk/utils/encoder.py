@@ -17,9 +17,12 @@ def sig_figures(x: Union[np.ndarray, float], sf: int):
         sf (int): Number of significant figures
 
     Returns:
-        Union[np.ndarray, float]: Rounded data.
+        Union[np.ndarray, float]: Rounded data; non-numeric data (e.g. index values
+        that are labels such as 'min' and 'max') is returned unchanged.
     """
     x = np.asarray(x)
+    if not np.issubdtype(x.dtype, np.number):
+        return x
     x_positive = np.where(np.isfinite(x) & (x != 0), np.abs(x), 10 ** (sf - 1))
     mags = 10 ** (sf - 1 - np.floor(np.log10(x_positive)))
     return np.round(x * mags) / mags

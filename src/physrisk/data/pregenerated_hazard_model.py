@@ -2,7 +2,7 @@ import asyncio
 import concurrent.futures
 import logging
 from collections import defaultdict
-from typing import Dict, List, Mapping, Optional, Sequence, Tuple, Type
+from collections.abc import Mapping, Sequence
 
 import numpy as np
 
@@ -45,10 +45,10 @@ class PregeneratedHazardModel(HazardModel):
 
     def __init__(
         self,
-        hazard_data_providers: Dict[Type[Hazard], HazardDataProvider],
+        hazard_data_providers: dict[type[Hazard], HazardDataProvider],
         zarr_max_workers: int = 32,
-        nan_is_zero: Optional[set[tuple[type[Hazard], str]]] = None,
-        nan_is_no_data: Optional[set[tuple[type[Hazard], str]]] = None,
+        nan_is_zero: set[tuple[type[Hazard], str]] | None = None,
+        nan_is_no_data: set[tuple[type[Hazard], str]] | None = None,
     ):
         """
         Args:
@@ -239,12 +239,12 @@ class PregeneratedHazardModel(HazardModel):
 
     @staticmethod
     def _log_response_issues(
-        responses: Dict[HazardDataRequest, HazardDataResponse],
+        responses: dict[HazardDataRequest, HazardDataResponse],
     ) -> None:
         # in some cases requested data cannot be retrieved, leading to a HazardDataFailedResponse
         # this may be handled by the vulnerability model or might result in missing results.
-        grouped_failures: Dict[
-            str, List[Tuple[HazardDataRequest, HazardDataFailedResponse]]
+        grouped_failures: dict[
+            str, list[tuple[HazardDataRequest, HazardDataFailedResponse]]
         ] = defaultdict(list)
         for req, resp in responses.items():
             if isinstance(resp, HazardDataFailedResponse):
@@ -274,12 +274,12 @@ class ZarrHazardModel(PregeneratedHazardModel):
         *,
         resource_selector: HazardResourceSelector,
         scenario_year_resolver: ScenarioYearResolver,
-        reader: Optional[ZarrReader] = None,
+        reader: ZarrReader | None = None,
         store=None,
         interpolation="floor",
         zarr_max_workers: int = 32,
-        nan_is_zero: Optional[set[tuple[type[Hazard], str]]] = None,
-        nan_is_no_data: Optional[set[tuple[type[Hazard], str]]] = None,
+        nan_is_zero: set[tuple[type[Hazard], str]] | None = None,
+        nan_is_no_data: set[tuple[type[Hazard], str]] | None = None,
     ):
         """Hazard model backed by Zarr arrays.
 

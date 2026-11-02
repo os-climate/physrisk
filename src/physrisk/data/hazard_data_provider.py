@@ -1,13 +1,7 @@
 import asyncio
 import sys
+from collections.abc import MutableMapping, Sequence
 from dataclasses import dataclass
-from typing import (
-    Dict,
-    MutableMapping,
-    Optional,
-    Sequence,
-    Type,
-)
 
 import numpy as np
 from shapely import Point
@@ -30,7 +24,7 @@ class HazardDataHint:
     A hazard resource path can be specified which uniquely defines the hazard resource; otherwise the resource
     is inferred from the indicator_id."""
 
-    path: Optional[str] = None
+    path: str | None = None
     # consider adding: indicator_model_gcm: str
 
     def group_key(self):
@@ -115,13 +109,13 @@ class CascadingHazardDataProvider:
 
     def __init__(
         self,
-        hazard_type: Type[Hazard],
+        hazard_type: type[Hazard],
         resource_selector: HazardResourceSelector,
         scenario_year_resolver: ScenarioYearResolver,
         *,
-        store: Optional[MutableMapping] = None,
-        zarr_reader: Optional[ZarrReader] = None,
-        interpolation: Optional[str] = "floor",
+        store: MutableMapping | None = None,
+        zarr_reader: ZarrReader | None = None,
+        interpolation: str | None = "floor",
     ):
         """Provides hazard data.
 
@@ -154,9 +148,9 @@ class CascadingHazardDataProvider:
         indicator_id: str,
         scenarios: Sequence[str],
         years: Sequence[int],
-        hint: Optional[HazardDataHint] = None,
-        buffer: Optional[int] = None,
-    ) -> Dict[ScenarioYear, ScenarioYearResult]:
+        hint: HazardDataHint | None = None,
+        buffer: int | None = None,
+    ) -> dict[ScenarioYear, ScenarioYearResult]:
         """Returns data for set of latitude and longitudes.
 
         Args:
@@ -317,14 +311,14 @@ class CascadingHazardDataProvider:
         latitudes: np.ndarray,
         indicator_id: str,
         resource: HazardResource,
-        weighted_sums_by_request: Dict[ScenarioYear, WeightedSum],
-        buffer: Optional[int],
+        weighted_sums_by_request: dict[ScenarioYear, WeightedSum],
+        buffer: int | None,
     ) -> dict[ScenarioYear, ScenarioYearResult]:
         """Get data for all scenarios and years using just a single HazardResource as the source.
         The importance of this is that interpolation of years is assumed to be feasible within the same resource as this
         is a single model (with consistent meaning of the values).
         """
-        results_by_request: Dict[ScenarioYear, ScenarioYearResult] = {}
+        results_by_request: dict[ScenarioYear, ScenarioYearResult] = {}
         expected_units = resource.units
         source_scenario_years = {
             source_scenario_year
@@ -333,7 +327,7 @@ class CascadingHazardDataProvider:
         }
         if len(source_scenario_years) == 0:
             return {}
-        results_by_source: Dict[ScenarioYear, ScenarioYearResult] = {}
+        results_by_source: dict[ScenarioYear, ScenarioYearResult] = {}
         try:
             # Any errors should propagate up.
             read_results = await asyncio.gather(
@@ -423,7 +417,7 @@ class CascadingHazardDataProvider:
         source_scenario_year: ScenarioYear,
         latitudes: np.ndarray,
         longitudes: np.ndarray,
-        buffer: Optional[int],
+        buffer: int | None,
         concrete_path: str,
     ):
         in_bounds_mask = None

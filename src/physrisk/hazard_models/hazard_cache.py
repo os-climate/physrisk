@@ -2,10 +2,11 @@ import base64
 import hashlib
 import json
 import os
+from collections.abc import Sequence
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import PurePosixPath
-from typing import Any, Dict, List, Optional, Protocol, Sequence
+from typing import Any, Protocol
 
 import h3
 import shapely
@@ -27,11 +28,11 @@ class ItemType(str, Enum):
 class Store(Protocol):
     def __init__(self, file: str): ...
 
-    def setitems(self, items: Dict[str, Any]): ...
+    def setitems(self, items: dict[str, Any]): ...
 
     def getitems(self, keys: Sequence[str]): ...
 
-    def getall(self, prefix: str = "") -> Dict[str, bytes]: ...
+    def getall(self, prefix: str = "") -> dict[str, bytes]: ...
 
 
 def to_json(store: Store, prefix: str = ""):
@@ -49,7 +50,7 @@ class LMDBStore(Store):
         with Lmdb.open(self._file, "c") as _:
             ...
 
-    def setitems(self, items: Dict[str, Any]):
+    def setitems(self, items: dict[str, Any]):
         with Lmdb.open(self._file, "c") as db:
             db.update(items)
 
@@ -65,9 +66,7 @@ class LMDBStore(Store):
 
 
 class MemoryStore(Store):
-    def __init__(
-        self, file: Optional[str] = None, values: Optional[Dict[str, str]] = None
-    ):
+    def __init__(self, file: str | None = None, values: dict[str, str] | None = None):
         self._dict = {}
         if file is not None and os.path.exists(file):
             with open(file, "r") as f:
@@ -75,7 +74,7 @@ class MemoryStore(Store):
         if values is not None:
             self._dict.update(values)
 
-    def setitems(self, items: Dict[str, Any]):
+    def setitems(self, items: dict[str, Any]):
         self._dict.update(items)
 
     def getitems(self, keys: Sequence[str]):
@@ -110,10 +109,10 @@ class H3BasedCache:
     def getall(self, prefix: str = ""):
         return self.store.getall(prefix)
 
-    def getitems(self, keys: List[str]):
+    def getitems(self, keys: list[str]):
         return self.store.getitems(keys)
 
-    def setitems(self, items: Dict[str, Any]):
+    def setitems(self, items: dict[str, Any]):
         self.store.setitems(items)
 
 
@@ -153,7 +152,7 @@ class GeometryH3BasedCache:
         self.grid_size = grid_size
 
     def spatial_key(
-        self, latitude: float, longitude: float, geometry: Optional[BaseGeometry] = None
+        self, latitude: float, longitude: float, geometry: BaseGeometry | None = None
     ):
         if geometry is None:
             # based on the lat/lon
@@ -181,8 +180,8 @@ class GeometryH3BasedCache:
     def getall(self, prefix: str = ""):
         return self.store.getall(prefix)
 
-    def getitems(self, keys: List[str]):
+    def getitems(self, keys: list[str]):
         return self.store.getitems(keys)
 
-    def setitems(self, items: Dict[str, Any]):
+    def setitems(self, items: dict[str, Any]):
         self.store.setitems(items)

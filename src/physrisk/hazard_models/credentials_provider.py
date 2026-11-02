@@ -1,5 +1,5 @@
 from os import getenv
-from typing import Dict, Protocol
+from typing import Protocol
 
 
 class CredentialsProvider(Protocol):
@@ -19,7 +19,7 @@ class CredentialsProvider(Protocol):
 
     def jupiter_refresh_token(self) -> str: ...
 
-    def proxies(self) -> Dict[str, str]: ...
+    def proxies(self) -> dict[str, str]: ...
 
 
 class EnvCredentialsProvider(CredentialsProvider):
@@ -52,5 +52,5 @@ class EnvCredentialsProvider(CredentialsProvider):
     def jupiter_refresh_token(self) -> str:
         return getenv("JUPITER_REFRESH_TOKEN", "")
 
-    def proxies(self) -> Dict[str, str]:
+    def proxies(self) -> dict[str, str]:
         return {"https": getenv("PROXY_HTTPS", ""), "http": getenv("PROXY_HTTP", "")}

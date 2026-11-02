@@ -1,6 +1,5 @@
-from collections import defaultdict
 import statistics
-from typing import Optional
+from collections import defaultdict
 
 from physrisk.api.v1.impact_req_resp import (
     RiskMeasureDefinition,
@@ -38,7 +37,7 @@ class AveragingAssetBasedPortfolioRiskMeasureCalculator(PortfolioRiskMeasureCalc
             ],
         )
 
-    def get_definition(self, hazard_type: Optional[type[Hazard]] = None):
+    def get_definition(self, hazard_type: type[Hazard] | None = None):
         return self._definition
 
     def calculate_risk_measures(
@@ -52,9 +51,9 @@ class AveragingAssetBasedPortfolioRiskMeasureCalculator(PortfolioRiskMeasureCalc
     ]:
         portfolio_measures: dict[MeasureKey, Measure] = {}
         measure_by_year_scen_agg: dict[
-            tuple[str, int | None, Optional[str]], list[MeasureKey]
+            tuple[str, int | None, str | None], list[MeasureKey]
         ] = defaultdict(list)
-        for mk in asset_level_measures.keys():
+        for mk in asset_level_measures:
             aggregation_id = mk.asset.aggregation_id if mk.asset is not None else None
             measure_by_year_scen_agg[(mk.scenario, mk.year, aggregation_id)].append(mk)
         for (scenario, year, aggregation_id), v in measure_by_year_scen_agg.items():

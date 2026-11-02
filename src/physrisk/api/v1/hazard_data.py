@@ -1,6 +1,7 @@
+from collections.abc import Iterable, Sequence
 from enum import Flag, auto
 from pathlib import PurePosixPath
-from typing import Dict, Iterable, List, Optional, Sequence, Tuple, Union, Literal
+from typing import Literal
 
 from pydantic import AliasChoices, BaseModel, Field, computed_field, field_validator
 
@@ -11,14 +12,14 @@ from physrisk.kernel.hazards import all_hazards
 class Colormap(BaseModel):
     """Provides details of colormap."""
 
-    min_index: Optional[int] = Field(
+    min_index: int | None = Field(
         1,
         description="Value of colormap minimum. Constant min for a group of maps can facilitate comparison.",
     )
     min_value: float = Field(
         description="Value of colormap minimum. Constant min for a group of maps can facilitate comparison."
     )
-    max_index: Optional[int] = Field(
+    max_index: int | None = Field(
         255,
         description="Value of colormap maximum. Constant max for a group of maps can facilitate comparison.",
     )
@@ -26,7 +27,7 @@ class Colormap(BaseModel):
         description="Value of colormap maximum. Constant max for a group of maps can facilitate comparison."
     )
     name: str = Field(description="Name of colormap, e.g. 'flare', 'heating'.")
-    nodata_index: Optional[int] = Field(0, description="Index used for no data.")
+    nodata_index: int | None = Field(0, description="Index used for no data.")
     units: str = Field(description="Units, e.g. 'degree days', 'metres'.")
     scaling: Literal["linear", "log"] = Field(
         "linear",
@@ -38,21 +39,21 @@ class Colormap(BaseModel):
 class MapInfo(BaseModel):
     """Provides information about map layer."""
 
-    colormap: Optional[Colormap] = Field(description="Details of colormap.")
-    bounds: List[Tuple[float, float]] = Field(
+    colormap: Colormap | None = Field(description="Details of colormap.")
+    bounds: list[tuple[float, float]] = Field(
         [(-180.0, 85.0), (180.0, 85.0), (180.0, -85.0), (-180.0, -85.0)],
-        description="Bounds (top/left, top/right, bottom/right, bottom/left) as degrees. Note applied to map reprojected into Web Mercator CRS.",  # noqa
+        description="Bounds (top/left, top/right, bottom/right, bottom/left) as degrees. Note applied to map reprojected into Web Mercator CRS.",
     )
-    bbox: Optional[List[float]] = Field(default=[-180.0, -85.0, 180.0, 85.0])
-    index_values: Optional[Sequence[Union[float, int, str]]] = Field(
+    bbox: list[float] | None = Field(default=[-180.0, -85.0, 180.0, 85.0])
+    index_values: Sequence[float | int | str] | None = Field(
         default=None,
         description="Index values to include in maps. If None, the last index value only is included.",
     )
     path: str = Field(
-        description="Name of array reprojected to Web Mercator for on-the-fly display or to hash to obtain tile ID. If not supplied, convention is to add '_map' to path."  # noqa
+        description="Name of array reprojected to Web Mercator for on-the-fly display or to hash to obtain tile ID. If not supplied, convention is to add '_map' to path."
     )
     # note that the bounds should be consistent with the array attributes
-    source: Optional[str] = Field(
+    source: str | None = Field(
         description="""Source of map image. These are
                             'map_array': single Mercator projection array at path above
                             'map_array_pyramid': pyramid of Mercator projection arrays
@@ -86,7 +87,7 @@ class HazardResource(BaseModel):
     """Provides information about a set of hazard indicators, including available scenarios and years."""
 
     hazard_type: str = Field(description="Type of hazard.")
-    group_id: Optional[str] = Field(
+    group_id: str | None = Field(
         "public",
         description="Identifier of the resource group (used for authentication).",
     )
@@ -94,7 +95,7 @@ class HazardResource(BaseModel):
     indicator_id: str = Field(
         description="Identifier of the hazard indicator (i.e. the modelled quantity), e.g. 'flood_depth'."
     )
-    indicator_model_id: Optional[str] = Field(
+    indicator_model_id: str | None = Field(
         None,
         description="Identifier specifying the type of model used in the derivation of the indicator "
         "(e.g. whether flood model includes impact of sea-level rise).",
@@ -102,21 +103,21 @@ class HazardResource(BaseModel):
     indicator_model_gcm: str = Field(
         description="Identifier of general circulation model(s) used in the derivation of the indicator."
     )
-    params: Dict[str, List[str]] = Field(
+    params: dict[str, list[str]] = Field(
         {}, description="Parameters used to expand wild-carded fields."
     )
     display_name: str = Field(description="Text used to display indicator.")
-    display_groups: List[str] = Field(
+    display_groups: list[str] = Field(
         [], description="Text used to group the (expanded) indicators for display."
     )
     description: str = Field(
         description="Brief description in mark down of the indicator and model that generated the indicator."
     )
-    map: Optional[MapInfo] = Field(
+    map: MapInfo | None = Field(
         None,
         description="Optional information used for display of the indicator in a map.",
     )
-    scenarios: List[ScenarioYears] = Field(
+    scenarios: list[ScenarioYears] = Field(
         description="Climate change scenarios for which the indicator is available."
     )
     store_netcdf_coords: bool = Field(
@@ -204,7 +205,7 @@ def expand(item: str, key: str, param: str):
 
 
 def expand_resource(
-    resource: HazardResource, keys: List[str], params: Dict[str, List[str]]
+    resource: HazardResource, keys: list[str], params: dict[str, list[str]]
 ) -> Iterable[HazardResource]:
     if len(keys) == 0:
         yield resource.model_copy(deep=True, update={"params": {}})
@@ -255,33 +256,33 @@ class InventorySource(Flag):
 
 
 class HazardAvailabilityRequest(BaseModel):
-    types: Optional[List[str]] = []  # e.g. ["RiverineInundation"]
-    sources: Optional[List[str]] = Field(
+    types: list[str] | None = []  # e.g. ["RiverineInundation"]
+    sources: list[str] | None = Field(
         None,
         description="Sources of inventory, can be 'embedded', 'hazard' or 'hazard_test'.",
     )
 
 
 class HazardAvailabilityResponse(BaseModel):
-    models: List[HazardResource]
+    models: list[HazardResource]
     colormaps: dict
 
 
 class HazardDescriptionRequest(BaseModel):
-    paths: List[str] = Field(description="List of paths to markdown objects.")
+    paths: list[str] = Field(description="List of paths to markdown objects.")
 
 
 class HazardDescriptionResponse(BaseModel):
-    descriptions: Dict[str, str] = Field(
+    descriptions: dict[str, str] = Field(
         description="For each path (key), the description markdown (value)."
     )
 
 
 class StaticInformationResponse(BaseModel):
-    scenario_descriptions: Dict[str, str] = Field(
+    scenario_descriptions: dict[str, str] = Field(
         description="For each scenario identifier (key, e.g. 'ssp585', 'rcp8p5'), the description markdown (value)."
     )
-    oed_occupancy_codes: Dict[int, str] = Field(
+    oed_occupancy_codes: dict[int, str] = Field(
         description="OED occupancy codes: mapping of OED Code (integer) to OED Label."
     )
 
@@ -291,8 +292,8 @@ def _supported_hazard_type_names() -> set[str]:
 
 
 class HazardDataRequestItem(BaseModel):
-    longitudes: List[float]
-    latitudes: List[float]
+    longitudes: list[float]
+    latitudes: list[float]
     request_item_id: str
     hazard_type: str | None = Field(
         default=None,
@@ -301,14 +302,14 @@ class HazardDataRequestItem(BaseModel):
         validation_alias=AliasChoices("hazard_type", "event_type"),
     )
     indicator_id: str
-    indicator_model_gcm: Optional[str] = ""
-    path: Optional[str] = None
+    indicator_model_gcm: str | None = ""
+    path: str | None = None
     scenario: str  # e.g. rcp8p5
     year: int
 
     @field_validator("hazard_type")
     @classmethod
-    def validate_hazard_type(cls, hazard_type: Optional[str]) -> Optional[str]:
+    def validate_hazard_type(cls, hazard_type: str | None) -> str | None:
         if hazard_type is None:
             return None
         supported_hazard_types = _supported_hazard_type_names()
@@ -321,7 +322,7 @@ class HazardDataRequestItem(BaseModel):
 
     @computed_field(description="Deprecated: same as hazard_type")  # type: ignore[misc]
     @property
-    def event_type(self) -> Optional[str]:
+    def event_type(self) -> str | None:
         """Deprecated: use hazard_type instead."""
         return self.hazard_type
 
@@ -348,13 +349,13 @@ class HazardDataRequest(BaseHazardRequest):
 
     interpolation: str = "floor"
     interpolate_years: bool = True
-    provider_max_requests: Dict[str, int] = Field(
+    provider_max_requests: dict[str, int] = Field(
         {},
         description="The maximum permitted number of \
         requests to external providers. This setting is intended in particular for paid-for data. The key \
         is the provider ID and the value is the maximum permitted requests.",
     )
-    items: List[HazardDataRequestItem]
+    items: list[HazardDataRequestItem]
 
     model_config = {
         "json_schema_extra": {
@@ -393,7 +394,7 @@ class HazardDataRequest(BaseHazardRequest):
 
 
 class HazardDataResponseItem(BaseModel):
-    intensity_curve_set: List[IntensityCurve]
+    intensity_curve_set: list[IntensityCurve]
     request_item_id: str
     hazard_type: str | None
     indicator_id: str
@@ -414,4 +415,4 @@ class HazardDataResponseItem(BaseModel):
 
 
 class HazardDataResponse(BaseModel):
-    items: List[HazardDataResponseItem]
+    items: list[HazardDataResponseItem]

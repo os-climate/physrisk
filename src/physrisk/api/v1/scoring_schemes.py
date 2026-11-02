@@ -15,9 +15,7 @@ class Category(int, Enum):
 def map_to_original_category(score: int) -> int:
     if score in [Category.ERROR, Category.NO_DATA, Category.NO_VULNERABILITY]:
         return int(OriginalCategory.NODATA)
-    elif score == Category.VERY_LOW:
-        return int(OriginalCategory.LOW)
-    elif score == Category.LOW:
+    elif score == Category.VERY_LOW or score == Category.LOW:
         return int(OriginalCategory.LOW)
     elif score == Category.MEDIUM:
         return int(OriginalCategory.MEDIUM)

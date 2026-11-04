@@ -17,6 +17,40 @@ from physrisk.kernel.hazards import HazardKind, hazard_class
 
 logger = logging.getLogger(__name__)
 
+# display names of index dimensions, where not simply the name with spaces
+_index_display_names = {"min_max": "min/max"}
+
+
+def index_display_name_and_units(
+    index_dim_name: str, index_units: str, hazard_kind: HazardKind, indicator_id: str
+) -> Tuple[str, str]:
+    """Display name and units of the index (non-spatial) dimension of an array.
+    A named dimension (e.g. 'return_period', 'threshold' or 'min_max') is displayed
+    as named; for the generic 'index' dimension, the name is inferred from the hazard kind.
+    """
+    if index_dim_name == "index":
+        display_name = (
+            "return period" if hazard_kind == HazardKind.ACUTE else "threshold"
+        )
+    else:
+        display_name = _index_display_names.get(
+            index_dim_name, index_dim_name.replace("_", " ")
+        )
+    if index_units == "default":
+        if display_name == "return period":
+            index_units = "years"
+        elif indicator_id in [
+            "days_wbgt_above",
+            "mean_degree_days/above/index",
+            "weeks_water_temp_above",
+        ]:
+            index_units = "°C"
+        else:
+            index_units = ""
+    elif index_units == "" and display_name == "return period":
+        index_units = "years"
+    return display_name, index_units
+
 
 class ImageCreator(HazardImageCreator):
     """Convert small arrays into images for map display.
@@ -46,26 +80,39 @@ class ImageCreator(HazardImageCreator):
         index_value: Optional[Union[str, float]] = None,
         scaling: str = "linear",
         tile_size: Optional[int] = None,
+        compare_scenario: Optional[str] = None,
+        compare_year: Optional[int] = None,
     ):
         if tile_size is not None and tile_size != 512:
             raise ValueError(
                 f"tile_size={tile_size} is not supported; only 512 is available for this resource."
             )
+        is_difference = compare_scenario is not None or compare_year is not None
+        if is_difference and (compare_scenario is None or compare_year is None):
+            raise ValueError("compare_scenario and compare_year must both be given.")
         try:
             resource = self.inventory.resources[resource_id]
-            weighted_sum = self._scenario_year_resolver(
-                resource.scenarios, ScenarioYear(scenario, year)
-            )
-            if weighted_sum is None:
-                raise KeyError(f"Unsupported scenario/year: {scenario}/{year}")
             path_weights: Dict[str, float] = {}
-            for source, weight in weighted_sum.weights:
-                path = resource.map_path_for_scenario_year(
-                    source.scenario,
-                    source.year,
-                    zoom=tile.z + 1 if tile is not None else None,
+
+            def add_path_weights(scenario: str, year: int, sign: float):
+                weighted_sum = self._scenario_year_resolver(
+                    resource.scenarios, ScenarioYear(scenario, year)
                 )
-                path_weights[path] = path_weights.get(path, 0.0) + weight
+                if weighted_sum is None:
+                    raise KeyError(f"Unsupported scenario/year: {scenario}/{year}")
+                for source, weight in weighted_sum.weights:
+                    path = resource.map_path_for_scenario_year(
+                        source.scenario,
+                        source.year,
+                        zoom=tile.z + 1 if tile is not None else None,
+                    )
+                    path_weights[path] = path_weights.get(path, 0.0) + sign * weight
+
+            add_path_weights(scenario, year, 1.0)
+            if is_difference:
+                # the difference is a weighted sum like any other, with
+                # negative weights for the scenario/year compared with
+                add_path_weights(compare_scenario, compare_year, -1.0)  # type: ignore[arg-type]
             image = self._to_image(
                 path_weights,
                 colormap,
@@ -74,6 +121,7 @@ class ImageCreator(HazardImageCreator):
                 min_value=min_value,
                 max_value=max_value,
                 scaling=scaling,
+                zero_transparent=is_difference,
             )
         except Exception as e:
             # if we are creating a whole image that does not exist, we log the error
@@ -113,26 +161,19 @@ class ImageCreator(HazardImageCreator):
         path = resource.map_path_for_scenario_year(source.scenario, source.year, zoom=1)
         z = self.reader.all_data(path)
         all_index_values, index_units = self.reader.get_index_values(z)
+        # map index values are those for which maps were generated; if not
+        # specified, only the last (highest) index is generated
         available_index_values = (
-            resource.map.index_values
+            [v for v in resource.map.index_values if v in all_index_values]
             if resource.map is not None and resource.map.index_values
-            else all_index_values
+            else all_index_values[-1:]
         )
-        hazard_type = hazard_class(resource.hazard_type)
-        index_display_name = (
-            "return period" if hazard_type.kind == HazardKind.ACUTE else "threshold"
+        index_display_name, index_units = index_display_name_and_units(
+            self.reader.get_index_dimension_name(z),
+            index_units,
+            hazard_class(resource.hazard_type).kind,
+            resource.indicator_id,
         )
-        if index_units == "default":
-            if hazard_type.kind == HazardKind.ACUTE:
-                index_units = "years"
-            elif resource.indicator_id in [
-                "days_wbgt_above",
-                "mean_degree_days/above/index",
-                "weeks_water_temp_above",
-            ]:
-                index_units = "°C"
-            else:
-                index_units = ""
 
         max_zoom = None
         is_pyramid = resource.map and resource.map.source != "map_array"
@@ -192,8 +233,11 @@ class ImageCreator(HazardImageCreator):
         min_value: Optional[float] = None,
         max_value: Optional[float] = None,
         scaling: str = "linear",
+        zero_transparent: bool = False,
     ) -> Image.Image:
-        """Get image for path specified as array of bytes."""
+        """Get image for path specified as array of bytes. If zero_transparent,
+        zero values are treated as nodata; used for differences, where zero means
+        no change (or no hazard in either case) and is better left unshaded."""
 
         def get_array(path: str) -> np.ndarray:
             array = get_data(self.reader, path)
@@ -234,6 +278,8 @@ class ImageCreator(HazardImageCreator):
 
         if any(dimension > 4000 for dimension in data.shape):
             raise ValueError("dimension too large (over 4000).")
+        if zero_transparent:
+            data = np.where(data == 0, np.nan, data)
         map_definition = colormap_provider.colormap(colormap)
 
         def get_colors(index: int):

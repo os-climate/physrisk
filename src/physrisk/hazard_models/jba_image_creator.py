@@ -255,8 +255,12 @@ class JBAImageCreator(HazardImageCreator):
         index_value: Optional[Union[str, float]] = None,
         scaling: str = "linear",
         tile_size: Optional[int] = None,
+        compare_scenario: Optional[str] = None,
+        compare_year: Optional[int] = None,
     ):
         assert tile is not None
+        if compare_scenario is not None or compare_year is not None:
+            raise ValueError("difference images are not supported for JBA resources.")
         size = _resolve_tile_size(tile_size)
         f = size // 256
 
@@ -505,6 +509,8 @@ class CombinedImageCreator(HazardImageCreator):
         index_value: Optional[Union[str, float]] = None,
         scaling: str = "linear",
         tile_size: Optional[int] = None,
+        compare_scenario: Optional[str] = None,
+        compare_year: Optional[int] = None,
     ):
         return self._creator(resource_id).create_image(
             resource_id,
@@ -518,6 +524,8 @@ class CombinedImageCreator(HazardImageCreator):
             index_value=index_value,
             scaling=scaling,
             tile_size=tile_size,
+            compare_scenario=compare_scenario,
+            compare_year=compare_year,
         )
 
     def get_info(

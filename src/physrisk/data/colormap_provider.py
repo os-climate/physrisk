@@ -98,6 +98,18 @@ _CP_TURBO: list[Rgb] = [
 ]
 # fmt: on
 
+# Kenneth Moreland's diverging 'coolwarm' colormap (https://www.kennethmoreland.com/color-maps/),
+# blue through light grey to red, for differences between scenarios/years (decrease to increase).
+# fmt: off
+_CP_COOLWARM: list[Rgb] = [
+    (59, 76, 192), (68, 90, 204), (77, 104, 215), (87, 117, 225), (98, 130, 234), (108, 142, 241), (119, 154, 247), (130, 165, 251),
+    (141, 176, 254), (152, 185, 255), (163, 194, 255), (174, 201, 253), (184, 208, 249), (194, 213, 244), (204, 217, 238), (213, 219, 230),
+    (221, 221, 221), (229, 216, 209), (236, 211, 197), (241, 204, 185), (245, 196, 173), (247, 187, 160), (247, 177, 148), (247, 166, 135),
+    (244, 154, 123), (241, 141, 111), (236, 127, 99), (229, 112, 88), (222, 96, 77), (213, 80, 66), (203, 62, 56), (192, 40, 47),
+    (180, 4, 38),
+]
+# fmt: on
+
 # used in tests only; value equals index so round-tripping can be checked, colour is irrelevant
 _RGB_TEST: list[Rgb] = [(i, 0, 0) for i in range(256)]
 
@@ -109,11 +121,13 @@ _RGB_COLORMAPS: dict[str, list[Rgb]] = {
     "magma": _lerp_rgb(_CP_MAGMA),
     "batlow": _lerp_rgb(_CP_BATLOW),
     "turbo": _lerp_rgb(_CP_TURBO),
+    "coolwarm": _lerp_rgb(_CP_COOLWARM),
     "test": _RGB_TEST,
 }
 
-# colormaps where index 1 (the minimum/zero value bin) is kept opaque instead of transparent
-_OPAQUE_MIN_BIN = {"heating_2"}
+# colormaps where index 1 (the minimum/zero value bin) is kept opaque instead of transparent;
+# for the diverging coolwarm, the minimum bin is the largest decrease, not zero
+_OPAQUE_MIN_BIN = {"heating_2", "coolwarm"}
 
 # dummy colormap used only in unit tests; alpha is irrelevant so every index is transparent
 _FULLY_TRANSPARENT = {"test"}

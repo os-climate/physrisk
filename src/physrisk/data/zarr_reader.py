@@ -232,10 +232,14 @@ class ZarrReader:
             & (image_coords[1, :] < shape[1])
         )
 
-    def get_index_values(self, z: zarr.Array) -> Tuple[List[Any], str]:
+    @staticmethod
+    def get_index_dimension_name(z: zarr.Array) -> str:
         # if dimensions attribute is present, assume that the first index
         # is the non-spatial one.
-        index_dim_name = z.attrs.get("dimensions", ["index"])[0]
+        return z.attrs.get("dimensions", ["index"])[0]
+
+    def get_index_values(self, z: zarr.Array) -> Tuple[List[Any], str]:
+        index_dim_name = self.get_index_dimension_name(z)
         index_values: List[Any] = z.attrs.get(index_dim_name + "_values", [0])
         index_units = z.attrs.get(index_dim_name + "_units", "default")
         if index_values is None:

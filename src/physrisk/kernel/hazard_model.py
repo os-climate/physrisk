@@ -252,6 +252,8 @@ class HazardImageCreator(Protocol):
         index_value: Optional[Union[str, float]] = None,
         scaling: str = "linear",
         tile_size: Optional[int] = None,
+        compare_scenario: Optional[str] = None,
+        compare_year: Optional[int] = None,
     ):
         """Creates an image Tile for display on maps.
 
@@ -270,6 +272,11 @@ class HazardImageCreator(Protocol):
             tile_size (Optional[int], optional): Output tile size in pixels, 256 or 512.
                 Defaults to None, which resolves to 512. Implementations that only support
                 one size (currently everything other than JBA) should reject any other value.
+            compare_scenario (Optional[str], optional): If given, together with compare_year,
+                the image shows the difference: value for scenario/year minus value for
+                compare_scenario/compare_year. Implementations not supporting differences
+                should reject it. Defaults to None.
+            compare_year (Optional[int], optional): Year to compare with. Defaults to None.
         """
         ...
 

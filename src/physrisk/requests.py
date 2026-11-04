@@ -339,13 +339,20 @@ class Requester:
             raise PermissionError()
         model = inventory.resources[request.resource]
         assert model.map is not None
+        is_difference = (
+            request.compare_scenario_id is not None or request.compare_year is not None
+        )
         colormap = (
             request.colormap
             if request.colormap is not None
+            else "coolwarm"
+            if is_difference
             else (model.map.colormap.name if model.map.colormap is not None else "None")
         )
         scaling = (
-            request.scaling
+            "linear"  # differences can be negative
+            if is_difference
+            else request.scaling
             if request.scaling is not None
             else (
                 model.map.colormap.scaling
@@ -369,6 +376,8 @@ class Requester:
             index_value=request.index_value,
             scaling=scaling,
             tile_size=request.tile_size,
+            compare_scenario=request.compare_scenario_id,
+            compare_year=request.compare_year,
         )
 
     def get_image_info(self, request: HazardImageInfoRequest):

@@ -4,6 +4,7 @@ import warnings
 from typing import Dict, Optional
 
 import numpy as np
+from PIL import Image
 import pytest
 import zarr
 import zarr.storage
@@ -16,7 +17,12 @@ from physrisk.data.scenario_year_resolution import (
     InterpolatedYearResolver,
     resolve_exact_year,
 )
-from physrisk.data.image_creator import ImageCreator, image_from_packed_rgba, to_rgba
+from physrisk.data.image_creator import (
+    ImageCreator,
+    image_from_packed_rgba,
+    index_display_name_and_units,
+    to_rgba,
+)
 from physrisk.data.inventory import Inventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.zarr_reader import ZarrReader
@@ -24,6 +30,55 @@ from physrisk.hazard_models.core_hazards import (
     InventoryHazardResourceSelector,
 )
 from physrisk.kernel.hazard_model import HazardModelFactory, Tile
+from physrisk.kernel.hazards import HazardKind
+
+
+@pytest.mark.parametrize(
+    "dim_name, units, kind, indicator_id, expected",
+    [
+        # generic 'index' dimension: name inferred from hazard kind
+        (
+            "index",
+            "default",
+            HazardKind.ACUTE,
+            "flood_depth",
+            ("return period", "years"),
+        ),
+        (
+            "index",
+            "default",
+            HazardKind.CHRONIC,
+            "days_wbgt_above",
+            ("threshold", "°C"),
+        ),
+        ("index", "", HazardKind.CHRONIC, "water_demand", ("threshold", "")),
+        # named dimensions displayed as named
+        ("min_max", "", HazardKind.ACUTE, "flood_sop", ("min/max", "")),
+        (
+            "return_period",
+            "",
+            HazardKind.ACUTE,
+            "max_speed",
+            ("return period", "years"),
+        ),
+        (
+            "return_period",
+            "years",
+            HazardKind.ACUTE,
+            "flood_depth",
+            ("return period", "years"),
+        ),
+        (
+            "threshold",
+            "",
+            HazardKind.CHRONIC,
+            "months/spei12m/below/index",
+            ("threshold", ""),
+        ),
+    ],
+)
+def test_index_display_name_and_units(dim_name, units, kind, indicator_id, expected):
+    assert index_display_name_and_units(dim_name, units, kind, indicator_id) == expected
 
 
 def test_to_rgba():
@@ -202,6 +257,50 @@ def test_interpolation(mock_inventory, zarr_store):
     np.testing.assert_equal(result, expected)
 
 
+def test_difference_image(mock_inventory, zarr_store):
+    converter = ImageCreator(
+        inventory=mock_inventory,
+        scenario_year_resolver=InterpolatedYearResolver(),
+        reader=ZarrReader(zarr_store),
+    )
+
+    def colormap_indices(image_bytes: bytes) -> np.ndarray:
+        # for the 'test' colormap, the red component is the colormap index
+        return np.array(Image.open(io.BytesIO(image_bytes)))[:, :, 0]
+
+    def difference_indices(compare_year: int) -> np.ndarray:
+        return colormap_indices(
+            converter.create_image(
+                "test_array_{scenario}_{year}",
+                "ssp585",
+                2050,
+                colormap="test",
+                min_value=-2,
+                max_value=2,
+                tile=Tile(0, 0, 0),
+                compare_scenario="ssp585",
+                compare_year=compare_year,
+            )
+        )
+
+    # 2050 array is the 2030 array + 1.0
+    colormap = colormap_provider.colormap("test")
+    expected = to_rgba(
+        np.full((2, 2), 1.0),
+        lambda index: colormap[str(index)],
+        min_value=-2,
+        max_value=2,
+    ).view(np.uint8)[:, ::4]
+    np.testing.assert_equal(difference_indices(2030), expected)
+    # no change is shown as nodata
+    np.testing.assert_equal(difference_indices(2050), np.zeros((2, 2)))
+
+    with pytest.raises(ValueError):
+        converter.create_image(
+            "test_array_{scenario}_{year}", "ssp585", 2050, compare_year=2030
+        )
+
+
 def test_image_info_includes_tile_size(mock_inventory, zarr_store, monkeypatch):
     resource = next(iter(mock_inventory.resources.values())).model_copy(
         update={"hazard_type": "Fire"}
@@ -220,6 +319,47 @@ def test_image_info_includes_tile_size(mock_inventory, zarr_store, monkeypatch):
         3,
         512,
     )
+
+
+@pytest.mark.parametrize(
+    "map_index_values, expected_available",
+    [
+        # if map index values are not specified, only the highest is generated
+        (None, [1000]),
+        ([100, 1000], [100, 1000]),
+        # values not in the array are not available
+        ([50, 100], [100]),
+    ],
+)
+def test_image_info_available_index_values(map_index_values, expected_available):
+    store = zarr.storage.MemoryStore(root="hazard.zarr")
+    root = zarr.open(store=store, mode="w")
+    z = root.create_dataset("test_array_ssp585_2030/1", shape=(3, 2, 2), dtype="f4")  # type: ignore
+    z.attrs["index_values"] = [10, 100, 1000]
+    resource = HazardResource(
+        path="test_array_{scenario}_{year}",
+        hazard_type="RiverineInundation",
+        indicator_id="flood_depth",
+        indicator_model_gcm="",
+        display_name="",
+        description="",
+        scenarios=[ScenarioYears(id="ssp585", years=[2030])],
+        units="m",
+        map=MapInfo(
+            path="test_array_{scenario}_{year}",
+            bounds=[],
+            colormap=None,
+            index_values=map_index_values,
+            source="map_array_pyramid",
+        ),
+    )
+    creator = ImageCreator(
+        Inventory([resource]), ZarrReader(store), InterpolatedYearResolver()
+    )
+
+    all_index_values, available, *_ = creator.get_info(resource.key(), "ssp585", 2030)
+    assert all_index_values == [10, 100, 1000]
+    assert available == expected_available
 
 
 _TEST_REQUEST_DICT = {

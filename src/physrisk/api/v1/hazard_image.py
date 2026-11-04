@@ -73,6 +73,15 @@ class HazardImageRequest(BaseHazardRequest):
         description="Output tile size in pixels. Defaults to 512. Only resources "
         "backed by JBA currently support 256 (fewer upstream tile fetches, faster).",
     )
+    compare_scenario_id: Optional[str] = Field(
+        None,
+        description="If given, with compare_year, the image shows the difference: "
+        "the value for scenario_id/year minus the value for "
+        "compare_scenario_id/compare_year. Not supported for JBA resources.",
+    )
+    compare_year: Optional[int] = Field(
+        None, description="Year to compare with; see compare_scenario_id."
+    )
 
 
 class HazardImageResponse(BaseModel):

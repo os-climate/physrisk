@@ -15,8 +15,11 @@ from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_hazard_resource_selector
 from physrisk.kernel.hazards import ChronicHeat, RiverineInundation
 
+from physrisk.utils import encoder
+
 from ..data.test_hazard_model_store import (
     TestData,
+    ZarrStoreMocker,
     get_hazard_path,
     get_mock_hazard_model_store_single_curve,
     mock_hazard_model_store_heat,
@@ -188,6 +191,50 @@ def test_zarr_reading_chronic():
     np.testing.assert_array_almost_equal_nulp(
         result.items[0].intensity_curve_set[0].intensities[0], 600.0
     )
+
+
+def test_zarr_reading_string_index_values():
+    """Index values may be labels rather than numbers (e.g. FLOPROS standard of
+    protection has 'min' and 'max'); rounding to significant figures must not fail."""
+    path = "inundation/flopros_riverine/v1/flood_sop/sop"
+    mocker = ZarrStoreMocker()
+    mocker.add_curves_global(
+        path,
+        TestData.longitudes[0:3],
+        TestData.latitudes[0:3],
+        ["min", "max"],
+        [100.0, 200.0],
+        units="years",
+    )
+    request_dict = {
+        "items": [
+            {
+                "request_item_id": "test_sop",
+                "event_type": "RiverineInundation",
+                "longitudes": TestData.longitudes[0:3],
+                "latitudes": TestData.latitudes[0:3],
+                "year": 1985,
+                "scenario": "historical",
+                "indicator_id": "flood_sop",
+                "path": path,
+            }
+        ],
+    }
+    request = requests.HazardDataRequest(**request_dict)  # type: ignore
+
+    result = requests._get_hazard_data(
+        request,
+        ZarrHazardModel(
+            scenario_year_resolver=resolve_exact_year,
+            resource_selector=get_default_hazard_resource_selector(EmbeddedInventory()),
+            reader=ZarrReader(store=mocker.store),
+        ),
+        sig_figures=lambda x: encoder.sig_figures(x, 4),
+    )
+
+    curve = result.items[0].intensity_curve_set[0]
+    assert curve.index_values == ["min", "max"]
+    np.testing.assert_allclose(curve.intensities, [100.0, 200.0])
 
 
 @pytest.mark.live_data("dev")

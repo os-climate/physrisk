@@ -47,8 +47,8 @@ class Geocoder:
             a for a in assets if not getattr(a, "country_iso_a2", None)
         ]
         countries = self.get_countries(
-            [a.latitude for a in assets if a in no_country_assets],
-            [a.longitude for a in assets if a in no_country_assets],
+            [a.latitude for a in no_country_assets],
+            [a.longitude for a in no_country_assets],
         )
         for a, country_iso_a2 in zip(no_country_assets, countries):
             a.country_iso_a2 = country_iso_a2  # type: ignore[attr-defined]

@@ -85,9 +85,7 @@ def test_hazard_data_availability_excludes_deprecated():
     assert inventory.resources["test/test_gcm1"].deprecation.superseded_by == (
         "test/test_new_gcm1"
     )
-    response = _get_hazard_data_availability(
-        HazardAvailabilityRequest(), inventory, {}
-    )
+    response = _get_hazard_data_availability(HazardAvailabilityRequest(), inventory, {})
     assert [m.path for m in response.models] == [current.path]
     response = _get_hazard_data_availability(
         HazardAvailabilityRequest(include_deprecated=True), inventory, {}

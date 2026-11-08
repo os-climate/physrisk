@@ -457,9 +457,7 @@ def _get_hazard_data_availability(
         for resource in inventory.resources.values()
         if request.include_deprecated or not resource.deprecated
     ]
-    response = HazardAvailabilityResponse(
-        models=models, colormaps=colormaps
-    )  # type: ignore
+    response = HazardAvailabilityResponse(models=models, colormaps=colormaps)  # type: ignore
     return response
 
 

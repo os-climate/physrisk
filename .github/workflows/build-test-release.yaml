@@ -147,8 +147,11 @@ jobs:
 
   python-tests:
     name: 'Python Tests'
-    runs-on: 'ubuntu-latest'
+    runs-on: 'ubuntu-24.04'
+    # Pinned: numcodecs<0.16 (required by zarr 2) has no 3.14 wheel and its
+    # source build fails on newer runner images. Revert once on zarr 3.
     needs: 'python-build'
+    continue-on-error: ${{ matrix.python-version == '3.14' }}
     # Matrix job
     strategy:
       fail-fast: false
@@ -174,8 +177,11 @@ jobs:
 
   python-audit:
     name: 'Python Audit'
-    runs-on: 'ubuntu-latest'
+    runs-on: 'ubuntu-24.04'
+    # Pinned: numcodecs<0.16 (required by zarr 2) has no 3.14 wheel and its
+    # source build fails on newer runner images. Revert once on zarr 3.
     needs: 'python-build'
+    continue-on-error: ${{ matrix.python-version == '3.14' }}
     # Matrix job
     strategy:
       fail-fast: false

@@ -15,6 +15,7 @@ from fsspec.implementations.memory import MemoryFileSystem
 from shapely import Polygon
 
 from physrisk.api.v1.hazard_data import (
+    Deprecation,
     HazardAvailabilityRequest,
     HazardResource,
     ScenarioYears,
@@ -69,6 +70,27 @@ def test_hazard_data_availability_summary():
         inventory.colormaps(),
     )  # , "hazard_test"])
     assert len(response.models) > 0  # rely on Pydantic validation for test
+
+
+def test_hazard_data_availability_excludes_deprecated():
+    current = _test_hazard_model()
+    deprecated = current.model_copy(
+        update={
+            "path": "test/test_{gcm}",
+            "params": {"gcm": ["gcm1", "gcm2"]},
+            "deprecation": Deprecation(superseded_by="test/test_new_{gcm}"),
+        }
+    )
+    inventory = Inventory([current] + list(deprecated.expand()))
+    assert inventory.resources["test/test_gcm1"].deprecation.superseded_by == (
+        "test/test_new_gcm1"
+    )
+    response = _get_hazard_data_availability(HazardAvailabilityRequest(), inventory, {})
+    assert [m.path for m in response.models] == [current.path]
+    response = _get_hazard_data_availability(
+        HazardAvailabilityRequest(include_deprecated=True), inventory, {}
+    )
+    assert len(response.models) == 3
 
 
 def test_set_get_inventory():

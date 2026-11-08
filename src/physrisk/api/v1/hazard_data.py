@@ -78,6 +78,17 @@ class ScenarioYears(BaseModel):
     # periods: Optional[List[Period]]
 
 
+class Deprecation(BaseModel):
+    """Marks a resource as deprecated, optionally pointing to its replacement."""
+
+    superseded_by: Optional[str] = Field(
+        None, description="Path of the resource that supersedes this one."
+    )
+    message: Optional[str] = Field(
+        None, description="Reason for deprecation or migration notes."
+    )
+
+
 def expanded(item: str, key: str, param: str):
     return item and item.replace("{" + key + "}", param)
 
@@ -126,6 +137,14 @@ class HazardResource(BaseModel):
                 in the parent folder. That is, path should be in the form path_to_array_group/array_group/array",
     )
     units: str = Field(description="Units of the hazard indicator.")
+    deprecation: Optional[Deprecation] = Field(
+        None,
+        description="If present, the resource is deprecated, e.g. in favour of a newer data set.",
+    )
+
+    @property
+    def deprecated(self) -> bool:
+        return self.deprecation is not None
 
     def expand(self):
         keys = list(self.params.keys())
@@ -199,7 +218,7 @@ class HazardResource(BaseModel):
             )
 
 
-def expand(item: str, key: str, param: str):
+def expand(item: Optional[str], key: str, param: str):
     return item and item.replace("{" + key + "}", param)
 
 
@@ -240,6 +259,17 @@ def expand_resource(
                                 )
                             )
                         ),
+                        "deprecation": (
+                            None
+                            if item.deprecation is None
+                            else item.deprecation.model_copy(
+                                update={
+                                    "superseded_by": expand(
+                                        item.deprecation.superseded_by, key, param
+                                    )
+                                }
+                            )
+                        ),
                     },
                 )
 
@@ -259,6 +289,10 @@ class HazardAvailabilityRequest(BaseModel):
     sources: Optional[List[str]] = Field(
         None,
         description="Sources of inventory, can be 'embedded', 'hazard' or 'hazard_test'.",
+    )
+    include_deprecated: bool = Field(
+        False,
+        description="If True, resources marked as deprecated are included in the response.",
     )
 
 

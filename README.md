@@ -72,4 +72,3 @@ A good place to start is the Getting Started section in the documentation site w
 
 [pre-commit.ci results page]: https://results.pre-commit.ci/latest/github/os-climate/physrisk/main
 [pre-commit.ci status badge]: https://results.pre-commit.ci/badge/github/os-climate/physrisk/main.svg
-

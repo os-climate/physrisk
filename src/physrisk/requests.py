@@ -452,8 +452,13 @@ def _read_permitted(group_ids: List[str], resource: HazardResource):
 def _get_hazard_data_availability(
     request: HazardAvailabilityRequest, inventory: Inventory, colormaps: dict
 ):
+    models = [
+        resource
+        for resource in inventory.resources.values()
+        if request.include_deprecated or not resource.deprecated
+    ]
     response = HazardAvailabilityResponse(
-        models=list(inventory.resources.values()), colormaps=colormaps
+        models=models, colormaps=colormaps
     )  # type: ignore
     return response
 

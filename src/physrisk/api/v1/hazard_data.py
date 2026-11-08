@@ -218,7 +218,7 @@ class HazardResource(BaseModel):
             )
 
 
-def expand(item: str, key: str, param: str):
+def expand(item: Optional[str], key: str, param: str):
     return item and item.replace("{" + key + "}", param)
 
 

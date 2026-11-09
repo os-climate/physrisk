@@ -13,7 +13,6 @@ import os
 import pytest
 import requests
 
-
 OED_OCCUPANCY_CSV_URL = (
     "https://raw.githubusercontent.com/OasisLMF/ODS_OpenExposureData"
     "/main/OpenExposureData/OccupancyValues.csv"

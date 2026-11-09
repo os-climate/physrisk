@@ -1,15 +1,15 @@
-from typing import Dict, MutableMapping, Optional
+from collections.abc import MutableMapping
 
 from dependency_injector import containers, providers
 
 from physrisk.data.hazard_data_provider import HazardResourceSelector
+from physrisk.data.image_creator import ImageCreator
+from physrisk.data.inventory import EmbeddedInventory, Inventory
+from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.scenario_year_resolution import (
     InterpolatedYearResolver,
     resolve_exact_year,
 )
-from physrisk.data.image_creator import ImageCreator
-from physrisk.data.inventory import EmbeddedInventory, Inventory
-from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_hazard_resource_selector
 from physrisk.hazard_models.credentials_provider import (
@@ -55,8 +55,8 @@ class DefaultHazardModelFactory(HazardModelFactory):
         credentials: CredentialsProvider,
         inventory: Inventory,
         resource_selector: HazardResourceSelector,
-        store: Optional[MutableMapping] = None,
-        reader: Optional[ZarrReader] = None,
+        store: MutableMapping | None = None,
+        reader: ZarrReader | None = None,
         default_interpolation: str = "floor",
         zarr_max_workers: int = 32,
     ):
@@ -76,8 +76,8 @@ class DefaultHazardModelFactory(HazardModelFactory):
 
     def hazard_model(
         self,
-        interpolation: Optional[str] = None,
-        provider_max_requests: Dict[str, int] = {},
+        interpolation: str | None = None,
+        provider_max_requests: dict[str, int] = {},
         interpolate_years: bool = True,
     ):
         # this is done to allow interpolation etc to be set dynamically,

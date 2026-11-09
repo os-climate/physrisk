@@ -1,5 +1,5 @@
-import fsspec.implementations.local as local
 from dependency_injector import containers, providers
+from fsspec.implementations import local
 
 from physrisk.data.inventory_reader import InventoryReader
 

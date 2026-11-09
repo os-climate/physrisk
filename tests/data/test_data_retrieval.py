@@ -3,7 +3,7 @@ import logging
 import os
 import time
 from collections import defaultdict
-from typing import Sequence
+from collections.abc import Sequence
 
 # import fsspec.implementations.local as local  # type: ignore
 import numpy as np
@@ -23,17 +23,17 @@ from physrisk.api.v1.hazard_data import (
 from physrisk.data.hazard_data_provider import (
     HazardResourceSelector,
 )
-from physrisk.data.scenario_year_resolution import (
-    ScenarioYear,
-    InterpolatedYearResolver,
-    interpolate_year,
-    resolve_exact_year,
-)
 from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.pregenerated_hazard_model import (
     PregeneratedHazardModel,
     ZarrHazardModel,
+)
+from physrisk.data.scenario_year_resolution import (
+    InterpolatedYearResolver,
+    ScenarioYear,
+    interpolate_year,
+    resolve_exact_year,
 )
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.kernel.hazard_model import HazardDataFailedResponse, HazardDataRequest
@@ -379,10 +379,8 @@ def test_years_interpolation():
     assert weights[ScenarioYear("ssp585", 2040)].weights[0][1] == (2050.0 - 2040.0) / (
         2050.0 - 2025.0
     )
-    #
     assert weights[ScenarioYear("ssp585", 2050)].weights[0][0].year == 2050
     assert weights[ScenarioYear("ssp585", 2050)].weights[0][1] == 1.0
-    #
     assert weights[ScenarioYear("ssp585", 2090)].weights[0][0].year == 2060
     assert weights[ScenarioYear("ssp585", 2090)].weights[0][1] == -(2090.0 - 2080.0) / (
         2080.0 - 2060.0
@@ -566,7 +564,7 @@ def test_cascade():
     )
     np.testing.assert_almost_equal(
         response[requests[9]].intensities,
-        [1.0, 2.0, 3.0],  #
+        [1.0, 2.0, 3.0],
     )
     assert isinstance(response[requests[10]], HazardDataFailedResponse)
     np.testing.assert_almost_equal(response[requests[15]].intensities, [1.0, 2.0, 3.0])

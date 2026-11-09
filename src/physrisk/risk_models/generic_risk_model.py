@@ -1,8 +1,11 @@
 import math
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Protocol, Sequence, Set, Type, Union
+from typing import Any, Protocol
 
 import numpy as np
+from pint import UnitRegistry
+
 from physrisk.api.v1.impact_req_resp import (
     RiskMeasureDefinition,
     RiskScoreValue,
@@ -33,7 +36,6 @@ from physrisk.kernel.impact_distrib import (
     ImpactDistrib,
 )
 from physrisk.kernel.risk import Measure, MeasureKey, RiskMeasureCalculator
-from pint import UnitRegistry
 from physrisk.utils.units import needs_conversion
 
 ureg = UnitRegistry()
@@ -53,7 +55,7 @@ class UnderlingMeasure(Protocol):
 
 @dataclass
 class HazardIndicatorBounds:
-    hazard_type: Type[Hazard]
+    hazard_type: type[Hazard]
     indicator_id: str
     units: str
     indicator_return: float
@@ -91,8 +93,8 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
     the point of view of loan origination or project financing.
     """
 
-    _bounds: Dict[
-        Type[Hazard], Union[HazardIndicatorBounds, ImpactBounds, ImpactBoundsJoint]
+    _bounds: dict[
+        type[Hazard], HazardIndicatorBounds | ImpactBounds | ImpactBoundsJoint
     ]
 
     def __init__(self):
@@ -103,13 +105,13 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 measure=self._aal_future,
                 lower=[float("-inf"),   0.01/100.,  0.2/100.,   1./100.,   5./100.],  # applies to impact
                 upper=[0.01/100.,       0.2/100.,   1./100.,    5./100.,   float("inf")],
-        ) # noqa
+        )
         chronic_bounds = ImpactBounds(
                 categories=[Category.VERY_LOW, Category.LOW, Category.MEDIUM, Category.HIGH, Category.VERY_HIGH],
                 measure=self._delta_aal,
                 lower=[float("-inf"),   0.01/100.,  1./100.,   5./100.,    10./100.],  # applies to impact
                 upper=[0.01/100,        1./100.,    5./100.,   10./100.,  float("inf")],
-        ) # noqa
+        )
         # fmt: on
 
         # The one remaining example of an exposure-based measure is Precipitation, an exemplar special case.
@@ -128,7 +130,7 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
                 units="mm/day",
                 lower=[float("-inf"), 10, 100, 130, 160],
                 upper=[10, 100, 130, 160, float("inf")],
-            ),  # noqa
+            ),
             CoastalInundation: acute_bounds,
             PluvialInundation: acute_bounds,
             RiverineInundation: acute_bounds,
@@ -558,11 +560,11 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
         return future_loss - histo_loss
 
     def get_definition(
-        self, hazard_type: type[Hazard], hazard_indicator_id: Optional[str] = None
+        self, hazard_type: type[Hazard], hazard_indicator_id: str | None = None
     ) -> ScoreBasedRiskMeasureDefinition:
         return self._definition_lookup.get(hazard_type, None)
 
-    def supported_hazards(self) -> Set[type]:
+    def supported_hazards(self) -> set[type]:
         return set(
             [
                 CoastalInundation,
@@ -579,9 +581,9 @@ class GenericScoreBasedRiskMeasures(RiskMeasureCalculator):
 
     def aggregate_risk_measures(
         self,
-        measures: Dict[MeasureKey, Measure],
+        measures: dict[MeasureKey, Measure],
         assets: Sequence[Asset],
         prosp_scens: Sequence[str],
         years: Sequence[int],
-    ) -> Dict[MeasureKey, Measure]:
+    ) -> dict[MeasureKey, Measure]:
         return measures

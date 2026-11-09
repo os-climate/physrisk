@@ -1,6 +1,7 @@
 import logging
+from collections.abc import Sequence
 from enum import Enum
-from typing import NamedTuple, Protocol, Sequence
+from typing import NamedTuple, Protocol
 
 from physrisk.api.v1.hazard_data import HazardResource
 from physrisk.data.hazard_data_provider import (

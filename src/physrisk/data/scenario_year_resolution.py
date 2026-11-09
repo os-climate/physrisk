@@ -2,8 +2,8 @@
 
 import re
 from bisect import bisect_left
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Sequence
 
 from typing_extensions import Protocol
 

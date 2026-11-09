@@ -1,16 +1,17 @@
 import io
 import logging
+from collections.abc import Callable, Sequence
 from functools import lru_cache
 from pathlib import PurePosixPath
-from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any
 
 import numpy as np
-import PIL.Image as Image
+from PIL import Image
 
 from physrisk.api.v1.hazard_image import TileNotAvailableError
 from physrisk.data import colormap_provider
-from physrisk.data.scenario_year_resolution import ScenarioYear, ScenarioYearResolver
 from physrisk.data.inventory import Inventory
+from physrisk.data.scenario_year_resolution import ScenarioYear, ScenarioYearResolver
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.kernel.hazard_model import HazardImageCreator, Tile
 from physrisk.kernel.hazards import HazardKind, hazard_class
@@ -23,7 +24,7 @@ _index_display_names = {"min_max": "min/max"}
 
 def index_display_name_and_units(
     index_dim_name: str, index_units: str, hazard_kind: HazardKind, indicator_id: str
-) -> Tuple[str, str]:
+) -> tuple[str, str]:
     """Display name and units of the index (non-spatial) dimension of an array.
     A named dimension (e.g. 'return_period', 'threshold' or 'min_max') is displayed
     as named; for the generic 'index' dimension, the name is inferred from the hazard kind.
@@ -74,14 +75,14 @@ class ImageCreator(HazardImageCreator):
         year: int,
         format="PNG",
         colormap: str = "heating",
-        tile: Optional[Tile] = None,
-        min_value: Optional[float] = None,
-        max_value: Optional[float] = None,
-        index_value: Optional[Union[str, float]] = None,
+        tile: Tile | None = None,
+        min_value: float | None = None,
+        max_value: float | None = None,
+        index_value: str | float | None = None,
         scaling: str = "linear",
-        tile_size: Optional[int] = None,
-        compare_scenario: Optional[str] = None,
-        compare_year: Optional[int] = None,
+        tile_size: int | None = None,
+        compare_scenario: str | None = None,
+        compare_year: int | None = None,
     ):
         if tile_size is not None and tile_size != 512:
             raise ValueError(
@@ -92,7 +93,7 @@ class ImageCreator(HazardImageCreator):
             raise ValueError("compare_scenario and compare_year must both be given.")
         try:
             resource = self.inventory.resources[resource_id]
-            path_weights: Dict[str, float] = {}
+            path_weights: dict[str, float] = {}
 
             def add_path_weights(scenario: str, year: int, sign: float):
                 weighted_sum = self._scenario_year_resolver(
@@ -144,8 +145,8 @@ class ImageCreator(HazardImageCreator):
         resource_id: str,
         scenario: str,
         year: int,
-        tile_size: Optional[int] = None,
-    ) -> Tuple[Sequence[Any], Sequence[Any], str, str, Optional[int], int]:
+        tile_size: int | None = None,
+    ) -> tuple[Sequence[Any], Sequence[Any], str, str, int | None, int]:
         if tile_size is not None and tile_size != 512:
             raise ValueError(
                 f"tile_size={tile_size} is not supported; only 512 is available for this resource."
@@ -206,8 +207,8 @@ class ImageCreator(HazardImageCreator):
         path: str,
         format="PNG",
         colormap: str = "heating",
-        min_value: Optional[float] = None,
-        max_value: Optional[float] = None,
+        min_value: float | None = None,
+        max_value: float | None = None,
     ):
         """Create image for path specified and save as file.
 
@@ -226,12 +227,12 @@ class ImageCreator(HazardImageCreator):
 
     def _to_image(
         self,
-        path_weights: Dict[str, float],
+        path_weights: dict[str, float],
         colormap: str = "heating",
-        tile: Optional[Tile] = None,
-        index_value: Optional[Union[str, float, int]] = None,
-        min_value: Optional[float] = None,
-        max_value: Optional[float] = None,
+        tile: Tile | None = None,
+        index_value: str | float | None = None,
+        min_value: float | None = None,
+        max_value: float | None = None,
         scaling: str = "linear",
         zero_transparent: bool = False,
     ) -> Image.Image:
@@ -310,11 +311,11 @@ def image_from_packed_rgba(rgba: np.ndarray) -> Image.Image:
 
 def to_rgba(
     data: np.ndarray,
-    get_colors: Callable[[int], List[int]],
-    min_value: Optional[float] = None,
-    max_value: Optional[float] = None,
-    nodata_lower: Optional[float] = None,
-    nodata_upper: Optional[float] = None,
+    get_colors: Callable[[int], list[int]],
+    min_value: float | None = None,
+    max_value: float | None = None,
+    nodata_lower: float | None = None,
+    nodata_upper: float | None = None,
     nodata_bin_transparent: bool = False,
     min_bin_transparent: bool = False,
     scaling: str = "linear",

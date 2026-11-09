@@ -1,4 +1,3 @@
-import pytest
 import json
 import logging
 import os
@@ -9,6 +8,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import numpy as np
+import pytest
 
 from physrisk.hazard_models.hazard_cache import (
     H3BasedCache,

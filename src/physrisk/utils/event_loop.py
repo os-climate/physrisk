@@ -1,8 +1,11 @@
 import asyncio
+import concurrent.futures
 import os
 import threading
 from contextlib import contextmanager
-from typing import Optional
+from typing import Any, Coroutine, Optional, TypeVar
+
+T = TypeVar("T")
 
 iothread = [None]  # dedicated fsspec IO thread
 loop = [None]  # global event loop for any non-async instance
@@ -78,6 +81,27 @@ async def _runner(event: threading.Event, coro, result, timeout=None):
         result[0] = ex
     finally:
         event.set()
+
+
+def run_sync(coro: Coroutine[Any, Any, T]) -> T:
+    """Run a coroutine to completion from synchronous code.
+
+    If the caller is already inside a running event loop (e.g. a synchronous
+    method called from async code), the coroutine runs on a new loop in a
+    worker thread, since the running loop cannot be blocked on.
+
+    Args:
+        coro: Coroutine to run.
+
+    Returns:
+        Result of the coroutine.
+    """
+    try:
+        asyncio.get_running_loop()
+    except RuntimeError:
+        return asyncio.run(coro)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        return executor.submit(asyncio.run, coro).result()
 
 
 def run(coro, loop, timeout: Optional[float] = None):

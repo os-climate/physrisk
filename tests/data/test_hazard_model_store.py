@@ -1,5 +1,6 @@
 import os
 from typing import Dict, List, Sequence, Tuple, Union
+from unittest.mock import AsyncMock, Mock
 
 import numpy as np
 import numpy.typing as npt
@@ -106,7 +107,8 @@ class ZarrStoreMocker:
         intensities: Union[Sequence[float], npt.NDArray],
         units: str = "default",
     ):
-        z = self._root.create_dataset(  # type: ignore
+        z = create_test_array(
+            self._root,
             array_path,
             shape=(shape[0], shape[1], shape[2]),
             chunks=(shape[0], 1000, 1000),
@@ -159,9 +161,40 @@ def shape_transform_21600_43200(
     return (len(return_periods), height, width), t
 
 
-def zarr_memory_store(path="hazard.zarr"):
-    store = zarr.storage.MemoryStore(root=path)
-    return store, zarr.open(store=store, mode="w")
+def mock_zarr_reader() -> Mock:
+    """Mock ZarrReader whose async methods delegate to the corresponding sync
+    methods, so tests can stub and inspect the sync ones."""
+    reader = Mock()
+    for name in ("get_curves", "get_max_curves", "in_bounds"):
+        sync_method = getattr(reader, name)
+        setattr(
+            reader,
+            f"{name}_async",
+            AsyncMock(side_effect=lambda *a, _m=sync_method, **k: _m(*a, **k)),
+        )
+    return reader
+
+
+def zarr_memory_store():
+    store = zarr.storage.MemoryStore()
+    return store, zarr.open_group(store=store, mode="w", zarr_format=2)
+
+
+def create_test_array(
+    root: zarr.Group,
+    name: str,
+    *,
+    shape: Tuple[int, ...],
+    chunks: Union[Tuple[int, ...], str] = "auto",
+    dtype: str = "f4",
+) -> zarr.Array:
+    """Create an array as the hazard data is stored: zarr v2 format, fill value 0.
+    zarr v2 has no implicit groups, so parent groups are created explicitly."""
+    parent, _, array_name = name.rpartition("/")
+    group = root.require_group(parent) if parent else root
+    return group.create_array(
+        array_name, shape=shape, chunks=chunks, dtype=dtype, fill_value=0.0
+    )
 
 
 def add_curves(
@@ -174,7 +207,8 @@ def add_curves(
     return_periods: List[float],
     trans: List[float],
 ):
-    z = root.create_dataset(  # type: ignore
+    z = create_test_array(
+        root,
         array_path,
         shape=(shape[0], shape[1], shape[2]),
         chunks=(shape[0], 1000, 1000),
@@ -212,12 +246,13 @@ def get_mock_hazard_model_store_single_curve():
         1.0,
     ]
     shape = (len(return_periods), 21600, 43200)
-    store = zarr.storage.MemoryStore(root="hazard.zarr")
-    root = zarr.open(store=store, mode="w")
+    store = zarr.storage.MemoryStore()
+    root = zarr.open_group(store=store, mode="w", zarr_format=2)
     array_path = get_hazard_path_wri_riverine_inundation(
         model="MIROC-ESM-CHEM", scenario="rcp8p5", year=2080
     )
-    z = root.create_dataset(  # type: ignore
+    z = create_test_array(
+        root,
         array_path,
         shape=(shape[0], shape[1], shape[2]),
         chunks=(shape[0], 1000, 1000),
@@ -277,8 +312,8 @@ def mock_hazard_model_store_for_parameter_sets(longitudes, latitudes, path_param
         0.0,
         1.0,
     ]
-    store = zarr.storage.MemoryStore(root="hazard.zarr")
-    root = zarr.open(store=store, mode="w")
+    store = zarr.storage.MemoryStore()
+    root = zarr.open_group(store=store, mode="w", zarr_format=2)
 
     for path, parameter in path_parameters.items():
         add_curves(
@@ -332,8 +367,8 @@ def mock_hazard_model_store_path_curves(
         0.0,
         1.0,
     ]
-    store = zarr.storage.MemoryStore(root="hazard.zarr")
-    root = zarr.open(store=store, mode="w")
+    store = zarr.storage.MemoryStore()
+    root = zarr.open_group(store=store, mode="w", zarr_format=2)
 
     for path, curve in path_curves.items():
         if len(curve) == 1:

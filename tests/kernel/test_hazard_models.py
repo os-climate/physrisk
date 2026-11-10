@@ -1,7 +1,9 @@
+import asyncio
 from dataclasses import dataclass
 from typing import Dict, Mapping, NamedTuple, Sequence, Tuple
 
 import numpy as np
+import pytest
 
 from tests.data.test_hazard_model_store import TestData
 from physrisk.kernel.assets import RealEstateAsset
@@ -119,3 +121,63 @@ def test_using_point_based_hazard_model():
     impact_distrib = results[key_result][0].impact
     mean_impact = impact_distrib.mean_impact()
     np.testing.assert_almost_equal(mean_impact, 0.009909858317497338)
+
+
+class SyncOnlyHazardModel(HazardModel):
+    def get_hazard_data(self, requests):
+        return {
+            request: HazardParameterDataResponse(np.array([1.0]))
+            for request in requests
+        }
+
+
+class AsyncOnlyHazardModel(HazardModel):
+    async def get_hazard_data_async(self, requests):
+        await asyncio.sleep(0)
+        return {
+            request: HazardParameterDataResponse(np.array([2.0]))
+            for request in requests
+        }
+
+
+def _heat_request():
+    return HazardDataRequest(
+        ChronicHeat,
+        0.0,
+        51.5,
+        indicator_id="days/above/35c",
+        scenario="ssp585",
+        year=2050,
+    )
+
+
+def test_sync_only_hazard_model_can_be_awaited():
+    request = _heat_request()
+    response = asyncio.run(SyncOnlyHazardModel().get_hazard_data_async([request]))
+    assert response[request].parameter == 1.0
+
+
+def test_async_only_hazard_model_can_be_called_synchronously():
+    request = _heat_request()
+    response = AsyncOnlyHazardModel().get_hazard_data([request])
+    assert response[request].parameter == 2.0
+
+
+def test_async_only_hazard_model_can_be_called_synchronously_inside_event_loop():
+    request = _heat_request()
+
+    async def call_sync_from_loop():
+        return AsyncOnlyHazardModel().get_hazard_data([request])
+
+    response = asyncio.run(call_sync_from_loop())
+    assert response[request].parameter == 2.0
+
+
+def test_hazard_model_must_implement_sync_or_async():
+    class IncompleteHazardModel(HazardModel):
+        pass
+
+    with pytest.raises(NotImplementedError, match="IncompleteHazardModel"):
+        IncompleteHazardModel().get_hazard_data([_heat_request()])
+    with pytest.raises(NotImplementedError, match="IncompleteHazardModel"):
+        asyncio.run(IncompleteHazardModel().get_hazard_data_async([_heat_request()]))

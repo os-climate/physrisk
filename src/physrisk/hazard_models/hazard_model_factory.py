@@ -1,5 +1,8 @@
+import asyncio
 from collections import defaultdict
-from typing import Dict, List, Mapping, MutableMapping, Optional, Sequence
+from typing import Dict, List, Mapping, Optional, Sequence
+
+from zarr.storage import StoreLike
 
 from physrisk.data.hazard_data_provider import HazardResourceSelector
 from physrisk.data.scenario_year_resolution import (
@@ -36,10 +39,10 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
         credentials: CredentialsProvider,
         inventory: Inventory,
         resource_selector: HazardResourceSelector,
-        store: Optional[MutableMapping] = None,
+        store: Optional[StoreLike] = None,
         reader: Optional[ZarrReader] = None,
         default_interpolation: str = "floor",
-        zarr_max_workers: int = 32,
+        zarr_max_workers: Optional[int] = None,
     ):
         self.resource_selector = resource_selector
         self.cache_store = cache_store
@@ -94,13 +97,13 @@ class CompositeHazardModel(HazardModel):
         credentials: CredentialsProvider,
         resource_selector: HazardResourceSelector,
         scenario_year_resolver: ScenarioYearResolver,
-        store: Optional[MutableMapping] = None,
+        store: Optional[StoreLike] = None,
         reader: Optional[ZarrReader] = None,
         interpolation: str = "floor",
         provider_max_requests: Dict[str, int] = {},
         restrict_coverage: bool = False,
         use_jba_coastal: bool = False,
-        zarr_max_workers: int = 32,
+        zarr_max_workers: Optional[int] = None,
     ):
         self.credentials = credentials
         self.max_jba_requests = provider_max_requests.get("jba", -1)
@@ -132,7 +135,7 @@ class CompositeHazardModel(HazardModel):
             and not request.hint.path.startswith("jba_")
         )
 
-    def get_hazard_data(
+    async def get_hazard_data_async(
         self, requests: Sequence[HazardDataRequest]
     ) -> Mapping[HazardDataRequest, HazardDataResponse]:
         requests_by_model: Dict[HazardModel, List[HazardDataRequest]] = defaultdict(
@@ -159,9 +162,13 @@ class CompositeHazardModel(HazardModel):
                 requests_by_model[self.zarr_hazard_model].append(request)
 
         responses: Dict[HazardDataRequest, HazardDataResponse] = {}
-
-        for model, reqs in requests_by_model.items():
-            events_reponses = model.get_hazard_data(reqs)
-            responses.update(events_reponses)
+        model_responses = await asyncio.gather(
+            *(
+                model.get_hazard_data_async(reqs)
+                for model, reqs in requests_by_model.items()
+            )
+        )
+        for model_response in model_responses:
+            responses.update(model_response)
 
         return responses

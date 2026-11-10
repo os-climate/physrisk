@@ -1,9 +1,11 @@
+import asyncio
+import concurrent.futures
+import functools
 import logging
 import os
 from pathlib import PurePosixPath
-from typing import Any, Callable, List, MutableMapping, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, List, Optional, Sequence, Tuple, Union
 
-from fsspec import FSMap
 import numpy as np
 import s3fs
 import shapely.ops
@@ -11,8 +13,38 @@ import zarr
 from affine import Affine
 from pyproj import Transformer
 from shapely import MultiPoint, Point, affinity, Polygon
+from zarr.storage import FsspecStore, StoreLike
+
+from physrisk.utils.concurrency import available_cpu_count
 
 logger = logging.getLogger(__name__)
+
+
+def configure_zarr_concurrency(
+    decode_threads: Optional[int] = None, async_concurrency: int = 32
+) -> None:
+    """Set zarr's process-wide concurrency for chunk reads.
+
+    zarr fetches the chunks of a read concurrently, up to ``async_concurrency``, and
+    decompresses them on a pool of ``decode_threads``. Decoded chunks are large
+    (e.g. 36 MB for a (9, 1000, 1000) float32 chunk), so the decode pool, rather
+    than the fetch limit, bounds peak memory. zarr's own default sizes the pool from
+    ``os.cpu_count()``, which in a CPU-limited container oversubscribes the CPU.
+
+    This changes zarr's global configuration and takes effect only if zarr has not
+    yet started its decode pool, so call it before reading any data.
+
+    Args:
+        decode_threads: Threads used to decompress chunks. Defaults to the CPUs
+            available to the process.
+        async_concurrency: Maximum chunks in flight per read.
+    """
+    zarr.config.set(
+        {
+            "async.concurrency": async_concurrency,
+            "threading.max_workers": decode_threads or available_cpu_count(),
+        }
+    )
 
 
 def get_env(key: str, default: Optional[str] = None) -> str:
@@ -36,16 +68,19 @@ class ZarrReader:
 
     def __init__(
         self,
-        store: Optional[MutableMapping] = None,
+        store: Optional[StoreLike] = None,
         path_provider: Optional[Callable[..., str]] = None,
         get_env: Callable[[str, Optional[str]], str] = get_env,
+        max_concurrent_reads: Optional[int] = None,
     ):
         """Create a ZarrReader.
 
         Args:
-            store: if not supplied, create S3Map store.
+            store: if not supplied, create S3 store.
             path_provider: function that provides path to the data set based on a set ID.
             get_env: allows override obtaining of environment variables.
+            max_concurrent_reads: maximum array reads in progress at once via the async
+                methods. Defaults to twice the available CPUs plus two.
         """
         if store is None:
             # if no store is provided, attempt to connect to an S3 bucket
@@ -56,10 +91,33 @@ class ZarrReader:
 
             store = ZarrReader.create_s3_zarr_store(get_env)
 
-        self._root = zarr.open(store, mode="r")
+        # hazard data is zarr v2 without consolidated metadata
+        self._root = zarr.open_group(store, mode="r", use_consolidated=False)
         self._store = store
         self._path_provider = path_provider
-        pass
+        # Reads block a thread while zarr fetches and decodes chunks on its own event
+        # loop and pool; this pool bounds the reads in flight, and with them memory.
+        self._executor = concurrent.futures.ThreadPoolExecutor(
+            max_workers=max_concurrent_reads or 2 * available_cpu_count() + 2,
+            thread_name_prefix="physrisk_zarr",
+        )
+
+    async def _run(self, func: Callable[..., Any], *args, **kwargs) -> Any:
+        return await asyncio.get_running_loop().run_in_executor(
+            self._executor, functools.partial(func, *args, **kwargs)
+        )
+
+    async def get_curves_async(self, *args, **kwargs):
+        """Asynchronous version of get_curves."""
+        return await self._run(self.get_curves, *args, **kwargs)
+
+    async def get_max_curves_async(self, *args, **kwargs):
+        """Asynchronous version of get_max_curves."""
+        return await self._run(self.get_max_curves, *args, **kwargs)
+
+    async def in_bounds_async(self, *args, **kwargs):
+        """Asynchronous version of in_bounds."""
+        return await self._run(self.in_bounds, *args, **kwargs)
 
     def all_data(self, set_id: str):
         return self._get_array(set_id)
@@ -79,37 +137,57 @@ class ZarrReader:
         crs = z.attrs.get("crs", "epsg:4326")
         return transform, crs
 
-    def ls(self, path: str):
-        if isinstance(self._store, zarr.DirectoryStore):
-            full_path = os.path.join(self._store.path, path)
-            return [os.path.join(full_path, name) for name in os.listdir(full_path)]
-        if not isinstance(self._store, FSMap):
-            raise NotImplementedError(
-                f"cannot list for store of type {type(self._store)}"
-            )
-        return self._store.fs.ls(PurePosixPath(self._store.root) / path)
+    def ls(self, path: str) -> List[str]:
+        """List the arrays and groups in the group at path.
+
+        Args:
+            path: Path of a group, relative to the root.
+
+        Returns:
+            Paths of the group's members, relative to the root.
+        """
+        path = path.strip("/")
+        group = self._root[path] if path else self._root
+        if not isinstance(group, zarr.Group):
+            raise ValueError(f"{path} is not a group")
+        return [str(PurePosixPath(path, name)) for name in group.keys()]
 
     @classmethod
     def create_s3_zarr_store(
-        cls, get_env: Callable[[str, Optional[str]], str] = get_env
-    ):
+        cls,
+        get_env: Callable[[str, Optional[str]], str] = get_env,
+        max_pool_connections: int = 64,
+    ) -> FsspecStore:
+        """Create a read-only store for the hazard data in S3.
+
+        Args:
+            get_env: Provides the environment variables naming bucket, path and credentials.
+            max_pool_connections: S3 connection pool size. botocore's default of 10
+                limits chunk downloads well below what zarr can fetch concurrently.
+
+        Returns:
+            The store.
+        """
         access_key = get_env(cls.__access_key, "")
         secret_key = get_env(cls.__secret_key, "")
         s3_bucket = get_env(cls.__S3_bucket, "os-climate-physical-risk")
         zarr_path = get_env(cls.__zarr_path, "hazard-indicators/hazard.zarr")
 
+        config_kwargs = {"max_pool_connections": max_pool_connections}
         s3 = (
-            s3fs.S3FileSystem(anon=True)
+            s3fs.S3FileSystem(anon=True, asynchronous=True, config_kwargs=config_kwargs)
             if access_key == ""
-            else s3fs.S3FileSystem(anon=False, key=access_key, secret=secret_key)
+            else s3fs.S3FileSystem(
+                anon=False,
+                key=access_key,
+                secret=secret_key,
+                asynchronous=True,
+                config_kwargs=config_kwargs,
+            )
         )
-
-        store = s3fs.S3Map(
-            root=str(PurePosixPath(s3_bucket, zarr_path)),
-            s3=s3,
-            check=False,
+        return FsspecStore(
+            fs=s3, path=str(PurePosixPath(s3_bucket, zarr_path)), read_only=True
         )
-        return store
 
     def get_curves(
         self,

@@ -1,6 +1,7 @@
-from typing import Dict, MutableMapping, Optional
+from typing import Dict, Optional
 
 from dependency_injector import containers, providers
+from zarr.storage import StoreLike
 
 from physrisk.data.hazard_data_provider import HazardResourceSelector
 from physrisk.data.scenario_year_resolution import (
@@ -10,7 +11,7 @@ from physrisk.data.scenario_year_resolution import (
 from physrisk.data.image_creator import ImageCreator
 from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.data.inventory_reader import InventoryReader
-from physrisk.data.zarr_reader import ZarrReader
+from physrisk.data.zarr_reader import ZarrReader, configure_zarr_concurrency
 from physrisk.hazard_models.core_hazards import get_default_hazard_resource_selector
 from physrisk.hazard_models.credentials_provider import (
     CredentialsProvider,
@@ -55,10 +56,10 @@ class DefaultHazardModelFactory(HazardModelFactory):
         credentials: CredentialsProvider,
         inventory: Inventory,
         resource_selector: HazardResourceSelector,
-        store: Optional[MutableMapping] = None,
+        store: Optional[StoreLike] = None,
         reader: Optional[ZarrReader] = None,
         default_interpolation: str = "floor",
-        zarr_max_workers: int = 32,
+        zarr_max_workers: Optional[int] = None,
     ):
         self.cache_store = cache_store
         self.inventory = inventory
@@ -144,6 +145,18 @@ class DefaultVulnerabilityModelsFactory(VulnerabilityModelsFactory):
         )
 
 
+def _create_zarr_reader(
+    store: StoreLike,
+    max_concurrent_reads: Optional[int],
+    decode_threads: Optional[int],
+    async_concurrency: int,
+) -> ZarrReader:
+    configure_zarr_concurrency(
+        decode_threads=decode_threads, async_concurrency=async_concurrency
+    )
+    return ZarrReader(store=store, max_concurrent_reads=max_concurrent_reads)
+
+
 class Container(containers.DeclarativeContainer):
     asset_factory = providers.Factory(DefaultAssetFactory)
 
@@ -151,10 +164,16 @@ class Container(containers.DeclarativeContainer):
 
     colormaps = providers.Singleton(lambda: EmbeddedInventory().colormaps())
 
+    # zarr concurrency: None means sized from the CPUs available to the process.
+    # zarr_max_workers: array reads in progress at once;
+    # zarr_decode_threads: threads decompressing chunks (bounds peak memory);
+    # zarr_async_concurrency: chunks in flight per array read.
     config = providers.Configuration(
         default={
             "zarr_sources": ["embedded"],
-            "zarr_max_workers": 32,
+            "zarr_max_workers": None,
+            "zarr_decode_threads": None,
+            "zarr_async_concurrency": 32,
             "enforce_permissions": True,
         }
     )
@@ -177,7 +196,13 @@ class Container(containers.DeclarativeContainer):
 
     zarr_store = providers.Singleton(ZarrReader.create_s3_zarr_store)
 
-    zarr_reader = providers.Singleton(ZarrReader, store=zarr_store)
+    zarr_reader = providers.Singleton(
+        _create_zarr_reader,
+        store=zarr_store,
+        max_concurrent_reads=config.zarr_max_workers,
+        decode_threads=config.zarr_decode_threads,
+        async_concurrency=config.zarr_async_concurrency,
+    )
 
     # why do we have factories for hazard models, vulnerability models and measures?
     # this is because the models may need to be created with different parameters for different requests

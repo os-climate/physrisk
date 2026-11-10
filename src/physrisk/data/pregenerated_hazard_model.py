@@ -1,5 +1,4 @@
 import asyncio
-import concurrent.futures
 import logging
 from collections import defaultdict
 from typing import Dict, List, Mapping, Optional, Sequence, Tuple, Type
@@ -46,14 +45,15 @@ class PregeneratedHazardModel(HazardModel):
     def __init__(
         self,
         hazard_data_providers: Dict[Type[Hazard], HazardDataProvider],
-        zarr_max_workers: int = 32,
+        zarr_max_workers: Optional[int] = None,
         nan_is_zero: Optional[set[tuple[type[Hazard], str]]] = None,
         nan_is_no_data: Optional[set[tuple[type[Hazard], str]]] = None,
     ):
         """
         Args:
             hazard_data_providers: Map from hazard type to its data provider.
-            zarr_max_workers: Max threads for concurrent Zarr chunk reads.
+            zarr_max_workers: Unused; kept for compatibility. Concurrency of Zarr reads
+                is set on the ZarrReader (max_concurrent_reads).
             nan_is_zero: (hazard_type, indicator_id) pairs where NaN is treated as 0. Defaults to common indicators (fire, drought, hail, subsidence, landslide).
             nan_is_no_data: (hazard_type, indicator_id) pairs where NaN causes a failed response. Mutually exclusive with nan_is_zero.
         """
@@ -72,7 +72,7 @@ class PregeneratedHazardModel(HazardModel):
                 f"element {next(iter(self._nan_is_zero & self._nan_is_no_data))} appears in nan_is_zero and nan_is_no_data"
             )
 
-    def get_hazard_data(
+    async def get_hazard_data_async(
         self, requests: Sequence[HazardDataRequest]
     ) -> Mapping[HazardDataRequest, HazardDataResponse]:
         """Return one hazard data response for each request.
@@ -93,15 +93,7 @@ class PregeneratedHazardModel(HazardModel):
         # accessed asynchronously (thanks to async chunk stores in case of Zarr).
         # Across batches we also call asynchronously.
         logger.info(f"Retrieving data for {len(requests)} hazard data requests")
-        try:
-            asyncio.get_running_loop()
-        except RuntimeError:
-            responses = asyncio.run(self._get_hazard_data_in_batches(requests))
-        else:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-                responses = executor.submit(
-                    lambda: asyncio.run(self._get_hazard_data_in_batches(requests))
-                ).result()
+        responses = await self._get_hazard_data_in_batches(requests)
         logger.info("Data retrieval complete")
         self._log_response_issues(responses)
         return responses
@@ -122,9 +114,6 @@ class PregeneratedHazardModel(HazardModel):
                 )
             ].append(request)
 
-        asyncio.get_running_loop().set_default_executor(
-            concurrent.futures.ThreadPoolExecutor(max_workers=self.zarr_max_workers)
-        )
         batch_results = await asyncio.gather(
             *(
                 self._get_batch_data(hazard_type, indicator_id, batch[0].hint, batch)
@@ -277,7 +266,7 @@ class ZarrHazardModel(PregeneratedHazardModel):
         reader: Optional[ZarrReader] = None,
         store=None,
         interpolation="floor",
-        zarr_max_workers: int = 32,
+        zarr_max_workers: Optional[int] = None,
         nan_is_zero: Optional[set[tuple[type[Hazard], str]]] = None,
         nan_is_no_data: Optional[set[tuple[type[Hazard], str]]] = None,
     ):
@@ -289,12 +278,17 @@ class ZarrHazardModel(PregeneratedHazardModel):
             reader: Shared ZarrReader; created from store if not provided.
             store: Zarr store (local, remote, or in-memory); used when reader is None.
             interpolation: Spatial interpolation method ("floor" or "linear").
-            zarr_max_workers: Max threads for concurrent Zarr chunk reads.
+            zarr_max_workers: Max array reads in progress at once, for a reader created
+                from store; a supplied reader keeps its own setting.
             nan_is_zero: (hazard_type, indicator_id) pairs where NaN is treated as 0. Defaults to common indicators (fire, drought, hail, subsidence, landslide).
             nan_is_no_data: (hazard_type, indicator_id) pairs where NaN causes a failed response. Mutually exclusive with nan_is_zero.
         """
         # share ZarrReaders across hazard data providers
-        zarr_reader = ZarrReader(store=store) if reader is None else reader
+        zarr_reader = (
+            ZarrReader(store=store, max_concurrent_reads=zarr_max_workers)
+            if reader is None
+            else reader
+        )
         super().__init__(
             {
                 t: CascadingHazardDataProvider(

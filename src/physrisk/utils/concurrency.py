@@ -1,5 +1,6 @@
 import math
 import os
+import sys
 from pathlib import Path
 from typing import Optional
 
@@ -15,9 +16,9 @@ def available_cpu_count() -> int:
     Returns:
         Number of usable CPUs, at least 1.
     """
-    try:
+    if sys.platform == "linux":
         count = len(os.sched_getaffinity(0))
-    except AttributeError:  # not available on macOS or Windows
+    else:  # affinity is not available on macOS or Windows
         count = os.cpu_count() or 1
     quota = _cgroup_cpu_quota()
     if quota is not None:

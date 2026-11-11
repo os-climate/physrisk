@@ -820,7 +820,7 @@ class ZarrReader:
         crs: str,
         transform: Affine,
         apply_pixel_center_offset: bool,
-        shape: Optional[Tuple[int, int, int]] = None,
+        shape: Optional[Tuple[int, ...]] = None,
     ):
         """Transform geographic coordinates into fractional raster coordinates.
 

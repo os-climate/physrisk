@@ -23,7 +23,7 @@ from physrisk.kernel.vulnerability_model import (
     DataRequester,
     VulnerabilityModelAcuteBase,
     VulnerabilityModelBase,
-    VulnerabilityModels,
+    VulnerabilityModelSelector,
 )
 from physrisk.utils.helpers import get_iterable
 
@@ -60,7 +60,7 @@ class AssetImpactResult:
 def calculate_impacts(  # noqa: C901
     assets: Iterable[Asset],
     hazard_model: HazardModel,
-    vulnerability_models: VulnerabilityModels,
+    vulnerability_model_selector: VulnerabilityModelSelector,
     *,
     scenarios: Sequence[str],
     years: Sequence[int],
@@ -72,8 +72,7 @@ def calculate_impacts(  # noqa: C901
     )  # list of assets to be modelled using vulnerability model
 
     for asset in assets:
-        asset_type = type(asset)
-        mappings = vulnerability_models.vuln_model_for_asset_of_type(asset_type)
+        mappings = vulnerability_model_selector.vuln_models_for(asset)
         for mapping in mappings:
             model_assets[mapping].append(asset)
     results: Dict[ImpactKey, List[AssetImpactResult]] = {}

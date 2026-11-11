@@ -60,8 +60,8 @@ from physrisk.kernel.risk import (
     NullAssetBasedPortfolioRiskMeasureCalculator,
 )
 from physrisk.kernel.vulnerability_model import (
-    VulnerabilityModels,
-    VulnerabilityModelsFactory,
+    VulnerabilityModelSelector,
+    VulnerabilityModelSelectorFactory,
 )
 from physrisk.utils import encoder
 from physrisk.utils.encoder import PhysriskDefaultEncoder
@@ -133,7 +133,7 @@ class Requester:
         self,
         asset_factory: AssetFactory,
         hazard_model_factory: HazardModelFactory,
-        vulnerability_models_factory: VulnerabilityModelsFactory,
+        vulnerability_model_selector_factory: VulnerabilityModelSelectorFactory,
         inventory: Inventory,
         resource_selector: HazardResourceSelector,
         inventory_reader: InventoryReader,
@@ -150,7 +150,7 @@ class Requester:
         self.hazard_model_factory = hazard_model_factory
         self.measures_factory = measures_factory
         self.sig_figures = sig_figures
-        self.vulnerability_models_factory = vulnerability_models_factory
+        self.vulnerability_model_selector_factory = vulnerability_model_selector_factory
         self.inventory = inventory
         self.inventory_reader = inventory_reader
         self.zarr_reader = reader
@@ -246,12 +246,12 @@ class Requester:
         )
 
         if not request.include_all:
-            vulnerability_models = (
-                self.vulnerability_models_factory.vulnerability_models()
+            vulnerability_model_selector = (
+                self.vulnerability_model_selector_factory.vulnerability_model_selector()
             )
-            result = _filter_with_vuln_models(
+            result = _filter_with_vulnerability_model_selector(
                 result=result,
-                vulnerability_models=vulnerability_models,
+                vulnerability_model_selector=vulnerability_model_selector,
             )
 
         message = ""
@@ -305,10 +305,12 @@ class Requester:
                     f"Unsupported value for `vulnerability_curve_mapping`: {request.calc_settings.vulnerability_curve_mapping}."
                 )
 
-        vulnerability_models = self.vulnerability_models_factory.vulnerability_models(
-            hazard_scope=hazard_scope,
-            use_oed_hazus_curves=use_oed_hazus_curves,
-            map_unknown_occ=map_unknown_occ,
+        vulnerability_model_selector = (
+            self.vulnerability_model_selector_factory.vulnerability_model_selector(
+                hazard_scope=hazard_scope,
+                use_oed_hazus_curves=use_oed_hazus_curves,
+                map_unknown_occ=map_unknown_occ,
+            )
         )
         asset_measure_calculators = self.measures_factory.asset_calculators(
             request.use_case_id
@@ -321,7 +323,7 @@ class Requester:
             request,
             hazard_model,
             asset_factory=self.asset_factory,
-            vulnerability_models=vulnerability_models,
+            vulnerability_model_selector=vulnerability_model_selector,
             measure_calculators=asset_measure_calculators,
             portfolio_measure_calculator=portfolio_measure_calculator,
             sig_figures=self.round_sig_figures,
@@ -604,7 +606,7 @@ def _get_asset_exposures(
 def _get_asset_impacts(
     request: AssetImpactRequest,
     hazard_model: HazardModel,
-    vulnerability_models: VulnerabilityModels,
+    vulnerability_model_selector: VulnerabilityModelSelector,
     asset_factory: AssetFactory = DefaultAssetFactory(),
     measure_calculators: Optional[Dict[Type[Asset], RiskMeasureCalculator]] = None,
     portfolio_measure_calculator: Optional[PortfolioRiskMeasureCalculator] = None,
@@ -630,7 +632,7 @@ def _get_asset_impacts(
     )
     risk_model = PortfolioRiskModel(
         hazard_model,
-        vulnerability_models,
+        vulnerability_model_selector,
         measure_calculators,
         portfolio_measure_calculator,
     )
@@ -1212,17 +1214,17 @@ def _create_available_sources_result(
     return result
 
 
-def _filter_with_vuln_models(
+def _filter_with_vulnerability_model_selector(
     result: dict[str, dict[str, HazardTypeAvailability]],
-    vulnerability_models: VulnerabilityModels,
+    vulnerability_model_selector: VulnerabilityModelSelector,
 ) -> dict[str, dict[str, HazardTypeAvailability]]:
     filtered_result: dict[str, dict[str, HazardTypeAvailability]] = {}
 
     for asset_type in all_asset_types():
         asset_type_name = asset_type.__name__
 
-        allowed = _get_hazards_from_vulnerability_models(
-            vulnerability_models, asset_type
+        allowed = _get_hazards_from_vulnerability_model_selector(
+            vulnerability_model_selector, asset_type
         )
 
         for hazard_type, indicators in result.items():
@@ -1244,12 +1246,19 @@ def _filter_with_vuln_models(
     return filtered_result
 
 
-def _get_hazards_from_vulnerability_models(
-    vulnerability_models: VulnerabilityModels,
+def _get_hazards_from_vulnerability_model_selector(
+    vulnerability_model_selector: VulnerabilityModelSelector,
     asset_type: type[Asset],
 ) -> dict[str, list[str]]:
     hazards: dict[str, list[str]] = {}
-    for vuln_model in vulnerability_models.vuln_model_for_asset_of_type(asset_type):
+    # This API reports availability for default instances of each asset class.
+    # Specific asset attributes can change which model or curve applies.
+    try:
+        asset = asset_type(latitude=0, longitude=0)
+    except TypeError:
+        # e.g. dataclass-based asset types that do not take a location
+        asset = asset_type()
+    for vuln_model in vulnerability_model_selector.vuln_models_for(asset):
         hazard_name = vuln_model.hazard_type.__name__
         hazards.setdefault(hazard_name, [])
         hazards[hazard_name].append(vuln_model.indicator_id)

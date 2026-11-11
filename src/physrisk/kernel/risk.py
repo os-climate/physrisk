@@ -27,8 +27,12 @@ from physrisk.kernel.financial_model import (
 )
 from physrisk.kernel.hazard_model import HazardModel
 from physrisk.kernel.hazards import Hazard
-from physrisk.kernel.impact import AssetImpactResult, ImpactKey, calculate_impacts
-from physrisk.kernel.vulnerability_model import VulnerabilityModels
+from physrisk.kernel.impact import (
+    AssetImpactResult,
+    ImpactKey,
+    calculate_impacts,
+)
+from physrisk.kernel.vulnerability_model import VulnerabilityModelSelector
 
 # from asyncio import ALL_COMPLETED
 # import concurrent.futures
@@ -151,17 +155,19 @@ class RiskModel:
     """
 
     def __init__(
-        self, hazard_model: HazardModel, vulnerability_models: VulnerabilityModels
+        self,
+        hazard_model: HazardModel,
+        vulnerability_model_selector: VulnerabilityModelSelector,
     ):
         """Initialize a RiskModel instance.
 
         Parameter:
             hazard_model (HazardModel): The hazard model to be used for risk calculations.
-            vulnerability_models (Optional[VulnerabilityModels]): Optional vulnerability models; if not provided, will use default.
+            vulnerability_model_selector (VulnerabilityModelSelector): Selects applicable models for each asset.
 
         """
         self._hazard_model = hazard_model
-        self._vulnerability_models = vulnerability_models
+        self._vulnerability_model_selector = vulnerability_model_selector
 
     def calculate_risk_measures(
         self,
@@ -187,7 +193,7 @@ class RiskModel:
         impact_results = calculate_impacts(
             assets,
             self._hazard_model,
-            self._vulnerability_models,
+            self._vulnerability_model_selector,
             scenarios=scenarios,
             years=years,
         )
@@ -272,7 +278,7 @@ class PortfolioRiskModel(RiskModel):
     def __init__(
         self,
         hazard_model: HazardModel,
-        vulnerability_models: VulnerabilityModels,
+        vulnerability_model_selector: VulnerabilityModelSelector,
         measure_calculators: Dict[type[Asset], RiskMeasureCalculator],
         portfolio_measure_calculator: PortfolioRiskMeasureCalculator = NullAssetBasedPortfolioRiskMeasureCalculator(),
     ):
@@ -280,11 +286,11 @@ class PortfolioRiskModel(RiskModel):
 
         Args:
             hazard_model (HazardModel): The hazard model.
-            vulnerability_models (VulnerabilityModels): Vulnerability models for asset types.
+            vulnerability_model_selector (VulnerabilityModelSelector): Selects applicable models for each asset.
             measure_calculators (Dict[type, RiskMeasureCalculator]): Risk measure calculators for asset types.
             portfolio_measure_calculator (PortfolioRiskMeasureCalculator): Risk measure calculator for portfolio-level measures.
         """
-        super().__init__(hazard_model, vulnerability_models)
+        super().__init__(hazard_model, vulnerability_model_selector)
         self.asset_level_measures_required = (
             portfolio_measure_calculator.asset_level_measures_required
         )

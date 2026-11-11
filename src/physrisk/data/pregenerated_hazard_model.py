@@ -45,20 +45,17 @@ class PregeneratedHazardModel(HazardModel):
     def __init__(
         self,
         hazard_data_providers: Dict[Type[Hazard], HazardDataProvider],
-        zarr_max_workers: Optional[int] = None,
+        *,
         nan_is_zero: Optional[set[tuple[type[Hazard], str]]] = None,
         nan_is_no_data: Optional[set[tuple[type[Hazard], str]]] = None,
     ):
         """
         Args:
             hazard_data_providers: Map from hazard type to its data provider.
-            zarr_max_workers: Unused; kept for compatibility. Concurrency of Zarr reads
-                is set on the ZarrReader (max_concurrent_reads).
             nan_is_zero: (hazard_type, indicator_id) pairs where NaN is treated as 0. Defaults to common indicators (fire, drought, hail, subsidence, landslide).
             nan_is_no_data: (hazard_type, indicator_id) pairs where NaN causes a failed response. Mutually exclusive with nan_is_zero.
         """
         self.hazard_data_providers = hazard_data_providers
-        self.zarr_max_workers = zarr_max_workers
         self._nan_is_zero: set[tuple[type[Hazard], str]] = (
             nan_is_zero
             if nan_is_zero is not None
@@ -266,7 +263,6 @@ class ZarrHazardModel(PregeneratedHazardModel):
         reader: Optional[ZarrReader] = None,
         store=None,
         interpolation="floor",
-        zarr_max_workers: Optional[int] = None,
         nan_is_zero: Optional[set[tuple[type[Hazard], str]]] = None,
         nan_is_no_data: Optional[set[tuple[type[Hazard], str]]] = None,
     ):
@@ -278,17 +274,11 @@ class ZarrHazardModel(PregeneratedHazardModel):
             reader: Shared ZarrReader; created from store if not provided.
             store: Zarr store (local, remote, or in-memory); used when reader is None.
             interpolation: Spatial interpolation method ("floor" or "linear").
-            zarr_max_workers: Max array reads in progress at once, for a reader created
-                from store; a supplied reader keeps its own setting.
             nan_is_zero: (hazard_type, indicator_id) pairs where NaN is treated as 0. Defaults to common indicators (fire, drought, hail, subsidence, landslide).
             nan_is_no_data: (hazard_type, indicator_id) pairs where NaN causes a failed response. Mutually exclusive with nan_is_zero.
         """
         # share ZarrReaders across hazard data providers
-        zarr_reader = (
-            ZarrReader(store=store, max_concurrent_reads=zarr_max_workers)
-            if reader is None
-            else reader
-        )
+        zarr_reader = ZarrReader(store=store) if reader is None else reader
         super().__init__(
             {
                 t: CascadingHazardDataProvider(
@@ -300,7 +290,6 @@ class ZarrHazardModel(PregeneratedHazardModel):
                 )
                 for t in resource_selector.hazard_indicators()
             },
-            zarr_max_workers=zarr_max_workers,
             nan_is_zero=nan_is_zero,
             nan_is_no_data=nan_is_no_data,
         )

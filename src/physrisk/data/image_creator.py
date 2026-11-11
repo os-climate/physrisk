@@ -11,7 +11,7 @@ from physrisk.api.v1.hazard_image import TileNotAvailableError
 from physrisk.data import colormap_provider
 from physrisk.data.scenario_year_resolution import ScenarioYear, ScenarioYearResolver
 from physrisk.data.inventory import Inventory
-from physrisk.data.zarr_reader import ZarrReader
+from physrisk.data.zarr_reader import ArrayInfo, ZarrReader
 from physrisk.kernel.hazard_model import HazardImageCreator, Tile
 from physrisk.kernel.hazards import HazardKind, hazard_class
 
@@ -159,7 +159,7 @@ class ImageCreator(HazardImageCreator):
         # All inputs are assumed to share index metadata.
         source = weighted_sum.weights[0][0]
         path = resource.map_path_for_scenario_year(source.scenario, source.year, zoom=1)
-        z = self.reader.all_data(path)
+        z = self.reader.array_info(path)
         all_index_values, index_units = self.reader.get_index_values(z)
         # map index values are those for which maps were generated; if not
         # specified, only the last (highest) index is generated
@@ -240,14 +240,14 @@ class ImageCreator(HazardImageCreator):
         no change (or no hazard in either case) and is better left unshaded."""
 
         def get_array(path: str) -> np.ndarray:
-            array = get_data(self.reader, path)
-            if len(array.shape) != 3:
+            info = get_array_info(self.reader, path)
+            if len(info.shape) != 3:
                 raise ValueError(
                     f"map array at {path!r} must have dimensions (index, y, x); "
-                    f"got shape {array.shape}"
+                    f"got shape {info.shape}"
                 )
 
-            index_values, _ = self.reader.get_index_values(array)
+            index_values, _ = self.reader.get_index_values(info)
             if index_value is None:
                 index = len(index_values) - 1
             else:
@@ -260,14 +260,17 @@ class ImageCreator(HazardImageCreator):
                     selected_index_value = str(index_value)
                 index = index_values.index(selected_index_value)
             if tile is None:
-                return array[index, :, :]
+                return self.reader.read(path, (index, slice(None), slice(None)))
 
             tile_size = 512
-            return array[
-                index,
-                tile_size * tile.y : tile_size * (tile.y + 1),
-                tile_size * tile.x : tile_size * (tile.x + 1),
-            ]
+            return self.reader.read(
+                path,
+                (
+                    index,
+                    slice(tile_size * tile.y, tile_size * (tile.y + 1)),
+                    slice(tile_size * tile.x, tile_size * (tile.x + 1)),
+                ),
+            )
 
         weighted_arrays = (
             weight * get_array(path) for path, weight in path_weights.items()
@@ -430,5 +433,5 @@ def to_rgba(
 
 
 @lru_cache(maxsize=32)
-def get_data(reader: ZarrReader, path: str):
-    return reader.all_data(path)
+def get_array_info(reader: ZarrReader, path: str) -> ArrayInfo:
+    return reader.array_info(path)

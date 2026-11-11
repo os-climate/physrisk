@@ -42,7 +42,6 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
         store: Optional[StoreLike] = None,
         reader: Optional[ZarrReader] = None,
         default_interpolation: str = "floor",
-        zarr_max_workers: Optional[int] = None,
     ):
         self.resource_selector = resource_selector
         self.cache_store = cache_store
@@ -51,7 +50,6 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
         self.store = store
         self.reader = reader
         self.default_interpolation = default_interpolation
-        self.zarr_max_workers = zarr_max_workers
 
     def hazard_model(
         self,
@@ -72,7 +70,6 @@ class HazardModelFactory(HazardModelFactoryPhysrisk):
             scenario_year_resolver=(
                 InterpolatedYearResolver() if interpolate_years else resolve_exact_year
             ),
-            zarr_max_workers=self.zarr_max_workers,
         )
 
     def image_creator(self, interpolate_years: bool = True):
@@ -103,7 +100,6 @@ class CompositeHazardModel(HazardModel):
         provider_max_requests: Dict[str, int] = {},
         restrict_coverage: bool = False,
         use_jba_coastal: bool = False,
-        zarr_max_workers: Optional[int] = None,
     ):
         self.credentials = credentials
         self.max_jba_requests = provider_max_requests.get("jba", -1)
@@ -123,7 +119,6 @@ class CompositeHazardModel(HazardModel):
             store=store,
             interpolation=interpolation,
             scenario_year_resolver=scenario_year_resolver,
-            zarr_max_workers=zarr_max_workers,
         )
         self.use_jba_coastal = use_jba_coastal
 

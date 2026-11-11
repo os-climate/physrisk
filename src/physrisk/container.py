@@ -1,6 +1,7 @@
-from typing import Dict, MutableMapping, Optional
+from typing import Dict, Optional
 
 from dependency_injector import containers, providers
+from zarr.storage import StoreLike
 
 from physrisk.data.hazard_data_provider import HazardResourceSelector
 from physrisk.data.scenario_year_resolution import (
@@ -10,7 +11,7 @@ from physrisk.data.scenario_year_resolution import (
 from physrisk.data.image_creator import ImageCreator
 from physrisk.data.inventory import EmbeddedInventory, Inventory
 from physrisk.data.inventory_reader import InventoryReader
-from physrisk.data.zarr_reader import ZarrReader
+from physrisk.data.zarr_reader import ZarrReader, configure_zarr_concurrency
 from physrisk.hazard_models.core_hazards import get_default_hazard_resource_selector
 from physrisk.hazard_models.credentials_provider import (
     CredentialsProvider,
@@ -55,10 +56,9 @@ class DefaultHazardModelFactory(HazardModelFactory):
         credentials: CredentialsProvider,
         inventory: Inventory,
         resource_selector: HazardResourceSelector,
-        store: Optional[MutableMapping] = None,
+        store: Optional[StoreLike] = None,
         reader: Optional[ZarrReader] = None,
         default_interpolation: str = "floor",
-        zarr_max_workers: int = 32,
     ):
         self.cache_store = cache_store
         self.inventory = inventory
@@ -67,7 +67,6 @@ class DefaultHazardModelFactory(HazardModelFactory):
         self.reader = reader
         self.default_interpolation = default_interpolation
         self.credentials = credentials
-        self.zarr_max_workers = zarr_max_workers
         self.jba_image_creator = (
             JBAImageCreator(credentials)
             if credentials.jba_vision_password() != ""
@@ -97,7 +96,6 @@ class DefaultHazardModelFactory(HazardModelFactory):
                 InterpolatedYearResolver() if interpolate_years else resolve_exact_year
             ),
             use_jba_coastal=False,
-            zarr_max_workers=self.zarr_max_workers,
         )
 
     def image_creator(self, interpolate_years: bool = True):
@@ -144,6 +142,18 @@ class DefaultVulnerabilityModelsFactory(VulnerabilityModelsFactory):
         )
 
 
+def _create_zarr_reader(
+    store: StoreLike,
+    decode_threads: Optional[int],
+    async_concurrency: Optional[int],
+    cache_arrays: bool,
+) -> ZarrReader:
+    configure_zarr_concurrency(
+        decode_threads=decode_threads, async_concurrency=async_concurrency
+    )
+    return ZarrReader(store=store, cache_arrays=cache_arrays)
+
+
 class Container(containers.DeclarativeContainer):
     asset_factory = providers.Factory(DefaultAssetFactory)
 
@@ -151,10 +161,19 @@ class Container(containers.DeclarativeContainer):
 
     colormaps = providers.Singleton(lambda: EmbeddedInventory().colormaps())
 
+    # zarr concurrency:
+    # zarr_decode_threads: threads decompressing chunks (bounds decoded-chunk memory);
+    #     None means the CPUs available to the process;
+    # zarr_async_concurrency: chunks in flight per array read; None means twice the
+    #     available CPUs, at most 8; reduce if downloaded chunks accumulate waiting
+    #     for decode;
+    # zarr_cache_arrays: keep opened arrays so metadata is read once per array.
     config = providers.Configuration(
         default={
             "zarr_sources": ["embedded"],
-            "zarr_max_workers": 32,
+            "zarr_decode_threads": None,
+            "zarr_async_concurrency": None,
+            "zarr_cache_arrays": True,
             "enforce_permissions": True,
         }
     )
@@ -177,7 +196,13 @@ class Container(containers.DeclarativeContainer):
 
     zarr_store = providers.Singleton(ZarrReader.create_s3_zarr_store)
 
-    zarr_reader = providers.Singleton(ZarrReader, store=zarr_store)
+    zarr_reader = providers.Singleton(
+        _create_zarr_reader,
+        store=zarr_store,
+        decode_threads=config.zarr_decode_threads,
+        async_concurrency=config.zarr_async_concurrency,
+        cache_arrays=config.zarr_cache_arrays,
+    )
 
     # why do we have factories for hazard models, vulnerability models and measures?
     # this is because the models may need to be created with different parameters for different requests
@@ -189,7 +214,6 @@ class Container(containers.DeclarativeContainer):
         inventory=inventory,
         reader=zarr_reader,
         resource_selector=resource_selector,
-        zarr_max_workers=config.zarr_max_workers,
     )
 
     measures_factory = providers.Factory(calc.DefaultMeasuresFactory)

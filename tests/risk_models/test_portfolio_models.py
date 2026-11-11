@@ -47,7 +47,9 @@ from physrisk.risk_models.portfolio_risk_model import CompanyRiskMeasureCalculat
 from physrisk.vulnerability_models.config_based_impact_curves import (
     DowntimeConfigItem,
 )
-from physrisk.vulnerability_models.vulnerability import VulnerabilityModelsFactory
+from physrisk.vulnerability_models.vulnerability import (
+    VulnerabilityModelSelectorFactory,
+)
 from tests.data.test_hazard_model_store import ZarrStoreMocker, get_hazard_path
 from tests.vulnerability_models.test_config_based_vulnerability import create_store
 
@@ -628,9 +630,9 @@ def test_impact_aggregation_end_to_end() -> None:
     container.override_providers(sig_figures=6)
 
     container.override_providers(
-        vulnerability_models_factory=providers.Factory(
-            VulnerabilityModelsFactory,
-            config=VulnerabilityModelsFactory.embedded_vulnerability_config(),
+        vulnerability_model_selector_factory=providers.Factory(
+            VulnerabilityModelSelectorFactory,
+            config=VulnerabilityModelSelectorFactory.embedded_vulnerability_config(),
         )
     )
     requester = container.requester()
@@ -724,9 +726,9 @@ def test_impact_aggregation_downtime_analytical_matches_mc() -> None:
     container.override_providers(zarr_reader=None)
     container.override_providers(sig_figures=6)
     container.override_providers(
-        vulnerability_models_factory=providers.Factory(
-            VulnerabilityModelsFactory,
-            config=VulnerabilityModelsFactory.embedded_vulnerability_config(),
+        vulnerability_model_selector_factory=providers.Factory(
+            VulnerabilityModelSelectorFactory,
+            config=VulnerabilityModelSelectorFactory.embedded_vulnerability_config(),
         )
     )
     container.override_providers(
@@ -1036,9 +1038,9 @@ def test_impact_aggregation_end_to_end_multi_hazard() -> None:
     container.override_providers(zarr_reader=None)
     container.override_providers(sig_figures=6)
     container.override_providers(
-        vulnerability_models_factory=providers.Factory(
-            VulnerabilityModelsFactory,
-            config=VulnerabilityModelsFactory.embedded_vulnerability_config(),
+        vulnerability_model_selector_factory=providers.Factory(
+            VulnerabilityModelSelectorFactory,
+            config=VulnerabilityModelSelectorFactory.embedded_vulnerability_config(),
         )
     )
     container.override_providers(

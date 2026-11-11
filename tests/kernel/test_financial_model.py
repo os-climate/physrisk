@@ -9,6 +9,8 @@ from physrisk.kernel.financial_model import (
     FinancialDataProvider,
 )
 from physrisk.risk_models.loss_model import LossModel
+from physrisk.kernel.vulnerability_model import CascadingVulnerabilityModelSelector
+from physrisk.vulnerability_models.power_generating_asset_models import InundationModel
 
 from ..data.test_hazard_model_store import TestData, mock_hazard_model_store_inundation
 
@@ -48,7 +50,12 @@ def test_financial_model():
         resource_selector=get_default_hazard_resource_selector(),
         store=store,
     )
-    model = LossModel(hazard_model=hazard_model)
+    model = LossModel(
+        hazard_model=hazard_model,
+        vulnerability_model_selector=CascadingVulnerabilityModelSelector(
+            CascadingVulnerabilityModelSelector.index_models([InundationModel()])
+        ),
+    )
     data_provider = MockFinancialDataProvider()
     financial_model = DefaultFinancialModel(data_provider, [])
     assets = [

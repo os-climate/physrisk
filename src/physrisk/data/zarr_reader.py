@@ -25,6 +25,8 @@ from affine import Affine
 from pyproj import Transformer
 from shapely import MultiPoint, Point, affinity, Polygon
 from zarr import AsyncArray, AsyncGroup
+from zarr.core.codec_pipeline import BatchedCodecPipeline
+from zarr.registry import fully_qualified_name, register_pipeline
 from zarr.storage import FsspecStore, StoreLike
 
 from physrisk.utils.concurrency import available_cpu_count
@@ -41,33 +43,89 @@ T = TypeVar("T")
 _zarr_loop = BackgroundEventLoop("physrisk-zarr")
 
 
+class _ChunkLimiter:
+    """Process-wide limit on chunks being read, i.e. downloaded, waiting for decode
+    or being decoded, across all array reads on the zarr loop."""
+
+    def __init__(self) -> None:
+        self.limit = 16
+        self._semaphore: Optional[asyncio.Semaphore] = None
+        self._loop: Optional[asyncio.AbstractEventLoop] = None
+
+    def set_limit(self, limit: int) -> None:
+        # chunks already holding a slot release it to the previous semaphore
+        self.limit, self._semaphore = limit, None
+
+    def semaphore(self) -> asyncio.Semaphore:
+        """The semaphore for the running loop (recreated if the loop is, e.g. after fork)."""
+        loop = asyncio.get_running_loop()
+        if self._semaphore is None or self._loop is not loop:
+            self._semaphore, self._loop = asyncio.Semaphore(self.limit), loop
+        return self._semaphore
+
+
+_chunk_limiter = _ChunkLimiter()
+
+
+class LimitedCodecPipeline(BatchedCodecPipeline):
+    """zarr's default codec pipeline, with a process-wide limit on chunks being read.
+
+    zarr's async.concurrency limits the chunks being read per array read (each
+    get_coordinate_selection call, say), so across concurrent reads the total grows
+    with the number of reads. On the zarr loop, each chunk read here also holds one
+    of a fixed number of slots from download until decoded and copied out, bounding
+    the memory of downloaded and decoded chunks across all reads. Elsewhere, reads
+    are unchanged.
+    """
+
+    async def read_batch(self, *args: Any, **kwargs: Any) -> Any:
+        # zarr calls read_batch once per batch of codec_pipeline.batch_size chunks,
+        # downloading, decoding and copying out each; the batch size defaults to 1
+        if not _zarr_loop.is_current():
+            return await super().read_batch(*args, **kwargs)
+        async with _chunk_limiter.semaphore():
+            return await super().read_batch(*args, **kwargs)
+
+
+register_pipeline(LimitedCodecPipeline)
+_configured = False
+
+
 def configure_zarr_concurrency(
     decode_threads: Optional[int] = None,
-    async_concurrency: Optional[int] = None,
+    max_chunks_in_flight: Optional[int] = None,
 ) -> None:
-    """Set the concurrency of hazard data reads.
+    """Set the concurrency of hazard data reads, for hazard models and map tiles.
 
-    zarr fetches the chunks of each array read concurrently, up to
-    ``async_concurrency``, and decompresses them on a pool of ``decode_threads``
-    shared by all reads. Decoded chunks are large (e.g. 36 MB for a (9, 1000, 1000)
-    float32 chunk), so the decode pool bounds the memory of decoded chunks. Chunks
-    downloaded but waiting for a decode thread are limited only per read, by
-    ``async_concurrency``, so they grow with the number of arrays read at once when
-    downloads outpace decoding (fast network, few CPUs). Both therefore default to
-    sizes based on the CPUs available to the process; ``os.cpu_count()``, which zarr
-    would otherwise use, oversubscribes a CPU-limited container.
+    zarr decompresses chunks on a pool of ``decode_threads`` shared by all reads.
+    ``max_chunks_in_flight`` limits the chunks being downloaded, waiting for decode or
+    being decoded across all reads in the process, and so the memory they use;
+    decoded chunks are large (e.g. 36 MB for a (9, 1000, 1000) float32 chunk). zarr's
+    async.concurrency setting, its limit for each array read (and for its other
+    operations, e.g. writes), is set to the same value, so that a single read can use
+    all of the slots. Defaults are based on the CPUs available to the process;
+    ``os.cpu_count()``, which zarr would otherwise use, oversubscribes a CPU-limited
+    container. Called with defaults when the first ZarrReader is created, if not
+    called before.
 
     Args:
         decode_threads: Threads decompressing chunks and running the CPU-bound parts
             of reads. Defaults to the available CPUs.
-        async_concurrency: Maximum chunks in flight per array read; zarr's global
-            async.concurrency setting. Defaults to twice the available CPUs, at most 8.
-            Reduce it if downloaded chunks accumulate waiting for decode.
+        max_chunks_in_flight: Maximum chunks in flight across all reads in the
+            process. Defaults to eight times the available CPUs, at least 16.
     """
-    if async_concurrency is None:
-        async_concurrency = min(8, 2 * available_cpu_count())
-    zarr.config.set({"async.concurrency": async_concurrency})
+    global _configured
+    if max_chunks_in_flight is None:
+        max_chunks_in_flight = max(16, 8 * available_cpu_count())
+    zarr.config.set(
+        {
+            "async.concurrency": max_chunks_in_flight,
+            "codec_pipeline.path": fully_qualified_name(LimitedCodecPipeline),
+        }
+    )
+    _chunk_limiter.set_limit(max_chunks_in_flight)
     _zarr_loop.set_executor_workers(decode_threads)
+    _configured = True
 
 
 @dataclass(frozen=True)
@@ -108,7 +166,8 @@ class ZarrReader:
 
         Each read is available as a method (e.g. get_curves) and an asynchronous
         method (e.g. get_curves_async); either way it runs on a loop shared by all
-        readers, with concurrency set by configure_zarr_concurrency.
+        readers, with concurrency set by configure_zarr_concurrency (with defaults,
+        if not called before the first reader is created).
 
         Args:
             store: if not supplied, create S3 store.
@@ -128,6 +187,8 @@ class ZarrReader:
 
             store = ZarrReader.create_s3_zarr_store(get_env)
 
+        if not _configured:
+            configure_zarr_concurrency()
         self._store = store
         self._path_provider = path_provider
         self._root: Optional[AsyncGroup] = None

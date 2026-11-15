@@ -211,16 +211,23 @@ class HazardModel(ABC):
     """Hazard model. The model accepts a set of HazardDataRequests and returns the corresponding
     HazardDataResponses.
 
-    Implementations override either get_hazard_data or get_hazard_data_async (or both);
-    the other is then provided: a synchronous implementation is run on a worker thread
-    when called asynchronously, and an asynchronous implementation is run to completion
-    when called synchronously.
+    get_hazard_data_async is the primary method: implementations should override it, and
+    callers running in an event loop, including hazard models that call other hazard
+    models, should await it. get_hazard_data is a blocking wrapper for synchronous
+    callers: it runs get_hazard_data_async to completion on a new event loop.
+
+    For backwards compatibility, an implementation may instead override only
+    get_hazard_data; get_hazard_data_async then runs it on a worker thread of the
+    calling loop's default executor, so that it does not block the loop.
     """
 
     def get_hazard_data(
         self, requests: Sequence[HazardDataRequest]
     ) -> Mapping[HazardDataRequest, HazardDataResponse]:
-        """Process the hazard indicator data requests and return responses.
+        """Process the hazard indicator data requests and return responses, blocking until complete.
+
+        For synchronous callers. From within an event loop, await get_hazard_data_async
+        instead: calling this method there works, but runs on an extra thread and event loop.
 
         Args:
             requests (Sequence[HazardDataRequest]): Hazard indicator data requests.
@@ -237,7 +244,7 @@ class HazardModel(ABC):
     async def get_hazard_data_async(
         self, requests: Sequence[HazardDataRequest]
     ) -> Mapping[HazardDataRequest, HazardDataResponse]:
-        """Asynchronous version of get_hazard_data, for use from an event loop.
+        """Process the hazard indicator data requests and return responses.
 
         Args:
             requests (Sequence[HazardDataRequest]): Hazard indicator data requests.

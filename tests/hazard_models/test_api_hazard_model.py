@@ -1,3 +1,7 @@
+import asyncio
+
+import numpy as np
+import pytest
 import shapely.wkt
 from physrisk.kernel.hazard_model import HazardDataRequest
 from physrisk.kernel.hazards import PluvialInundation, RiverineInundation
@@ -5,7 +9,11 @@ from physrisk.kernel.hazards import PluvialInundation, RiverineInundation
 from physrisk.data.geocode import Geocoder
 from physrisk.hazard_models.credentials_provider import EnvCredentialsProvider
 from physrisk.hazard_models.hazard_cache import GeometryH3BasedCache, MemoryStore
-from physrisk.hazard_models.jba_hazard_model import JBAHazardModel
+from physrisk.hazard_models.jba_hazard_model import (
+    JBAAuthenticationError,
+    JBACacheKey,
+    JBAHazardModel,
+)
 
 from tests.conftest import cache_store_tests
 
@@ -126,3 +134,85 @@ def test_jba_hazard_model(load_credentials, hazard_dir, update_inputs):
         ]
         response = model.get_hazard_data(requests_riv + requests_pluv)
         assert response is not None
+
+
+class FakeAPIJBAHazardModel(JBAHazardModel):
+    """JBAHazardModel with the API call replaced by a fake that records requests."""
+
+    def __init__(self, *args, fail_batches=False, fail_auth=False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fail_batches = fail_batches
+        self.fail_auth = fail_auth
+        self.calls: list[list[str]] = []
+
+    async def flood_depth(self, api_request, access_token, session):
+        self.calls.append(list(api_request.spatial_keys))
+        await asyncio.sleep(0.01)
+        if self.fail_auth:
+            raise JBAAuthenticationError("401")
+        if self.fail_batches and len(api_request.spatial_keys) > 1:
+            return "batch failed"
+        stats = {
+            "FLRF_U": {"rp_100": {"max100": 1.5}},
+            "FLSW_U": {"rp_100": {"max100": 0.5}},
+        }
+        scenarios = ["historical"] + self._jba_scenarios_for_country(
+            api_request.country_code
+        )
+        return {
+            JBACacheKey(s, k): {"stats": stats, "geometry": "POINT(0 0)"}
+            for k in api_request.spatial_keys
+            for s in scenarios
+        }
+
+
+def _fake_model(**kwargs):
+    return FakeAPIJBAHazardModel(
+        GeometryH3BasedCache(MemoryStore()),
+        EnvCredentialsProvider(disable_api_calls=False),
+        max_requests=5,
+        **kwargs,
+    )
+
+
+def _flood_requests():
+    latitudes, longitudes = lats_lons()
+    return [
+        HazardDataRequest(
+            hazard_type=hazard_type,
+            longitude=lon,
+            latitude=lat,
+            indicator_id="flood_depth",
+            scenario="ssp585",
+            year=2050,
+        )
+        for hazard_type in [RiverineInundation, PluvialInundation]
+        for lat, lon in zip(latitudes[:2], longitudes[:2])
+    ]
+
+
+def test_jba_api_requests():
+    model = _fake_model()
+    requests = _flood_requests()
+    responses = model.get_hazard_data(requests)
+    assert [len(c) for c in model.calls] == [2]  # one batch with both locations
+    for req in requests:
+        expected = 1.5 if req.hazard_type == RiverineInundation else 0.5
+        np.testing.assert_allclose(responses[req].intensities, [expected])
+    # served from the cache the second time
+    model.get_hazard_data(requests)
+    assert len(model.calls) == 1
+
+
+def test_jba_failed_batch_rerun_singly():
+    model = _fake_model(fail_batches=True)
+    requests = _flood_requests()
+    responses = model.get_hazard_data(requests)
+    assert sorted(len(c) for c in model.calls) == [1, 1, 2]
+    assert all(responses[req].intensities.size == 1 for req in requests)
+
+
+def test_jba_authentication_error_raised():
+    model = _fake_model(fail_auth=True)
+    with pytest.raises(JBAAuthenticationError):
+        model.get_hazard_data(_flood_requests())

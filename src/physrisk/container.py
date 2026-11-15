@@ -145,11 +145,12 @@ class DefaultVulnerabilityModelsFactory(VulnerabilityModelsFactory):
 def _create_zarr_reader(
     store: StoreLike,
     decode_threads: Optional[int],
-    async_concurrency: Optional[int],
+    max_chunks_in_flight: Optional[int],
     cache_arrays: bool,
 ) -> ZarrReader:
     configure_zarr_concurrency(
-        decode_threads=decode_threads, async_concurrency=async_concurrency
+        decode_threads=decode_threads,
+        max_chunks_in_flight=max_chunks_in_flight,
     )
     return ZarrReader(store=store, cache_arrays=cache_arrays)
 
@@ -161,18 +162,18 @@ class Container(containers.DeclarativeContainer):
 
     colormaps = providers.Singleton(lambda: EmbeddedInventory().colormaps())
 
-    # zarr concurrency:
+    # zarr concurrency, shared by hazard model and map tile reads:
     # zarr_decode_threads: threads decompressing chunks (bounds decoded-chunk memory);
     #     None means the CPUs available to the process;
-    # zarr_async_concurrency: chunks in flight per array read; None means twice the
-    #     available CPUs, at most 8; reduce if downloaded chunks accumulate waiting
-    #     for decode;
+    # zarr_max_chunks_in_flight: chunks downloaded, waiting for decode or being decoded
+    #     across all reads in the process (bounds their memory); None means eight times
+    #     the available CPUs, at least 16;
     # zarr_cache_arrays: keep opened arrays so metadata is read once per array.
     config = providers.Configuration(
         default={
             "zarr_sources": ["embedded"],
             "zarr_decode_threads": None,
-            "zarr_async_concurrency": None,
+            "zarr_max_chunks_in_flight": None,
             "zarr_cache_arrays": True,
             "enforce_permissions": True,
         }
@@ -200,7 +201,7 @@ class Container(containers.DeclarativeContainer):
         _create_zarr_reader,
         store=zarr_store,
         decode_threads=config.zarr_decode_threads,
-        async_concurrency=config.zarr_async_concurrency,
+        max_chunks_in_flight=config.zarr_max_chunks_in_flight,
         cache_arrays=config.zarr_cache_arrays,
     )
 

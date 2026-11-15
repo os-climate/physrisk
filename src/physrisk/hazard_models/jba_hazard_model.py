@@ -4,7 +4,6 @@ import logging
 from collections import defaultdict
 from dataclasses import dataclass
 from enum import Enum
-from threading import Lock
 from typing import (
     Dict,
     Iterable,
@@ -42,7 +41,6 @@ from physrisk.kernel.hazards import (
     PluvialInundation,
     RiverineInundation,
 )
-from physrisk.utils.event_loop import get_loop, run
 
 logger = logging.getLogger(__name__)
 
@@ -168,7 +166,6 @@ class JBAHazardModel(HazardModel):
             2080,
         ]  # we could have included 2040 and 2100, but removed for better performance
         self.historical_year = 2025
-        self.lock = Lock()
         self.max_requests = max_requests
         self.cmip = cmip
         self.batch_size = batch_size
@@ -191,181 +188,175 @@ class JBAHazardModel(HazardModel):
         ):
             raise ValueError("invalid request")
 
-    def get_hazard_data(
+    async def get_hazard_data_async(
         self, requests: Sequence[HazardDataRequest]
     ) -> Mapping[HazardDataRequest, HazardDataResponse]:
         # noqa:C90
-        with self.lock:
-            # why don't we want this to be accessed by more than one thread at the same time?
-            # 1) JBA API returns Riverine and Pluvial hazards at the same time. We want to make sure that
-            # we get these and cache just once: otherwise a risk that we request the same data multiple times!
-            # 2) We are already maxing out the number of requests to JBA using async for a single thread.
-            if not self.use_best_dataset and self.geocoder is None:
-                self.geocoder = Geocoder.instance()
-            cache_key_country: Dict[JBACacheKey, str] = {}  # cache item to requests
-            request_groups: Dict[RequestKey, List[JBACacheKey]] = defaultdict(
-                list
-            )  # request to cache items
-            self.check_requests(requests)
-            # some deviations from 2-letter country codes:
-            country_mapping = {
-                "AU": "AUC",  # Australian model including coastal inundation
-                "ES-ML": "ES",  # Melilla as ES
-                "FR": "FR5C",  # France 5m model including coastal inundation
-                "GG": "GB",  # Guernsey uses GB map
-                "HK": "CN",
-                "IE": "IE30",
-                "JE": "FR5C",  # Jersey uses France map
-                "MC": "FR5C",  # Monaco uses France map
-                "NI": "NIC",  # Nicaragua uses NIC
-                "US": "US5",  # US 5 m model
-            }
-            result: MutableMapping[HazardDataRequest, HazardDataResponse] = {}
-            # group requests by common location
-            requests_by_location: Dict[str, List[HazardDataRequest]] = defaultdict(list)
-            all_years: set[int] = set()
-            for item in requests:
-                spatial_key = self.cache_store.spatial_key(
-                    item.latitude, item.longitude, item.geometry
-                )
-                requests_by_location[spatial_key].append(item)
-                if item.scenario != "historical":
-                    all_years.add(item.year)
-            if self.use_best_dataset:
-                # 'WR' (world) resolves on the JBA side to the best dataset available
-                # for the location, so no geocoding is required.
-                countries = ["WR" for _ in requests_by_location]
-            else:
-                # JBA requires a 2-letter country code per request (at time of writing),
-                # so it is necessary to geocode.
-                lats, lons = (
-                    [r[0].latitude for r in requests_by_location.values()],
-                    [r[0].longitude for r in requests_by_location.values()],
-                )
-                assert self.geocoder is not None
-                countries = [
-                    country_mapping.get(c, c)
-                    for c in self.geocoder.get_countries(lats, lons)
-                ]
-            # note a single cache entry can provide information for multiple requests, because each entry contains
-            # information about different hazards, or because points are close.
-            # for interpolation, the list of pillar years for different requested years is calculated
-            # ahead of time: e.g. 2036 needs 2030 and 2050 pillars.
-            requested_years = sorted(list(all_years))
-            pillars = ScenarioYears(id="ssp", years=list(self.pillar_years))
-            historical = ScenarioYear("historical", -1)
-            pillar_years_lookup = {
-                year: interpolate_year(
-                    ScenarioYear("ssp", year), pillars, historical, self.historical_year
-                )
-                for year in requested_years
-            }
-            pillar_years_lookup[-1] = interpolate_year(
-                historical, pillars, historical, self.historical_year
+        if not self.use_best_dataset and self.geocoder is None:
+            # slow to construct (loads Natural Earth data), so kept off the loop
+            self.geocoder = await asyncio.to_thread(Geocoder.instance)
+        cache_key_country: Dict[JBACacheKey, str] = {}  # cache item to requests
+        request_groups: Dict[RequestKey, List[JBACacheKey]] = defaultdict(
+            list
+        )  # request to cache items
+        self.check_requests(requests)
+        # some deviations from 2-letter country codes:
+        country_mapping = {
+            "AU": "AUC",  # Australian model including coastal inundation
+            "ES-ML": "ES",  # Melilla as ES
+            "FR": "FR5C",  # France 5m model including coastal inundation
+            "GG": "GB",  # Guernsey uses GB map
+            "HK": "CN",
+            "IE": "IE30",
+            "JE": "FR5C",  # Jersey uses France map
+            "MC": "FR5C",  # Monaco uses France map
+            "NI": "NIC",  # Nicaragua uses NIC
+            "US": "US5",  # US 5 m model
+        }
+        result: MutableMapping[HazardDataRequest, HazardDataResponse] = {}
+        # group requests by common location
+        requests_by_location: Dict[str, List[HazardDataRequest]] = defaultdict(list)
+        all_years: set[int] = set()
+        for item in requests:
+            spatial_key = self.cache_store.spatial_key(
+                item.latitude, item.longitude, item.geometry
             )
-            cache_keys: set[JBACacheKey] = (
-                set()
-            )  # the set of cache keys to be requested (spatial key, year and scenario)
-            req_weights_set: List[
-                RequestWeights
-            ] = []  # for each request the linear combination of cache keys required (interpolating)
-            for reqs, country in zip(requests_by_location.values(), countries):
-                for req in reqs:
-                    req_weights: List[Tuple[JBACacheKey, float]] = []
-                    for weight in pillar_years_lookup[
-                        -1 if req.scenario == "historical" else req.year
-                    ].weights:
-                        cache_key = JBACacheKey(
-                            jba_scenario=self.jba_scenario(
-                                req.scenario, weight[0].year, country
-                            ),
-                            spatial_key=self.cache_store.spatial_key(
-                                req.latitude, req.longitude, req.geometry
-                            ),
-                        )
-                        cache_key_country[cache_key] = country
-                        cache_keys.add(cache_key)
-                        req_weights.append((cache_key, weight[1]))
-                    req_weights_set.append(RequestWeights(req, req_weights))
-            # requests are grouped by country
-            for cache_key in cache_keys:
-                country_code = cache_key_country[cache_key]
-                request_groups[RequestKey(country_code=country_code)].append(cache_key)
-            access_token = self.credentials.jba_access_key()
-            api_requests: List[APIRequest] = []
-            # contains the raw results for all cache keys, first populated by looking in cache
-            # and then by making API calls if needed.
-            cached_responses: Dict[JBACacheKey, Dict] = {}
-            for request_key, group_cache_keys in request_groups.items():
-                # process anything that can be sourced from the cache and identify extra API requests needed
-                group_cached_responses, api_requests_batch = (
-                    self._identify_api_requests(
-                        request_key, group_cache_keys, requests_by_location
-                    )
-                )
-                cached_responses.update(group_cached_responses)
-                api_requests.extend(api_requests_batch)
-            # if there are extra API requests, make these (in parallel) and process to get results
-            n_requests = len([k for r in api_requests for k in r.spatial_keys])
-            logger.info(f"{n_requests} API requests total")
-            batches = [len(r.spatial_keys) for r in api_requests]
-            logger.info(f"{len(api_requests)} batches of requests of size ({batches})")
-            if n_requests > self.max_requests:
-                raise ValueError(
-                    f"would make {n_requests} requests to JBA API, more than {self.max_requests} maximum. "
-                    "provider_max_requests may be set incorrectly."
-                )
-            cached_responses.update(
-                self._process_api_requests(api_requests, access_token)
+            requests_by_location[spatial_key].append(item)
+            if item.scenario != "historical":
+                all_years.add(item.year)
+        if self.use_best_dataset:
+            # 'WR' (world) resolves on the JBA side to the best dataset available
+            # for the location, so no geocoding is required.
+            countries = ["WR" for _ in requests_by_location]
+        else:
+            # JBA requires a 2-letter country code per request (at time of writing),
+            # so it is necessary to geocode.
+            lats, lons = (
+                [r[0].latitude for r in requests_by_location.values()],
+                [r[0].longitude for r in requests_by_location.values()],
             )
-            for req_weight in req_weights_set:
-                resps = [
-                    self._process_response(
-                        req_weight.request, cached_responses.get(key, {"stats": None})
-                    )
-                    for key, _ in req_weight.weights
-                ]
-                if len(resps) == 1:
-                    result[req_weight.request] = resps[0]
-                elif len(resps) == 2:
-                    weight0, weight1 = (
-                        req_weight.weights[0][1],
-                        req_weight.weights[1][1],
-                    )
-                    if isinstance(resps[0], HazardEventDataResponse) and isinstance(
-                        resps[1], HazardEventDataResponse
-                    ):
-                        result[req_weight.request] = HazardEventDataResponse(
-                            resps[0].return_periods,
-                            resps[0].intensities * weight0
-                            + resps[1].intensities * weight1,
-                            units="m",
-                            path="jba",
-                        )
-                    elif isinstance(
-                        resps[0], HazardParameterDataResponse
-                    ) and isinstance(resps[1], HazardParameterDataResponse):
-                        result[req_weight.request] = HazardParameterDataResponse(
-                            resps[0].parameters * weight0
-                            + resps[1].parameters * weight1,
-                            units=resps[0].units,
-                            path="jba",
-                        )
-                    else:
-                        result[req_weight.request] = HazardDataFailedResponse(
-                            ValueError("no data returned")
-                        )
-            failures = [
-                r for r in result.values() if isinstance(r, HazardDataFailedResponse)
+            assert self.geocoder is not None
+            countries = [
+                country_mapping.get(c, c)
+                for c in await asyncio.to_thread(
+                    self.geocoder.get_countries, lats, lons
+                )
             ]
-            if any(failures):
-                logger.error(
-                    f"{len(failures)} errors in JBA batch (logs limited to first 3)"
+        # note a single cache entry can provide information for multiple requests, because each entry contains
+        # information about different hazards, or because points are close.
+        # for interpolation, the list of pillar years for different requested years is calculated
+        # ahead of time: e.g. 2036 needs 2030 and 2050 pillars.
+        requested_years = sorted(list(all_years))
+        pillars = ScenarioYears(id="ssp", years=list(self.pillar_years))
+        historical = ScenarioYear("historical", -1)
+        pillar_years_lookup = {
+            year: interpolate_year(
+                ScenarioYear("ssp", year), pillars, historical, self.historical_year
+            )
+            for year in requested_years
+        }
+        pillar_years_lookup[-1] = interpolate_year(
+            historical, pillars, historical, self.historical_year
+        )
+        cache_keys: set[JBACacheKey] = (
+            set()
+        )  # the set of cache keys to be requested (spatial key, year and scenario)
+        req_weights_set: List[
+            RequestWeights
+        ] = []  # for each request the linear combination of cache keys required (interpolating)
+        for reqs, country in zip(requests_by_location.values(), countries):
+            for req in reqs:
+                req_weights: List[Tuple[JBACacheKey, float]] = []
+                for weight in pillar_years_lookup[
+                    -1 if req.scenario == "historical" else req.year
+                ].weights:
+                    cache_key = JBACacheKey(
+                        jba_scenario=self.jba_scenario(
+                            req.scenario, weight[0].year, country
+                        ),
+                        spatial_key=self.cache_store.spatial_key(
+                            req.latitude, req.longitude, req.geometry
+                        ),
+                    )
+                    cache_key_country[cache_key] = country
+                    cache_keys.add(cache_key)
+                    req_weights.append((cache_key, weight[1]))
+                req_weights_set.append(RequestWeights(req, req_weights))
+        # requests are grouped by country
+        for cache_key in cache_keys:
+            country_code = cache_key_country[cache_key]
+            request_groups[RequestKey(country_code=country_code)].append(cache_key)
+        access_token = self.credentials.jba_access_key()
+        api_requests: List[APIRequest] = []
+        # contains the raw results for all cache keys, first populated by looking in cache
+        # and then by making API calls if needed.
+        cached_responses: Dict[JBACacheKey, Dict] = {}
+        for request_key, group_cache_keys in request_groups.items():
+            # process anything that can be sourced from the cache and identify extra API requests needed
+            group_cached_responses, api_requests_batch = self._identify_api_requests(
+                request_key, group_cache_keys, requests_by_location
+            )
+            cached_responses.update(group_cached_responses)
+            api_requests.extend(api_requests_batch)
+        # if there are extra API requests, make these (in parallel) and process to get results
+        n_requests = len([k for r in api_requests for k in r.spatial_keys])
+        logger.info(f"{n_requests} API requests total")
+        batches = [len(r.spatial_keys) for r in api_requests]
+        logger.info(f"{len(api_requests)} batches of requests of size ({batches})")
+        if n_requests > self.max_requests:
+            raise ValueError(
+                f"would make {n_requests} requests to JBA API, more than {self.max_requests} maximum. "
+                "provider_max_requests may be set incorrectly."
+            )
+        cached_responses.update(
+            await self._process_api_requests(api_requests, access_token)
+        )
+        for req_weight in req_weights_set:
+            resps = [
+                self._process_response(
+                    req_weight.request, cached_responses.get(key, {"stats": None})
                 )
-                errors = (str(i.error) for i in failures)
-                for _ in range(min(len(failures), 3)):
-                    logger.error(next(errors))
-            return result
+                for key, _ in req_weight.weights
+            ]
+            if len(resps) == 1:
+                result[req_weight.request] = resps[0]
+            elif len(resps) == 2:
+                weight0, weight1 = (
+                    req_weight.weights[0][1],
+                    req_weight.weights[1][1],
+                )
+                if isinstance(resps[0], HazardEventDataResponse) and isinstance(
+                    resps[1], HazardEventDataResponse
+                ):
+                    result[req_weight.request] = HazardEventDataResponse(
+                        resps[0].return_periods,
+                        resps[0].intensities * weight0 + resps[1].intensities * weight1,
+                        units="m",
+                        path="jba",
+                    )
+                elif isinstance(resps[0], HazardParameterDataResponse) and isinstance(
+                    resps[1], HazardParameterDataResponse
+                ):
+                    result[req_weight.request] = HazardParameterDataResponse(
+                        resps[0].parameters * weight0 + resps[1].parameters * weight1,
+                        units=resps[0].units,
+                        path="jba",
+                    )
+                else:
+                    result[req_weight.request] = HazardDataFailedResponse(
+                        ValueError("no data returned")
+                    )
+        failures = [
+            r for r in result.values() if isinstance(r, HazardDataFailedResponse)
+        ]
+        if any(failures):
+            logger.error(
+                f"{len(failures)} errors in JBA batch (logs limited to first 3)"
+            )
+            errors = (str(i.error) for i in failures)
+            for _ in range(min(len(failures), 3)):
+                logger.error(next(errors))
+        return result
 
     def jba_cache_id(self, key: JBACacheKey):
         # for dealing with buffer > 10 m, we have two options
@@ -610,7 +601,7 @@ class JBAHazardModel(HazardModel):
             )
         return cached_responses, batches
 
-    def _process_api_requests(
+    async def _process_api_requests(
         self,
         api_requests: Sequence[APIRequest],
         access_token: str,
@@ -618,18 +609,8 @@ class JBAHazardModel(HazardModel):
     ):
         """Make required requests to the API, updating cache and process responses."""
         check_total = 0
-        # the code is async in order to run a large number of API requests in parallel
-        # and may be called from within a thread-pool
-        # we could create a new event loop, e.g. via (later closing loop):
-        # loop = asyncio.new_event_loop()
-        # loop.run_until_complete(gather_requests(api_requests))
-        # but we prefer to use a single loop in away analagous to accessing Zarr data
-        # which uses the AsyncFileSystem of fsspec.
-        loop = get_loop()
         cached_responses = {}
-        with aiohttp.TCPConnector(
-            limit_per_host=concurrent_requests, loop=loop
-        ) as conn:
+        async with aiohttp.TCPConnector(limit_per_host=concurrent_requests) as conn:
             reruns: List[APIRequest] = []
 
             async def gather_requests(api_requests: Sequence[APIRequest]):
@@ -663,11 +644,7 @@ class JBAHazardModel(HazardModel):
 
                     await asyncio.gather(*(request_single(req) for req in api_requests))
 
-            run_result = run(gather_requests(api_requests), loop)
-            # run() catches exceptions raised inside the coroutine and returns them
-            # rather than re-raising, so we must check and re-raise explicitly here.
-            if isinstance(run_result, BaseException):
-                raise run_result
+            await gather_requests(api_requests)
             # for failed batches we run again, but as single requests
             # this is needed because the JBA API will fail for all locations
             # if a single one is out of bounds (e.g. off-shore wind farm)
@@ -689,9 +666,7 @@ class JBAHazardModel(HazardModel):
                 )
             ]
             if len(single_api_requests) > 0:
-                run_result = run(gather_requests(single_api_requests), loop)
-                if isinstance(run_result, BaseException):
-                    raise run_result
+                await gather_requests(single_api_requests)
             logger.info(f"Check: {check_total} requests made")
             logger.info(f"Check: {len(single_api_requests)} reruns")
         return cached_responses

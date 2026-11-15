@@ -9,7 +9,11 @@ import pytest
 import zarr
 import zarr.storage
 
-from physrisk.data.zarr_reader import ZarrReader, configure_zarr_concurrency
+from physrisk.data.zarr_reader import (
+    ZarrReader,
+    _chunk_limiter,
+    configure_zarr_concurrency,
+)
 from physrisk.utils.concurrency import available_cpu_count
 from tests.data.test_hazard_model_store import (
     TestData,
@@ -73,7 +77,8 @@ class SlowMemoryStore(zarr.storage.MemoryStore):
         return type(self)(self._store_dict, read_only=read_only, stats=self.stats)
 
     async def get(self, key, prototype=None, byte_range=None):
-        if key.rsplit("/", 1)[-1].startswith("."):  # metadata is not delayed
+        name = key.rsplit("/", 1)[-1]
+        if name.startswith(".") or name == "zarr.json":  # metadata is not delayed
             return await super().get(key, prototype, byte_range)
         stats = self.stats
         stats.in_flight += 1
@@ -201,9 +206,95 @@ def test_missing_array_is_not_cached():
     assert reader.array_info("not_there").shape == (1, 2, 2)
 
 
-def test_default_concurrency_sized_from_available_cpus():
+def test_default_concurrency_sized_from_available_cpus(restore_zarr_concurrency):
     configure_zarr_concurrency()
-    assert zarr.config.get("async.concurrency") == min(8, 2 * available_cpu_count())
-    configure_zarr_concurrency(async_concurrency=3)
-    assert zarr.config.get("async.concurrency") == 3
+    limit = max(16, 8 * available_cpu_count())
+    assert _chunk_limiter.limit == limit
+    # so that a single read can use all of the slots
+    assert zarr.config.get("async.concurrency") == limit
+    configure_zarr_concurrency(max_chunks_in_flight=5)
+    assert _chunk_limiter.limit == 5
+    assert zarr.config.get("async.concurrency") == 5
+
+
+@pytest.fixture
+def restore_zarr_concurrency():
+    yield
     configure_zarr_concurrency()
+
+
+def slow_store_with_chunked_arrays(chunks_per_side: dict) -> SlowMemoryStore:
+    """Arrays of 10 x 10 chunks, chunks_per_side[name] chunks along each side."""
+    store = SlowMemoryStore()
+    root = zarr.open_group(store=store, mode="w", zarr_format=2)
+    for name, n in chunks_per_side.items():
+        z = create_test_array(root, name, shape=(1, 10 * n, 10 * n), chunks=(1, 10, 10))
+        z.attrs["transform_mat3x3"] = [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            -1.0,
+            10.0 * n,
+            0.0,
+            0.0,
+            1.0,
+        ]
+        z[0, :, :] = 1.0
+    return store
+
+
+def chunk_centres(n: int):
+    """Longitudes and latitudes of a point in each chunk of an n x n-chunk array."""
+    lons = [10.0 * cx + 5.5 for cy in range(n) for cx in range(n)]
+    lats = [10.0 * n - 10.0 * cy - 5.5 for cy in range(n) for cx in range(n)]
+    return lons, lats
+
+
+def test_chunks_in_flight_limited_across_reads(restore_zarr_concurrency):
+    configure_zarr_concurrency(max_chunks_in_flight=3)
+    store = slow_store_with_chunked_arrays({f"array_{i}": 4 for i in range(4)})
+    store.stats.delay_s = 0.02
+    reader = ZarrReader(store)
+    lons, lats = chunk_centres(4)
+
+    async def read_all():
+        return await asyncio.gather(
+            *(reader.get_curves_async(f"array_{i}", lons, lats) for i in range(4))
+        )
+
+    for values, _, _, _ in asyncio.run(read_all()):
+        np.testing.assert_array_equal(values, np.ones((16, 1)))
+    # 4 reads of 16 chunks, each allowed 3 at a time: 3 in flight across all of them
+    assert store.stats.max_in_flight == 3
+
+
+def test_single_read_uses_all_slots(restore_zarr_concurrency):
+    configure_zarr_concurrency(max_chunks_in_flight=12)
+    store = slow_store_with_chunked_arrays({"array": 4})
+    store.stats.delay_s = 0.02
+    reader = ZarrReader(store)
+    values, _, _, _ = reader.get_curves("array", *chunk_centres(4))
+    np.testing.assert_array_equal(values, np.ones((16, 1)))
+    assert store.stats.max_in_flight == 12
+
+
+def test_chunk_limit_applies_to_reads_on_the_zarr_loop(restore_zarr_concurrency):
+    configure_zarr_concurrency(max_chunks_in_flight=1)
+    zarr.config.set({"async.concurrency": 4})
+    store = slow_store_with_chunked_arrays({"array": 2})
+    store.stats.delay_s = 0.02
+    reader = ZarrReader(store)
+    # reads for hazard models and for map tiles are limited
+    values, _, _, _ = reader.get_curves("array", *chunk_centres(2))
+    np.testing.assert_array_equal(values, np.ones((4, 1)))
+    assert store.stats.max_in_flight == 1
+    tile = reader.read("array", (0, slice(None), slice(None)))
+    np.testing.assert_array_equal(tile, np.ones((20, 20)))
+    assert store.stats.max_in_flight == 1
+    # the configured pipeline is used, but reads outside the zarr loop are limited
+    # only by zarr's own setting
+    z = zarr.open_array(store=store, path="array", mode="r")
+    assert type(z._async_array.codec_pipeline).__name__ == "LimitedCodecPipeline"
+    np.testing.assert_array_equal(z[0, :, :], np.ones((20, 20)))
+    assert store.stats.max_in_flight == 4

@@ -367,28 +367,53 @@ def test_impact_aggregation_multi_hazard() -> None:
         impacts, financial_model, scenario, key_year, insurance_provider=insurance
     )
 
+    # net-of-insurance results are keyed with mitigated=True
     np.testing.assert_allclose(
-        insured_results[RiskQuantityKey(QuantityType.DAMAGE, None, None, Wind)].mean,
+        insured_results[
+            RiskQuantityKey(QuantityType.DAMAGE, None, None, Wind, mitigated=True)
+        ].mean,
         0.0,
         atol=1e-9,
     )
     np.testing.assert_allclose(
         insured_results[
-            RiskQuantityKey(QuantityType.DAMAGE, None, None, RiverineInundation)
+            RiskQuantityKey(
+                QuantityType.DAMAGE, None, None, RiverineInundation, mitigated=True
+            )
         ].mean,
         expected_flood_damage,
         rtol=rtol,
     )
     np.testing.assert_allclose(
-        insured_results[RiskQuantityKey(QuantityType.DAMAGE, None, None, Fire)].mean,
+        insured_results[
+            RiskQuantityKey(QuantityType.DAMAGE, None, None, Fire, mitigated=True)
+        ].mean,
         expected_fire_damage,
         rtol=rtol,
     )
     np.testing.assert_allclose(
         insured_results[
-            RiskQuantityKey(QuantityType.REVENUE_LOSS, None, None, ChronicHeat)
+            RiskQuantityKey(
+                QuantityType.REVENUE_LOSS, None, None, ChronicHeat, mitigated=True
+            )
         ].mean,
         expected_heat_rev_loss,
+    )
+    # gross results are computed from the same events and so are identical to the
+    # results obtained without insurance
+    for key, quantity in results.items():
+        if key.asset is not None:
+            continue
+        np.testing.assert_array_equal(
+            insured_results[key].exceedance_curve.values,
+            quantity.exceedance_curve.values,
+        )
+        assert insured_results[key].mean == quantity.mean
+    # the capped portfolio total is also available both gross and net
+    gross_total = insured_results[RiskQuantityKey(QuantityType.DAMAGE)]
+    net_total = insured_results[RiskQuantityKey(QuantityType.DAMAGE, mitigated=True)]
+    np.testing.assert_allclose(
+        gross_total.mean - net_total.mean, expected_wind_damage, rtol=rtol
     )
 
 
@@ -657,6 +682,15 @@ def test_impact_aggregation_end_to_end() -> None:
     )
     res = requester.get_asset_impacts(request=req)
     assert res is not None
+    # no insurance supplied: only the gross portfolio measure is produced
+    assert res.risk_measures is not None
+    assert {m.key.measure_id for m in res.risk_measures.measures_for_portfolio} == {
+        "portfolio_measure_0"
+    }
+    assert (
+        "portfolio_measure_0_mitigated"
+        not in res.risk_measures.score_based_measure_set_defn.score_definitions
+    )
 
 
 def test_impact_aggregation_downtime_analytical_matches_mc() -> None:
@@ -1071,6 +1105,7 @@ def test_impact_aggregation_end_to_end_multi_hazard() -> None:
         calc_settings=CalcSettings(
             hazard_scope="RiverineInundation,Wind,Fire,ChronicHeat",
             vulnerability_curve_mapping="hazus",
+            include_mitigated=True,
         ),
         measures_specification=AssetMeasuresSpecification(
             measure_ids=["mean"],
@@ -1078,11 +1113,6 @@ def test_impact_aggregation_end_to_end_multi_hazard() -> None:
         ),
     )
     res = requester.get_asset_impacts(request=req)
-
-    import json
-
-    with open("result.json", "w") as f:
-        f.write(json.dumps(res.model_dump(exclude_none=True), indent=4))
 
     assert res.risk_measures is not None
     assert res.portfolio_impacts is not None
@@ -1126,19 +1156,28 @@ def test_impact_aggregation_end_to_end_multi_hazard() -> None:
 
     # Collect MC portfolio means from portfolio_impacts (ssp585 / 2050 only), split by
     # aggregation_id so the two sub-portfolios (None and 'group_b') are distinguishable.
+    # Gross (unmitigated) results only; net-of-insurance results are checked below.
     mc_by_key: dict[tuple[str, str, Optional[str]], float] = {
         (pi.key.hazard_type, pi.impact_type, pi.key.aggregation_id): pi.impact_mean
         for pi in res.portfolio_impacts
-        if pi.key.scenario_id == "ssp585" and pi.key.year == "2050"
+        if pi.key.scenario_id == "ssp585"
+        and pi.key.year == "2050"
+        and not pi.key.mitigated
+    }
+    mc_mitigated_by_key: dict[tuple[str, str, Optional[str]], float] = {
+        (pi.key.hazard_type, pi.impact_type, pi.key.aggregation_id): pi.impact_mean
+        for pi in res.portfolio_impacts
+        if pi.key.scenario_id == "ssp585" and pi.key.year == "2050" and pi.key.mitigated
     }
 
     # For each hazard / impact-type pair and each sub-portfolio:
     #   mean(per-asset fractional AAL, restricted to that sub-portfolio's assets)
     #   == MC portfolio mean for that sub-portfolio (within MC noise).
-    # Wind damage is fully insured (see `insurance` above), which the analytical drilldown
-    # does not model, so it is checked separately below instead of via this reconciliation.
+    # The gross results reconcile for all hazards, including the insured Wind; the
+    # analytical drilldown does not model insurance.
     for hazard, impact_type in [
         ("RiverineInundation", "damage"),
+        ("Wind", "damage"),
         ("Fire", "damage"),
         ("ChronicHeat", "disruption/revenue"),
     ]:
@@ -1160,16 +1199,20 @@ def test_impact_aggregation_end_to_end_multi_hazard() -> None:
                 f"mc={mc_by_key[k]:.6g}, analytical={analytical:.6g}",
             )
 
-    # Wind damage: fully insured, so the MC portfolio mean (net of claims) should be ~0 in
-    # both sub-portfolios, while the (uninsured) analytical AAL remains clearly positive.
+    # Wind damage: fully insured, so the MC portfolio mean net of claims should be ~0 in
+    # both sub-portfolios, while the gross mean remains clearly positive.
     for aggregation_id in (None, "group_b"):
         k = ("Wind", "damage", aggregation_id)
-        assert k in mc_by_key, f"MC portfolio mean missing for {k}"
-        np.testing.assert_allclose(mc_by_key[k], 0.0, atol=1e-6)
-        analytical = analytical_mean("Wind", "damage", aggregation_id)
-        assert analytical > 1e-5, (
-            f"expected positive uninsured analytical Wind AAL for group {aggregation_id!r}, got {analytical:.6g}"
+        assert k in mc_mitigated_by_key, f"MC mitigated portfolio mean missing for {k}"
+        np.testing.assert_allclose(mc_mitigated_by_key[k], 0.0, atol=1e-6)
+        assert mc_by_key[k] > 1e-5, (
+            f"expected positive gross Wind mean for group {aggregation_id!r}, got {mc_by_key[k]:.6g}"
         )
+    # uninsured hazards are unaffected by mitigation (the all-hazard totals, with
+    # hazard type "", include Wind and so are reduced)
+    for k, gross_mean in mc_by_key.items():
+        if k[0] not in ("Wind", ""):
+            np.testing.assert_allclose(mc_mitigated_by_key[k], gross_mean)
 
     # CompanyRiskMeasureCalculator must produce a portfolio-level score per sub-portfolio
     # (aggregation_id), not just a single score for the whole pool.
@@ -1181,6 +1224,61 @@ def test_impact_aggregation_end_to_end_multi_hazard() -> None:
     assert portfolio_score_aggregation_ids == {None, "group_b"}, (
         f"expected a portfolio score for each sub-portfolio, got {portfolio_score_aggregation_ids}"
     )
+
+    # With insurance supplied, each sub-portfolio has two portfolio scores, distinguished by
+    # measure_id: one gross (without mitigation) and one net of insurance (with mitigation).
+    portfolio_scores = {
+        (m.key.aggregation_id, m.key.measure_id): m
+        for m in res.risk_measures.measures_for_portfolio
+        if m.key.scenario_id == "ssp585" and m.key.year == "2050"
+    }
+    assert set(portfolio_scores.keys()) == {
+        (aggregation_id, measure_id)
+        for aggregation_id in (None, "group_b")
+        for measure_id in ("portfolio_measure_0", "portfolio_measure_0_mitigated")
+    }
+    for aggregation_id in (None, "group_b"):
+        gross = portfolio_scores[(aggregation_id, "portfolio_measure_0")]
+        net = portfolio_scores[(aggregation_id, "portfolio_measure_0_mitigated")]
+        # insurance can only reduce losses, so the net score cannot exceed the gross score
+        assert net.measure_0 <= gross.measure_0
+    # both measure IDs are defined, with distinct definitions
+    score_definitions = res.risk_measures.score_based_measure_set_defn.score_definitions
+    assert (
+        score_definitions["portfolio_measure_0"].underlying_measures[0].measure_id
+        == "portfolio_level_score"
+    )
+    assert (
+        score_definitions["portfolio_measure_0_mitigated"]
+        .underlying_measures[0]
+        .measure_id
+        == "portfolio_level_score_mitigated"
+    )
+
+    # Insurance is configured, but mitigated results are only returned if requested: with
+    # include_mitigated off, only the gross measures and impacts are produced.
+    req.calc_settings.include_mitigated = False
+    res_gross = requester.get_asset_impacts(request=req)
+    assert res_gross.risk_measures is not None
+    assert res_gross.portfolio_impacts is not None
+    assert {
+        m.key.measure_id for m in res_gross.risk_measures.measures_for_portfolio
+    } == {"portfolio_measure_0"}
+    assert (
+        "portfolio_measure_0_mitigated"
+        not in res_gross.risk_measures.score_based_measure_set_defn.score_definitions
+    )
+    assert not any(pi.key.mitigated for pi in res_gross.portfolio_impacts)
+    # the gross portfolio score is the same whether or not mitigated results are requested
+    gross_scores = {
+        (m.key.scenario_id, m.key.year, m.key.aggregation_id): m.measure_0
+        for m in res_gross.risk_measures.measures_for_portfolio
+    }
+    assert gross_scores == {
+        (m.key.scenario_id, m.key.year, m.key.aggregation_id): m.measure_0
+        for m in res.risk_measures.measures_for_portfolio
+        if m.key.measure_id == "portfolio_measure_0"
+    }
 
 
 def test_portfolio_semi_standard_deviation() -> None:

@@ -149,6 +149,28 @@ class _SimulationInputs:
     year: int  # resolved key_year, used for frac_disruption_to_revenue_loss
 
 
+class _SimulationAggregators:
+    """The set of aggregators used in the simulation for one variant of the losses
+    (gross, or net of mitigation)."""
+
+    def __init__(self, n_events: int):
+        # aggregated impacts for batch of events for (asset, quantity) combinations
+        self.by_asset_batch = Aggregator(key_provider=ByAssetAggregationKeys())
+        # aggregated impacts for all events for (hazard, quantity) combinations
+        self.by_hazard = Aggregator(
+            key_provider=HazardQuantityAggregationKeys(), size=(n_events,)
+        )
+        # aggregated impacts for all events, summed over assets and hazards per (quantity, aggregation_id),
+        # after capping per-asset totals at TIV / revenue
+        self.portfolio = Aggregator(
+            key_provider=PortfolioAggregationKeys(), size=(n_events,)
+        )
+
+    def results(self, mitigated: bool) -> dict[RiskQuantityKey, np.ndarray]:
+        pools = {**self.by_hazard.aggregation_pools, **self.portfolio.aggregation_pools}
+        return {k._replace(mitigated=mitigated): v for k, v in pools.items()}
+
+
 def _classify_impacts(
     impacts: dict[ImpactKey, list[AssetImpactResult]],
     scenario: str,
@@ -335,20 +357,21 @@ def _run_simulation(
     event_batch_sz: int = 1000,
     insurance_provider: Optional[InsuranceDataProvider] = None,
 ) -> dict[RiskQuantityKey, np.ndarray]:
-    """Run Monte Carlo simulation; return per-event impact arrays keyed by RiskQuantityKey."""
+    """Run Monte Carlo simulation; return per-event impact arrays keyed by RiskQuantityKey.
+    Gross (unmitigated) losses are always returned. If an insurance provider is supplied,
+    losses net of insurance claim payments are also returned, keyed with mitigated=True;
+    these are computed from the same sampled events as the gross losses."""
     severity_provider = UncorrelatedEventSeverityProvider(
         {h: len(v) for h, v in inputs.idx_in_all_acute_impacted_assets.items()}
     )
     generator = np.random.default_rng(seed=111)
     insurance_generator = np.random.default_rng(seed=111)
 
-    by_asset_batch_agg = Aggregator(key_provider=ByAssetAggregationKeys())
-    by_hazard_agg = Aggregator(
-        key_provider=HazardQuantityAggregationKeys(), size=(n_events,)
+    gross_aggs = _SimulationAggregators(n_events)
+    net_aggs = (
+        _SimulationAggregators(n_events) if insurance_provider is not None else None
     )
-    portfolio_agg = Aggregator(
-        key_provider=PortfolioAggregationKeys(), size=(n_events,)
-    )
+    all_aggs = [gross_aggs] + ([net_aggs] if net_aggs is not None else [])
 
     logger.info(
         f"Starting to aggregate impacts for {n_events} events, in batches of {event_batch_sz}, "
@@ -363,7 +386,8 @@ def _run_simulation(
 
     # for a batch of events
     for event_start in range(0, n_events, event_batch_sz):
-        by_asset_batch_agg.zero()
+        for aggs in all_aggs:
+            aggs.by_asset_batch.zero()
         event_end = min(event_start + event_batch_sz, n_events)
 
         # insurance model: for each asset in the batch we draw variates
@@ -411,78 +435,87 @@ def _run_simulation(
                                 asset, disruption_samples, inputs.year, "EUR"
                             )
                         )
-                    # mitigation of losses through insurance claims (applied once to the
-                    # combined pre-insurance value, i.e. one policy per quantity type):
-                    damage = damage - claim_payment(
-                        damage,
-                        idx_in_all_acute_impacted_assets,
-                        hazard_type,
-                        QuantityType.DAMAGE,
-                    )
-                    revenue_loss = revenue_loss - claim_payment(
-                        revenue_loss,
-                        idx_in_all_acute_impacted_assets,
+                    losses = [(gross_aggs, damage, revenue_loss)]
+                    if net_aggs is not None:
+                        # mitigation of losses through insurance claims (applied once to the
+                        # combined pre-insurance value, i.e. one policy per quantity type):
+                        net_damage = damage - claim_payment(
+                            damage,
+                            idx_in_all_acute_impacted_assets,
+                            hazard_type,
+                            QuantityType.DAMAGE,
+                        )
+                        net_revenue_loss = revenue_loss - claim_payment(
+                            revenue_loss,
+                            idx_in_all_acute_impacted_assets,
+                            hazard_type,
+                            QuantityType.REVENUE_LOSS,
+                        )
+                        losses.append((net_aggs, net_damage, net_revenue_loss))
+
+                    for aggs, damage_val, revenue_loss_val in losses:
+                        for val, qt in [
+                            (damage_val, QuantityType.DAMAGE),
+                            (revenue_loss_val, QuantityType.REVENUE_LOSS),
+                        ]:
+                            # aggregated impacts for all events for (hazard, quantity) combinations - not asset, important to reduce memory use
+                            aggs.by_hazard.aggregate(
+                                asset,
+                                hazard_type,
+                                qt,
+                                val,
+                                slice=(slice(event_start, event_end),),
+                            )
+                            # aggregated impacts for batch of events for (asset, quantity) combinations - more combinations, but only for the batch
+                            aggs.by_asset_batch.aggregate(asset, hazard_type, qt, val)
+
+        for aggs in all_aggs:
+            # chronic impacts applies to revenue loss (not mitigated by insurance):
+            for hazard_type in inputs.chronic_hazards_in_scope:
+                chronic_impacts = inputs.chronic_impacts_sorted[hazard_type]
+                for idx, asset in enumerate(inputs.all_assets_list):
+                    aggs.by_hazard.aggregate(
+                        asset,
                         hazard_type,
                         QuantityType.REVENUE_LOSS,
+                        chronic_impacts[idx],
+                        slice=(slice(event_start, event_end),),
+                    )
+                    aggs.by_asset_batch.aggregate(
+                        asset,
+                        hazard_type,
+                        QuantityType.REVENUE_LOSS,
+                        chronic_impacts[idx],
                     )
 
-                    for val, qt in [
-                        (damage, QuantityType.DAMAGE),
-                        (revenue_loss, QuantityType.REVENUE_LOSS),
-                    ]:
-                        # aggregated impacts for all events for (hazard, quantity) combinations - not asset, important to reduce memory use
-                        by_hazard_agg.aggregate(
-                            asset,
-                            hazard_type,
-                            qt,
-                            val,
-                            slice=(slice(event_start, event_end),),
-                        )
-                        # aggregated impacts for batch of events for (asset, quantity) combinations - more combinations, but only for the batch
-                        by_asset_batch_agg.aggregate(asset, hazard_type, qt, val)
-
-        # chronic impacts applies to revenue loss:
-        for hazard_type in inputs.chronic_hazards_in_scope:
-            chronic_impacts = inputs.chronic_impacts_sorted[hazard_type]
-            for idx, asset in enumerate(inputs.all_assets_list):
-                by_hazard_agg.aggregate(
-                    asset,
-                    hazard_type,
-                    QuantityType.REVENUE_LOSS,
-                    chronic_impacts[idx],
-                    slice=(slice(event_start, event_end),),
-                )
-                by_asset_batch_agg.aggregate(
-                    asset, hazard_type, QuantityType.REVENUE_LOSS, chronic_impacts[idx]
-                )
-
-        # cap per-asset totals (aggregated over hazards) at TIV / revenue
-        for qt, cap in [
-            (QuantityType.DAMAGE, asset_tiv),
-            (QuantityType.REVENUE_LOSS, asset_revenue),
-            (QuantityType.COSTS_INCREASE, asset_revenue),
-        ]:
-            for asset in inputs.all_assets:
-                capped = np.minimum(
-                    by_asset_batch_agg.aggregation_pools.get(
-                        RiskQuantityKey(quantity=qt, asset=asset), np.array(0.0)
-                    ),
-                    cap[asset],
-                )
-                portfolio_agg.aggregate(
-                    asset,
-                    None,
-                    qt,
-                    capped,
-                    slice=(slice(event_start, event_end),),
-                )
+            # cap per-asset totals (aggregated over hazards) at TIV / revenue
+            for qt, cap in [
+                (QuantityType.DAMAGE, asset_tiv),
+                (QuantityType.REVENUE_LOSS, asset_revenue),
+                (QuantityType.COSTS_INCREASE, asset_revenue),
+            ]:
+                for asset in inputs.all_assets:
+                    capped = np.minimum(
+                        aggs.by_asset_batch.aggregation_pools.get(
+                            RiskQuantityKey(quantity=qt, asset=asset), np.array(0.0)
+                        ),
+                        cap[asset],
+                    )
+                    aggs.portfolio.aggregate(
+                        asset,
+                        None,
+                        qt,
+                        capped,
+                        slice=(slice(event_start, event_end),),
+                    )
 
         if (event_end // event_batch_sz) % 20 == 0:
             logger.info(f"Processed {event_end} events out of {n_events}.")
 
     # return combined by-hazard and capped 'total' results (one 'total' per portfolio, i.e. per aggregation_id)
-    all_results = by_hazard_agg.aggregation_pools
-    all_results.update(portfolio_agg.aggregation_pools)
+    all_results = gross_aggs.results(mitigated=False)
+    if net_aggs is not None:
+        all_results.update(net_aggs.results(mitigated=True))
     return all_results
 
 

@@ -38,14 +38,18 @@ class AveragingAssetBasedPortfolioRiskMeasureCalculator(PortfolioRiskMeasureCalc
             ],
         )
 
-    def get_definition(self, hazard_type: Optional[type[Hazard]] = None):
-        return self._definition
+    def get_definition(
+        self, hazard_type: Optional[type[Hazard]] = None, mitigated: bool = False
+    ):
+        # no measure is calculated net of mitigation
+        return None if mitigated else self._definition
 
     def calculate_risk_measures(
         self,
         financial_data_provider: FinancialDataProvider,
         asset_level_measures: dict[MeasureKey, Measure] = {},
         impacts: dict[ImpactKey, list[AssetImpactResult]] = {},
+        include_mitigated: bool = False,
     ) -> tuple[
         dict[MeasureKey, Measure],
         dict[tuple[str, int | None], dict[RiskQuantityKey, Quantity]],

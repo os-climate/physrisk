@@ -60,6 +60,8 @@ class RiskQuantityKey(NamedTuple):
     asset: Optional[Asset] = None
     aggregation_id: Optional[str] = None
     hazard_type: Optional[type[Hazard]] = None
+    # True for quantities net of mitigation (e.g. insurance claim payments); False for gross
+    mitigated: bool = False
 
 
 @dataclass(frozen=True)
@@ -81,6 +83,7 @@ class MeasureKey(NamedTuple):
     e.g. for ChronicHeat, multiple hazard indicators may be used to capture different mechanisms of impact.
     aggregation_id identifies the sub-portfolio (asset 'aggregation_id') a portfolio-level measure belongs to;
     None for asset-level measures and for the pooled portfolio total.
+    mitigated is True for measures calculated net of mitigation (e.g. insurance claim payments).
     """
 
     asset: Optional[Asset]
@@ -89,6 +92,7 @@ class MeasureKey(NamedTuple):
     hazard_type: Optional[Type[Hazard]]
     hazard_indicator_id: Optional[str] = None
     aggregation_id: Optional[str] = None
+    mitigated: bool = False
 
 
 @dataclass
@@ -106,15 +110,24 @@ class PortfolioRiskMeasureCalculator(Protocol):
     """
 
     def get_definition(
-        self, hazard_type: Optional[type[Hazard]] = None
-    ) -> ScoreBasedRiskMeasureDefinition: ...
+        self, hazard_type: Optional[type[Hazard]] = None, mitigated: bool = False
+    ) -> Optional[ScoreBasedRiskMeasureDefinition]:
+        """Definition of the portfolio-level measure. If mitigated is True, the definition of the
+        measure calculated net of mitigation (e.g. insurance claim payments), or None if no such
+        measure is calculated."""
+        ...
 
     def calculate_risk_measures(
         self,
         financial_data_provider: FinancialDataProvider,
         asset_level_measures: dict[MeasureKey, Measure] = {},
         impacts: dict[ImpactKey, list[AssetImpactResult]] = {},
-    ) -> tuple[dict[MeasureKey, Measure], PortfolioQuantities]: ...
+        include_mitigated: bool = False,
+    ) -> tuple[dict[MeasureKey, Measure], PortfolioQuantities]:
+        """Calculate portfolio-level measures. If include_mitigated is True, measures and quantities
+        calculated net of mitigation (e.g. insurance claim payments) are also returned, where the
+        calculator supports this."""
+        ...
 
     def asset_level_measures_required(self) -> bool: ...
 
@@ -124,7 +137,11 @@ class PortfolioRiskMeasureCalculator(Protocol):
 class NullAssetBasedPortfolioRiskMeasureCalculator(PortfolioRiskMeasureCalculator):
     """Calculates portfolio score-based risk measures from asset-level score-based risk measures only."""
 
-    def get_definition(self, hazard_type: Optional[Type[Hazard]] = None):
+    def get_definition(
+        self, hazard_type: Optional[Type[Hazard]] = None, mitigated: bool = False
+    ):
+        if mitigated:
+            return None
         return ScoreBasedRiskMeasureDefinition(
             hazard_types=[], values=[], underlying_measures=[]
         )
@@ -134,6 +151,7 @@ class NullAssetBasedPortfolioRiskMeasureCalculator(PortfolioRiskMeasureCalculato
         financial_data_provider: FinancialDataProvider,
         asset_level_measures: dict[MeasureKey, Measure] = {},
         impacts: dict[ImpactKey, list[AssetImpactResult]] = {},
+        include_mitigated: bool = False,
     ) -> tuple[dict[MeasureKey, Measure], PortfolioQuantities]:
         return {}, {}
 
@@ -169,6 +187,7 @@ class RiskModel:
         prosp_scens: Sequence[str],
         years: Sequence[int],
         financial_data_provider: FinancialDataProvider,
+        include_mitigated: bool = False,
     ):
         """Calculate risk measures for a set of assets, scenarios, and years."""
         ...
@@ -304,6 +323,7 @@ class PortfolioRiskModel(RiskModel):
         self,
         assets: Sequence[Asset],
         hazard_type_indicators: dict[type[Hazard], set[str]] = {},
+        include_mitigated: bool = False,
     ) -> tuple[
         dict[type[Hazard], list[str]],
         dict[ScoreBasedRiskMeasureDefinition, str],
@@ -350,9 +370,18 @@ class PortfolioRiskModel(RiskModel):
             self._portfolio_measure_calculator,
             NullAssetBasedPortfolioRiskMeasureCalculator,
         ):
-            measure_id_lookup[self._portfolio_measure_calculator.get_definition()] = (
-                "portfolio_measure_0"
-            )
+            definition = self._portfolio_measure_calculator.get_definition()
+            if definition is not None:
+                measure_id_lookup[definition] = "portfolio_measure_0"
+            # measure net of mitigation, if requested, is distinguished by its own measure ID
+            if include_mitigated:
+                mitigated_definition = (
+                    self._portfolio_measure_calculator.get_definition(mitigated=True)
+                )
+                if mitigated_definition is not None:
+                    measure_id_lookup[mitigated_definition] = (
+                        "portfolio_measure_0_mitigated"
+                    )
 
         def get_measure_id(
             measure_calc: Union[RiskMeasureCalculator, None],
@@ -391,6 +420,7 @@ class PortfolioRiskModel(RiskModel):
         scenarios: Sequence[str],
         years: Sequence[int],
         financial_data_provider: FinancialDataProvider = EqualDistributionFinancialDataProvider(),
+        include_mitigated: bool = False,
     ) -> tuple[
         dict[ImpactKey, list[AssetImpactResult]],
         dict[MeasureKey, Measure],
@@ -410,6 +440,8 @@ class PortfolioRiskModel(RiskModel):
             assets (Sequence[Asset]): List of assets.
             scenarios (Sequence[str]): List of prospective scenarios.
             years (Sequence[int]): List of years for the calculations.
+            include_mitigated (bool): If True, also return portfolio-level measures and quantities
+                calculated net of mitigation (e.g. insurance claim payments), where supported.
 
         Return:
             Tuple[
@@ -489,7 +521,10 @@ class PortfolioRiskModel(RiskModel):
         # calculate portfolio measures
         portfolio_measures, portfolio_quantities = (
             self._portfolio_measure_calculator.calculate_risk_measures(
-                financial_data_provider, aggregated_measures, impacts
+                financial_data_provider,
+                aggregated_measures,
+                impacts,
+                include_mitigated=include_mitigated,
             )
         )
         aggregated_measures.update(portfolio_measures)

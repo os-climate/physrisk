@@ -141,19 +141,44 @@ class CompanyRiskMeasureCalculator(PortfolioRiskMeasureCalculator):
                 )
             ],
         )
+        # counterpart of the measure above, calculated net of insurance claim payments
+        self._mitigated_definition = ScoreBasedRiskMeasureDefinition(
+            hazard_types=[],
+            values=[],
+            underlying_measures=[
+                RiskMeasureDefinition(
+                    measure_id="portfolio_level_score_mitigated",
+                    label="Aggregated damage/business disruption score, net of insurance.",
+                    description=(
+                        "Portfolio level score inferred from aggregated damage and business disruption, "
+                        "net of insurance claim payments."
+                    ),
+                    units="",
+                )
+            ],
+        )
 
-    def get_definition(self, hazard_type: Optional[type[Hazard]] = None):
-        return self._definition
+    def get_definition(
+        self, hazard_type: Optional[type[Hazard]] = None, mitigated: bool = False
+    ) -> Optional[ScoreBasedRiskMeasureDefinition]:
+        if not mitigated:
+            return self._definition
+        return (
+            self._mitigated_definition if self._insurance_provider is not None else None
+        )
 
     def calculate_risk_measures(
         self,
         financial_data_provider: FinancialDataProvider,
         asset_level_measures: dict[MeasureKey, Measure] = {},
         impacts: dict[ImpactKey, list[AssetImpactResult]] = {},
+        include_mitigated: bool = False,
     ) -> tuple[
         dict[MeasureKey, Measure],
         dict[tuple[str, int | None], dict[RiskQuantityKey, Quantity]],
     ]:
+        # mitigation through insurance is only modelled if mitigated results are requested
+        insurance_provider = self._insurance_provider if include_mitigated else None
         financial_model = DefaultFinancialModel(
             financial_data_provider, downtime_config=self._downtime_config
         )
@@ -174,7 +199,7 @@ class CompanyRiskMeasureCalculator(PortfolioRiskMeasureCalculator):
                 year,
                 n_events=self._n_events,
                 event_batch_sz=self._event_batch_sz,
-                insurance_provider=self._insurance_provider,
+                insurance_provider=insurance_provider,
             )
             all_portfolio_quantities[(scenario, year)] = portfolio_quantities
             aggregation_ids = sorted(
@@ -185,27 +210,49 @@ class CompanyRiskMeasureCalculator(PortfolioRiskMeasureCalculator):
                 },
                 key=lambda a: a or "",
             )
+            # gross scores always; scores net of insurance also, if requested and supplied
+            mitigated_definition = (
+                self.get_definition(mitigated=True) if include_mitigated else None
+            )
+            definitions = [(False, self._definition)] + (
+                [(True, mitigated_definition)]
+                if mitigated_definition is not None
+                else []
+            )
             for aggregation_id in aggregation_ids:
-                damage, revenue_loss, costs_increase = (
-                    portfolio_quantities[
-                        RiskQuantityKey(quantity=qt, aggregation_id=aggregation_id)
-                    ]
-                    for qt in [
-                        QuantityType.DAMAGE,
-                        QuantityType.REVENUE_LOSS,
-                        QuantityType.COSTS_INCREASE,
-                    ]
-                )
-                score = self.calculate_scores(
-                    damage.values, revenue_loss.values, costs_increase.values
-                )
-                measures[
-                    MeasureKey(None, scenario, year, None, None, aggregation_id)
-                ] = Measure(
-                    score=Category(round(score)),
-                    measure_0=score,
-                    definition=self._definition,
-                )
+                for mitigated, definition in definitions:
+                    damage, revenue_loss, costs_increase = (
+                        portfolio_quantities[
+                            RiskQuantityKey(
+                                quantity=qt,
+                                aggregation_id=aggregation_id,
+                                mitigated=mitigated,
+                            )
+                        ]
+                        for qt in [
+                            QuantityType.DAMAGE,
+                            QuantityType.REVENUE_LOSS,
+                            QuantityType.COSTS_INCREASE,
+                        ]
+                    )
+                    score = self.calculate_scores(
+                        damage.values, revenue_loss.values, costs_increase.values
+                    )
+                    measures[
+                        MeasureKey(
+                            None,
+                            scenario,
+                            year,
+                            None,
+                            None,
+                            aggregation_id,
+                            mitigated=mitigated,
+                        )
+                    ] = Measure(
+                        score=Category(round(score)),
+                        measure_0=score,
+                        definition=definition,
+                    )
         return measures, all_portfolio_quantities
 
     def asset_level_measures_required(self) -> bool:

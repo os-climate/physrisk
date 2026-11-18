@@ -3,7 +3,6 @@ import sys
 from dataclasses import dataclass
 from typing import (
     Dict,
-    MutableMapping,
     Optional,
     Sequence,
     Type,
@@ -12,6 +11,7 @@ from typing import (
 import numpy as np
 from shapely import Point
 from typing_extensions import Protocol
+from zarr.storage import StoreLike
 
 from physrisk.api.v1.hazard_data import HazardResource
 from physrisk.kernel.hazards import Hazard
@@ -119,7 +119,7 @@ class CascadingHazardDataProvider:
         resource_selector: HazardResourceSelector,
         scenario_year_resolver: ScenarioYearResolver,
         *,
-        store: Optional[MutableMapping] = None,
+        store: Optional[StoreLike] = None,
         zarr_reader: Optional[ZarrReader] = None,
         interpolation: Optional[str] = "floor",
     ):
@@ -129,7 +129,7 @@ class CascadingHazardDataProvider:
             hazard_type (Type[Hazard]): Hazard type.
             resource_selector: Selects hazard resources in cascade order.
             scenario_year_resolver: Joint scenario selection and interpolation policy.
-            store (Optional[MutableMapping], optional): Zarr store instance. Defaults to None.
+            store (Optional[StoreLike], optional): Zarr store instance. Defaults to None.
             zarr_reader (Optional[ZarrReader], optional): ZarrReader instance. Defaults to None.
             interpolation (Optional[str], optional): Interpolation type. Defaults to "floor".
 
@@ -222,8 +222,7 @@ class CascadingHazardDataProvider:
                 coverage_source.scenario, coverage_source.year
             )
             try:
-                in_bounds_mask = await asyncio.to_thread(
-                    self._reader.in_bounds,
+                in_bounds_mask = await self._reader.in_bounds_async(
                     coverage_path,
                     longitudes[unprocessed_mask],
                     latitudes[unprocessed_mask],
@@ -428,8 +427,12 @@ class CascadingHazardDataProvider:
     ):
         in_bounds_mask = None
         if buffer is None:
-            values, in_bounds_mask, indices, units = await asyncio.to_thread(
-                self._reader.get_curves,
+            (
+                values,
+                in_bounds_mask,
+                indices,
+                units,
+            ) = await self._reader.get_curves_async(
                 concrete_path,
                 longitudes,
                 latitudes,
@@ -440,8 +443,7 @@ class CascadingHazardDataProvider:
                 raise Exception(
                     "The buffer must be an integer between 0 and 1000 metres."
                 )
-            values, indices, units = await asyncio.to_thread(
-                self._reader.get_max_curves,
+            values, indices, units = await self._reader.get_max_curves_async(
                 concrete_path,
                 [
                     (

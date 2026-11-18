@@ -2,7 +2,6 @@ from itertools import chain
 
 import numpy as np
 import zarr
-import zarr.core
 
 from ..utils.lazy import lazy_import
 
@@ -17,7 +16,7 @@ def zarr_read(path, longitudes, latitudes):
         scale = tif.geotiff_metadata["ModelPixelScale"]
         tie_point = tif.geotiff_metadata["ModelTiepoint"]
         store = tif.series[0].aszarr()
-        zarray = zarr.open(store, mode="r")
+        zarray = zarr.open_array(store, mode="r")
         # shape: List[int] = tif.series[0].shape
         i, j, k, x, y, z = tie_point[0:6]
         sx, sy, sz = scale
@@ -27,8 +26,7 @@ def zarr_read(path, longitudes, latitudes):
         coords = np.vstack((longitudes, latitudes, np.ones(len(longitudes))))
         frac_image_coords = mat @ coords
         image_coords = np.floor(frac_image_coords).astype(int)
-        assert zarray is zarr.core.Array
-        data = zarray.get_coordinate_selection((image_coords[1, :], image_coords[0, :]))  # type: ignore
+        data = zarray.get_coordinate_selection((image_coords[1, :], image_coords[0, :]))
         return data
 
 

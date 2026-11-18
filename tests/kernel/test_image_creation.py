@@ -31,6 +31,7 @@ from physrisk.hazard_models.core_hazards import (
 )
 from physrisk.kernel.hazard_model import HazardModelFactory, Tile
 from physrisk.kernel.hazards import HazardKind
+from tests.data.test_hazard_model_store import create_test_array
 
 
 @pytest.mark.parametrize(
@@ -132,9 +133,9 @@ def test_to_rgba_handles_all_nodata():
 
 
 def test_to_image_rejects_unsupported_dimensions(mock_inventory):
-    store = zarr.storage.MemoryStore(root="hazard.zarr")
-    root = zarr.open(store=store, mode="w")
-    root.create_dataset("map", shape=(2, 2), dtype="f4")  # type: ignore
+    store = zarr.storage.MemoryStore()
+    root = zarr.open_group(store=store, mode="w", zarr_format=2)
+    create_test_array(root, "map", shape=(2, 2), dtype="f4")
     creator = ImageCreator(
         mock_inventory, ZarrReader(store), InterpolatedYearResolver()
     )
@@ -206,13 +207,14 @@ def mock_inventory():
 
 @pytest.fixture
 def zarr_store():
-    store = zarr.storage.MemoryStore(root="hazard.zarr")
-    root = zarr.open(store=store, mode="w")
+    store = zarr.storage.MemoryStore()
+    root = zarr.open_group(store=store, mode="w", zarr_format=2)
 
     im = np.array([[1.2, 0.8], [0.5, 0.4]])
     im2 = np.array([[1.2 + 1.0, 0.8 + 1.0], [0.5 + 1.0, 0.4 + 1.0]])
 
-    z = root.create_dataset(  # type: ignore
+    z = create_test_array(
+        root,
         "test_array_ssp585_2030/1",
         shape=(1, im.shape[0], im.shape[1]),
         chunks=(1, im.shape[0], im.shape[1]),
@@ -220,7 +222,8 @@ def zarr_store():
     )
     z[0, :, :] = im
 
-    z2 = root.create_dataset(  # type: ignore
+    z2 = create_test_array(
+        root,
         "test_array_ssp585_2050/1",
         shape=(1, im2.shape[0], im2.shape[1]),
         chunks=(1, im2.shape[0], im2.shape[1]),
@@ -332,9 +335,9 @@ def test_image_info_includes_tile_size(mock_inventory, zarr_store, monkeypatch):
     ],
 )
 def test_image_info_available_index_values(map_index_values, expected_available):
-    store = zarr.storage.MemoryStore(root="hazard.zarr")
-    root = zarr.open(store=store, mode="w")
-    z = root.create_dataset("test_array_ssp585_2030/1", shape=(3, 2, 2), dtype="f4")  # type: ignore
+    store = zarr.storage.MemoryStore()
+    root = zarr.open_group(store=store, mode="w", zarr_format=2)
+    z = create_test_array(root, "test_array_ssp585_2030/1", shape=(3, 2, 2), dtype="f4")
     z.attrs["index_values"] = [10, 100, 1000]
     resource = HazardResource(
         path="test_array_{scenario}_{year}",
@@ -438,7 +441,7 @@ def test_write_file(mock_inventory):
     # useful for testing image generation
     test_output_dir = "{set me}"
     test_path = "wildfire/jupiter/v1/wildfire_probability_ssp585_2050_map"
-    store = zarr.DirectoryStore(
+    store = zarr.storage.LocalStore(
         os.path.join(test_output_dir, "hazard_test", "hazard.zarr")
     )
     creator = ImageCreator(

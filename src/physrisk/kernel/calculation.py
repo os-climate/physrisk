@@ -32,13 +32,6 @@ from physrisk.vulnerability_models.thermal_power_generation_models import (
     ThermalPowerGenerationWaterTemperatureModel,
 )
 
-from .assets import (
-    IndustrialActivity,
-    PowerGeneratingAsset,
-    RealEstateAsset,
-    TestAsset,
-    ThermalPowerGeneratingAsset,
-)
 from .hazard_model import HazardModel
 from .vulnerability_model import VulnerabilityModelBase
 
@@ -65,64 +58,34 @@ def placeholder_models() -> Sequence[VulnerabilityModelBase]:
     ]
 
 
-def default_vulnerability_models() -> Dict[type, list[VulnerabilityModelBase]]:
-    """Base set of programmatic models; other models are added on top of these
-    There is a specific treatment for power generating assets and real estate assets.
+def default_programmatic_models() -> list[VulnerabilityModelBase]:
+    """Base set of programmatic models; other models are added on top of these.
+    Each model determines the assets to which it applies.
     """
-    return {
-        ThermalPowerGeneratingAsset: [
-            ThermalPowerGenerationAirTemperatureModel(),
-            ThermalPowerGenerationCoastalInundationModel(),
-            ThermalPowerGenerationDroughtModel(),
-            ThermalPowerGenerationRiverineInundationModel(),
-            ThermalPowerGenerationWaterStressModel(),
-            ThermalPowerGenerationWaterTemperatureModel(),
-        ],
-    }
+    return [
+        ThermalPowerGenerationAirTemperatureModel(),
+        ThermalPowerGenerationCoastalInundationModel(),
+        ThermalPowerGenerationDroughtModel(),
+        ThermalPowerGenerationRiverineInundationModel(),
+        ThermalPowerGenerationWaterStressModel(),
+        ThermalPowerGenerationWaterTemperatureModel(),
+    ]
 
 
-def alternate_default_vulnerability_models_scores() -> Dict[
-    type, Sequence[VulnerabilityModelBase]
-]:
-    """A vulnerability models set that combines loss-based and exposure-based scores."""
-    return {
-        Asset: [
-            # This is for a generic 'unknown' asset. To be replaced by a config-based model (when complete)
-            # but for now, treat like a real estate asset.
-            RealEstateCoastalInundationModel(),
-            RealEstateRiverineInundationModel(),
-            GenericTropicalCycloneModel(),
-            PlaceholderVulnerabilityModel("fire_probability", Fire, ImpactType.damage),
-            PlaceholderVulnerabilityModel(
-                "days/above/35c", ChronicHeat, ImpactType.damage
-            ),
-            PlaceholderVulnerabilityModel("days/above/5cm", Hail, ImpactType.damage),
-            PlaceholderVulnerabilityModel(
-                "months/spei3m/below/-2", Drought, ImpactType.damage
-            ),
-            PlaceholderVulnerabilityModel(
-                "max/daily/water_equivalent", Precipitation, ImpactType.damage
-            ),
-        ],
-        PowerGeneratingAsset: [pgam.InundationModel()],
-        RealEstateAsset: [
-            RealEstateCoastalInundationModel(),
-            RealEstateRiverineInundationModel(),
-            GenericTropicalCycloneModel(),
-            CoolingModel(),
-        ],
-        IndustrialActivity: [ChronicHeatGZNModel()],
-        ThermalPowerGeneratingAsset: [
-            ThermalPowerGenerationAirTemperatureModel(),
-            ThermalPowerGenerationCoastalInundationModel(),
-            ThermalPowerGenerationDroughtModel(),
-            ThermalPowerGenerationRiverineInundationModel(),
-            ThermalPowerGenerationWaterStressModel(),
-            ThermalPowerGenerationWaterTemperatureModel(),
-            GenericTropicalCycloneModel(),
-        ],
-        TestAsset: [pgam.TemperatureModel()],
-    }
+def alternate_programmatic_models_scores() -> list[VulnerabilityModelBase]:
+    """A vulnerability models set that combines loss-based and exposure-based scores.
+    Candidates are in order of precedence.
+    """
+    return [
+        *default_programmatic_models(),
+        RealEstateCoastalInundationModel(),
+        RealEstateRiverineInundationModel(),
+        GenericTropicalCycloneModel(),
+        pgam.InundationModel(),
+        CoolingModel(),
+        ChronicHeatGZNModel(),
+        *placeholder_models(),
+    ]
 
 
 def get_default_risk_measure_calculators() -> Dict[Type[Asset], RiskMeasureCalculator]:

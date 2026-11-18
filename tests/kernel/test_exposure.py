@@ -31,7 +31,9 @@ from physrisk.kernel.hazards import (
     Hail,
     Wind,
 )
-from physrisk.container import DictBasedVulnerabilityModelsFactory
+from physrisk.vulnerability_models.vulnerability import (
+    CascadingVulnerabilityModelSelectorFactory,
+)
 from physrisk.requests import Requester
 from physrisk.vulnerability_models.configuration.asset_factory import (
     DefaultAssetFactory,
@@ -41,14 +43,18 @@ from ..data.test_hazard_model_store import TestData, mock_hazard_model_store_pat
 
 
 def test_jupiter_exposure_service(get_components):
-    assets, store, hazard_model_factory, expected, vulnerability_models_factory = (
-        get_components
-    )
+    (
+        assets,
+        store,
+        hazard_model_factory,
+        expected,
+        vulnerability_model_selector_factory,
+    ) = get_components
     inventory = EmbeddedInventory()
     requester = Requester(
         asset_factory=DefaultAssetFactory(),
         hazard_model_factory=hazard_model_factory,
-        vulnerability_models_factory=vulnerability_models_factory,
+        vulnerability_model_selector_factory=vulnerability_model_selector_factory,
         inventory=inventory,
         resource_selector=get_default_hazard_resource_selector(inventory),
         inventory_reader=InventoryReader(fs=local.LocalFileSystem(), base_path=""),
@@ -142,6 +148,12 @@ def get_components():
         store=store,
     )
 
-    vulnerability_models_factory = DictBasedVulnerabilityModelsFactory()
+    vulnerability_model_selector_factory = CascadingVulnerabilityModelSelectorFactory()
 
-    return assets, store, hazard_model_factory, expected, vulnerability_models_factory
+    return (
+        assets,
+        store,
+        hazard_model_factory,
+        expected,
+        vulnerability_model_selector_factory,
+    )

@@ -24,28 +24,17 @@ from physrisk.hazard_models.jba_image_creator import (
 )
 from physrisk.kernel import calculation as calc
 from physrisk.kernel.hazard_model import HazardModelFactory
-from physrisk.kernel.hazards import Hazard
-from physrisk.kernel.vulnerability_model import (
-    DictBasedVulnerabilityModels,
-)
-from physrisk.kernel.vulnerability_model import (
-    VulnerabilityModels as PVulnerabilityModels,
-)
-from physrisk.kernel.vulnerability_model import (
-    VulnerabilityModelsFactory as PVulnerabilityModelsFactory,
-)
 from physrisk.requests import (
     PhysriskDefaultEncoder,
     Requester,
     _create_inventory,
 )
-from physrisk.vulnerability_models.config_based_vuln_model_acute import (
-    StandardOfProtection,
-)
 from physrisk.vulnerability_models.configuration.asset_factory import (
     DefaultAssetFactory,
 )
-from physrisk.vulnerability_models.vulnerability import VulnerabilityModelsFactory
+from physrisk.vulnerability_models.vulnerability import (
+    DefaultVulnerabilityModelSelectorFactory,
+)
 
 
 class DefaultHazardModelFactory(HazardModelFactory):
@@ -117,33 +106,6 @@ class DefaultHazardModelFactory(HazardModelFactory):
         return CombinedImageCreator(image_creator, self.jba_image_creator)
 
 
-class DictBasedVulnerabilityModelsFactory(PVulnerabilityModelsFactory):
-    def vulnerability_models(
-        self,
-        hazard_scope: dict[type[Hazard], set[str] | None] | None = None,
-        use_oed_hazus_curves: bool = False,
-        map_unknown_occ: bool = False,
-    ) -> PVulnerabilityModels:
-        return DictBasedVulnerabilityModels(
-            calc.alternate_default_vulnerability_models_scores()
-        )
-
-
-class DefaultVulnerabilityModelsFactory(VulnerabilityModelsFactory):
-    """Default vulnerability approach. 'default_vulnerability_models'
-    programmatic models are used, to which FEMA Hazus vulnerability-based
-    models are added and finally configuration.
-    FEMA Hazus vulnerability-based models use is toggled at runtime.
-    """
-
-    def __init__(self):
-        super().__init__(
-            config=VulnerabilityModelsFactory.embedded_vulnerability_config(),
-            programmatic_models=calc.default_vulnerability_models(),
-            standard_of_protection=StandardOfProtection.CONSTANT_DEPTH,
-        )
-
-
 class Container(containers.DeclarativeContainer):
     asset_factory = providers.Factory(DefaultAssetFactory)
 
@@ -194,13 +156,15 @@ class Container(containers.DeclarativeContainer):
 
     measures_factory = providers.Factory(calc.DefaultMeasuresFactory)
 
-    vulnerability_models_factory = providers.Factory(DefaultVulnerabilityModelsFactory)
+    vulnerability_model_selector_factory = providers.Factory(
+        DefaultVulnerabilityModelSelectorFactory,
+    )
 
     requester = providers.Singleton(
         Requester,
         asset_factory=asset_factory,
         hazard_model_factory=hazard_model_factory,
-        vulnerability_models_factory=vulnerability_models_factory,
+        vulnerability_model_selector_factory=vulnerability_model_selector_factory,
         inventory=inventory,
         resource_selector=resource_selector,
         inventory_reader=inventory_reader,

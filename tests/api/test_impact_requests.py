@@ -21,11 +21,9 @@ from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_hazard_resource_selector
 from physrisk.hazard_models.hazard_cache import GeometryH3BasedCache, LMDBStore
 from physrisk.kernel.assets import (
-    PowerGeneratingAsset,
-    RealEstateAsset,
     ThermalPowerGeneratingAsset,
 )
-from physrisk.kernel.vulnerability_model import DictBasedVulnerabilityModels
+from physrisk.kernel.vulnerability_model import CascadingVulnerabilityModelSelector
 from physrisk.vulnerability_models.power_generating_asset_models import InundationModel
 from physrisk.vulnerability_models.real_estate_models import (
     RealEstateCoastalInundationModel,
@@ -131,14 +129,14 @@ def test_impact_request():
     )
 
     resource_selector = get_default_hazard_resource_selector(EmbeddedInventory())
-    vulnerability_models = DictBasedVulnerabilityModels(
-        {
-            PowerGeneratingAsset: [InundationModel()],
-            RealEstateAsset: [
+    vulnerability_model_selector = CascadingVulnerabilityModelSelector(
+        CascadingVulnerabilityModelSelector.index_models(
+            [
+                InundationModel(),
                 RealEstateCoastalInundationModel(),
                 RealEstateRiverineInundationModel(),
-            ],
-        }
+            ]
+        )
     )
 
     response = requests._get_asset_impacts(
@@ -148,7 +146,7 @@ def test_impact_request():
             resource_selector=resource_selector,
             reader=ZarrReader(store),
         ),
-        vulnerability_models=vulnerability_models,
+        vulnerability_model_selector=vulnerability_model_selector,
     )
 
     assert response.asset_impacts[0].impacts[0].key.hazard_type == "CoastalInundation"
@@ -193,14 +191,14 @@ def test_risk_model_impact_request():
     )
 
     resource_selector = get_default_hazard_resource_selector(EmbeddedInventory())
-    vulnerability_models = DictBasedVulnerabilityModels(
-        {
-            PowerGeneratingAsset: [InundationModel()],
-            RealEstateAsset: [
+    vulnerability_model_selector = CascadingVulnerabilityModelSelector(
+        CascadingVulnerabilityModelSelector.index_models(
+            [
+                InundationModel(),
                 RealEstateCoastalInundationModel(),
                 RealEstateRiverineInundationModel(),
-            ],
-        }
+            ]
+        )
     )
     response = requests._get_asset_impacts(
         request,
@@ -209,7 +207,7 @@ def test_risk_model_impact_request():
             resource_selector=resource_selector,
             reader=ZarrReader(store),
         ),
-        vulnerability_models=vulnerability_models,
+        vulnerability_model_selector=vulnerability_model_selector,
     )
 
     assert response.asset_impacts[0].impacts[0].key.hazard_type == "CoastalInundation"
@@ -266,16 +264,16 @@ def test_thermal_power_generation(mocker_store):
     request = requests.AssetImpactRequest(**request_dict)  # type: ignore
 
     resource_selector = get_default_hazard_resource_selector(EmbeddedInventory())
-    vulnerability_models = DictBasedVulnerabilityModels(
-        {
-            ThermalPowerGeneratingAsset: [
+    vulnerability_model_selector = CascadingVulnerabilityModelSelector(
+        CascadingVulnerabilityModelSelector.index_models(
+            [
                 ThermalPowerGenerationAirTemperatureModel(),
                 ThermalPowerGenerationDroughtModel(),
                 ThermalPowerGenerationRiverineInundationModel(),
                 ThermalPowerGenerationWaterStressModel(),
                 ThermalPowerGenerationWaterTemperatureModel(),
             ]
-        }
+        )
     )
 
     response = requests._get_asset_impacts(
@@ -285,7 +283,7 @@ def test_thermal_power_generation(mocker_store):
             resource_selector=resource_selector,
             reader=ZarrReader(mocker_store),
         ),
-        vulnerability_models=vulnerability_models,
+        vulnerability_model_selector=vulnerability_model_selector,
         assets=None if assets_provided_in_the_request else assets,
     )
     # Air Temperature
@@ -372,12 +370,10 @@ def test_thermal_power_generation(mocker_store):
         0.005896707722257193
     )
 
-    vulnerability_models = DictBasedVulnerabilityModels(
-        {
-            ThermalPowerGeneratingAsset: [
-                ThermalPowerGenerationDroughtModel(impact_based_on_a_single_point=True),
-            ]
-        }
+    vulnerability_model_selector = CascadingVulnerabilityModelSelector(
+        CascadingVulnerabilityModelSelector.index_models(
+            [ThermalPowerGenerationDroughtModel(impact_based_on_a_single_point=True)]
+        )
     )
     response = requests._get_asset_impacts(
         request,
@@ -386,7 +382,7 @@ def test_thermal_power_generation(mocker_store):
             resource_selector=resource_selector,
             reader=ZarrReader(mocker_store),
         ),
-        vulnerability_models=vulnerability_models,
+        vulnerability_model_selector=vulnerability_model_selector,
         assets=None if assets_provided_in_the_request else assets,
     )
 

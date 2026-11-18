@@ -16,7 +16,7 @@ from physrisk.kernel.hazards import ChronicHeat
 from physrisk.kernel.impact import calculate_impacts
 from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
 from physrisk.kernel.vulnerability_model import (
-    DictBasedVulnerabilityModels,
+    CascadingVulnerabilityModelSelector,
     VulnerabilityModelBase,
 )
 from physrisk.vulnerability_models.chronic_heat_models import ChronicHeatGZNModel
@@ -205,8 +205,8 @@ def test_chronic_vulnerability_model():
     scenario = "ssp585"
     year = 2050
 
-    vulnerability_models = DictBasedVulnerabilityModels(
-        {IndustrialActivity: [ChronicHeatGZNModel()]}
+    vulnerability_model_selector = CascadingVulnerabilityModelSelector(
+        CascadingVulnerabilityModelSelector.index_models([ChronicHeatGZNModel()])
     )
 
     assets = [
@@ -217,7 +217,7 @@ def test_chronic_vulnerability_model():
     results = calculate_impacts(
         assets,
         hazard_model,
-        vulnerability_models,
+        vulnerability_model_selector,
         scenarios=[scenario],
         years=[year],
     )

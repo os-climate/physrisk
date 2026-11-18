@@ -21,7 +21,6 @@ from physrisk.data.scenario_year_resolution import resolve_exact_year
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.hazard_models.core_hazards import get_default_hazard_resource_selector
 from physrisk.kernel.assets import Asset, RealEstateAsset
-from physrisk.kernel.calculation import alternate_default_vulnerability_models_scores
 from physrisk.kernel.hazard_model import HazardModelFactory
 from physrisk.kernel.hazards import (
     ChronicHeat,
@@ -45,11 +44,9 @@ from physrisk.kernel.risk import (
     RiskMeasuresFactory,
 )
 from physrisk.kernel.vulnerability_model import (
-    DictBasedVulnerabilityModels,
-    VulnerabilityModels,
-)
-from physrisk.kernel.vulnerability_model import (
-    VulnerabilityModelsFactory as PVulnerabilityModelsFactory,
+    CascadingVulnerabilityModelSelector,
+    VulnerabilityModelSelector,
+    VulnerabilityModelSelectorFactory as PVulnerabilityModelSelectorFactory,
 )
 from physrisk.requests import _create_risk_measures
 from physrisk.risk_models.generic_risk_model import GenericScoreBasedRiskMeasures
@@ -62,12 +59,15 @@ from physrisk.vulnerability_models.config_based_impact_curves import (
 )
 from physrisk.vulnerability_models.example_models import PlaceholderVulnerabilityModel
 from physrisk.vulnerability_models.real_estate_models import (
+    CoolingModel,
     GenericTropicalCycloneModel,
     RealEstateCoastalInundationModel,
     RealEstatePluvialInundationModel,
     RealEstateRiverineInundationModel,
 )
-from physrisk.vulnerability_models.vulnerability import VulnerabilityModelsFactory
+from physrisk.vulnerability_models.vulnerability import (
+    VulnerabilityModelSelectorFactory,
+)
 from tests.data.test_hazard_model_store import get_hazard_path
 
 from ..data.test_hazard_model_store import (
@@ -128,9 +128,9 @@ def _config_based_vulnerability_models():
     return config
 
 
-def _vulnerability_models(
+def _vulnerability_model_selector(
     hazard_scope: dict[type[Hazard], set[str] | None] | None = None,
-) -> VulnerabilityModels:
+) -> VulnerabilityModelSelector:
     model_set = [
         RealEstateCoastalInundationModel(),
         RealEstateRiverineInundationModel(),
@@ -140,15 +140,12 @@ def _vulnerability_models(
             "max/daily/water_equivalent", Precipitation, ImpactType.damage
         ),
     ]
-    programmatic_models = {
-        Asset: model_set,
-        RealEstateAsset: model_set,
-    }
-    factory = VulnerabilityModelsFactory(
+    programmatic_models = model_set
+    factory = VulnerabilityModelSelectorFactory(
         config=_config_based_vulnerability_models(),
         programmatic_models=programmatic_models,
     )
-    models = factory.vulnerability_models(
+    models = factory.vulnerability_model_selector(
         disable_api_calls=True, hazard_scope=hazard_scope
     )
     return models
@@ -163,7 +160,16 @@ def test_risk_indicator_model():
 
     model = PortfolioRiskModel(
         hazard_model,
-        DictBasedVulnerabilityModels(alternate_default_vulnerability_models_scores()),
+        CascadingVulnerabilityModelSelector(
+            CascadingVulnerabilityModelSelector.index_models(
+                [
+                    RealEstateCoastalInundationModel(),
+                    RealEstateRiverineInundationModel(),
+                    GenericTropicalCycloneModel(),
+                    CoolingModel(),
+                ]
+            )
+        ),
         {RealEstateAsset: RealEstateToyRiskMeasures()},
         NullAssetBasedPortfolioRiskMeasureCalculator(),
     )
@@ -625,7 +631,7 @@ def test_generic_model():
 
     model = PortfolioRiskModel(
         hazard_model,
-        _vulnerability_models(),
+        _vulnerability_model_selector(),
         {Asset: generic_measures, RealEstateAsset: generic_measures},
         NullAssetBasedPortfolioRiskMeasureCalculator(),
     )
@@ -663,7 +669,7 @@ def test_generic_model():
     # 1) for SSP245 Hail data not available
     model = PortfolioRiskModel(
         hazard_model,
-        _vulnerability_models({Hail: None}),
+        _vulnerability_model_selector({Hail: None}),
         {Asset: generic_measures, RealEstateAsset: generic_measures},
         NullAssetBasedPortfolioRiskMeasureCalculator(),
     )
@@ -685,7 +691,7 @@ def test_generic_model():
     ]
     model = PortfolioRiskModel(
         hazard_model,
-        _vulnerability_models({ChronicHeat: None}),
+        _vulnerability_model_selector({ChronicHeat: None}),
         {Asset: generic_measures, RealEstateAsset: generic_measures},
         NullAssetBasedPortfolioRiskMeasureCalculator(),
     )
@@ -723,14 +729,14 @@ def test_generic_model_via_requests_custom():
         ):
             return hazard_model
 
-    class TestVulnerabilityModelsFactory(PVulnerabilityModelsFactory):
-        def vulnerability_models(
+    class TestVulnerabilityModelSelectorFactory(PVulnerabilityModelSelectorFactory):
+        def vulnerability_model_selector(
             self,
             hazard_scope: dict[type[Hazard], set[str] | None] | None = None,
             use_oed_hazus_curves: bool = False,
             map_unknown_occ: bool = False,
-        ) -> VulnerabilityModels:
-            return _vulnerability_models()
+        ) -> VulnerabilityModelSelector:
+            return _vulnerability_model_selector()
 
     class TestMeasuresFactory(RiskMeasuresFactory):
         def asset_calculators(self, use_case_id: str):
@@ -743,7 +749,9 @@ def test_generic_model_via_requests_custom():
         hazard_model_factory=providers.Factory(TestHazardModelFactory)
     )
     container.override_providers(
-        vulnerability_models_factory=providers.Factory(TestVulnerabilityModelsFactory)
+        vulnerability_model_selector_factory=providers.Factory(
+            TestVulnerabilityModelSelectorFactory
+        )
     )
     container.override_providers(
         measures_factory=providers.Factory(TestMeasuresFactory)

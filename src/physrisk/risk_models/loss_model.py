@@ -3,19 +3,24 @@ from typing import Dict, List, Optional, Sequence
 
 import numpy as np
 
-from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
+from physrisk.kernel.impact_distrib import (
+    EmptyImpactDistrib,
+    ImpactDistrib,
+    ImpactType,
+    PlaceholderImpactDistrib,
+)
 
 from ..kernel.assets import Asset
 from ..kernel.calculation import (
     get_default_hazard_model,
-    alternate_default_vulnerability_models_scores,
+    alternate_programmatic_models_scores,
 )
 from ..kernel.financial_model import DefaultFinancialModel
 from ..kernel.hazard_model import HazardModel
 from ..kernel.impact import calculate_impacts
 from ..kernel.vulnerability_model import (
-    DictBasedVulnerabilityModels,
-    VulnerabilityModels,
+    CascadingVulnerabilityModelSelector,
+    VulnerabilityModelSelector,
 )
 
 
@@ -33,17 +38,19 @@ class LossModel:
     def __init__(
         self,
         hazard_model: Optional[HazardModel] = None,
-        vulnerability_models: Optional[VulnerabilityModels] = None,
+        vulnerability_model_selector: Optional[VulnerabilityModelSelector] = None,
     ):
         self.hazard_model = (
             get_default_hazard_model() if hazard_model is None else hazard_model
         )
-        self.vulnerability_models = (
-            DictBasedVulnerabilityModels(
-                alternate_default_vulnerability_models_scores()
+        self.vulnerability_model_selector = (
+            CascadingVulnerabilityModelSelector(
+                CascadingVulnerabilityModelSelector.index_models(
+                    alternate_programmatic_models_scores()
+                )
             )
-            if vulnerability_models is None
-            else vulnerability_models
+            if vulnerability_model_selector is None
+            else vulnerability_model_selector
         )
 
     """Calculates the financial impact on a list of assets."""
@@ -67,7 +74,7 @@ class LossModel:
         results = calculate_impacts(
             assets,
             self.hazard_model,
-            self.vulnerability_models,
+            self.vulnerability_model_selector,
             scenarios=[scenario],
             years=[year],
         )
@@ -79,6 +86,8 @@ class LossModel:
             for result in impact_values:
                 # look up keys for results
                 impact = result.impact
+                if isinstance(impact, (EmptyImpactDistrib, PlaceholderImpactDistrib)):
+                    continue
                 keys = aggregator.get_aggregation_keys(impact_key.asset, impact)
                 # transform units of impact into currency for aggregation
 

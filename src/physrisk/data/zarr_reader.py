@@ -128,6 +128,11 @@ def configure_zarr_concurrency(
     _configured = True
 
 
+_ZARR_METADATA_KEYS = frozenset(
+    [".zgroup", ".zarray", ".zattrs", ".zmetadata", "zarr.json"]
+)
+
+
 @dataclass(frozen=True)
 class ArrayInfo:
     """Shape and attributes of a hazard array, without its data."""
@@ -275,6 +280,10 @@ class ZarrReader:
     def ls(self, path: str) -> List[str]:
         """List the arrays and groups in the group at path.
 
+        The group need not have group metadata: map pyramids, for example, are
+        directories of zoom-level arrays without a .zgroup, which zarr 3 cannot open
+        as a group. So the store is listed directly.
+
         Args:
             path: Path of a group, relative to the root.
 
@@ -285,10 +294,12 @@ class ZarrReader:
 
     async def _ls(self, path: str) -> List[str]:
         path = path.strip("/")
-        group = await self._get_node(path)
-        if not isinstance(group, AsyncGroup):
-            raise ValueError(f"{path} is not a group")
-        return [str(PurePosixPath(path, name)) async for name in group.keys()]
+        store = (await self._group()).store
+        return [
+            str(PurePosixPath(path, name))
+            async for name in store.list_dir(path)
+            if name not in _ZARR_METADATA_KEYS
+        ]
 
     @classmethod
     def create_s3_zarr_store(

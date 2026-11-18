@@ -37,6 +37,20 @@ def test_ls_lists_group_members():
     ]
 
 
+def test_ls_lists_group_without_group_metadata():
+    # map pyramids in the hazard data have no .zgroup
+    store, root = zarr_memory_store()
+    for zoom in [1, 2, 10]:
+        create_test_array(root, f"flood/map/{zoom}", shape=(1, 2, 2))
+    asyncio.run(store.delete("flood/map/.zgroup"))
+    reader = ZarrReader(store)
+    assert sorted(reader.ls("flood/map/")) == [
+        "flood/map/1",
+        "flood/map/10",
+        "flood/map/2",
+    ]
+
+
 def test_async_and_sync_reads_agree():
     curve = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
     store = mock_hazard_model_store_inundation(

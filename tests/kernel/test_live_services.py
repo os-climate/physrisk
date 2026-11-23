@@ -1,10 +1,11 @@
 import json
 import logging
+
 import pytest
 import requests
 
-from physrisk.container import Container
 import physrisk.requests
+from physrisk.container import Container
 from tests.conftest import get_result_expected
 
 url = "https://physrisk-api-physrisk.apps.osc-cl1.apps.os-climate.org"

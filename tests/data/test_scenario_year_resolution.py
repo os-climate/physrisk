@@ -9,12 +9,12 @@ from physrisk.api.v1.hazard_data import HazardResource, ScenarioYears
 from physrisk.data.hazard_data_provider import (
     CascadingHazardDataProvider,
 )
+from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.data.scenario_year_resolution import (
-    ScenarioYear,
     InterpolatedYearResolver,
+    ScenarioYear,
     resolve_exact_year,
 )
-from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.kernel.hazard_model import HazardDataRequest, HazardEventDataResponse
 from physrisk.kernel.hazards import RiverineInundation
 

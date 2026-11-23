@@ -1,22 +1,17 @@
 import io
 import os
 import warnings
-from typing import Dict, Optional
 
 import numpy as np
-from PIL import Image
 import pytest
 import zarr
 import zarr.storage
 from dependency_injector import providers
+from PIL import Image
 
 from physrisk.api.v1.hazard_data import HazardResource, MapInfo, ScenarioYears
 from physrisk.container import Container
 from physrisk.data import colormap_provider
-from physrisk.data.scenario_year_resolution import (
-    InterpolatedYearResolver,
-    resolve_exact_year,
-)
 from physrisk.data.image_creator import (
     ImageCreator,
     image_from_packed_rgba,
@@ -25,6 +20,10 @@ from physrisk.data.image_creator import (
 )
 from physrisk.data.inventory import Inventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
+from physrisk.data.scenario_year_resolution import (
+    InterpolatedYearResolver,
+    resolve_exact_year,
+)
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import (
     InventoryHazardResourceSelector,
@@ -388,8 +387,8 @@ def _build_requester(inventory, zarr_store, enforce_permissions: bool = True):
     class TestHazardModelFactory(HazardModelFactory):
         def hazard_model(
             self,
-            interpolation: Optional[str] = "floor",
-            provider_max_requests: Dict[str, int] = {},
+            interpolation: str | None = "floor",
+            provider_max_requests: dict[str, int] = {},
             interpolate_years: bool = False,
         ):
             return ZarrHazardModel(

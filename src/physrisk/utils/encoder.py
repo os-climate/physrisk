@@ -1,10 +1,10 @@
 import json
 import math
-from typing import Union
+
 import numpy as np
 
 
-def sig_figures(x: Union[np.ndarray, float], sf: int):
+def sig_figures(x: np.ndarray | float, sf: int):
     """Round the array or float to sf significant figures.
     Why do we support this: is it not better to keep all numbers as floats
     until the end and then use formatting like {0:.6g} or similar only when displaying?

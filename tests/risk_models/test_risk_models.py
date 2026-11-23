@@ -1,6 +1,6 @@
 """Test asset impact calculations."""
 
-from typing import Dict, Optional, Sequence, Type
+from collections.abc import Sequence
 
 import numpy as np
 from dependency_injector import providers
@@ -17,8 +17,8 @@ from physrisk.api.v1.scoring_schemes import (
     map_to_original_category,
 )
 from physrisk.container import Container
-from physrisk.data.scenario_year_resolution import resolve_exact_year
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
+from physrisk.data.scenario_year_resolution import resolve_exact_year
 from physrisk.hazard_models.core_hazards import get_default_hazard_resource_selector
 from physrisk.kernel.assets import Asset, RealEstateAsset
 from physrisk.kernel.calculation import alternate_default_vulnerability_models_scores
@@ -537,8 +537,8 @@ def test_generic_model_via_requests_default_vulnerability():
     class TestHazardModelFactory(HazardModelFactory):
         def hazard_model(
             self,
-            interpolation: Optional[str] = "floor",
-            provider_max_requests: Dict[str, int] = {},
+            interpolation: str | None = "floor",
+            provider_max_requests: dict[str, int] = {},
             interpolate_years: bool = False,
         ):
             return hazard_model
@@ -573,7 +573,7 @@ def test_generic_model_via_requests_default_vulnerability():
     class TestMeasuresWithHazardIndicatorID(RiskMeasureCalculator):
         def calc_measure(
             self,
-            hazard_type: Type[Hazard],
+            hazard_type: type[Hazard],
             base_impact: Sequence[AssetImpactResult],
             impact: Sequence[AssetImpactResult],
         ) -> Measure | dict[str | None, Measure]:
@@ -717,8 +717,8 @@ def test_generic_model_via_requests_custom():
     class TestHazardModelFactory(HazardModelFactory):
         def hazard_model(
             self,
-            interpolation: Optional[str] = "floor",
-            provider_max_requests: Dict[str, int] = {},
+            interpolation: str | None = "floor",
+            provider_max_requests: dict[str, int] = {},
             interpolate_years: bool = False,
         ):
             return hazard_model

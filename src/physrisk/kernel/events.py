@@ -1,4 +1,4 @@
-from typing import List, Protocol
+from typing import Protocol
 
 import numpy as np
 from numba import float64, njit
@@ -112,7 +112,7 @@ class EmpiricalMultivariateDistribution(MultivariateDistribution):
 
 
 def event_samples(
-    impacts_bins: np.ndarray, probs: List[np.ndarray], nb_events: int, nb_samples: int
+    impacts_bins: np.ndarray, probs: list[np.ndarray], nb_events: int, nb_samples: int
 ):
     if any([p.size != 1 and p.size != nb_events for p in probs]):
         raise ValueError(
@@ -138,7 +138,7 @@ def find(elements: np.ndarray, value):
 
 @njit(cache=True)
 def event_samples_numba(
-    impacts_bins: np.ndarray, probs: List[np.ndarray], nb_events: int, nb_samples: int
+    impacts_bins: np.ndarray, probs: list[np.ndarray], nb_events: int, nb_samples: int
 ):
     samples = np.zeros(shape=(nb_samples, nb_events))
     np.random.seed(111)
@@ -162,7 +162,7 @@ spec = [
 
 
 @jitclass(spec)
-class CumulativeProb(object):
+class CumulativeProb:
     def __init__(self, values: np.ndarray, cum_probs: np.ndarray):
         self.values = values
         self.cum_probs = cum_probs

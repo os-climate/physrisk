@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Dict, Type
 
 
 class IndicatorData(Enum):
@@ -20,14 +19,14 @@ class HazardKind(Enum):
 
 class Hazard:
     kind = HazardKind.UNKNOWN
-    indicator_data: Dict[str, IndicatorData] = {}
+    indicator_data: dict[str, IndicatorData] = {}
 
 
-def hazard_kind(hazard_type: Type[Hazard]):
+def hazard_kind(hazard_type: type[Hazard]):
     return hazard_type.kind
 
 
-def indicator_data(hazard_type: Type[Hazard], indicator_id: str):
+def indicator_data(hazard_type: type[Hazard], indicator_id: str):
     default = (
         IndicatorData.EVENT
         if hazard_type.kind == HazardKind.ACUTE
@@ -38,7 +37,6 @@ def indicator_data(hazard_type: Type[Hazard], indicator_id: str):
 
 class ChronicHeat(Hazard):
     kind = HazardKind.CHRONIC
-    pass
 
 
 class Inundation(Hazard):
@@ -47,7 +45,6 @@ class Inundation(Hazard):
         "flood_depth": IndicatorData.EVENT,
         "flood_sop": IndicatorData.PARAMETERS,
     }
-    pass
 
 
 class AirTemperature(ChronicHeat):
@@ -60,17 +57,14 @@ class CoastalInundation(Inundation):
 
 class ChronicWind(Hazard):
     kind = HazardKind.CHRONIC
-    pass
 
 
 class CombinedInundation(Hazard):
     kind = HazardKind.CHRONIC
-    pass
 
 
 class Drought(Hazard):
     kind = HazardKind.CHRONIC
-    pass
 
 
 class Fire(Hazard):
@@ -78,7 +72,6 @@ class Fire(Hazard):
     indicator_data = {
         "fire_probability": IndicatorData.PARAMETERS,
     }
-    pass
 
 
 class Hail(Hazard):
@@ -86,7 +79,6 @@ class Hail(Hazard):
     indicator_data = {
         "days/above/5cm": IndicatorData.PARAMETERS,
     }
-    pass
 
 
 class PluvialInundation(Inundation):
@@ -95,7 +87,6 @@ class PluvialInundation(Inundation):
 
 class Precipitation(Hazard):
     kind = HazardKind.CHRONIC
-    pass
 
 
 class RiverineInundation(Inundation):
@@ -104,7 +95,6 @@ class RiverineInundation(Inundation):
 
 class WaterRisk(Hazard):
     kind = HazardKind.CHRONIC
-    pass
 
 
 class WaterTemperature(ChronicHeat):
@@ -113,7 +103,6 @@ class WaterTemperature(ChronicHeat):
 
 class Wind(Hazard):
     kind = HazardKind.ACUTE
-    pass
 
 
 class Subsidence(Hazard):
@@ -121,7 +110,6 @@ class Subsidence(Hazard):
     indicator_data = {
         "subsidence_probability": IndicatorData.PARAMETERS,
     }
-    pass
 
 
 def all_hazards() -> list[type[Hazard]]:
@@ -155,7 +143,6 @@ class Landslide(Hazard):
     indicator_data = {
         "landslide_probability": IndicatorData.PARAMETERS,
     }
-    pass
 
 
 class Earthquake(Hazard):

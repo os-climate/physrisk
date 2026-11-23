@@ -1,15 +1,18 @@
 import json
 
-import fsspec.implementations.local as local
 import numpy as np
 import pytest
+from fsspec.implementations import local
 
 import physrisk.api.v1.common
 from physrisk.api.v1.exposure_req_resp import (
     AssetExposureRequest,
     AssetExposureResponse,
 )
-from physrisk.container import DefaultHazardModelFactory
+from physrisk.container import (
+    DefaultHazardModelFactory,
+    DictBasedVulnerabilityModelsFactory,
+)
 from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.inventory_reader import InventoryReader
 from physrisk.data.zarr_reader import ZarrReader
@@ -31,7 +34,6 @@ from physrisk.kernel.hazards import (
     Hail,
     Wind,
 )
-from physrisk.container import DictBasedVulnerabilityModelsFactory
 from physrisk.requests import Requester
 from physrisk.vulnerability_models.configuration.asset_factory import (
     DefaultAssetFactory,

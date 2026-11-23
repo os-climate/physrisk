@@ -1,12 +1,11 @@
 import shapely.wkt
-from physrisk.kernel.hazard_model import HazardDataRequest
-from physrisk.kernel.hazards import PluvialInundation, RiverineInundation
 
 from physrisk.data.geocode import Geocoder
 from physrisk.hazard_models.credentials_provider import EnvCredentialsProvider
 from physrisk.hazard_models.hazard_cache import GeometryH3BasedCache, MemoryStore
 from physrisk.hazard_models.jba_hazard_model import JBAHazardModel
-
+from physrisk.kernel.hazard_model import HazardDataRequest
+from physrisk.kernel.hazards import PluvialInundation, RiverineInundation
 from tests.conftest import cache_store_tests
 
 

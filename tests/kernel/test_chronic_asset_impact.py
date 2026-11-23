@@ -1,10 +1,10 @@
-from typing import List, Sequence, Union
+from collections.abc import Sequence
 
 import numpy as np
 from scipy.stats import norm
 
-from physrisk.data.scenario_year_resolution import resolve_exact_year
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
+from physrisk.data.scenario_year_resolution import resolve_exact_year
 from physrisk.hazard_models.core_hazards import get_default_hazard_resource_selector
 from physrisk.kernel.assets import Asset, IndustrialActivity
 from physrisk.kernel.hazard_model import (
@@ -53,7 +53,7 @@ class ExampleChronicHeatModel(VulnerabilityModelBase):
 
     def get_data_requests(
         self, asset: Asset, *, scenario: str, year: int
-    ) -> Union[HazardDataRequest, Sequence[HazardDataRequest]]:
+    ) -> HazardDataRequest | Sequence[HazardDataRequest]:
         """Request the hazard data needed by the vulnerability model for a specific asset
         (this is a Google-style doc string)
 
@@ -139,7 +139,7 @@ def get_impact_distrib(
     fraction_loss_mean: float,
     fraction_loss_std: float,
     hazard_type: type,
-    hazard_paths: List[str],
+    hazard_paths: list[str],
     hazard_indicator_id: str,
     impact_type: ImpactType,
 ) -> ImpactDistrib:

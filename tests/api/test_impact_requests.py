@@ -14,9 +14,9 @@ from physrisk import requests
 from physrisk.api.v1.common import Asset, Assets
 from physrisk.api.v1.impact_req_resp import RiskMeasures, RiskMeasuresHelper
 from physrisk.container import Container
-from physrisk.data.scenario_year_resolution import resolve_exact_year
 from physrisk.data.inventory import EmbeddedInventory
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
+from physrisk.data.scenario_year_resolution import resolve_exact_year
 from physrisk.data.zarr_reader import ZarrReader
 from physrisk.hazard_models.core_hazards import get_default_hazard_resource_selector
 from physrisk.hazard_models.hazard_cache import GeometryH3BasedCache, LMDBStore

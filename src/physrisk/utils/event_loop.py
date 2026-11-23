@@ -2,7 +2,6 @@ import asyncio
 import os
 import threading
 from contextlib import contextmanager
-from typing import Optional
 
 iothread = [None]  # dedicated fsspec IO thread
 loop = [None]  # global event loop for any non-async instance
@@ -80,7 +79,7 @@ async def _runner(event: threading.Event, coro, result, timeout=None):
         event.set()
 
 
-def run(coro, loop, timeout: Optional[float] = None):
+def run(coro, loop, timeout: float | None = None):
     """Run a coroutine in the given event loop, waiting until this is complete or has timed out.
     This is blocking, typically used within a thread pool to execute a batch of IO requests executed in
     parallel.
@@ -106,6 +105,6 @@ def run(coro, loop, timeout: Optional[float] = None):
         if timeout is not None:
             timeout -= 1
             if timeout < 0:
-                raise asyncio.TimeoutError()
+                raise TimeoutError()
 
     return result[0]

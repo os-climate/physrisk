@@ -38,6 +38,11 @@ class CalcSettings(BaseModel):
             "config_only: do not use hazus curves.",
         )
     )
+    include_mitigated: bool = Field(
+        default=False,
+        description="If True and mitigation (e.g. insurance) is configured, portfolio-level measures "
+        "and impacts calculated net of mitigation are returned in addition to the gross (unmitigated) ones.",
+    )
 
 
 class AssetMeasuresSpecification(BaseModel):
@@ -301,6 +306,11 @@ class PortfolioImpactKey(ImpactKey):
         None,
         description="Identifier of the sub-portfolio (asset 'aggregation_id') this "
         "result belongs to; omitted for the pooled portfolio total.",
+    )
+    mitigated: bool = Field(
+        False,
+        description="True if the result is net of mitigation (e.g. insurance claim payments); "
+        "False for the gross (unmitigated) result.",
     )
 
 

@@ -1,5 +1,6 @@
+import asyncio
 import sys
-from abc import ABC, abstractmethod
+from abc import ABC
 from typing import (
     Any,
     Dict,
@@ -18,6 +19,7 @@ from shapely.geometry.base import BaseGeometry
 
 from physrisk.data.hazard_data_provider import HazardDataHint
 from physrisk.kernel.hazards import Hazard
+from physrisk.utils.event_loop import run_sync
 
 
 class HazardDataRequest:
@@ -207,10 +209,39 @@ class HazardParameterDataResponse(HazardDataResponse):
 
 class HazardModel(ABC):
     """Hazard model. The model accepts a set of HazardDataRequests and returns the corresponding
-    HazardDataResponses."""
+    HazardDataResponses.
 
-    @abstractmethod
+    get_hazard_data_async is the primary method: implementations should override it, and
+    callers running in an event loop, including hazard models that call other hazard
+    models, should await it. get_hazard_data is a blocking wrapper for synchronous
+    callers: it runs get_hazard_data_async to completion on a new event loop.
+
+    For backwards compatibility, an implementation may instead override only
+    get_hazard_data; get_hazard_data_async then runs it on a worker thread of the
+    calling loop's default executor, so that it does not block the loop.
+    """
+
     def get_hazard_data(
+        self, requests: Sequence[HazardDataRequest]
+    ) -> Mapping[HazardDataRequest, HazardDataResponse]:
+        """Process the hazard indicator data requests and return responses, blocking until complete.
+
+        For synchronous callers. From within an event loop, await get_hazard_data_async
+        instead: calling this method there works, but runs on an extra thread and event loop.
+
+        Args:
+            requests (Sequence[HazardDataRequest]): Hazard indicator data requests.
+
+        Returns:
+            Mapping[HazardDataRequest, HazardDataResponse]: Responses for all hazard indicator data requests.
+        """
+        if type(self).get_hazard_data_async is HazardModel.get_hazard_data_async:
+            raise NotImplementedError(
+                f"{type(self).__name__} must implement get_hazard_data or get_hazard_data_async"
+            )
+        return run_sync(self.get_hazard_data_async(requests))
+
+    async def get_hazard_data_async(
         self, requests: Sequence[HazardDataRequest]
     ) -> Mapping[HazardDataRequest, HazardDataResponse]:
         """Process the hazard indicator data requests and return responses.
@@ -221,7 +252,11 @@ class HazardModel(ABC):
         Returns:
             Mapping[HazardDataRequest, HazardDataResponse]: Responses for all hazard indicator data requests.
         """
-        ...
+        if type(self).get_hazard_data is HazardModel.get_hazard_data:
+            raise NotImplementedError(
+                f"{type(self).__name__} must implement get_hazard_data or get_hazard_data_async"
+            )
+        return await asyncio.to_thread(self.get_hazard_data, requests)
 
     def get_hazard_events(
         self, requests: Sequence[HazardDataRequest]

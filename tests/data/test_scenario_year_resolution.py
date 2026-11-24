@@ -17,6 +17,7 @@ from physrisk.data.scenario_year_resolution import (
 from physrisk.data.pregenerated_hazard_model import ZarrHazardModel
 from physrisk.kernel.hazard_model import HazardDataRequest, HazardEventDataResponse
 from physrisk.kernel.hazards import RiverineInundation
+from tests.data.test_hazard_model_store import mock_zarr_reader
 
 
 def resource(scenarios):
@@ -47,7 +48,7 @@ async def test_cascade_skips_resources_without_matches_but_partial_matches_claim
         resource([("ssp585", [2030])]),
         resource([("ssp585", [2050])]),
     ]
-    reader = Mock()
+    reader = mock_zarr_reader()
     reader.in_bounds.return_value = np.array([True])
     reader.get_curves.return_value = (
         np.array([[3.0]]),
@@ -82,7 +83,7 @@ def test_get_hazard_data_preserves_future_request_key_at_historical_anchor():
     resources = Mock()
     resources.get_resources.return_value = [r]
     resources.hazard_indicators.return_value = {RiverineInundation: [r.indicator_id]}
-    reader = Mock()
+    reader = mock_zarr_reader()
     reader.in_bounds.return_value = np.array([True])
     reader.get_curves.return_value = (
         np.array([[1.5]]),

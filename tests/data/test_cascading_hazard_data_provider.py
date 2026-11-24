@@ -15,6 +15,7 @@ from physrisk.data.scenario_year_resolution import (
     resolve_exact_year,
 )
 from physrisk.kernel.hazards import RiverineInundation
+from tests.data.test_hazard_model_store import mock_zarr_reader
 
 
 def resource(name):
@@ -46,7 +47,7 @@ def provider(resources, reader, resolver=resolve_exact_year):
 
 async def test_merge_aligns_partial_coverage_and_sizes_each_requested_year():
     first, second = resource("first"), resource("second")
-    reader = Mock()
+    reader = mock_zarr_reader()
     reader.in_bounds.side_effect = [
         np.array([True, False, False]),
         np.array([True, False]),
@@ -89,7 +90,7 @@ async def test_merge_aligns_partial_coverage_and_sizes_each_requested_year():
 
 
 async def test_merge_rejects_resources_with_different_units():
-    reader = Mock()
+    reader = mock_zarr_reader()
     reader.in_bounds.side_effect = [np.array([True, False]), np.array([True])]
     reader.get_curves.side_effect = lambda path, *args: (
         np.array([[1.0]]),
@@ -110,7 +111,7 @@ async def test_merge_rejects_resources_with_different_units():
 
 
 async def test_read_must_cover_every_coordinate_claimed_by_bounds():
-    reader = Mock()
+    reader = mock_zarr_reader()
     reader.in_bounds.return_value = np.array([True])
     # Bounds claim the point, but the historical array does not cover it.
     reader.get_curves.side_effect = lambda path, *args: (
@@ -131,7 +132,7 @@ async def test_read_must_cover_every_coordinate_claimed_by_bounds():
 
 
 async def test_interpolation_rejects_inputs_with_different_units():
-    reader = Mock()
+    reader = mock_zarr_reader()
     reader.in_bounds.return_value = np.array([True])
     reader.get_curves.side_effect = lambda path, *args: (
         np.ones((1, 1)),

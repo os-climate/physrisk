@@ -1,4 +1,5 @@
 import asyncio
+import atexit
 from dataclasses import dataclass
 import io
 import logging
@@ -14,13 +15,48 @@ from physrisk.data import colormap_provider
 from physrisk.data.image_creator import ImageCreator, image_from_packed_rgba, to_rgba
 from physrisk.kernel.hazard_model import HazardImageCreator, Tile
 
-from physrisk.utils.event_loop import get_loop, run
+from physrisk.utils.event_loop import BackgroundEventLoop
 from physrisk.hazard_models.credentials_provider import (
     CredentialsProvider,
     EnvCredentialsProvider,
 )
 
 logger = logging.getLogger(__name__)
+
+# Requests to JBA Vision from all callers run on this loop, using one shared session so
+# that connections (and their TCP and TLS handshakes) are reused across map tiles.
+_jba_vision_loop = BackgroundEventLoop("physrisk-jba-vision")
+_session: Optional[aiohttp.ClientSession] = None
+_session_loop: Optional[asyncio.AbstractEventLoop] = None
+_SESSION_TIMEOUT = aiohttp.ClientTimeout(total=30, sock_connect=10)
+_LIMIT_PER_HOST = 16  # across all callers
+
+
+def _shared_session() -> aiohttp.ClientSession:
+    """The shared session; created on first use on the JBA Vision loop, and again
+    if that loop is replaced (e.g. after fork)."""
+    global _session, _session_loop
+    loop = asyncio.get_running_loop()
+    if _session is None or _session.closed or _session_loop is not loop:
+        _session = aiohttp.ClientSession(
+            connector=aiohttp.TCPConnector(limit_per_host=_LIMIT_PER_HOST),
+            timeout=_SESSION_TIMEOUT,
+        )
+        _session_loop = loop
+    return _session
+
+
+@atexit.register
+def _close_shared_session() -> None:
+    # avoids aiohttp's 'Unclosed client session' warning at exit
+    session, loop = _session, _session_loop
+    if session is None or session.closed or loop is None or not loop.is_running():
+        return
+    try:
+        asyncio.run_coroutine_threadsafe(session.close(), loop).result(timeout=1)
+    except Exception:
+        pass
+
 
 # Depth bins (and so FLOOD_DEPTH_UPPER/FLOOD_DEPTH_MID) are shared across the three flood
 # hazard types; only the colour ramp (hue) differs between their legends.
@@ -272,12 +308,10 @@ class JBAImageCreator(HazardImageCreator):
             ]
 
         try:
-            loop = get_loop()
             if index_value is None:
                 index_value = 1500
-            tiles = run(
-                self._fetch_all_tiles(resource_id, int(index_value), expand(tile, f)),
-                loop=loop,
+            tiles = _jba_vision_loop.run_sync(
+                self._fetch_all_tiles(resource_id, int(index_value), expand(tile, f))
             )
             stitched = self._stitch_tiles(tiles, grid=(f, f))
         except Exception as e:
@@ -315,21 +349,7 @@ class JBAImageCreator(HazardImageCreator):
         """
         identifier = self._identifier(self.tileset, resource_id, return_period)
         url = self.templates_legends[identifier]
-        loop = get_loop()
-
-        async def _fetch() -> bytes:
-            async with aiohttp.ClientSession(
-                proxy=self.credentials.proxies()["https"],
-                auth=aiohttp.BasicAuth(
-                    self.credentials.jba_vision_username(),
-                    self.credentials.jba_vision_password(),
-                ),
-            ) as session:
-                async with session.get(url) as resp:
-                    resp.raise_for_status()
-                    return await resp.read()
-
-        return run(_fetch(), loop=loop)
+        return _jba_vision_loop.run_sync(self._get(url))
 
     def get_info(
         self,
@@ -350,85 +370,74 @@ class JBAImageCreator(HazardImageCreator):
         )
 
     def _get_urls_from_capability(self):
-        # async is not necessary, but we follow the same pattern
-        loop = get_loop()
-        with aiohttp.TCPConnector(loop=loop) as conn:
-            identifiers, template_tiles, template_legends = {}, {}, {}
+        template_tiles, template_legends = {}, {}
+        try:
+            e_tree = etree.fromstring(
+                _jba_vision_loop.run_sync(self._fetch_capabilities())
+            )
+            ns = {
+                "wmts": "http://www.opengis.net/wmts/1.0",
+                "ows": "http://www.opengis.net/ows/1.1",
+                "xlink": "http://www.w3.org/1999/xlink",
+            }
+            for layer in e_tree.xpath("//wmts:Layer", namespaces=ns):
+                template_tile = layer.xpath(
+                    "wmts:ResourceURL[@format='image/png']", namespaces=ns
+                )[0].get("template")
+                template_legend = layer.xpath(
+                    "wmts:Style/wmts:LegendURL[@format='image/png']", namespaces=ns
+                )[0].get("{" + ns["xlink"] + "}href")
+                title_text = layer.xpath("ows:Title", namespaces=ns)[0].text
+                template_tiles[title_text] = template_tile
+                template_legends[title_text] = template_legend
+        except Exception as e:
+            logger.exception(e)
+        return template_tiles, template_legends
 
-            async def get_capability():
-                try:
-                    async with aiohttp.ClientSession(
-                        connector=conn, connector_owner=False
-                    ) as session:
-                        set_name = self.tileset.identifier()
-                        url = f"https://jbavision.jbarisk.com/cog/WMTS/{set_name}?service=WMS&request=GetCapabilities&version=1.3.0"
-                        async with session.get(
-                            url=url,
-                            proxy=self.credentials.proxies()["https"],
-                            auth=aiohttp.BasicAuth(
-                                self.credentials.jba_vision_username(),
-                                self.credentials.jba_vision_password(),
-                            ),
-                        ) as resp:
-                            resp.raise_for_status()
-                            e_tree = etree.fromstring(await resp.text())
-                            ns = {
-                                "wmts": "http://www.opengis.net/wmts/1.0",
-                                "ows": "http://www.opengis.net/ows/1.1",
-                                "xlink": "http://www.w3.org/1999/xlink",
-                            }
-                            layers = e_tree.xpath("//wmts:Layer", namespaces=ns)
-                            for layer in layers:
-                                template_tile = layer.xpath(
-                                    "wmts:ResourceURL[@format='image/png']",
-                                    namespaces=ns,
-                                )[0].get("template")
-                                template_legend = layer.xpath(
-                                    "wmts:Style/wmts:LegendURL[@format='image/png']",
-                                    namespaces=ns,
-                                )[0].get("{" + ns["xlink"] + "}href")
-                                title_text = layer.xpath("ows:Title", namespaces=ns)[
-                                    0
-                                ].text
-                                identifier = layer.xpath(
-                                    "ows:Identifier", namespaces=ns
-                                )[0].text
-                                identifiers[title_text] = identifier
-                                template_tiles[title_text] = template_tile
-                                template_legends[title_text] = template_legend
-                except Exception as e:
-                    logger.exception(e)
+    async def _fetch_capabilities(self) -> bytes:
+        set_name = self.tileset.identifier()
+        return await self._get(
+            f"https://jbavision.jbarisk.com/cog/WMTS/{set_name}?service=WMS&request=GetCapabilities&version=1.3.0"
+        )
 
-            run(get_capability(), loop=loop)
-            return template_tiles, template_legends
+    async def _get(self, url: str) -> bytes:
+        """GET url using the shared session, retrying once if a pooled connection was
+        closed by the server just as it was reused."""
+        try:
+            return await self._get_once(url)
+        except (aiohttp.ServerDisconnectedError, aiohttp.ClientOSError):
+            return await self._get_once(url)
 
-    async def _fetch_tile(
-        self, session: aiohttp.ClientSession, url: str
-    ) -> Image.Image:
+    async def _get_once(self, url: str) -> bytes:
+        # credentials and proxy are read per request, so changes take effect without
+        # recreating the shared session
+        async with _shared_session().get(
+            url,
+            proxy=self.credentials.proxies()["https"] or None,
+            auth=aiohttp.BasicAuth(
+                self.credentials.jba_vision_username(),
+                self.credentials.jba_vision_password(),
+            ),
+        ) as resp:
+            resp.raise_for_status()
+            return await resp.read()
+
+    async def _fetch_tile(self, url: str) -> Image.Image:
         """Download a single tile and return it as a Pillow Image."""
-        async with session.get(url) as resp:
-            resp.raise_for_status()  # raise on HTTP errors
-            data = await resp.read()  # raw bytes
-            return Image.open(io.BytesIO(data)).convert("RGBA")  # ensure RGBA
+        data = await self._get(url)
+        return Image.open(io.BytesIO(data)).convert("RGBA")  # ensure RGBA
 
     async def _fetch_all_tiles(
         self, resource_id: str, return_period: int, tile_specs: List[TileSpec]
     ):
         """Download all tiles concurrently and return them in the same order."""
-        async with aiohttp.ClientSession(
-            proxy=self.credentials.proxies()["https"],
-            auth=aiohttp.BasicAuth(
-                self.credentials.jba_vision_username(),
-                self.credentials.jba_vision_password(),
-            ),
-        ) as session:
-            tasks = []
-            for z, x, y in tile_specs:
-                url = self.templates_tiles[
-                    self._identifier(self.tileset, resource_id, return_period)
-                ].format(TileMatrix=z, TileCol=x, TileRow=y)
-                tasks.append(self._fetch_tile(session, url))
-            return await asyncio.gather(*tasks)
+        tasks = []
+        for z, x, y in tile_specs:
+            url = self.templates_tiles[
+                self._identifier(self.tileset, resource_id, return_period)
+            ].format(TileMatrix=z, TileCol=x, TileRow=y)
+            tasks.append(self._fetch_tile(url))
+        return await asyncio.gather(*tasks)
 
     def _stitch_tiles(self, tiles, grid=(2, 2)):
         """

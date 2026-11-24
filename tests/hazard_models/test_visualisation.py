@@ -1,14 +1,19 @@
+import asyncio
 import io
+import threading
 from collections import Counter
 from typing import Tuple
 
+import aiohttp
 import numpy as np
 import pytest
 import PIL.Image as Image
+from aiohttp import web
 
-from physrisk.api.v1.hazard_image import HazardImageRequest
+from physrisk.api.v1.hazard_image import HazardImageRequest, TileNotAvailableError
 from physrisk.container import Container
 from physrisk.kernel.hazard_model import Tile
+from physrisk.hazard_models.credentials_provider import EnvCredentialsProvider
 from physrisk.hazard_models.jba_image_creator import JBAImageCreator
 
 
@@ -180,3 +185,133 @@ def test_infer_hazard_legend_colours(load_credentials):
     assert riverine_colours == [
         tuple(int(v) for v in row) for row in FLOOD_DEPTH_COLOURS_RIVERINE
     ]
+
+
+_RIVERINE_RP1500 = "WR_202603_FLRF_U_RP1500_RD_5m_4326"
+
+
+def _offline_jba_image_creator(monkeypatch, fetch_tile):
+    templates = {_RIVERINE_RP1500: "https://tiles/{TileMatrix}/{TileCol}/{TileRow}.png"}
+    monkeypatch.setattr(
+        JBAImageCreator,
+        "_get_urls_from_capability",
+        lambda self: (templates, templates),
+    )
+    monkeypatch.setattr(JBAImageCreator, "_fetch_tile", fetch_tile)
+    return JBAImageCreator(credentials=EnvCredentialsProvider())
+
+
+def test_jba_image_creator_offline(monkeypatch):
+    urls = []
+
+    async def fetch_tile(self, url):
+        urls.append(url)
+        return Image.new("RGBA", (256, 256), (124, 195, 212, 255))
+
+    creator = _offline_jba_image_creator(monkeypatch, fetch_tile)
+    image_bytes = creator.create_image(
+        "jba_riverine", "historical", -1, tile=Tile(x=0, y=0, z=1), tile_size=512
+    )
+    assert Image.open(io.BytesIO(image_bytes)).size == (512, 512)
+    # a 512px tile is stitched from four 256px tiles one zoom level deeper
+    assert sorted(urls) == sorted(
+        f"https://tiles/2/{x}/{y}.png" for x in range(2) for y in range(2)
+    )
+
+
+def test_jba_image_creator_missing_layer(monkeypatch):
+    async def fetch_tile(self, url):
+        raise AssertionError("not expected")
+
+    creator = _offline_jba_image_creator(monkeypatch, fetch_tile)
+    with pytest.raises(TileNotAvailableError):
+        creator.create_image("jba_pluvial", "historical", -1, tile=Tile(x=0, y=0, z=1))
+
+
+def test_jba_image_creator_fetch_error_raised(monkeypatch):
+    async def fetch_tile(self, url):
+        raise RuntimeError("tile request failed")
+
+    creator = _offline_jba_image_creator(monkeypatch, fetch_tile)
+    with pytest.raises(RuntimeError, match="tile request failed"):
+        creator.create_image("jba_riverine", "historical", -1, tile=Tile(x=0, y=0, z=1))
+
+
+def test_jba_image_creator_capabilities_failure(monkeypatch):
+    async def fetch_capabilities(self):
+        raise RuntimeError("capabilities request failed")
+
+    monkeypatch.setattr(JBAImageCreator, "_fetch_capabilities", fetch_capabilities)
+    creator = JBAImageCreator(credentials=EnvCredentialsProvider())
+    assert creator.templates_tiles == {} and creator.templates_legends == {}
+
+
+@pytest.fixture
+def tile_server():
+    """Local HTTP server for tiles, recording the client address of each request."""
+    peers: list = []
+
+    async def handle(request):
+        peers.append(request.transport.get_extra_info("peername"))
+        buffer = io.BytesIO()
+        Image.new("RGBA", (256, 256), (124, 195, 212, 255)).save(buffer, "PNG")
+        return web.Response(body=buffer.getvalue(), content_type="image/png")
+
+    async def start():
+        app = web.Application()
+        app.router.add_get("/{z}/{x}/{y}.png", handle)
+        runner = web.AppRunner(app)
+        await runner.setup()
+        site = web.TCPSite(runner, "127.0.0.1", 0)
+        await site.start()
+        return runner, runner.addresses[0][1]
+
+    loop = asyncio.new_event_loop()
+    thread = threading.Thread(target=loop.run_forever, daemon=True)
+    thread.start()
+    runner, port = asyncio.run_coroutine_threadsafe(start(), loop).result()
+    yield f"http://127.0.0.1:{port}", peers
+    asyncio.run_coroutine_threadsafe(runner.cleanup(), loop).result()
+    loop.call_soon_threadsafe(loop.stop)
+    thread.join()
+    loop.close()
+
+
+def _local_jba_image_creator(monkeypatch, base_url):
+    templates = {_RIVERINE_RP1500: base_url + "/{TileMatrix}/{TileCol}/{TileRow}.png"}
+    monkeypatch.setattr(
+        JBAImageCreator,
+        "_get_urls_from_capability",
+        lambda self: (templates, templates),
+    )
+    return JBAImageCreator(credentials=EnvCredentialsProvider())
+
+
+def test_jba_image_creator_reuses_connection(monkeypatch, tile_server):
+    base_url, peers = tile_server
+    creator = _local_jba_image_creator(monkeypatch, base_url)
+    for _ in range(3):
+        creator.create_image(
+            "jba_riverine", "historical", -1, tile=Tile(x=0, y=0, z=1), tile_size=256
+        )
+    assert len(peers) == 3
+    assert len(set(peers)) == 1  # one connection for all three tiles
+
+
+def test_jba_image_creator_retries_on_disconnect(monkeypatch, tile_server):
+    base_url, peers = tile_server
+    creator = _local_jba_image_creator(monkeypatch, base_url)
+    get_once = JBAImageCreator._get_once
+    attempts = []
+
+    async def flaky_get_once(self, url):
+        attempts.append(url)
+        if len(attempts) == 1:
+            raise aiohttp.ServerDisconnectedError()
+        return await get_once(self, url)
+
+    monkeypatch.setattr(JBAImageCreator, "_get_once", flaky_get_once)
+    creator.create_image(
+        "jba_riverine", "historical", -1, tile=Tile(x=0, y=0, z=1), tile_size=256
+    )
+    assert len(attempts) == 2 and len(peers) == 1

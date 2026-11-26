@@ -40,7 +40,11 @@ from physrisk.kernel.impact_aggregator import (
     SimpleEventInsuranceProvider,
     aggregate_impacts,
 )
-from physrisk.kernel.impact_distrib import ImpactDistrib, ImpactType
+from physrisk.kernel.impact_distrib import (
+    ImpactDistrib,
+    ImpactType,
+    PlaceholderImpactDistrib,
+)
 from physrisk.kernel.insurance_model import SectoralInsuranceData
 from physrisk.kernel.risk import QuantityType, RiskQuantityKey
 from physrisk.risk_models.portfolio_risk_model import CompanyRiskMeasureCalculator
@@ -523,6 +527,46 @@ def test_impact_aggregation_acute_duplicate_impact_type_raises() -> None:
     )
     with pytest.raises(NotImplementedError):
         aggregate_impacts(impacts, financial_model, scenario, key_year)
+
+
+def test_impact_aggregation_ignores_placeholder_impacts() -> None:
+    """Placeholder impacts (intended only for score-based measures) carry no distribution
+    and should be skipped by the aggregation, for both acute and chronic hazards, rather
+    than raising."""
+    scenario, key_year = "ssp585", 2050
+    asset = ManufacturingAsset(id="asset_0", latitude=0.0, longitude=0.0)
+    wind_edges = np.array([0.0, 0.5])
+    wind_probs = np.array([0.02])  # mean 0.005
+
+    def ik(hazard_type, sc=scenario, yr=key_year):
+        return ImpactKey(asset=asset, hazard_type=hazard_type, scenario=sc, key_year=yr)
+
+    impacts: Dict[ImpactKey, list[AssetImpactResult]] = {
+        ik(Wind): [
+            AssetImpactResult(
+                impact=ImpactDistrib(Wind, wind_edges.copy(), wind_probs.copy(), "")
+            )
+        ],
+        # acute placeholder
+        ik(Fire): [AssetImpactResult(impact=PlaceholderImpactDistrib())],
+        # chronic placeholders, future and historical
+        ik(ChronicHeat): [AssetImpactResult(impact=PlaceholderImpactDistrib())],
+        ik(ChronicHeat, sc="historical", yr=None): [
+            AssetImpactResult(impact=PlaceholderImpactDistrib())
+        ],
+    }
+
+    financial_model = DefaultFinancialModel(
+        data_provider=TestFinancialDataProvider(), downtime_config=[]
+    )
+    results = aggregate_impacts(impacts, financial_model, scenario, key_year)
+
+    np.testing.assert_allclose(
+        results[RiskQuantityKey(QuantityType.DAMAGE, asset, None, Wind)].mean, 0.005
+    )
+    assert RiskQuantityKey(QuantityType.DAMAGE, None, None, Fire) not in results
+    heat_key = RiskQuantityKey(QuantityType.REVENUE_LOSS, None, None, ChronicHeat)
+    assert heat_key not in results or results[heat_key].mean == 0.0
 
 
 def test_simple_event_insurance_provider() -> None:

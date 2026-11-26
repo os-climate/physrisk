@@ -7,7 +7,12 @@ from typing_extensions import Protocol
 import numpy as np
 
 from physrisk.kernel.hazards import Hazard
-from physrisk.kernel.impact_distrib import EmptyImpactDistrib, ImpactDistrib, ImpactType
+from physrisk.kernel.impact_distrib import (
+    EmptyImpactDistrib,
+    ImpactDistrib,
+    ImpactType,
+    PlaceholderImpactDistrib,
+)
 from physrisk.kernel.insurance_model import InsuranceDataProvider
 from physrisk.kernel.risk import Quantity, QuantityType, RiskQuantityKey
 from physrisk.kernel.assets import Asset
@@ -171,6 +176,12 @@ class _SimulationAggregators:
         return {k._replace(mitigated=mitigated): v for k, v in pools.items()}
 
 
+def _has_distrib(impact: ImpactDistrib) -> bool:
+    """False for impacts carrying no distribution: empty results, and placeholders
+    (which are only intended for score-based risk measures)."""
+    return not isinstance(impact, (EmptyImpactDistrib, PlaceholderImpactDistrib))
+
+
 def _classify_impacts(
     impacts: dict[ImpactKey, list[AssetImpactResult]],
     scenario: str,
@@ -199,9 +210,7 @@ def _classify_impacts(
         if ik.hazard_type.kind != HazardKind.ACUTE:
             chronic_hazards_in_scope.add(ik.hazard_type)
             continue
-        non_empty_airs = [
-            air for air in airs if not isinstance(air.impact, EmptyImpactDistrib)
-        ]
+        non_empty_airs = [air for air in airs if _has_distrib(air.impact)]
         if not non_empty_airs:
             continue
         airs_by_type: dict[ImpactType, AssetImpactResult] = {}
@@ -315,7 +324,7 @@ def _build_chronic_arrays(
                         ),
                         [],
                     )
-                    if not isinstance(i.impact, EmptyImpactDistrib)
+                    if _has_distrib(i.impact)
                 )
                 for asset in all_assets_list
             ]
@@ -337,7 +346,7 @@ def _build_chronic_arrays(
                         ),
                         [],
                     )
-                    if not isinstance(i.impact, EmptyImpactDistrib)
+                    if _has_distrib(i.impact)
                 )
                 for asset in all_assets_list
             ]

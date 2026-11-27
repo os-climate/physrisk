@@ -15,6 +15,8 @@ from shapely import Point
 from shapely.geometry.base import BaseGeometry
 import shapely.wkt
 
+from physrisk.utils.geometry import snap_to_grid
+
 project_4326_to_3857 = Transformer.from_crs(
     "EPSG:4326", "EPSG:3857", always_xy=True
 ).transform
@@ -192,7 +194,12 @@ class Asset:
         geom_proj: BaseGeometry = transform(project_4326_to_3857, geometry)
         scaling_factor = 1.0 / math.cos(math.radians(geometry.centroid.y))
         buffered = geom_proj.buffer(buffer * scaling_factor, quad_segs=4)
-        return transform(project_3857_to_4326, buffered)
+        # Snap to the same grid used for cache keys (GeometryH3BasedCache), so that the
+        # key-time snap is a no-op and floating-point noise from the projection round-trip
+        # is removed here. Then normalize (after snapping, which can rebuild rings), as for
+        # WKT input, so the geometry is canonical; this is already the form the cache key
+        # uses, so it leaves keys unchanged.
+        return snap_to_grid(transform(project_3857_to_4326, buffered)).normalize()
 
 
 class OEDAsset(Asset):

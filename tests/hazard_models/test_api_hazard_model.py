@@ -87,6 +87,23 @@ def test_spatial_key_grid_size_tolerance():
     )
 
 
+def test_spatial_key_vertex_order_invariant():
+    """The same polygon with a different ring start vertex and orientation should give
+    the same key (snap then normalize), and a buffered asset geometry should already be
+    in the canonical (snapped, normalized) form so that the key-time step is a no-op."""
+    lat, lon = 22.3022371, 114.1867006
+    poly = Asset(latitude=lat, longitude=lon, buffer=50.0).geometry
+    coords = list(poly.exterior.coords)[:-1]
+    reordered = shapely.Polygon((coords[3:] + coords[:3])[::-1])
+    assert reordered.wkb != poly.wkb
+
+    store = GeometryH3BasedCache(MemoryStore())
+    assert store.spatial_key(lat, lon, geometry=poly) == store.spatial_key(
+        lat, lon, geometry=reordered
+    )
+    assert shapely.set_precision(poly, store.grid_size).normalize().wkb == poly.wkb
+
+
 def test_jba_hazard_model(load_credentials, hazard_dir, update_inputs):
     """JBA test, using made-up cached data."""
     # latitudes, longitudes = lats_lons()

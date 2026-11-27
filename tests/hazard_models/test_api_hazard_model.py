@@ -1,5 +1,10 @@
+import json
+from unittest.mock import patch
+
+import aiohttp
 import shapely.wkt
-from physrisk.kernel.hazard_model import HazardDataRequest
+from physrisk.kernel.assets import Asset
+from physrisk.kernel.hazard_model import HazardDataRequest, HazardEventDataResponse
 from physrisk.kernel.hazards import PluvialInundation, RiverineInundation
 
 from physrisk.data.geocode import Geocoder
@@ -126,3 +131,69 @@ def test_jba_hazard_model(load_credentials, hazard_dir, update_inputs):
         ]
         response = model.get_hazard_data(requests_riv + requests_pluv)
         assert response is not None
+
+
+class _FakeJBAResponse:
+    def __init__(self, body):
+        self.status = 200
+        self._body = body
+
+    async def json(self):
+        return self._body
+
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, *args):
+        return False
+
+
+def test_jba_cache_stores_asset_lat_lon():
+    """For an asset specified as latitude/longitude plus buffer, the geometry sent to JBA
+    is the buffered polygon; the latitude/longitude entered should also be stored in the
+    cache value, so that cache entries can be linked back to assets."""
+    latitude, longitude = 43.264209, 5.386365
+    asset = Asset(latitude=latitude, longitude=longitude, buffer=50.0)
+    assert asset.geometry is not None and asset.geometry.geom_type == "Polygon"
+
+    model = JBAHazardModel(
+        GeometryH3BasedCache(MemoryStore()),
+        EnvCredentialsProvider(disable_api_calls=False),
+        max_requests=5,
+    )
+    sent_payloads = []
+    stats = {"FLRF_U": {"rp_100": {"max100": 0.5}}}
+
+    def fake_post(session, url, json, **kwargs):
+        sent_payloads.append(json)
+        body = [
+            {"id": g["id"], "stats": stats, **{s: stats for s in model.jba_scenarios}}
+            for g in json["geometries"]
+        ]
+        return _FakeJBAResponse(body)
+
+    request = HazardDataRequest(
+        hazard_type=RiverineInundation,
+        longitude=asset.longitude,
+        latitude=asset.latitude,
+        indicator_id="flood_depth",
+        scenario="ssp585",
+        year=2050,
+        geometry=asset.geometry,
+    )
+    with patch.object(aiohttp.ClientSession, "post", fake_post):
+        response = model.get_hazard_data([request])
+    assert isinstance(response[request], HazardEventDataResponse)
+
+    # the buffered polygon (not the point) is sent, with no additional JBA-side buffer
+    (geometry_sent,) = sent_payloads[0]["geometries"]
+    assert geometry_sent["wkt_geometry"] == asset.geometry.wkt
+    assert geometry_sent["buffer"] == 0
+
+    cached = {k: json.loads(v) for k, v in model.cache_store.getall("jba/").items()}
+    assert len(cached) == 1 + len(model.jba_scenarios)  # historical plus all scenarios
+    for value in cached.values():
+        assert value["wkt_geometry"] == asset.geometry.wkt
+        assert value["buffer"] == 0
+        assert value["latitude"] == latitude
+        assert value["longitude"] == longitude

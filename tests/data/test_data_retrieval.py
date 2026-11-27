@@ -107,6 +107,27 @@ def test_set_get_inventory_s3():
     assert reader.read("hazard_test")[0].indicator_id == "test_indicator_id"
 
 
+class _UnreachableFileSystem(MemoryFileSystem):
+    """Fails every access, as for example an unreachable S3 endpoint would."""
+
+    def info(self, path, **kwargs):
+        raise ConnectionError("could not connect to endpoint")
+
+
+def test_zarr_reader_raises_underlying_store_error():
+    """An error accessing the store should be raised, rather than reported by zarr
+    as 'nothing found'."""
+    store = _UnreachableFileSystem().get_mapper("zarr_reader_unreachable/hazard.zarr")
+    with pytest.raises(ConnectionError):
+        ZarrReader(store=store)
+
+
+def test_zarr_reader_missing_store_raises_path_not_found():
+    store = MemoryFileSystem().get_mapper("zarr_reader_missing/hazard.zarr")
+    with pytest.raises(zarr.errors.PathNotFoundError):
+        ZarrReader(store=store)
+
+
 def _test_hazard_model():
     return HazardResource(
         hazard_type="TestHazardType",

@@ -486,15 +486,30 @@ class JBAHazardModel(HazardModel):
                 api_request.geometries,
             )
         }
+        # the latitude/longitude of the request, also stored alongside the cached response:
+        # for an asset specified as latitude/longitude plus buffer, this is the point entered
+        # (the geometry is the buffered polygon), allowing cache entries to be linked back to assets.
+        id_to_lat_lon: Dict[str, Tuple[float, float]] = {
+            id: (lat, lon)
+            for id, lat, lon in zip(
+                req_ids, api_request.latitudes, api_request.longitudes
+            )
+        }
+        # buffer applied by JBA: zero if a geometry is supplied (any buffer is then already
+        # included in the geometry), otherwise the default buffer around the point.
+        id_to_buffer: Dict[str, int] = {
+            id: (self.default_buffer if geom is None else 0)
+            for id, geom in zip(req_ids, api_request.geometries)
+        }
         request = {
             "country_code": country_code,
             "geometries": [
                 {
                     "id": id,
                     "wkt_geometry": id_to_wkt[id],
-                    "buffer": (self.default_buffer if geom is None else 0),
+                    "buffer": id_to_buffer[id],
                 }
-                for id, geom in zip(req_ids, api_request.geometries)
+                for id in req_ids
             ],
         }
         params = {
@@ -527,9 +542,13 @@ class JBAHazardModel(HazardModel):
                                     if cache_key.jba_scenario == "historical"
                                     else cache_key.jba_scenario
                                 )
+                                lat, lon = id_to_lat_lon[item["id"]]
                                 result[cache_key] = {
                                     "stats": item[key],
-                                    "geometry": id_to_wkt[item["id"]],
+                                    "wkt_geometry": id_to_wkt[item["id"]],
+                                    "buffer": id_to_buffer[item["id"]],
+                                    "latitude": lat,
+                                    "longitude": lon,
                                 }
                         return result
                     except Exception:

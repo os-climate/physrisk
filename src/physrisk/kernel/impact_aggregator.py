@@ -374,7 +374,7 @@ def _run_simulation(
         {h: len(v) for h, v in inputs.idx_in_all_acute_impacted_assets.items()}
     )
     generator = np.random.default_rng(seed=111)
-    insurance_generator = np.random.default_rng(seed=111)
+    insurance_generator = np.random.default_rng(seed=222)
 
     gross_aggs = _SimulationAggregators(n_events)
     net_aggs = (

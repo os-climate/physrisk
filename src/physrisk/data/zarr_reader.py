@@ -56,7 +56,18 @@ class ZarrReader:
 
             store = ZarrReader.create_s3_zarr_store(get_env)
 
-        self._root = zarr.open(store, mode="r")
+        try:
+            self._root = zarr.open(store, mode="r")
+        except zarr.errors.PathNotFoundError:
+            # fsspec mappers report any error accessing a key (e.g. a connection or SSL
+            # error) as the key being absent, so zarr reports 'nothing found'. Probe the
+            # store root directly so that any such underlying error is raised instead.
+            if isinstance(store, FSMap):
+                try:
+                    store.fs.info(store.root)
+                except FileNotFoundError:
+                    pass
+            raise
         self._store = store
         self._path_provider = path_provider
         pass
